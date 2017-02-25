@@ -1,29 +1,120 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
+#
+# NOTE! Please use 'git ls-files -i --exclude-standard'
+# command after changing this file, to see if there are
+# any tracked files which get ignored after the change.
+#
+# Normal rules
+#
+.*
 *.a
-*.lib
-
-# Executables
-*.exe
-*.out
 *.app
+*.bak
+*.bin
+*.bz2
+*.dll
+*.dol
+*.dylib
+*.elf
+*.exe
+*.gz
+*.i
+*.lib
+*.lst
+*.lzma
+*.lzo
+*.lz4
+*.ko
+*.ko.cmd
+*.mod.c
+*.o
+*.o.*
+*.order
+*.out
+*.patch
+*.pc
+*.s
+*.so
+*.so.*
+*.tar
+*.xz
+
+#
+# GNU Build System (Autotools)
+#
+aclocal.m4
+autom4te.cache/
+autoscan.log
+build/*
+compile
+config.guess
+config.h
+config.h.in
+config.log
+config-ml.in
+config.py
+config.status
+config.status.lineno
+config.sub
+configure
+configure.scan
+depcomp
+.deps/
+install-sh
+.libs/
+libtool
+libtool.m4
+ltmain.sh
+lt~obsolete.m4
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+Makefile
+*/Makefile.in
+mdate-sh
+missing
+mkinstalldirs
+py-compile
+stamp-h?
+symlink-tree
+texinfo.tex
+ylwrap
+
+#
+# Debian directory (make deb-pkg)
+#
+/debian/
+
+#
+# git files that we don't want to ignore even it they are dot-files
+#
+!.gitignore
+
+#
+# stgit generated dirs
+#
+patches-*
+
+#
+# quilt's files
+#
+patches
+series
+
+#
+# cscope files
+#
+cscope.*
+ncscope.*
+
+#
+# gnu global files
+#
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
+*.orig
+*.rej
+*~
+\#*#
