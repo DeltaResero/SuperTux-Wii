@@ -272,6 +272,7 @@ GameSession::process_events()
               {
                 SDLKey key = event.key.keysym.sym;
 
+
                 switch(key)
                   {
                   case SDLK_ESCAPE:    /* Escape: Open/Close the menu: */

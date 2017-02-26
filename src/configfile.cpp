@@ -37,6 +37,7 @@ static void defaults ()
   debug_mode = false;
 
   use_fullscreen = true;
+
   show_fps = false;
   use_gl = false;
 
@@ -53,6 +54,7 @@ static void defaults ()
 
 void loadconfig(void)
 {
+
   FILE * file = NULL;
 
   defaults();

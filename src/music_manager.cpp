@@ -52,13 +52,13 @@ MusicManager::exists_music(const std::string& file)
 {
   if(!audio_device)
     return true;
-  
+
   // song already loaded?
   std::map<std::string, MusicResource>::iterator i = musics.find(file);
   if(i != musics.end()) {
-    return true;                                      
+    return true;
   }
-  
+
 #ifndef GP2X
   Mix_Music* song = Mix_LoadMUS(file.c_str());
 #else
@@ -71,7 +71,7 @@ MusicManager::exists_music(const std::string& file)
     return false;
 
   // insert into music list
-  std::pair<std::map<std::string, MusicResource>::iterator, bool> result = 
+  std::pair<std::map<std::string, MusicResource>::iterator, bool> result =
     musics.insert(
         std::make_pair<std::string, MusicResource> (file, MusicResource()));
   MusicResource& resource = result.first->second;
@@ -85,7 +85,7 @@ void
 MusicManager::free_music(MusicResource* )
 {
   // TODO free music, currently we can't do this since SDL_mixer seems to have
-  // some bugs if you load/free alot of mod files.  
+  // some bugs if you load/free alot of mod files.
 }
 
 void
@@ -101,10 +101,10 @@ MusicManager::play_music(const MusicRef& musicref, int loops)
 
   if(current_music)
     current_music->refcount--;
-  
+
   current_music = musicref.music;
   current_music->refcount++;
-  
+
   if(music_enabled)
 #ifndef GP2X
     Mix_PlayMusic(current_music->music, loops);
@@ -123,13 +123,13 @@ MusicManager::halt_music()
 {
   if(!audio_device)
     return;
-  
+
 #ifndef GP2X
   Mix_HaltMusic();
 #else
   Player_Stop();
 #endif
-  
+
   if(current_music) {
     current_music->refcount--;
     if(current_music->refcount == 0)
@@ -146,7 +146,7 @@ MusicManager::enable_music(bool enable)
 
   if(enable == music_enabled)
     return;
-  
+
   music_enabled = enable;
   if(music_enabled == false) {
 #ifndef GP2X

@@ -1,5 +1,5 @@
 //  $Id: title.cpp 2702 2005-07-08 12:18:16Z wansti $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -13,7 +13,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -128,9 +128,9 @@ void check_contrib_menu()
       LevelSubset& subset = * (contrib_subsets[index]);
 
       current_contrib_subset = subset.name;
- 
+
       contrib_subset_menu->clear();
- 
+
       contrib_subset_menu->additem(MN_LABEL, subset.title, 0,0);
       contrib_subset_menu->additem(MN_HL,"",0,0);
 
@@ -142,7 +142,7 @@ void check_contrib_menu()
         contrib_subset_menu->additem(MN_ACTION, level.name, 0,0,i+1);
         }
 
-      contrib_subset_menu->additem(MN_HL,"",0,0);      
+      contrib_subset_menu->additem(MN_HL,"",0,0);
       contrib_subset_menu->additem(MN_BACK, "Back", 0, 0);
       }
     else if(index < worldmap_list.num_items + (int)contrib_subsets.size())
@@ -179,7 +179,7 @@ void check_contrib_subset_menu()
           player_status.reset();
           Menu::set_current(main_menu);
         }
-    }  
+    }
 }
 
 void draw_background()
@@ -199,10 +199,10 @@ void draw_demo(GameSession* session, double frame_ratio)
 #ifndef NOSOUND
   world->play_music(LEVEL_MUSIC);
 #endif
-  
+
   global_frame_counter++;
   tux->key_event((SDLKey) keymap.right,DOWN);
-  
+
   if(random_timer.check())
     {
       if(walking)
@@ -226,7 +226,7 @@ void draw_demo(GameSession* session, double frame_ratio)
   tux->can_jump = true;
   float last_tux_x_pos = tux->base.x;
   world->action(frame_ratio);
-  
+
 
   // disabled for now, since with the new jump code we easily get deadlocks
   // Jump if tux stays in the same position for one loop, ie. if he is
@@ -251,6 +251,7 @@ void title(void)
   GameSession session(datadir + "/levels/misc/menu.stl", 0, ST_GL_DEMO_GAME);
 
   clearscreen(0, 0, 0);
+  loading_surf->draw( 160, 30);
   updatescreen();
 
   /* Load images: */
@@ -307,7 +308,7 @@ void title(void)
 
       /* Draw the background: */
       draw_demo(&session, frame_ratio);
-      
+
       if (Menu::current() == main_menu)
         logo->draw( 160, 30);
 
@@ -341,7 +342,7 @@ void title(void)
         {
           menu->draw();
           menu->action();
-        
+
           if(menu == main_menu)
             {
 #ifndef NOSOUND
@@ -398,7 +399,7 @@ void title(void)
                 int slot = menu->get_active_item_id();
                 char str[1024];
                 sprintf(str,"Are you sure you want to delete slot %d?", slot);
-                
+
                 draw_background();
 
                 if(confirm_dialog(str))
@@ -432,7 +433,7 @@ void title(void)
         }
 
       mouse_cursor->draw();
-      
+
       flipscreen();
 
       /* Set the time of the last update and the time of the current update */

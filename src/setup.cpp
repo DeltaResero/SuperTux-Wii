@@ -317,8 +317,11 @@ void st_directory_setup(void)
 {
   char home[] = {"sd:/apps/supertux"};
   char str[1024];
+
   st_dir = (char *) malloc(255);
+
   strcpy(st_dir, home);
+
   st_save_dir = (char *) malloc(255);
 
   strcpy(st_save_dir,st_dir);
@@ -402,7 +405,7 @@ void st_menu(void)
 
   options_menu->additem(MN_HL,"",0,0);
   options_menu->additem(MN_BACK,"Back",0,0);
-  
+
   options_keys_menu->additem(MN_LABEL,"Key Setup",0,0);
   options_keys_menu->additem(MN_HL,"",0,0);
   options_keys_menu->additem(MN_CONTROLFIELD,"Left move", 0,0, 0,&keymap.left);
@@ -441,7 +444,7 @@ void st_menu(void)
     options_joystick_button_menu->additem(MN_BACK,"Back",0,0);
 #endif
 
-  
+
   load_game_menu->additem(MN_LABEL,"Start Game",0,0);
   load_game_menu->additem(MN_HL,"",0,0);
   load_game_menu->additem(MN_DEACTIVE,"Slot 1",0,0, 1);
@@ -507,16 +510,16 @@ bool process_load_game_menu()
 
       fadeout();
       WorldMapNS::WorldMap worldmap;
-      
+
       //TODO: Define the circumstances under which BonusIsland is chosen
       worldmap.set_map_file("world1.stwm");
       worldmap.load_map();
-     
+
       // Load the game or at least set the savegame_file variable
       worldmap.loadgame(slotfile);
 
       worldmap.display();
-      
+
       Menu::set_current(main_menu);
 
       st_pause_ticks_stop();
@@ -636,7 +639,7 @@ void st_general_setup(void)
   /* Load the mouse-cursor */
   mouse_cursor = new MouseCursor( datadir + "/images/status/mousecursor.png",1);
   MouseCursor::set_current(mouse_cursor);
-  
+
 }
 
 void st_general_free(void)
@@ -663,7 +666,7 @@ void st_general_free(void)
 
   /* Free mouse-cursor */
   delete mouse_cursor;
-  
+
   /* Free menus */
   delete worldmap_menu;
   delete contrib_subset_menu;
@@ -713,6 +716,7 @@ void st_video_setup(void)
 
 void st_video_setup_sdl(void)
 {
+
   if (use_fullscreen)
     {
 #ifndef GP2X
@@ -1045,11 +1049,11 @@ void parseargs(int argc, char * argv[])
 #ifndef GP2X
           assert(i+1 < argc);
           if (sscanf(argv[++i],
-                     "%d:%d:%d:%d:%d", 
-                     &joystick_keymap.x_axis, 
-                     &joystick_keymap.y_axis, 
-                     &joystick_keymap.a_button, 
-                     &joystick_keymap.b_button, 
+                     "%d:%d:%d:%d:%d",
+                     &joystick_keymap.x_axis,
+                     &joystick_keymap.y_axis,
+                     &joystick_keymap.a_button,
+                     &joystick_keymap.b_button,
                      &joystick_keymap.start_button) != 5)
             {
               puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
@@ -1069,7 +1073,7 @@ void parseargs(int argc, char * argv[])
         {
           launch_leveleditor_mode = true;
         }
-      else if (strcmp(argv[i], "--datadir") == 0 
+      else if (strcmp(argv[i], "--datadir") == 0
                || strcmp(argv[i], "-d") == 0 )
         {
           assert(i+1 < argc);
@@ -1145,7 +1149,7 @@ void parseargs(int argc, char * argv[])
                "  --disable-music     Like above, but this will disable music.\n"
                "\n"
                "Misc Options:\n"
-               "  -j, --joystick NUM  Use joystick NUM (default: 0)\n" 
+               "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
                "  --joymap XAXIS:YAXIS:A:B:START\n"
                "  --leveleditor       Opens the leveleditor in a file. (Only works when a file is provided.)\n"
                "                      Define how joystick buttons and axis should be mapped\n"
