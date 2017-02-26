@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: text.h 811 2004-04-28 14:58:24Z rmcruz $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

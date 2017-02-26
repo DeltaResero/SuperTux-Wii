@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: badguy.h 1048 2004-05-08 23:46:43Z rmcruz $
 // 
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

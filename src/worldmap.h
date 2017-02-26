@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: worldmap.h 1746 2004-08-11 11:09:42Z wansti $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>

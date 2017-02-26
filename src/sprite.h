@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: sprite.h 737 2004-04-26 12:21:23Z grumbel $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>

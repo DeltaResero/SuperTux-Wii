@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: special.h 922 2004-05-02 21:28:32Z tobgle $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>

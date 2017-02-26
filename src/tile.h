@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: tile.h 1041 2004-05-08 11:35:04Z tobgle $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

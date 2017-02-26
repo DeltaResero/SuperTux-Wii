@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: physic.cpp 598 2004-04-20 18:39:18Z grumbel $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

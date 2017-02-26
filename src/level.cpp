@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: level.cpp 1634 2004-07-27 16:43:23Z rmcruz $
 // 
 //  SuperTux
 //  Copyright (C) 2004 SuperTux Development Team, see AUTHORS for details

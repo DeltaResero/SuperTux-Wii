@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: physic.h 597 2004-04-20 17:58:12Z grumbel $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

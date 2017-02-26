@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: setup.h 803 2004-04-28 13:18:54Z grumbel $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

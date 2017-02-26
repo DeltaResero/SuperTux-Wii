@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: leveleditor.h 1201 2004-05-15 22:22:54Z sik0fewl $
 // 
 //  SuperTux
 //  Copyright (C) 2003 Ricardo Cruz <rick2@aeiou.pt>

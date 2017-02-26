@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: high_scores.h 585 2004-04-20 11:09:34Z grumbel $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Adam Czachorowski <gislan@o2.pl>

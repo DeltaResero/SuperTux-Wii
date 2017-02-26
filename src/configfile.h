@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: configfile.h 585 2004-04-20 11:09:34Z grumbel $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2004 Michael George <mike@georgetech.com>

@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: music_manager.cpp 827 2004-04-29 00:15:11Z grumbel $
 //
 //  SuperTux
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>

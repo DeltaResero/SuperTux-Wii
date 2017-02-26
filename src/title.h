@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: title.h 585 2004-04-20 11:09:34Z grumbel $
 // 
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

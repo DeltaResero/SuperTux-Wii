@@ -1,5 +1,5 @@
-//  $Id$
-// 
+//  $Id: gameloop.cpp 2664 2005-07-01 17:23:40Z matzebraun $
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -14,7 +14,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -64,11 +64,11 @@ GameSession::GameSession(const std::string& subset_, int levelnb_, int mode)
     subset(subset_)
 {
   current_ = this;
-  
+
   global_frame_counter = 0;
   game_pause = false;
 
-  fps_timer.init(true);            
+  fps_timer.init(true);
   frame_timer.init(true);
 
   restart_level();
@@ -94,7 +94,7 @@ GameSession::restart_level()
     { // Tux has lost a life, so we try to respawn him at the nearest reset point
       old_x_pos = world->get_tux()->base.x;
     }
-  
+
   delete world;
 
   if (st_gl_mode == ST_GL_LOAD_LEVEL_FILE)
@@ -120,7 +120,7 @@ GameSession::restart_level()
           if (i->x - screen->w/2 < old_x_pos && best_reset_point.x < i->x)
             best_reset_point = *i;
         }
-      
+
       if (best_reset_point.x != -1)
         {
           world->get_tux()->base.x = best_reset_point.x;
@@ -130,12 +130,12 @@ GameSession::restart_level()
 
           if(collision_object_map(world->get_tux()->base)) {
               std::cout << "Warning: reset point inside a wall.\n";
-          }                                                                  
+          }
 
           scroll_x = best_reset_point.x - screen->w/2;
         }
     }
-    
+
   if (st_gl_mode != ST_GL_DEMO_GAME)
     {
       if(st_gl_mode == ST_GL_PLAY || st_gl_mode == ST_GL_LOAD_LEVEL_FILE)
@@ -160,9 +160,9 @@ GameSession::levelintro(void)
 #ifndef NOSOUND
   music_manager->halt_music();
 #endif
-  
+
   char str[60];
- 
+
   if (get_level()->img_bkgd)
     get_level()->img_bkgd->draw(0, 0);
   else
@@ -173,10 +173,10 @@ GameSession::levelintro(void)
 
   sprintf(str, "TUX x %d", player_status.lives);
   white_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
-  
+
   sprintf(str, "by %s", world->get_level()->author.c_str());
   white_small_text->drawf(str, 0, 360, A_HMIDDLE, A_TOP, 1);
-  
+
 
   flipscreen();
 
@@ -245,11 +245,11 @@ GameSession::process_events()
             case SDL_QUIT:        /* Quit event - quit: */
               st_abort("Received window close", "");
               break;
-              
+
             case SDL_KEYDOWN:     /* A keypress! */
               {
                 SDLKey key = event.key.keysym.sym;
-           
+
                 switch(key)
                   {
                   case SDLK_ESCAPE:    /* Escape: Open/Close the menu: */
@@ -259,7 +259,7 @@ GameSession::process_events()
                     break;
                   }
               }
-          
+
             case SDL_JOYBUTTONDOWN:
               if (event.jbutton.button == joystick_keymap.start_button)
                 on_escape_press();
@@ -295,7 +295,7 @@ GameSession::process_events()
           else
             {
               Player& tux = *world->get_tux();
-  
+
               switch(event.type)
                 {
 #ifndef GP2X
@@ -306,7 +306,7 @@ GameSession::process_events()
                 case SDL_KEYDOWN:     /* A keypress! */
                   {
                     SDLKey key = event.key.keysym.sym;
-            
+
                     if(tux.key_event(key,DOWN))
                       break;
 
@@ -435,7 +435,7 @@ GameSession::process_events()
 		  break;
 #endif
 		case SDL_JOYHATMOTION:
-		  if ((event.jhat.value == SDL_HAT_RIGHT) || 
+		  if ((event.jhat.value == SDL_HAT_RIGHT) ||
 		      (event.jhat.value == SDL_HAT_RIGHTUP) ){
 			tux.input.left  = UP;
 			tux.input.right = DOWN;
@@ -449,17 +449,17 @@ GameSession::process_events()
                         tux.input.left  = DOWN;
 			tux.input.right = DOWN;
                   }
-		 
+
 		  if ( (event.jhat.value ==  ( SDL_HAT_DOWN)) ||
 		       (event.jhat.value ==  ( SDL_HAT_LEFTDOWN)) ||
 		       (event.jhat.value ==  ( SDL_HAT_RIGHTDOWN)) )
 			 tux.input.down = DOWN;
 
-		  if ((event.jhat.value != ( SDL_HAT_DOWN)) && 
+		  if ((event.jhat.value != ( SDL_HAT_DOWN)) &&
                       (event.jhat.value != ( SDL_HAT_LEFTDOWN)) &&
                       (event.jhat.value != ( SDL_HAT_RIGHTDOWN)))
 			 tux.input.down = UP;
-                           
+
                   break;
 
 
@@ -492,7 +492,7 @@ GameSession::process_events()
                         tux.input.down = UP;
                     }
                   break;
-#endif            
+#endif
                 case SDL_JOYBUTTONDOWN:
 #ifndef GP2X
                   if (event.jbutton.button == joystick_keymap.a_button)
@@ -604,7 +604,7 @@ GameSession::check_end_conditions()
         { // No more lives!?
           if(st_gl_mode != ST_GL_TEST)
             drawendscreen();
-          
+
           exit_status = ES_GAME_OVER;
         }
       else
@@ -626,7 +626,7 @@ GameSession::action(double frame_ratio)
     }
 }
 
-void 
+void
 GameSession::draw()
 {
   world->draw();
@@ -745,7 +745,7 @@ GameSession::run()
 {
   Menu::set_current(0);
   current_ = this;
-  
+
   int fps_cnt = 0;
 
   update_time = last_update_time = st_get_ticks();
@@ -809,7 +809,7 @@ GameSession::run()
       /* Pause till next frame, if the machine running the game is too fast: */
       /* FIXME: Works great for in OpenGl mode, where the CPU doesn't have to do that much. But
          the results in SDL mode aren't perfect (thought the 100 FPS are reached), even on an AMD2500+. */
-      if(last_update_time >= update_time - 12) 
+      if(last_update_time >= update_time - 12)
         {
           SDL_Delay(10);
           update_time = st_get_ticks();
@@ -856,7 +856,7 @@ GameSession::run()
 #endif
 #endif
     }
-  
+
   return exit_status;
 }
 
@@ -955,7 +955,7 @@ GameSession::drawendscreen()
   gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
 
   flipscreen();
-  
+
   SDL_Event event;
   wait_for_event(event,2000,5000,true);
 }
@@ -979,7 +979,7 @@ GameSession::drawresultscreen(void)
   gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
 
   flipscreen();
-  
+
   SDL_Event event;
   wait_for_event(event,2000,5000,true);
 }

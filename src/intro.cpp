@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: intro.cpp 917 2004-05-02 14:56:04Z rmcruz $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

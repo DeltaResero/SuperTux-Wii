@@ -1,5 +1,5 @@
-//  $Id$
-// 
+//  $Id: world.cpp 1696 2004-08-03 18:47:15Z rmcruz $
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -14,7 +14,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -117,11 +117,11 @@ World::~World()
   for (std::vector<BouncyDistro*>::iterator i = bouncy_distros.begin();
        i != bouncy_distros.end(); ++i)
     delete *i;
-  
+
   for (std::vector<BrokenBrick*>::iterator i = broken_bricks.begin();
        i != broken_bricks.end(); ++i)
     delete *i;
-  
+
   for (std::vector<BouncyBrick*>::iterator i = bouncy_bricks.begin();
        i != bouncy_bricks.end(); ++i)
     delete *i;
@@ -129,14 +129,14 @@ World::~World()
   for (std::vector<FloatingScore*>::iterator i = floating_scores.begin();
        i != floating_scores.end(); ++i)
     delete *i;
-  
+
   delete level;
 }
 
 void
 World::set_defaults()
 {
-  // Set defaults: 
+  // Set defaults:
   scroll_x = 0;
 
   player_status.score_multiplier = 1;
@@ -194,7 +194,7 @@ World::draw()
     {
       drawgradient(level->bkgd_top, level->bkgd_bottom);
     }
-    
+
   /* Draw particle systems (background) */
   std::vector<ParticleSystem*>::iterator p;
   for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
@@ -286,13 +286,13 @@ World::action(double frame_ratio)
   // Handle all kinds of game objects
   for (unsigned int i = 0; i < bouncy_bricks.size(); i++)
     bouncy_bricks[i]->action(frame_ratio);
-  
+
   for (unsigned int i = 0; i < floating_scores.size(); i++)
     floating_scores[i]->action(frame_ratio);
 
   for (unsigned int i = 0; i < bullets.size(); ++i)
     bullets[i].action(frame_ratio);
-  
+
   for (unsigned int i = 0; i < upgrades.size(); i++)
     upgrades[i].action(frame_ratio);
 
@@ -308,7 +308,7 @@ World::action(double frame_ratio)
 
   /* Handle all possible collisions. */
   collision_handler();
-  
+
   // Cleanup marked badguys
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end();
       /* ++i handled at end of the loop */) {
@@ -423,7 +423,7 @@ World::collision_handler()
         {
           if((*j)->dying != DYING_NOT)
             continue;
-          
+
           if(rectcollision(bullets[i].base, (*j)->base))
             {
               // We have detected a collision and now call the
@@ -442,7 +442,7 @@ World::collision_handler()
     {
       if((*i)->dying != DYING_NOT)
         continue;
-      
+
       BadGuys::iterator j = i;
       ++j;
       for (; j != bad_guys.end(); ++j)
@@ -461,19 +461,19 @@ World::collision_handler()
     }
 
   if(tux.dying != DYING_NOT) return;
-    
-  // CO_BADGUY & CO_PLAYER check 
+
+  // CO_BADGUY & CO_PLAYER check
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
     {
       if((*i)->dying != DYING_NOT)
         continue;
-      
+
       if(rectcollision_offset((*i)->base, tux.base, 0, 0))
         {
           // We have detected a collision and now call the collision
           // functions of the collided objects.
           if (tux.previous_base.y < tux.base.y &&
-              tux.previous_base.y + tux.previous_base.height 
+              tux.previous_base.y + tux.previous_base.height
               < (*i)->base.y + (*i)->base.height/2
               && !tux.invincible_timer.started())
             {
@@ -563,7 +563,7 @@ World::add_upgrade(float x, float y, Direction dir, UpgradeKind kind)
   upgrades.push_back(new_upgrade);
 }
 
-void 
+void
 World::add_bullet(float x, float y, float xm, Direction dir)
 {
   if(bullets.size() > MAX_BULLETS-1)
@@ -573,7 +573,7 @@ World::add_bullet(float x, float y, float xm, Direction dir)
   new_bullet.init(x,y,xm,dir);
   bullets.push_back(new_bullet);
 #ifndef NOSOUND
-#ifndef GP2X  
+#ifndef GP2X
   play_sound(sounds[SND_SHOOT], SOUND_CENTER_SPEAKER);
 #else
   play_chunk(SND_SHOOT);
@@ -614,7 +614,7 @@ void
 World::trybreakbrick(float x, float y, bool small, Direction col_side)
 {
   Level* plevel = get_level();
-  
+
   Tile* tile = gettile(x, y);
   if (tile->brick)
     {
@@ -655,12 +655,12 @@ World::trybreakbrick(float x, float y, bool small, Direction col_side)
         {
           /* Get rid of it: */
           plevel->change(x, y, TM_IA, tile->next_tile);
-          
+
           /* Replace it with broken bits: */
-          add_broken_brick(tile, 
+          add_broken_brick(tile,
                                  ((int)(x + 1) / 32) * 32,
                                  (int)(y / 32) * 32);
-          
+
           /* Get some score: */
 #ifndef NOSOUND
 #ifndef GP2X
@@ -767,7 +767,7 @@ World::trygrabdistro(float x, float y, int bounciness)
 void
 World::trybumpbadguy(float x, float y)
 {
-  // Bad guys: 
+  // Bad guys:
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
     {
       if ((*i)->base.x >= x - 32 && (*i)->base.x <= x + 32 &&

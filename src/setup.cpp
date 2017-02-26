@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: setup.cpp 2702 2005-07-08 12:18:16Z wansti $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

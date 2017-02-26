@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: world.h 1696 2004-08-03 18:47:15Z rmcruz $
 // 
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

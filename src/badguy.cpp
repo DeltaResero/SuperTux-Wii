@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: badguy.cpp 2620 2005-06-18 12:12:10Z matzebraun $
 // 
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

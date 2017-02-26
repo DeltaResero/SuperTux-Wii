@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: button.cpp 1077 2004-05-10 16:44:37Z tobgle $
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

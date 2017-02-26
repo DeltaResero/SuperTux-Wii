@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: sound.cpp 1741 2004-08-10 22:50:39Z rmcruz $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

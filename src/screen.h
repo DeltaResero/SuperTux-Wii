@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: screen.h 883 2004-05-01 10:59:52Z rmcruz $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

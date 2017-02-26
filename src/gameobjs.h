@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: gameobjs.h 922 2004-05-02 21:28:32Z tobgle $
 // 
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

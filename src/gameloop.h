@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: gameloop.h 1201 2004-05-15 22:22:54Z sik0fewl $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Bill Kendrick <bill@newbreedsoftware.com>

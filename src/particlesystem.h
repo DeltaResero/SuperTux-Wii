@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: particlesystem.h 585 2004-04-20 11:09:34Z grumbel $
 // 
 //  SuperTux
 //  Copyright (C) 2004 Matthias Braun <matze@braunis.de>

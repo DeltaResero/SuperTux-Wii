@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: player.cpp 2620 2005-06-18 12:12:10Z matzebraun $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
@@ -89,7 +89,7 @@ Player::init()
 
   frame_main = 0;
   frame_ = 0;
-  
+
   player_input_init(&input);
 
   invincible_timer.init(true);
@@ -174,7 +174,7 @@ Player::action(double frame_ratio)
 
   physic.apply(frame_ratio, base.x, base.y);
 
-  if(dying == DYING_NOT) 
+  if(dying == DYING_NOT)
     {
       base_type target = base;
 
@@ -488,7 +488,7 @@ Player::handle_input()
   if (input.down == DOWN && size == BIG && !duck && physic.get_velocity_y() == 0 && on_ground())
     {
       duck = true;
-      base.height = 32;                             
+      base.height = 32;
       base.y += 32;
       // changing base size confuses collision otherwise
       old_base = previous_base = base;
@@ -499,7 +499,7 @@ Player::handle_input()
       base.y -= 32;
       base.height = 64;
       // changing base size confuses collision otherwise
-      old_base = previous_base = base;                        
+      old_base = previous_base = base;
     }
 }
 
@@ -508,7 +508,7 @@ Player::grow()
 {
   if(size == BIG)
     return;
-  
+
   size = BIG;
   base.height = 64;
   base.y -= 32;
@@ -575,19 +575,19 @@ Player::draw()
       else
         {
           PlayerSprite* sprite;
-          
+
           if (size == SMALL)
             sprite = &smalltux;
           else if (got_coffee)
             sprite = &firetux;
           else
             sprite = &largetux;
-          
+
           if (duck && size != SMALL)
             {
               if (dir == RIGHT)
                 sprite->duck_right->draw(base.x - scroll_x, base.y);
-              else 
+              else
                 sprite->duck_left->draw(base.x - scroll_x, base.y);
             }
           else if (skidding_timer.started())
@@ -595,21 +595,21 @@ Player::draw()
               if (dir == RIGHT)
                 sprite->skid_right->draw(base.x - scroll_x, base.y);
               else
-                sprite->skid_left->draw(base.x - scroll_x, base.y); 
+                sprite->skid_left->draw(base.x - scroll_x, base.y);
             }
           else if (kick_timer.started())
             {
               if (dir == RIGHT)
                 sprite->kick_right->draw(base.x - scroll_x, base.y);
               else
-                sprite->kick_left->draw(base.x - scroll_x, base.y); 
+                sprite->kick_left->draw(base.x - scroll_x, base.y);
             }
           else if (physic.get_velocity_y() != 0)
             {
               if (dir == RIGHT)
                 sprite->jump_right->draw(base.x - scroll_x, base.y);
               else
-                sprite->jump_left->draw(base.x - scroll_x, base.y);                   
+                sprite->jump_left->draw(base.x - scroll_x, base.y);
             }
           else
             {
@@ -628,7 +628,7 @@ Player::draw()
                     sprite->walk_left->draw(base.x - scroll_x, base.y);
                 }
             }
-                      
+
           // Draw arm overlay graphics when Tux is holding something
           if (holding_something && physic.get_velocity_y() == 0 && !duck)
             {
@@ -648,10 +648,10 @@ Player::draw()
                 largetux_star->draw(base.x - scroll_x, base.y);
             }
         }
-    }     
-  
+    }
+
   if (debug_mode)
-    fillrect(base.x - scroll_x, base.y, 
+    fillrect(base.x - scroll_x, base.y,
              base.width, base.height, 75,75,75, 150);
 }
 
@@ -833,7 +833,7 @@ Player::check_bounds(bool back_scrolling, bool hor_autoscroll)
     if(base.x + base.width > scroll_x + screen->w)
       base.x = scroll_x + screen->w - base.width;
     }
-    
+
 }
 
 // EOF //

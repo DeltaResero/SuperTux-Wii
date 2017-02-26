@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: gameobjs.cpp 834 2004-04-29 10:45:24Z matzebraun $
 // 
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: scene.h 920 2004-05-02 16:08:22Z matzebraun $
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>

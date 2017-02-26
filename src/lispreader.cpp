@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: lispreader.cpp 2273 2005-01-08 12:40:47Z rmcruz $ */
 /*
  * lispreader.c
  *
@@ -315,6 +315,7 @@ lisp_stream_init_any (lisp_stream_t *stream, void *data,
   return stream;
 }
 
+
 lisp_object_t*
 lisp_make_integer (int value)
 {
@@ -621,7 +622,7 @@ _compile_pattern (lisp_object_t **obj, int *index)
         int i;
         lisp_object_t *pattern;
         type = -1;
-	
+
         if (lisp_type(lisp_car(*obj)) != LISP_TYPE_SYMBOL)
           return 0;
 
@@ -1146,7 +1147,7 @@ LispReader::read_string_vector (const char* name, std::vector<std::string>* vec)
         }
       return true;
     }
-  return false;    
+  return false;
 }
 
 bool
@@ -1164,7 +1165,7 @@ LispReader::read_int_vector (const char* name, std::vector<int>* vec)
         }
       return true;
     }
-  return false;    
+  return false;
 }
 
 bool
@@ -1180,7 +1181,7 @@ LispReader::read_char_vector (const char* name, std::vector<char>* vec)
         }
       return true;
     }
-  return false;    
+  return false;
 }
 
 bool
@@ -1194,7 +1195,7 @@ LispReader::read_string (const char* name, std::string* str)
      *str = lisp_string(lisp_car(obj));
       return true;
     }
-  return false;  
+  return false;
 }
 
 bool
@@ -1330,17 +1331,17 @@ lisp_object_t* lisp_read_from_gzfile(const char* filename)
           buf = static_cast<char*>(realloc(buf, chunk_size * try_number));
           assert(buf);
         }
-      else 
+      else
         {
-          // everything fine, encountered EOF 
+          // everything fine, encountered EOF
           done = true;
         }
     }
-      
+
   lisp_stream_t stream;
   lisp_stream_init_string (&stream, buf);
   root_obj = lisp_read (&stream);
-      
+
   free(buf);
   gzclose(in);
 
@@ -1351,7 +1352,7 @@ bool has_suffix(const char* data, const char* suffix)
 {
   int suffix_len = strlen(suffix);
   int data_len   = strlen(data);
-  
+
   const char* data_suffix = (data + data_len - suffix_len);
 
   if (data_suffix >= data)

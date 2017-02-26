@@ -1,4 +1,4 @@
-//  $Id$
+//  $Id: leveleditor.cpp 2631 2005-06-21 21:52:22Z wansti $
 //
 //  SuperTux
 //  Copyright (C) 2003 Ricardo Cruz <rick2@aeiou.pt>
