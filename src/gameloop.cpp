@@ -210,28 +210,10 @@ GameSession::on_escape_press()
     }
 }
 
-// remap the WiiSDL keys
-SDLKey remap_keys(SDLKey key)
-{
-
-    switch(key)
-    {
-        case SDLK_ESCAPE:
-        return SDLK_SPACE;
-        break;
-
-        case SDLK_SPACE: return SDLK_ESCAPE;
-        break;
-
-        default: return key;
-    }
-
-    return key;
-}
-
 void
 GameSession::process_events()
 {
+//ingame
   if (end_sequence != NO_ENDSEQUENCE)
     {
       Player& tux = *world->get_tux();
@@ -251,8 +233,6 @@ GameSession::process_events()
       SDL_Event event;
       while (SDL_PollEvent(&event))
         {
-          // remap the WiiSDL keys
-          event.key.keysym.sym = remap_keys(event.key.keysym.sym);
 
           /* Check for menu-events, if the menu is shown */
           if (Menu::current())
@@ -284,7 +264,7 @@ GameSession::process_events()
               }
 
             case SDL_JOYBUTTONDOWN:
-              if (event.jbutton.button == joystick_keymap.start_button)
+              if (event.jbutton.button == 6 /* mote home */|| event.jbutton.button == 19 /* cc home */ )//joystick_keymap.start_button)
                 on_escape_press();
               break;
             }
@@ -298,8 +278,6 @@ GameSession::process_events()
       SDL_Event event;
       while (SDL_PollEvent(&event))
         {
-        // remap the WiiSDL keys
-        event.key.keysym.sym = remap_keys(event.key.keysym.sym);
 
           /* Check for menu-events, if the menu is shown */
           if (Menu::current())
@@ -521,11 +499,16 @@ GameSession::process_events()
 #endif
                 case SDL_JOYBUTTONDOWN:
 #ifndef GP2X
-                  if (event.jbutton.button == joystick_keymap.a_button)
+                  if (event.jbutton.button == 2 /* (1) */|| //joystick_keymap.b_button)
+                      event.jbutton.button == 7 /* (z) */ ||
+                      event.jbutton.button == 9 /* (cc a) */ )
                     tux.input.up = DOWN;
-                  else if (event.jbutton.button == joystick_keymap.b_button)
+                  else if (event.jbutton.button == 3 /* (2) */ || //joystick_keymap.b_button)
+                           event.jbutton.button == 8 /* (c) */ ||
+                           event.jbutton.button == 10 /* (cc b) */ )
                     tux.input.fire = DOWN;
-                  else if (event.jbutton.button == joystick_keymap.start_button)
+                  else if (event.jbutton.button == 6 /*mote home */ || //joystick_keymap.start_button)
+                           event.jbutton.button == 19 /* cc home */ )
                     on_escape_press();
                   break;
 #else
@@ -554,9 +537,9 @@ GameSession::process_events()
 
                 case SDL_JOYBUTTONUP:
 #ifndef GP2X
-                  if (event.jbutton.button == joystick_keymap.a_button)
+                  if (event.jbutton.button == 2)//joystick_keymap.a_button)
                     tux.input.up = UP;
-                  else if (event.jbutton.button == joystick_keymap.b_button)
+                  else if (event.jbutton.button == 3)//joystick_keymap.b_button)
                     tux.input.fire = UP;
                   break;
 

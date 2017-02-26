@@ -644,9 +644,12 @@ WorldMap::get_input()
 #endif
             case SDL_JOYBUTTONDOWN:
 #ifndef GP2X
-              if (event.jbutton.button == joystick_keymap.b_button)
+              if (event.jbutton.button == 2 /* (1) */|| //joystick_keymap.b_button)
+                  event.jbutton.button == 7 /* (z) */ ||
+                  event.jbutton.button == 9 /* (cc a) */ )
                 enter_level = true;
-              else if (event.jbutton.button == joystick_keymap.start_button)
+              else if (event.jbutton.button == 6 /* mote home */ ||//joystick_keymap.start_button)
+                       event.jbutton.button == 19 /* cc home */ )
                 on_escape_press();
               break;
 #else

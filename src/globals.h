@@ -50,6 +50,9 @@
 #define GP2X_BUTTON_VOLDOWN         (17)
 #endif
 
+//added as Supertuxs takes a long, long time to load
+extern Surface* loading_surf;
+
 extern std::string datadir;
 
 struct JoystickKeymap

@@ -33,14 +33,41 @@
 #include "resources.h"
 #include "texture.h"
 #include "tile.h"
+#ifdef _WII_
+    #include <wiiuse/wpad.h>
+    #include <ogc/lwp_watchdog.h>
+    #include <fat.h>
+#endif
+
+//added as Supertuxs takes a long, long time to load
+Surface* loading_surf;
 
 int main(int argc, char * argv[])
 {
+
+#ifdef _WII_
+  fatInitDefault();
+#endif
+
   st_directory_setup();
+
+#ifndef _WII_
   parseargs(argc, argv);
-  
+  ////
+#endif
+
+
+
   st_audio_setup();
   st_video_setup();
+
+
+  clearscreen(0, 0, 0);
+  loading_surf = new Surface(datadir + "/images/title/loading.png", USE_ALPHA);
+  loading_surf->draw( 160, 30);
+  updatescreen();
+
+
   st_joystick_setup();
   st_general_setup();
   st_menu();
@@ -70,6 +97,8 @@ int main(int argc, char * argv[])
   Surface::debug_check();
 #endif
   st_shutdown();
+
+  delete loading_surf;
 
   return 0;
 }

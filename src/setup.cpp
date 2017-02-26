@@ -311,6 +311,8 @@ void free_strings(char **strings, int num)
     free(strings[i]);
 }
 
+#ifdef _WII_
+
 /* --- SETUP --- */
 /* Set SuperTux configuration and save directories */
 void st_directory_setup(void)
@@ -336,9 +338,79 @@ void st_directory_setup(void)
 
   // User has not that a datadir, so we try some magic
   //if (datadir.empty())
-datadir = "sd:/apps/supertux/data";
+  datadir = "sd:/apps/supertux/data";
 }
+#else
 
+/* Set SuperTux configuration and save directories */
+void st_directory_setup(void)
+{
+  char *home;
+  char str[1024];
+  /* Get home directory (from $HOME variable)... if we can't determine it,
+     use the current directory ("."): */
+  if (getenv("HOME") != NULL)
+    home = getenv("HOME");
+  else
+    home = ".";
+
+  st_dir = (char *) malloc(sizeof(char) * (strlen(home) +
+                                           strlen("/.supertux") + 1));
+  strcpy(st_dir, home);
+  strcat(st_dir, "/.supertux");
+
+  /* Remove .supertux config-file from old SuperTux versions */
+  if(faccessible(st_dir))
+    {
+      remove
+        (st_dir);
+    }
+
+  st_save_dir = (char *) malloc(sizeof(char) * (strlen(st_dir) + strlen("/save") + 1));
+
+  strcpy(st_save_dir,st_dir);
+  strcat(st_save_dir,"/save");
+
+  /* Create them. In the case they exist they won't destroy anything. */
+  mkdir(st_dir, 0755);
+  mkdir(st_save_dir, 0755);
+
+  sprintf(str, "%s/levels", st_dir);
+  mkdir(str, 0755);
+
+  // User has not that a datadir, so we try some magic
+  if (datadir.empty())
+    {
+#ifndef WIN32
+      // Detect datadir
+      char exe_file[PATH_MAX];
+      if (readlink("/proc/self/exe", exe_file, PATH_MAX) < 0)
+        {
+          puts("Couldn't read /proc/self/exe, using default path: " DATA_PREFIX);
+          datadir = DATA_PREFIX;
+        }
+      else
+        {
+          std::string exedir = std::string(dirname(exe_file)) + "/";
+
+          datadir = exedir + "../data"; // SuperTux run from source dir
+          if (access(datadir.c_str(), F_OK) != 0)
+            {
+              datadir = exedir + "../share/supertux"; // SuperTux run from PATH
+              if (access(datadir.c_str(), F_OK) != 0)
+                { // If all fails, fall back to compiled path
+                  datadir = DATA_PREFIX;
+                }
+            }
+        }
+#else
+  datadir = "data";//DATA_PREFIX;
+#endif
+    }
+  printf("Datadir: %s\n", datadir.c_str());
+ }
+ 
+#endif //def _WII_
 /* Create and setup menus. */
 void st_menu(void)
 {
