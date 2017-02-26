@@ -574,13 +574,15 @@ WorldMap::get_input()
             case SDL_QUIT:
               st_abort("Received window close", "");
               break;
-          
+
             case SDL_KEYDOWN:
               switch(event.key.keysym.sym)
                 {
                 case SDLK_ESCAPE:
                   on_escape_press();
                   break;
+
+                case SDLK_SPACE: // added for wii mote
                 case SDLK_LCTRL:
                 case SDLK_RETURN:
                   enter_level = true;
@@ -1165,9 +1167,9 @@ WorldMap::loadgame(const std::string& filename)
   std::cout << "loadgame: " << filename << std::endl;
   savegame_file = filename;
 
-  if (access(filename.c_str(), F_OK) != 0)
-    return;
-  
+//  if (access(filename.c_str(), F_OK) != 0)
+//    return;
+
   lisp_object_t* savegame = lisp_read_from_file(filename);
   if (!savegame)
     {

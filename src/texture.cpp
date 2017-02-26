@@ -731,7 +731,7 @@ SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
     int ret = SDL_BlitSurface(sdl_surface_copy, NULL, screen, &dest);
 
     if (update == UPDATE)
-      SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
+      SDL_Flip(screen);//SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
 
     SDL_FreeSurface (sdl_surface_copy);
     return ret;
@@ -740,7 +740,7 @@ SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
   int ret = SDL_BlitSurface(sdl_surface, NULL, screen, &dest);
 
   if (update == UPDATE)
-    SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
+    SDL_Flip(screen);//SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
 
   return ret;
 }
@@ -778,7 +778,7 @@ SurfaceSDL::draw_bg(Uint8 alpha, bool update)
     int ret = SDL_BlitSurface(sdl_surface_copy, NULL, screen, &dest);
 
     if (update == UPDATE)
-      SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
+      SDL_Flip(screen);//SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
 
     SDL_FreeSurface (sdl_surface_copy);
     return ret;
@@ -787,7 +787,7 @@ SurfaceSDL::draw_bg(Uint8 alpha, bool update)
   int ret = SDL_SoftStretch(sdl_surface, NULL, screen, &dest);
 
   if (update == UPDATE)
-    SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
+    SDL_Flip(screen);//SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
 
   return ret;
 }
@@ -830,7 +830,7 @@ SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w, float h, Ui
     int ret = SDL_BlitSurface(sdl_surface_copy, NULL, screen, &dest);
 
     if (update == UPDATE)
-      SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
+      SDL_Flip(screen);//SDL_UpdateRect(screen, dest.x, dest.y, dest.w, dest.h);
 
     SDL_FreeSurface (sdl_surface_copy);
     return ret;

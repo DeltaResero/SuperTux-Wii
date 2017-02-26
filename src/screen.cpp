@@ -200,7 +200,7 @@ void drawpixel(int x, int y, Uint32 pixel)
     }
   /* Update just the part of the display that we've changed */
 #ifndef RES320X240
-  SDL_UpdateRect(screen, x, y, 1, 1);
+  SDL_Flip(screen);//SDL_UpdateRect(screen, x, y, 1, 1);
 #else
   SDL_UpdateRect(screen, x/2, y/2, 1, 1);
 #endif
@@ -364,7 +364,7 @@ void updatescreen(void)
   if(use_gl)  /*clearscreen(0,0,0);*/
     SDL_GL_SwapBuffers();
   else
-    SDL_UpdateRect(screen, 0, 0, screen->w, screen->h);
+    SDL_Flip(screen);//SDL_UpdateRect(screen, 0, 0, screen->w, screen->h);
 }
 
 void flipscreen(void)
@@ -386,9 +386,9 @@ void update_rect(SDL_Surface *scr, Sint32 x, Sint32 y, Sint32 w, Sint32 h)
 {
   if(!use_gl)
 #ifndef RES320X240
-    SDL_UpdateRect(scr, x, y, w, h);
+    SDL_Flip(screen);//SDL_UpdateRect(scr, x, y, w, h);
 #else
-    SDL_UpdateRect(scr, x, y, w, h);
+    SDL_Flip(screen);//SDL_UpdateRect(scr, x, y, w, h);
 #endif
 }
 

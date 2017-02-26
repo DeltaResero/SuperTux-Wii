@@ -210,28 +210,50 @@ GameSession::on_escape_press()
     }
 }
 
+// remap the WiiSDL keys
+SDLKey remap_keys(SDLKey key)
+{
+
+    switch(key)
+    {
+        case SDLK_ESCAPE:
+        return SDLK_SPACE;
+        break;
+
+        case SDLK_SPACE: return SDLK_ESCAPE;
+        break;
+
+        default: return key;
+    }
+
+    return key;
+}
+
 void
 GameSession::process_events()
 {
   if (end_sequence != NO_ENDSEQUENCE)
     {
       Player& tux = *world->get_tux();
-         
+
       tux.input.fire  = UP;
       tux.input.left  = UP;
       tux.input.right = DOWN;
-      tux.input.down  = UP; 
+      tux.input.down  = UP;
 
       if (int(last_x_pos) == int(tux.base.x))
-        tux.input.up    = DOWN; 
+        tux.input.up    = DOWN;
       else
-        tux.input.up    = UP; 
+        tux.input.up    = UP;
 
       last_x_pos = tux.base.x;
 
       SDL_Event event;
       while (SDL_PollEvent(&event))
         {
+          // remap the WiiSDL keys
+          event.key.keysym.sym = remap_keys(event.key.keysym.sym);
+
           /* Check for menu-events, if the menu is shown */
           if (Menu::current())
             {
@@ -275,6 +297,9 @@ GameSession::process_events()
       SDL_Event event;
       while (SDL_PollEvent(&event))
         {
+        // remap the WiiSDL keys
+        event.key.keysym.sym = remap_keys(event.key.keysym.sym);
+
           /* Check for menu-events, if the menu is shown */
           if (Menu::current())
             {
@@ -999,15 +1024,15 @@ std::string slotinfo(int slot)
       lisp_free(savegame);
     }
 
-  if (access(slotfile, F_OK) == 0)
-    {
+//  if (access(slotfile, F_OK) == 0)
+//    {
       if (!title.empty())
         snprintf(tmp,1024,"Slot %d - %s",slot, title.c_str());
       else
         snprintf(tmp, 1024,"Slot %d - Savegame",slot);
-    }
-  else
-    sprintf(tmp,"Slot %d - Free",slot);
+//    }
+//  else
+//    sprintf(tmp,"Slot %d - Free",slot);
 
   return tmp;
 }
