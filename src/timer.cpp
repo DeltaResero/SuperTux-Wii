@@ -71,7 +71,7 @@ Timer::init(bool st_ticks)
 {
   period    = 0;
   time      = 0;
-  get_ticks = st_ticks ? st_get_ticks : SDL_GetTicks;
+  get_ticks = st_ticks ? st_get_ticks : (unsigned int(*)())SDL_GetTicks;
 }
 
 void
@@ -155,7 +155,7 @@ Timer::fread(FILE* fi)
   if (tick_mode)
     get_ticks = st_get_ticks;
   else
-    get_ticks = SDL_GetTicks;
+    get_ticks = (unsigned int(*)())SDL_GetTicks;
 
   if (diff_ticks != 0)
     time = get_ticks() - diff_ticks;
