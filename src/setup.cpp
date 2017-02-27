@@ -78,9 +78,6 @@
 #define DATA_PREFIX "data/"
 #endif
 
-/* Stores wether we're loading from and saving to SD or USB (Wii Only) */
-int selecteddevice;
-
 /* Local function prototypes: */
 
 void seticon(void);
@@ -337,7 +334,6 @@ void st_directory_setup(void)
   st_save_dir = (char *) malloc(255);
   strcpy(st_save_dir,st_dir);
   strcat(st_save_dir,"/save");
-  selecteddevice = 1;
   }
 
   fclose(fp);
@@ -357,7 +353,6 @@ void st_directory_setup(void)
   st_save_dir = (char *) malloc(255);
   strcpy(st_save_dir,st_dir);
   strcat(st_save_dir,"/save");
-  selecteddevice = 2;
   }
   }
 
@@ -613,6 +608,20 @@ void update_load_save_game_menu(Menu* pmenu)
 bool process_load_game_menu()
 {
   int slot = load_game_menu->check();
+  
+  int selecteddevice = 0;
+  FILE *fp;
+  fp = fopen("sd:/apps/supertux/data/supertux.strf", "rb");
+  if(fp)
+  selecteddevice = 1;
+  fclose(fp);
+  if(!selecteddevice)
+  fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
+  if(fp)
+  selecteddevice = 2;
+  if(!selecteddevice)
+  exit(0);
+  fclose(fp);
 
   if(slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
     {
