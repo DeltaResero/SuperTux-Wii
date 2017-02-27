@@ -78,6 +78,9 @@
 #define DATA_PREFIX "data/"
 #endif
 
+/* Stores wether we're loading from and saving to SD or USB (Wii Only) */
+int selecteddevice;
+
 /* Local function prototypes: */
 
 void seticon(void);
@@ -317,17 +320,54 @@ void free_strings(char **strings, int num)
 /* Set SuperTux configuration and save directories */
 void st_directory_setup(void)
 {
+
+  bool deviceselection = false;
+
+  FILE *fp = NULL;
+  fp = fopen("sd:/apps/supertux/data/supertux.strf", "rb");
+
+  if(fp){
+
+  deviceselection = true;
   char home[] = {"sd:/apps/supertux"};
+  datadir = "sd:/apps/supertux/data";
   char str[1024];
-
   st_dir = (char *) malloc(255);
-
   strcpy(st_dir, home);
-
   st_save_dir = (char *) malloc(255);
-
   strcpy(st_save_dir,st_dir);
   strcat(st_save_dir,"/save");
+  selecteddevice = 1;
+  }
+
+  fclose(fp);
+
+  if(!deviceselection){
+
+  fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
+
+  if(fp){
+
+  deviceselection = true;
+  char home[] = {"usb:/apps/supertux"};
+  datadir = "usb:/apps/supertux/data";
+  char str[1024];
+  st_dir = (char *) malloc(255);
+  strcpy(st_dir, home);
+  st_save_dir = (char *) malloc(255);
+  strcpy(st_save_dir,st_dir);
+  strcat(st_save_dir,"/save");
+  selecteddevice = 2;
+  }
+  }
+
+  fclose(fp);
+
+  if(!deviceselection){
+  exit(0);
+  }
+
+  //char home[] = {"sd:/apps/supertux"};
 
   /* Create them. In the case they exist they won't destroy anything. */
   //mkdir(st_dir, 0755);
@@ -338,7 +378,7 @@ void st_directory_setup(void)
 
   // User has not that a datadir, so we try some magic
   //if (datadir.empty())
-  datadir = "sd:/apps/supertux/data";
+  //datadir = "sd:/apps/supertux/data";
 }
 #else
 
@@ -383,9 +423,9 @@ void st_directory_setup(void)
   mkdir(str, 0755);
 
   // User has not that a datadir, so we try some magic
+#ifndef WIN32
   if (datadir.empty())
     {
-#ifndef WIN32
       // Detect datadir
       char exe_file[PATH_MAX];
       if (readlink("/proc/self/exe", exe_file, PATH_MAX) < 0)
@@ -438,7 +478,7 @@ void st_menu(void)
   main_menu->additem(MN_GOTO, "Options",0,options_menu, MNID_OPTIONMENU);
   
 #ifndef GP2X
-  main_menu->additem(MN_ACTION,"Level Editor",0,0, MNID_LEVELEDITOR);
+  //main_menu->additem(MN_ACTION,"Level Editor",0,0, MNID_LEVELEDITOR);
 #endif
   main_menu->additem(MN_ACTION,"Credits",0,0, MNID_CREDITS);
   main_menu->additem(MN_ACTION,"Quit",0,0, MNID_QUITMAINMENU);
@@ -451,7 +491,7 @@ void st_menu(void)
 #else
   options_menu->additem(MN_DEACTIVE,"OpenGL (not supported)",use_gl, 0, MNID_OPENGL);
 #endif
-  options_menu->additem(MN_TOGGLE,"Fullscreen",use_fullscreen,0, MNID_FULLSCREEN);
+  //options_menu->additem(MN_TOGGLE,"Fullscreen",use_fullscreen,0, MNID_FULLSCREEN);
 #endif
 #ifndef NOSOUND
   if(audio_device)
@@ -577,7 +617,10 @@ bool process_load_game_menu()
   if(slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
     {
       char slotfile[1024];
-      snprintf(slotfile, 1024, "%s/slot%d.stsg", st_save_dir, slot);
+	  if(selecteddevice == 1)
+      snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
+	  if(selecteddevice == 2)
+	  snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
 
 //      if (access(slotfile, F_OK) != 0)
 //        {
@@ -796,7 +839,7 @@ void st_video_setup_sdl(void)
   if (use_fullscreen)
     {
 #ifndef GP2X
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 0, SDL_FULLSCREEN ) ; /* | SDL_HWSURFACE); */
+      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF ); /* | SDL_HWSURFACE); */
 #else
 //      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_HWSURFACE | SDL_DOUBLEBUF ) ; /* GP2X */
       printf("screen width: %d, height: %d\n",SCREEN_W, SCREEN_H);
@@ -815,7 +858,7 @@ void st_video_setup_sdl(void)
   else
     {
 #ifndef GP2X
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 0, SDL_HWSURFACE | SDL_DOUBLEBUF );
+      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF );
 
 #else
 //      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_HWSURFACE | SDL_DOUBLEBUF ) ; /* GP2X */
@@ -1209,7 +1252,7 @@ void parseargs(int argc, char * argv[])
         }
       else if (strcmp(argv[i], "--help") == 0)
         {     /* Show help: */
-          puts("Super Tux " VERSION "\n"
+          puts("Super Tux Wii" VERSION "\n"
                "  Please see the file \"README.txt\" for more details.\n");
           printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
           puts("Display Options:\n"

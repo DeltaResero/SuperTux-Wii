@@ -765,7 +765,7 @@ WorldMap::update(float delta)
           if (level->x == tux->get_tile_pos().x &&
               level->y == tux->get_tile_pos().y)
             {
-              std::cout << "Enter the current level: " << level->name << std::endl;;
+              //std::cout << "Enter the current level: " << level->name << std::endl;;
               GameSession session(datadir +  "/levels/" + level->name,
                                   1, ST_GL_LOAD_LEVEL_FILE);
 
@@ -805,7 +805,7 @@ WorldMap::update(float delta)
                             //tux->update(delta);
                           }
 
-                        std::cout << "Walk to dir: " << dir << std::endl;
+                        //std::cout << "Walk to dir: " << dir << std::endl;
                       }
 
                     if (!level->extro_filename.empty())
@@ -1130,7 +1130,7 @@ WorldMap::display()
 void
 WorldMap::savegame(const std::string& filename)
 {
-  std::cout << "savegame: " << filename << std::endl;
+  //std::cout << "savegame: " << filename << std::endl;
   std::ofstream out(filename.c_str());
 
   int nb_solved_levels = 0;
@@ -1167,7 +1167,7 @@ WorldMap::savegame(const std::string& filename)
 void
 WorldMap::loadgame(const std::string& filename)
 {
-  std::cout << "loadgame: " << filename << std::endl;
+  //std::cout << "loadgame: " << filename << std::endl;
   savegame_file = filename;
 
 //  if (access(filename.c_str(), F_OK) != 0)
@@ -1176,7 +1176,7 @@ WorldMap::loadgame(const std::string& filename)
   lisp_object_t* savegame = lisp_read_from_file(filename);
   if (!savegame)
     {
-      std::cout << "WorldMap:loadgame: File not found: " << filename << std::endl;
+      //std::cout << "WorldMap:loadgame: File not found: " << filename << std::endl;
       return;
     }
 
