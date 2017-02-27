@@ -100,7 +100,11 @@ void TileManager::load_tileset(std::string filename)
               tile->anim_speed = 25;
 
               LispReader reader(lisp_cdr(element));
+              #ifdef NDEBUG
+              void(reader.read_int("id",  &tile->id));
+              #else
               assert(reader.read_int("id",  &tile->id));
+              #endif
               reader.read_bool("solid",     &tile->solid);
               reader.read_bool("brick",     &tile->brick);
               reader.read_bool("ice",       &tile->ice);
