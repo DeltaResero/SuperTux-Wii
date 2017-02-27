@@ -114,7 +114,7 @@ bool confirm_dialog(std::string text)
 
     mouse_cursor->draw();
     flipscreen();
-    SDL_Delay(25);
+    SDL_Delay(10);
   }
 
 

@@ -800,7 +800,7 @@ GameSession::run()
       else
         {
           ++pause_menu_frame;
-          SDL_Delay(50);
+          SDL_Delay(10);
         }
 
       draw();
