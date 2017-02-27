@@ -37,6 +37,7 @@
     #include <wiiuse/wpad.h>
     #include <ogc/lwp_watchdog.h>
     #include <fat.h>
+	#include <dopmii/FileSystem.h>
 #endif
 
 //added as Supertuxs takes a long, long time to load
@@ -46,7 +47,11 @@ int main(int argc, char * argv[])
 {
 
 #ifdef _WII_
-  fatInitDefault();
+  IO::SD OurSD;
+  OurSD.Mount();
+  IO::USB OurUSB;
+  OurUSB.Startup();
+  OurUSB.Mount();
 #endif
 
   st_directory_setup();
