@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <cstring>
 #include <assert.h>
 #include <unistd.h>
 #include "globals.h"

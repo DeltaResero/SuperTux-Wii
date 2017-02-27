@@ -21,6 +21,7 @@
 //  02111-1307, USA.
 
 #include <iostream>
+#include <cstdlib>
 #include <math.h>
 
 #include "globals.h"

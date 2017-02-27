@@ -21,6 +21,7 @@
 #include "tile.h"
 #include "scene.h"
 #include "assert.h"
+#include <cstring>
 
 TileManager* TileManager::instance_  = 0;
 std::set<TileGroup>* TileManager::tilegroups_  = 0;

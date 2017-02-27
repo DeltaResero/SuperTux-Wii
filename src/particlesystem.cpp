@@ -20,6 +20,7 @@
 #include "particlesystem.h"
 
 #include <iostream>
+#include <cstdlib>
 #include <math.h>
 #include "globals.h"
 #include "world.h"
