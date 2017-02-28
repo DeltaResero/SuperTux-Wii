@@ -514,7 +514,7 @@ void st_menu(void)
 #endif
 
   //if(use_joystick)
-#ifdef GP2X
+#if 0 //def GP2X
   options_menu->additem(MN_GOTO,"Joystick Move Setup",0,options_joystick_axis_menu);
   options_menu->additem(MN_GOTO,"Joystick Action Setup",0,options_joystick_button_menu);
 #endif
