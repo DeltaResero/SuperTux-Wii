@@ -37,21 +37,26 @@
     #include <wiiuse/wpad.h>
     #include <ogc/lwp_watchdog.h>
     #include <fat.h>
-	#include <dopmii/FileSystem.h>
+	//#include <dopmii/FileSystem.h>
 #endif
 
 //added as Supertuxs takes a long, long time to load
-Surface* loading_surf;
-
+Surface* loading_surf = NULL;
+void print_status(const char * st);
 int main(int argc, char * argv[])
 {
 
 #ifdef _WII_
-  IO::SD OurSD;
-  OurSD.Mount();
-  IO::USB OurUSB;
-  OurUSB.Startup();
-  OurUSB.Mount();
+  //IO::SD OurSD;
+  //OurSD.Mount();
+  //IO::USB OurUSB;
+  //OurUSB.Startup();
+  //OurUSB.Mount();
+  sleep(1);//delay here allows us to use usb disks behind hubs.
+  bool res = fatInitDefault();
+  if (res == 0) {
+  print_status("Failed to initialize FAT library!\n");
+  }
 #endif
 
   st_directory_setup();

@@ -85,6 +85,7 @@ int selecteddevice;
 
 void seticon(void);
 void usage(char * prog, int ret);
+void print_status(const char * st);
 
 /* Does the given file exist and is it accessible? */
 int faccessible(const char *filename)
@@ -346,24 +347,43 @@ void st_directory_setup(void)
 
   fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
 
+      deviceselection = true;
+      char home[] = {"usb:/apps/supertux"};
+      datadir = "usb:/apps/supertux/data";
+      char str[1024];
+      st_dir = (char *) malloc(255);
+      strcpy(st_dir, home);
+      st_save_dir = (char *) malloc(255);
+      strcpy(st_save_dir,st_dir);
+      strcat(st_save_dir,"/save");
+      selecteddevice = 2;
+      }
+
+  fclose(fp);
+
+    if(!deviceselection){
+
+  fp = fopen("/apps/supertux/data/supertux.strf", "rb");
+
   if(fp){
 
-  deviceselection = true;
-  char home[] = {"usb:/apps/supertux"};
-  datadir = "usb:/apps/supertux/data";
-  char str[1024];
-  st_dir = (char *) malloc(255);
-  strcpy(st_dir, home);
-  st_save_dir = (char *) malloc(255);
-  strcpy(st_save_dir,st_dir);
-  strcat(st_save_dir,"/save");
-  selecteddevice = 2;
-  }
+      deviceselection = true;
+      char home[] = {"/apps/supertux"};
+      datadir = "/apps/supertux/data";
+      char str[1024];
+      st_dir = (char *) malloc(255);
+      strcpy(st_dir, home);
+      st_save_dir = (char *) malloc(255);
+      strcpy(st_save_dir,st_dir);
+      strcat(st_save_dir,"/save");
+      selecteddevice = 3;
+      }
   }
 
   fclose(fp);
 
   if(!deviceselection){
+  print_status("Game data not found on SD or USB!\n");;
   exit(0);
   }
 
@@ -621,6 +641,8 @@ bool process_load_game_menu()
       snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
 	  if(selecteddevice == 2)
 	  snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
+	  if(selecteddevice == 3)
+	  snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
 
 //      if (access(slotfile, F_OK) != 0)
 //        {
@@ -816,8 +838,20 @@ void st_video_setup(void)
     execl("/usr/gp2x/gp2xmenu", "/usr/gp2x/gp2xmenu", NULL);    
 #endif
 
+      print_status("Could not initialize video\n");
       exit(1);
     }
+    
+//    int flags = IMG_INIT_PNG;//|IMG_INIT_TIF|IMG_INIT_JPG;
+//    int initted = IMG_Init(flags);
+//    if ((initted & flags) != flags) {
+    
+//              char err_str[256];
+            
+//          sprintf(err_str, "Failed to initialize image loaders %d != %d (%s)\n", flags, initted, IMG_GetError());
+          
+//    print_status(err_str);
+//    }
 
   /* Open display: */
   if(use_gl)
@@ -870,6 +904,7 @@ void st_video_setup_sdl(void)
                   "\nError: I could not set up video for 640x480 mode.\n"
                   "The Simple DirectMedia error that occured was:\n"
                   "%s\n\n", SDL_GetError());
+                  print_status("Could not set video mode\n");
 #ifdef GP2X_VERSION
     chdir("/usr/gp2x");
     execl("/usr/gp2x/gp2xmenu", "/usr/gp2x/gp2xmenu", NULL);    
@@ -912,6 +947,7 @@ void st_video_setup_gl(void)
                   "\nError: I could not set up video for 640x480 mode.\n"
                   "The Simple DirectMedia error that occured was:\n"
                   "%s\n\n", SDL_GetError());
+                  print_status("Could not set video mode2\n");
           exit(1);
         }
     }
@@ -1084,7 +1120,9 @@ void st_shutdown(void)
 
 void st_abort(const std::string& reason, const std::string& details)
 {
-  fprintf(stderr, "\nError: %s\n%s\n\n", reason.c_str(), details.c_str());
+    std::string errmsg = "\nError: " + reason + "\n" + details + "\n";
+  fprintf(stderr, errmsg.c_str());
+  print_status(errmsg.c_str());
   st_shutdown();
   abort();
 }
@@ -1108,6 +1146,7 @@ void seticon(void)
               "\nError: I could not load the icon image: %s%s\n"
               "The Simple DirectMedia error that occured was:\n"
               "%s\n\n", datadir.c_str(), "/images/icon.xpm", SDL_GetError());
+              print_status("Could not load icon image\n");
       exit(1);
     }
 
@@ -1320,4 +1359,43 @@ void usage(char * prog, int ret)
 
   exit(ret);
 }
+#include <gccore.h>
 
+void print_status(const char *st) {
+
+static void *xfb = NULL;
+static GXRModeObj *rmode = NULL;
+
+	// Initialise the video system
+	VIDEO_Init();
+
+	// Obtain the preferred video mode from the system
+	// This will correspond to the settings in the Wii menu
+	rmode = VIDEO_GetPreferredMode(NULL);
+
+	// Allocate memory for the display in the uncached region
+	xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+	
+	// Initialise the console, required for printf
+	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+	
+	// Set up the video registers with the chosen mode
+	VIDEO_Configure(rmode);
+	
+	// Tell the video hardware where our display memory is
+	VIDEO_SetNextFramebuffer(xfb);
+	
+	// Make the display visible
+	VIDEO_SetBlack(FALSE);
+
+	// Flush the video register changes to the hardware
+	VIDEO_Flush();
+
+	// Wait for Video setup to complete
+	VIDEO_WaitVSync();
+	if(rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
+	printf("\n\n");
+	printf("Error!\n %s\n", st);
+	sleep(5);
+	exit(0);
+}
