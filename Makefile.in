@@ -19,24 +19,42 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	src src/lib/libpng/pngu
-DATA		:=	
+DATA		:=
 INCLUDES	:=
+LIBOGC_INC := $(DEVKITPRO)/libogc/include
+LIBOGC_LIB := $(DEVKITPRO)/libogc/lib/wii
+PORTLIBS := $(DEVKITPRO)/portlibs/wii
+
+#---------------------------------------------------------------------------------
+# options for Debug/Verbose
+# (enable with make DEBUG=1 VERBOSE=1)
+#---------------------------------------------------------------------------------
+
+DEBUG	?= 0
+VERBOSE	?= 0
+
+ifeq ($(DEBUG), 1)
+	DEBUG_FLAGS = -g
+endif
+ifeq ($(VERBOSE), 1)
+	VERBOSE_FLAGS = -v
+endif
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -D_WII_ -DNOOPENGL -g -O3 -Wall $(MACHDEP) $(INCLUDE) `$(PREFIX)pkg-config --cflags sdl`
+CFLAGS		=	$(DEBUG_FLAGS) -D_WII_ -DNOOPENGL -O3 -Wall $(MACHDEP) $(INCLUDE) `$(PREFIX)pkg-config --cflags sdl`
 CXXFLAGS	=	$(CFLAGS)
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS		=	$(DEBUG_FLAGS) $(VERBOSE_FLAGS) $(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(LIBOGC_LIB) -logc
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
 LIBS	:=	`$(PREFIX)pkg-config --libs sdl SDL_mixer` -lSDL_image  \
                  -ljpeg -lpng -lfreetype -lvorbisidec -logg\
-                -lz -lfat -lwiiuse -lbte -logc -lm -lwiikeyboard -lmad
+                -lz -lfat -lwiiuse -lbte -logc -lm -lwiikeyboard -lmad -L$(PORTLIBS)/lib -lopengx
 
  
 #--------------------------------------------------------------------------------
@@ -86,8 +104,8 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 #---------------------------------------------------------------------------------
 export INCLUDE	:=	$(foreach dir,$(INCLUDES), -iquote $(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					-I$(CURDIR)/$(BUILD) \
-					-I$(LIBOGC_INC) -I$(PORTLIBS)/include -I$(LIBOGC_INC)/SDL
+					-I$(CURDIR)/$(BUILD) -I$(PORTLIBS)/include/GL \
+					-I$(LIBOGC_INC) -I$(PORTLIBS)/include -I$(PORTLIBS)/include/SDL
 
 #---------------------------------------------------------------------------------
 # build a list of library paths

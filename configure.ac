@@ -11,8 +11,8 @@ dnl ===========================================================================
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.54])
-AC_INIT(SuperTux, 0.1.3)
+AC_PREREQ([2.72])
+AC_INIT([SuperTux],[0.1.3])
 AC_CONFIG_SRCDIR([src/supertux.cpp])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(dist-bzip2)
@@ -25,7 +25,12 @@ AC_PROG_INSTALL
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
-AC_HEADER_STDC
+
+# Autoupdate added the next two lines to ensure that the configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS(unistd.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -36,7 +41,7 @@ dnl Give advanced users some options to play with
 
 AC_MSG_CHECKING(for gprof mode)
 AC_ARG_ENABLE(gprof,
-              AC_HELP_STRING([--enable-gprof], [enable GNU profiling support]),
+              AS_HELP_STRING([--enable-gprof],[enable GNU profiling support]),
               [enable_gprof="$enableval"],
               [enable_gprof="no"])
 if test "x${enable_gprof}" != "xno"; then
@@ -48,7 +53,7 @@ fi
 
 AC_MSG_CHECKING(for debug mode)
 AC_ARG_ENABLE(debug,
-              AC_HELP_STRING([--enable-debug], [enable debugging mode]),
+              AS_HELP_STRING([--enable-debug],[enable debugging mode]),
               [enable_debug="$enableval"],
               [enable_debug="no"])
 if test "x${enable_debug}" != "xno"; then
@@ -60,7 +65,7 @@ fi
 
 AC_MSG_CHECKING(wether OpenGL should be used)
 AC_ARG_ENABLE(opengl,
-              AC_HELP_STRING([--disable-opengl], [disable OpenGL support]),, enable_opengl="yes")
+              AS_HELP_STRING([--disable-opengl],[disable OpenGL support]),, enable_opengl="yes")
 if test "x${enable_opengl}" != "xno"; then
     AC_MSG_RESULT([yes])
 else
@@ -163,7 +168,8 @@ CXXFLAGS="$CXXFLAGS -DDATA_PREFIX='\"$datadir/supertux\"'"
 dnl Checks for library functions.
 AC_CHECK_FUNCS(mkdir strdup strstr)
 
-AC_OUTPUT(Makefile src/Makefile data/Makefile)
+AC_CONFIG_FILES([Makefile src/Makefile data/Makefile])
+AC_OUTPUT
 
 echo ""
 echo "Features:"
