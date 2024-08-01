@@ -317,7 +317,7 @@ void title(void)
       white_small_text->draw(" SuperTux " VERSION "\n"
                              "Copyright (c) 2003 SuperTux Devel Team\n"
                              "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
-                             "are welcome to redistribute it under certain conditions; see the file COPYING\n"
+                             "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
                              "for details.\n",
                              0, 420, 0);
 #else
@@ -327,7 +327,7 @@ void title(void)
 			     "WARRANTY. This is free software, and\n"
                              "you are welcome to redistribute it\n"
 			     "under certain conditions; see the file\n"
-			     "COPYING for details.\n",
+			     "LICENSE for details.\n",
                              0, 360, 0);
 #endif
 #ifndef NOSOUND
