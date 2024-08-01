@@ -3,8 +3,6 @@ bin_PROGRAMS = supertux
 supertux_SOURCES = \
 badguy.cpp \
 badguy.h \
-bitmask.cpp \
-bitmask.h \
 button.cpp \
 button.h \
 collision.cpp \
