@@ -24,9 +24,7 @@
 #include "special.h"
 #include "gameloop.h"
 #include "screen.h"
-#ifndef NOSOUND
 #include "sound.h"
-#endif
 #include "scene.h"
 #include "globals.h"
 #include "player.h"
@@ -107,21 +105,12 @@ Bullet::action(double frame_ratio)
 
   base.ym = base.ym + 0.5 * frame_ratio;
 
-#ifndef RES320X240  
   if (base.x < scroll_x ||
       base.x > scroll_x + screen->w ||
       base.y > screen->h ||
       issolid(base.x + 4, base.y + 2) ||
       issolid(base.x, base.y + 2) ||
       life_count <= 0)
-#else
-  if (base.x < scroll_x ||
-      base.x > scroll_x + 640 ||
-      base.y > 480 ||
-      issolid(base.x + 4, base.y + 2) ||
-      issolid(base.x, base.y + 2) ||
-      life_count <= 0)
-#endif
     {
       remove_me();
     }
@@ -131,13 +120,8 @@ Bullet::action(double frame_ratio)
 void 
 Bullet::draw()
 {
-#ifndef RES320X240
   if (base.x >= scroll_x - base.width &&
       base.x <= scroll_x + screen->w)
-#else
-  if (base.x >= scroll_x - base.width &&
-      base.x <= scroll_x + 640)
-#endif
     {
       img_bullet->draw(base.x - scroll_x, base.y);
     }
@@ -213,11 +197,7 @@ Upgrade::action(double frame_ratio)
       remove_me();
       return;
   }
-#ifndef RES320X240
   if(base.y > screen->h) {
-#else
-  if(base.y > 640) {
-#endif
     remove_me();
     return;
   }
@@ -272,11 +252,7 @@ Upgrade::draw()
     {
       /* Rising up... */
 
-#ifndef RES320X240
       dest.x = (int)(base.x - scroll_x);
-#else
-      dest.x = (int)(base.x - scroll_x)/2;
-#endif
       dest.y = (int)(base.y + 32 - base.height);
       dest.w = 32;
       dest.h = (int)base.height;
@@ -321,13 +297,7 @@ Upgrade::bump(Player* )
   if(kind != UPGRADE_GROWUP)
     return;
 
-#ifndef NOSOUND
-#ifndef GP2X
   play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
-#else
-    play_chunk(SND_BUMP_UPGRADE);
-#endif
-#endif
   
   // do a little jump and change direction
   physic.set_velocity(-physic.get_velocity_x(), 3);
@@ -359,52 +329,26 @@ Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
 
       if (kind == UPGRADE_GROWUP)
         {
-#ifndef NOSOUND
-#ifndef GP2X
           play_sound(sounds[SND_EXCELLENT], SOUND_CENTER_SPEAKER);
-#else
-	    play_chunk(SND_EXCELLENT);
-#endif
-#endif
           pplayer->grow();
         }
       else if (kind == UPGRADE_ICEFLOWER)
         {
-#ifndef NOSOUND
-#ifndef GP2X
           play_sound(sounds[SND_COFFEE], SOUND_CENTER_SPEAKER);
-#else
-	  play_chunk(SND_COFFEE);
-#endif
-#endif
           pplayer->grow();
           pplayer->got_coffee = true;
         }
       else if (kind == UPGRADE_HERRING)
         {
-#ifndef NOSOUND
-#ifndef GP2X
           play_sound(sounds[SND_HERRING], SOUND_CENTER_SPEAKER);
-#else
-	  play_chunk(SND_HERRING);
-#endif
-#endif
           pplayer->invincible_timer.start(TUX_INVINCIBLE_TIME);
-#ifndef NOSOUND
           World::current()->play_music(HERRING_MUSIC);
-#endif
         }
       else if (kind == UPGRADE_1UP)
         {
           if(player_status.lives < MAX_LIVES) {
             player_status.lives++;
-#ifndef NOSOUND
-#ifndef GP2X
             play_sound(sounds[SND_LIFEUP], SOUND_CENTER_SPEAKER);
-#else
-	    play_chunk(SND_LIFEUP);
-#endif
-#endif
           }
         }
 

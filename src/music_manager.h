@@ -19,9 +19,6 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef HEADER_MUSIC_MANAGER_H
 #define HEADER_MUSIC_MANAGER_H
-#ifdef GP2X
-#include "mikmod.h"
-#endif
 
 #include <SDL_mixer.h>
 #include <string>
@@ -54,12 +51,7 @@ private:
     ~MusicResource();
 
     MusicManager* manager;
-#ifndef GP2X
     Mix_Music* music;
-#else
-    MODULE *music;
-#endif
-    
     int refcount;
   };
 

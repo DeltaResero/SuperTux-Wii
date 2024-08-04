@@ -263,8 +263,6 @@ Player::action(double frame_ratio)
         }
     }
 
-//(GP2X patch)	updateSound();
-
   /* ---- DONE HANDLING TUX! --- */
 
   // check some timers
@@ -340,13 +338,7 @@ Player::handle_horizontal_input()
   if(on_ground() && ((vx < 0 && dirsign >0) || (vx>0 && dirsign<0))) {
       if(fabs(vx)>SKID_XM && !skidding_timer.check()) {
           skidding_timer.start(SKID_TIME);
-#ifndef NOSOUND
-#ifndef GP2X
           play_sound(sounds[SND_SKID], SOUND_CENTER_SPEAKER);
-#else
-	  play_chunk(SND_SKID);
-#endif
-#endif
           ax *= 2.5;
       } else {
           ax *= 2;
@@ -399,22 +391,10 @@ Player::handle_vertical_input()
           --base.y;
           jumping = true;
           can_jump = false;
-          if (size == SMALL) {
-#ifndef NOSOUND
-#ifndef GP2X
+          if (size == SMALL)
             play_sound(sounds[SND_JUMP], SOUND_CENTER_SPEAKER);
-#else
-	    play_chunk(SND_JUMP);
-#endif
-		}
-          else {
-#ifndef GP2X
+          else
             play_sound(sounds[SND_BIGJUMP], SOUND_CENTER_SPEAKER);
-#else
-	    play_chunk(SND_BIGJUMP);
-#endif
-#endif
-          }
         }
     }
   // Let go of jump key
@@ -554,13 +534,7 @@ Player::grabdistros()
       if(player_status.lives < MAX_LIVES)
         ++player_status.lives;
       /*We want to hear the sound even, if MAX_LIVES is reached*/
-#ifndef NOSOUND
-#ifndef GP2X
       play_sound(sounds[SND_LIFEUP], SOUND_CENTER_SPEAKER);
-#else
-      play_chunk(SND_LIFEUP);
-#endif
-#endif
     }
 }
 
@@ -692,13 +666,7 @@ Player::collision(void* p_c_object, int c_object)
               else
                 {
                    pbad_c->dying = DYING_FALLING;
-#ifndef NOSOUND
-#ifndef GP2X
                    play_sound(sounds[SND_FALL], SOUND_CENTER_SPEAKER);
-#else
-		   play_chunk(SND_FALL);
-#endif
-#endif
                    World::current()->add_score(pbad_c->base.x - scroll_x,
                                                pbad_c->base.y,
                                                25 * player_status.score_multiplier);
@@ -729,14 +697,7 @@ Player::collision(void* p_c_object, int c_object)
 void
 Player::kill(HurtMode mode)
 {
-#ifndef NOSOUND
-#ifndef GP2X
   play_sound(sounds[SND_HURT], SOUND_CENTER_SPEAKER);
-#else
-  play_chunk(SND_HURT);
-  updateSound();
-#endif
-#endif
 
   physic.set_velocity_x(0);
 
@@ -774,11 +735,7 @@ Player::is_dying()
 
 bool Player::is_dead()
 {
-#ifndef RES320X240
   if(base.y > screen->h || base.x < scroll_x - AUTOSCROLL_DEAD_INTERVAL)  // last condition can happen in auto-scrolling
-#else
-  if(base.y > 640 || base.x < scroll_x - AUTOSCROLL_DEAD_INTERVAL)  // last condition can happen in auto-scrolling
-#endif
     return true;
   else
     return false;
@@ -804,22 +761,9 @@ Player::check_bounds(bool back_scrolling, bool hor_autoscroll)
     }
 
   /* Keep in-bounds, vertically: */
-#ifndef RES320X240
   if (base.y > screen->h)
-#else
-  if (base.y > 640)
-#endif
     {
       kill(KILL);
-#ifndef NOSOUND
-#ifdef GP2X    
-      float wait=SDL_GetTicks()+800;
-      while ( wait > SDL_GetTicks()) {
-         updateSound();
-      }
-#endif
-#endif
-
     }
 
   if(base.x < scroll_x && (!back_scrolling || hor_autoscroll))  // can happen if back scrolling is disabled

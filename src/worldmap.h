@@ -23,9 +23,7 @@
 #include <vector>
 #include <string>
 
-#ifndef NOSOUND
 #include "musicref.h"
-#endif
 
 namespace WorldMapNS {
 
@@ -209,9 +207,7 @@ private:
   typedef std::vector<Level> Levels;
   Levels levels;
 
-#ifndef NOSOUND
   MusicRef song;
-#endif
 
   Direction input_direction;
   bool enter_level;

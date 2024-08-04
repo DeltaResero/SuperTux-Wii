@@ -38,6 +38,8 @@ screen.cpp \
 screen.h \
 setup.cpp \
 setup.h \
+sound.cpp \
+sound.h \
 special.cpp \
 special.h \
 supertux.cpp \
@@ -66,16 +68,10 @@ gameobjs.cpp \
 sprite.h \
 sprite.cpp \
 sprite_manager.cpp \
-sprite_manager.h
-
-if HAVE_SOUND
- supertux_SOURCES += \
-  music_manager.cpp \
-  music_manager.h \
-  musicref.cpp \
-  musicref.h \
-  sound.cpp \
-  sound.h
-endif
+sprite_manager.h \
+music_manager.cpp \
+music_manager.h \
+musicref.cpp \
+musicref.h
 
 # EOF #

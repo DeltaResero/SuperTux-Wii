@@ -24,9 +24,6 @@
 #include "defines.h"
 #include "screen.h"
 #include "text.h"
-#ifndef NOSOUND
-#include "sound.h"
-#endif
 
 Text::Text(const std::string& file, int kind_, int w_, int h_)
 {
@@ -119,9 +116,6 @@ Text::draw_chars(Surface* pchars,const  char* text, int x, int y, int update)
           else if ( text[i] == '\n')
             {
               y += h + 2;
-#ifdef RES320X240
-	    y+=6;
-#endif
               j = 0;
             }
         }
@@ -135,9 +129,6 @@ Text::draw_chars(Surface* pchars,const  char* text, int x, int y, int update)
           else if ( text[i] == '\n')
             {
               y += h + 2;
-#ifdef RES320X240
-	    y+=6;
-#endif
               j = 0;
             }
         }
@@ -315,23 +306,6 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
                 break;
               }
             break;
-#ifdef GP2X
-	  case SDL_JOYBUTTONDOWN:
-	    if ( event.jbutton.button == joystick_keymap.down_button ) {
-            	    speed += SPEED_INC;
-	    }
-	    if ( event.jbutton.button == joystick_keymap.up_button ) {
-            	    speed -= SPEED_INC;
-	    }	    
-	    if ( event.jbutton.button == joystick_keymap.b_button ) {
-            	    done = 1;
-	    }	    
-	    if ( event.jbutton.button == joystick_keymap.a_button ) {
-            	    scroll += SCROLL;
-	    }
-	  break;
-#endif
-
           case SDL_QUIT:
             done = 1;
             break;
@@ -356,36 +330,21 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
             white_small_text->drawf(names.item[i]+1, 0, screen->h+y-int(scroll),
                 A_HMIDDLE, A_TOP, 1);
             y += white_small_text->h+ITEMS_SPACE;
-#ifdef RES320X240
-	    y += 6;
-#endif
             break;
           case '	':
             white_text->drawf(names.item[i]+1, 0, screen->h+y-int(scroll),
                 A_HMIDDLE, A_TOP, 1);
             y += white_text->h+ITEMS_SPACE;
-#ifdef RES320X240
-	    y += 6;
-#endif
             break;
           case '-':
-#ifdef RES320X240
-            white_text->drawf(names.item[i]+1, 0, screen->h+y-int(scroll), A_HMIDDLE, A_TOP, 3);
-#else
-            white_big_text->drawf(names.item[i]+1, 0, screen->h+y-int(scroll), A_HMIDDLE, A_TOP, 3);
-#endif
+            white_big_text->drawf(names.item[i]+1, 0, screen->h+y-int(scroll),
+                A_HMIDDLE, A_TOP, 3);
             y += white_big_text->h+ITEMS_SPACE;
-#ifdef RES320X240
-	    y += 6;
-#endif
             break;
           default:
             blue_text->drawf(names.item[i], 0, screen->h+y-int(scroll),
                 A_HMIDDLE, A_TOP, 1);
             y += blue_text->h+ITEMS_SPACE;
-#ifdef RES320X240
-	    y += 6;
-#endif
             break;
           }
         }
@@ -401,15 +360,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
       if(scroll < 0)
         scroll = 0;
 
-#ifndef GP2X
-    SDL_Delay(10);
-#else
-    SDL_Delay(2);
-#ifndef NOSOUND
-    updateSound();
-#endif
-#endif
-
+      SDL_Delay(10);
     }
   string_list_free(&names);
 

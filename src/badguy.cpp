@@ -251,13 +251,7 @@ BadGuy::action_mriceblock(double frame_ratio)
           tux.kick_timer.start(KICKING_TIME);
           set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
           physic.set_velocity_x((dir == LEFT) ? -3.5 : 3.5);
-#ifndef NOSOUND
-#ifndef GP2X
           play_sound(sounds[SND_KICK],SOUND_CENTER_SPEAKER);
-#else
-          play_chunk(SND_KICK);
-#endif
-#endif
         }
     }
 
@@ -267,8 +261,6 @@ BadGuy::action_mriceblock(double frame_ratio)
       check_horizontal_bump();
       if(mode == KICK && changed != dir)
         {
-#ifndef NOSOUND
-#ifndef GP2X
           /* handle stereo sound (number 10 should be tweaked...)*/
           if (base.x < scroll_x + screen->w/2 - 10)
             play_sound(sounds[SND_RICOCHET], SOUND_LEFT_SPEAKER);
@@ -276,10 +268,6 @@ BadGuy::action_mriceblock(double frame_ratio)
             play_sound(sounds[SND_RICOCHET], SOUND_RIGHT_SPEAKER);
           else
             play_sound(sounds[SND_RICOCHET], SOUND_CENTER_SPEAKER);
-#else
-          play_chunk(SND_RICOCHET);
-#endif
-#endif
         }
     }
 
@@ -467,21 +455,12 @@ BadGuy::action_bomb(double frame_ratio)
       timer.start(EXPLODETIME);
 
       /* play explosion sound */  // FIXME: is the stereo all right? maybe we should use player cordinates...
-      if (base.x < scroll_x + screen->w/2 - 10) {
-#ifndef NOSOUND
-#ifndef GP2X
+      if (base.x < scroll_x + screen->w/2 - 10)
         play_sound(sounds[SND_EXPLODE], SOUND_LEFT_SPEAKER);
-	  }
-      else if (base.x > scroll_x + screen->w/2 + 10) {
+      else if (base.x > scroll_x + screen->w/2 + 10)
         play_sound(sounds[SND_EXPLODE], SOUND_RIGHT_SPEAKER);
-	  }
-      else {
+      else
         play_sound(sounds[SND_EXPLODE], SOUND_CENTER_SPEAKER);
-#else
-	play_chunk(SND_EXPLODE);
-#endif
-#endif
-      }
 
     } else if(mode == BOMB_EXPLODE) {
       remove_me();
@@ -699,21 +678,13 @@ BadGuy::action(double frame_ratio)
     }
 
   // BadGuy fall below the ground
-#ifndef RES320X240
   if (base.y > screen->h) {
-#else
-  if (base.y > 640) {
-#endif
     remove_me();
     return;
   }
 
   // Once it's on screen, it's activated!
-#ifndef RES320X240
   if (base.x <= scroll_x + screen->w + OFFSCREEN_DISTANCE)
-#else
-  if (base.x <= scroll_x + 640 + OFFSCREEN_DISTANCE)
-#endif
     seen = true;
 
   if(!seen)
@@ -773,11 +744,7 @@ void
 BadGuy::draw()
 {
   // Don't try to draw stuff that is outside of the screen
-#ifndef RES320X240
   if(base.x <= scroll_x - base.width || base.x >= scroll_x + screen->w)
-#else
-  if(base.x <= scroll_x - base.width || base.x >= scroll_x + 640)
-#endif
     return;
   
   if(sprite_left == 0 || sprite_right == 0)
@@ -845,13 +812,7 @@ BadGuy::squish_me(Player* player)
     
   World::current()->add_score(base.x - scroll_x,
                               base.y, 50 * player_status.score_multiplier);
-#ifndef NOSOUND
-#ifndef GP2X
   play_sound(sounds[SND_SQUISH], SOUND_CENTER_SPEAKER);
-#else
-  play_chunk(SND_SQUISH);
-#endif
-#endif
   player_status.score_multiplier++;
 
   dying = DYING_SQUISHED;
@@ -870,13 +831,7 @@ BadGuy::squish(Player* player)
    
     player->jump_of_badguy(this);
     World::current()->add_score(base.x - scroll_x, base.y, 50 * player_status.score_multiplier);
-#ifndef NOSOUND
-#ifndef GP2X
     play_sound(sounds[SND_SQUISH], SOUND_CENTER_SPEAKER);
-#else
-    play_chunk(SND_SQUISH);
-#endif
-#endif
     player_status.score_multiplier++;
     remove_me();
     return;
@@ -885,13 +840,7 @@ BadGuy::squish(Player* player)
     if (mode == NORMAL || mode == KICK)
       {
         /* Flatten! */
-#ifndef NOSOUND
-#ifndef GP2X
         play_sound(sounds[SND_STOMP], SOUND_CENTER_SPEAKER);
-#else
-	play_chunk(SND_STOMP);
-#endif
-#endif
         mode = FLAT;
         set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
         physic.set_velocity_x(0);
@@ -899,13 +848,7 @@ BadGuy::squish(Player* player)
         timer.start(4000);
       } else if (mode == FLAT) {
         /* Kick! */
-#ifndef NOSOUND
-#ifndef GP2X
         play_sound(sounds[SND_KICK], SOUND_CENTER_SPEAKER);
-#else
-	play_chunk(SND_KICK);
-#endif
-#endif
 
         if (player->base.x < base.x + (base.width/2)) {
           physic.set_velocity_x(5);
@@ -983,13 +926,7 @@ BadGuy::kill_me(int score)
                     score * player_status.score_multiplier);
 
   /* Play death sound: */
-#ifndef NOSOUND
-#ifndef GP2X
   play_sound(sounds[SND_FALL], SOUND_CENTER_SPEAKER);
-#else
-	play_chunk(SND_FALL);
-#endif
-#endif
 }
 
 void BadGuy::explode(BadGuy *badguy)
@@ -1117,13 +1054,7 @@ BadGuy::collision(void *p_c_object, int c_object, CollisionType type)
       /* Get kicked if were flat */
       if (mode == FLAT && !dying)
       {
-#ifndef NOSOUND
-#ifndef GP2X
         play_sound(sounds[SND_KICK], SOUND_CENTER_SPEAKER);
-#else
-	play_chunk(SND_KICK);
-#endif
-#endif
 
         // Hit from left side
         if (player->base.x < base.x) {
