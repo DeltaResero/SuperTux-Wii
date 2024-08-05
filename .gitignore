@@ -73,6 +73,7 @@ Makefile
 mdate-sh
 missing
 mkinstalldirs
+obj/
 py-compile
 stamp-h?
 symlink-tree
