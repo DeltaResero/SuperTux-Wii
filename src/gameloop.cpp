@@ -491,23 +491,18 @@ GameSession::process_events()
                   break;
 
                 case SDL_JOYBUTTONDOWN:
-                  if (event.jbutton.button == 2 /* (1) */|| //joystick_keymap.b_button)
-                      event.jbutton.button == 7 /* (z) */ ||
-                      event.jbutton.button == 9 /* (cc a) */ )
+                  if (event.jbutton.button == 3 /* (1) */)
                     tux.input.up = DOWN;
-                  else if (event.jbutton.button == 3 /* (2) */ || //joystick_keymap.b_button)
-                           event.jbutton.button == 8 /* (c) */ ||
-                           event.jbutton.button == 10 /* (cc b) */ )
+                  else if (event.jbutton.button == 2 /* (2) */)
                     tux.input.fire = DOWN;
-                  else if (event.jbutton.button == 6 /*mote home */ || //joystick_keymap.start_button)
-                           event.jbutton.button == 19 /* cc home */ )
+                  else if (event.jbutton.button == 6 /*mote home */)
                     on_escape_press();
                   break;
 
                 case SDL_JOYBUTTONUP:
-                  if (event.jbutton.button == 2)//joystick_keymap.a_button)
+                  if (event.jbutton.button == 3)//joystick_keymap.a_button)
                     tux.input.up = UP;
-                  else if (event.jbutton.button == 3)//joystick_keymap.b_button)
+                  else if (event.jbutton.button == 2)//joystick_keymap.b_button)
                     tux.input.fire = UP;
                   break;
 

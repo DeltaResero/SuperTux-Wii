@@ -642,12 +642,9 @@ WorldMap::get_input()
 	      break;
 
             case SDL_JOYBUTTONDOWN:
-              if (event.jbutton.button == 2 /* (1) */|| //joystick_keymap.b_button)
-                  event.jbutton.button == 7 /* (z) */ ||
-                  event.jbutton.button == 9 /* (cc a) */ )
+              if (event.jbutton.button == 3 /* (2) */)
                 enter_level = true;
-              else if (event.jbutton.button == 6 /* mote home */ ||//joystick_keymap.start_button)
-                       event.jbutton.button == 19 /* cc home */ )
+              else if (event.jbutton.button == 6 /* mote home */)
                 on_escape_press();
               break;
 
