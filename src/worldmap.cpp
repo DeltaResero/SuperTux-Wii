@@ -940,24 +940,24 @@ WorldMap::draw_status()
 {
   char str[80];
   sprintf(str, "%d", player_status.score);
-  white_text->draw("SCORE", 0, 0);
-  gold_text->draw(str, 96, 0);
+  white_text->draw("SCORE", 20, offset_y);
+  gold_text->draw(str, 116, offset_y);
 
   sprintf(str, "%d", player_status.distros);
-  white_text->draw_align("COINS", 320-64, 0,  A_LEFT, A_TOP);
-  gold_text->draw_align(str, 320+64, 0, A_RIGHT, A_TOP);
+  white_text->draw_align("COINS", 320-64, offset_y,  A_LEFT, A_TOP);
+  gold_text->draw_align(str, 320+64, offset_y, A_RIGHT, A_TOP);
 
-  white_text->draw("LIVES", 480, 0);
+  white_text->draw("LIVES", 460, offset_y);
   if (player_status.lives >= 5)
     {
       sprintf(str, "%dx", player_status.lives);
-      gold_text->draw_align(str, 617, 0, A_RIGHT, A_TOP);
-      tux_life->draw(565+(18*3), 0);
+      gold_text->draw_align(str, 597, offset_y, A_RIGHT, A_TOP);
+      tux_life->draw(545+(18*3), offset_y);
     }
   else
     {
       for(int i= 0; i < player_status.lives; ++i)
-        tux_life->draw(565+(18*i),0);
+        tux_life->draw(545+(18*i),offset_y);
     }
 
   if (!tux->is_moving())
@@ -969,11 +969,11 @@ WorldMap::draw_status()
             {
               if(!i->name.empty())
                 {
-              white_text->draw_align(i->title.c_str(), screen->w/2, screen->h,  A_HMIDDLE, A_BOTTOM);
+              white_text->draw_align(i->title.c_str(), screen->w/2, screen->h - offset_y,  A_HMIDDLE, A_BOTTOM);
                 }
 				  else if (i->teleport_dest_x != -1) {
 				  	if(!i->teleport_message.empty())
-               	 gold_text->draw_align(i->teleport_message.c_str(), screen->w/2, screen->h,  A_HMIDDLE, A_BOTTOM);
+               	 gold_text->draw_align(i->teleport_message.c_str(), screen->w/2, screen->h - offset_y,  A_HMIDDLE, A_BOTTOM);
 				  }
 
               /* Display a message in the map, if any as been selected */

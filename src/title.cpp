@@ -308,7 +308,7 @@ void title(void)
                              "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
                              "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
                              "for details.\n",
-                             0, 420, 0);
+                             0, (420 - offset_y), 0);
 
       /* Don't draw menu, if quit is true */
       Menu* menu = Menu::current();

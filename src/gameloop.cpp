@@ -814,8 +814,8 @@ GameSession::drawstatus()
   char str[60];
 
   sprintf(str, "%d", player_status.score);
-  white_text->draw("SCORE", 0, 0, 1);
-  gold_text->draw(str, 96, 0, 1);
+  white_text->draw("SCORE", 20, offset_y, 1);
+  gold_text->draw(str, 116, offset_y, 1);
 
   if(st_gl_mode == ST_GL_TEST)
     {
@@ -823,35 +823,35 @@ GameSession::drawstatus()
     }
 
   if(!time_left.check()) {
-    white_text->draw("TIME'S UP", 224, 0, 1);
+    white_text->draw("TIME'S UP", 258, offset_y, 1); // (300-42)=258
   } else if (time_left.get_left() > TIME_WARNING || (global_frame_counter % 10) < 5) {
     sprintf(str, "%d", time_left.get_left() / 1000 );
-    white_text->draw("TIME", 224, 0, 1);
-    gold_text->draw(str, 304, 0, 1);
+    white_text->draw("TIME", 258, offset_y, 1);  // (300-42)=258
+    gold_text->draw(str, 342, offset_y, 1); // (300+42)=342
   }
 
   sprintf(str, "%d", player_status.distros);
-  white_text->draw("COINS", screen->h, 0, 1);
-  gold_text->draw(str, 608, 0, 1);
+  white_text->draw("COINS", 460, offset_y, 1);
+  gold_text->draw(str, 555, offset_y, 1);
 
-  white_text->draw("LIVES", 480, 20);
+  white_text->draw("LIVES", 460, 20 + offset_y, 1);
   if (player_status.lives >= 5)
     {
       sprintf(str, "%dx", player_status.lives);
-      gold_text->draw_align(str, 617, 20, A_RIGHT, A_TOP);
-      tux_life->draw(565+(18*3), 20);
+      gold_text->draw_align(str, 597, 20 + offset_y, A_RIGHT, A_TOP);
+      tux_life->draw(545+(18*3), 20 + offset_y);
     }
   else
     {
       for(int i= 0; i < player_status.lives; ++i)
-        tux_life->draw(565+(18*i),20);
+        tux_life->draw(545+(18*i),20 + offset_y);
     }
 
   if(show_fps)
     {
       sprintf(str, "%2.1f", fps_fps);
-      white_text->draw("FPS", screen->h, 40, 1);
-      gold_text->draw(str, screen->h + 60, 40, 1);
+      white_text->draw("FPS", 460, 40 + offset_y, 1);
+      gold_text->draw(str, 520, 40 + offset_y, 1); // (460+60)=520
     }
 }
 

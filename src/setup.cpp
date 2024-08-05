@@ -72,6 +72,8 @@ int selecteddevice;
 
 /* Local function prototypes: */
 
+bool tv_overscan_enabled = false;
+int offset_y = tv_overscan_enabled ? 40 : 0;
 void seticon(void);
 void usage(char * prog, int ret);
 void print_status(const char * st);
@@ -505,6 +507,7 @@ void st_menu(void)
   options_menu->additem(MN_TOGGLE,"Show Mouse",show_mouse,0, MNID_SHOWMOUSE);
 #endif
   options_menu->additem(MN_TOGGLE,"Show FPS  ",show_fps,0, MNID_SHOWFPS);
+  options_menu->additem(MN_TOGGLE,"TV Overscan",tv_overscan_enabled,0, MNID_TV_OVERSCAN);
   options_menu->additem(MN_GOTO,"Keyboard Setup",0,options_keys_menu);
 
   //if(use_joystick)
@@ -671,6 +674,12 @@ void process_options_menu(void)
     case MNID_SHOWFPS:
       if(show_fps != options_menu->isToggled(MNID_SHOWFPS))
         show_fps = !show_fps;
+      break;
+    case MNID_TV_OVERSCAN:
+      if(tv_overscan_enabled != options_menu->isToggled(MNID_TV_OVERSCAN)){
+        tv_overscan_enabled = !tv_overscan_enabled;
+        offset_y = tv_overscan_enabled ? 40 : 0;
+      }
       break;
     }
 }
