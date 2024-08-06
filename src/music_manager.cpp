@@ -75,8 +75,18 @@ MusicManager::exists_music(const std::string& file)
 }
 
 void
-MusicManager::free_music(MusicResource* )
+MusicManager::free_music(MusicResource* music)
 {
+  Mix_FreeMusic(music->music);
+  for(std::map<std::string, MusicResource>::iterator i = musics.begin(); i != musics.end(); i++)
+  {
+      if (&i->second == music)
+      {
+          musics.erase(i->first);
+          break;
+      }
+  }
+
   // TODO free music, currently we can't do this since SDL_mixer seems to have
   // some bugs if you load/free alot of mod files.
 }
@@ -136,6 +146,6 @@ MusicManager::enable_music(bool enable)
 MusicManager::MusicResource::~MusicResource()
 {
   // buggy SDL_mixer :-/
-  // Mix_FreeMusic(music);
+  //Mix_FreeMusic(music);
 }
 
