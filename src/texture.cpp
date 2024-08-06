@@ -347,7 +347,7 @@ sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, 
     sdl_surface = SDL_DisplayFormatAlpha(conv);
 
   if (sdl_surface == NULL)
-    st_abort("Can't covert to display format", file);
+    st_abort("Can't covert to display format (part)", file);
 
   if (use_alpha == IGNORE_ALPHA && !use_gl)
     SDL_SetAlpha(sdl_surface, 0, 0);
