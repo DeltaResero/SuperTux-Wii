@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
 
   st_audio_setup();
   st_video_setup();
-
+  SDL_ShowCursor(false);
 
   clearscreen(0, 0, 0);
   loading_surf = new Surface(datadir + "/images/title/loading.png", USE_ALPHA);
