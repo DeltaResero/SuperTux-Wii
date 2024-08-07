@@ -414,7 +414,7 @@ WorldMap::WorldMap()
 WorldMap::~WorldMap()
 {
   delete tux;
-  delete tile_manager;
+  //delete tile_manager;
 
   deleteSprites();
 }
@@ -425,6 +425,7 @@ void WorldMap::loadSprites()
 	leveldot_green = new Surface(datadir +  "/images/worldmap/leveldot_green.png", USE_ALPHA);
 	leveldot_red = new Surface(datadir +  "/images/worldmap/leveldot_red.png", USE_ALPHA);
 	leveldot_teleporter = new Surface(datadir +  "/images/worldmap/teleporter.png", USE_ALPHA);
+	tile_manager = new TileManager();
 }
 
 void WorldMap::deleteSprites()
@@ -433,10 +434,12 @@ void WorldMap::deleteSprites()
 	if (leveldot_green) delete leveldot_green;
 	if (leveldot_red) delete leveldot_red;
 	if (leveldot_teleporter) delete leveldot_teleporter;
+	if (tile_manager) delete tile_manager;
 	level_sprite = 0;
 	leveldot_green = 0;
 	leveldot_red = 0;
 	leveldot_teleporter = 0;
+	tile_manager = 0;
 }
 
 void
