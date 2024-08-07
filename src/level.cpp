@@ -227,6 +227,8 @@ Level::~Level()
 void
 Level::init_defaults()
 {
+  cleanup();
+
   name       = "UnNamed";
   author     = "UnNamed";
   song_title = "Mortimers_chipdisko.mod";
@@ -245,9 +247,6 @@ Level::init_defaults()
   bkgd_bottom.red   = 255;
   bkgd_bottom.green = 255;
   bkgd_bottom.blue  = 255;
-
-  badguy_data.clear();
-  reset_points.clear();
 
   for(int i = 0; i < 15; ++i)
     {
@@ -493,7 +492,36 @@ Level::load(const std::string& filename)
         break;
         }
 
-      ia_tiles[j][i] = (*it);
+      int tile = (*it);
+      ia_tiles[j][i] = tile;
+
+      switch (tile)
+      {
+          case 102:
+          case 103:
+          case 104:
+          case 105:
+          case 128:
+          case 77:
+          case 78:
+          case 26:
+          case 82:
+          case 83:
+          case 44:
+          case 45:
+          case 46:
+              {
+                  // add this tile as a restorable tile
+                  OriginalTileInfo info;
+                  info.x = i;
+                  info.y = j;
+                  info.tile = tile;
+                  original_tiles.push_back(info);
+              }
+              break;
+      }
+
+
       if(i == width - 1)
         {
           i = -1;
@@ -539,6 +567,14 @@ Level::load(const std::string& filename)
 
   lisp_free(root_obj);
   return 0;
+}
+
+void Level::reload_bricks_and_coins()
+{
+	for(vector<OriginalTileInfo>::iterator it = original_tiles.begin(); it != original_tiles.end(); ++it)
+	{
+		ia_tiles[(*it).y][(*it).x] = (*it).tile;
+	}
 }
 
 /* Save data for level: */
@@ -655,12 +691,12 @@ Level::cleanup()
       fg_tiles[i].clear();
     }
 
+  original_tiles.clear();
   reset_points.clear();
   name = "";
   author = "";
   song_title = "";
   bkgd_image = "";
-
   badguy_data.clear();
 }
 
@@ -758,6 +794,12 @@ Level::load_song()
   }
   free(song_subtitle);
   free(song_path);
+}
+
+void Level::free_song()
+{
+	level_song = level_end_song;
+	level_song_fast = level_end_song;
 }
 
 MusicRef

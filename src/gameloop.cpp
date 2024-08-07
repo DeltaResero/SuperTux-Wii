@@ -94,10 +94,7 @@ GameSession::restart_level()
       world->get_tux()->init();
       world->deactivate_world();
 
-      if (st_gl_mode == ST_GL_LOAD_LEVEL_FILE || st_gl_mode == ST_GL_DEMO_GAME)
-          get_level()->load(subset);
-      else
-          get_level()->load(subset, levelnb);
+      get_level()->reload_bricks_and_coins();
 
       world->activate_world();
   }

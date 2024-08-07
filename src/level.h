@@ -66,6 +66,14 @@ struct ResetPoint
   int y;
 };
 
+struct OriginalTileInfo
+{
+	// for restoring coins, bricks, "?" blocks etc. upon death
+	int x;
+	int y;
+	int tile;
+};
+
 class Level 
 {
  public:
@@ -96,6 +104,10 @@ class Level
 
   /** A collection of points to which Tux can be reset after a lost live */
   std::vector<ResetPoint> reset_points;
+
+  // collection of original brick/coin/bonus block tile positions
+  std::vector<OriginalTileInfo> original_tiles;
+
  public:
   Level();
   Level(const std::string& subset, int level);
@@ -115,6 +127,8 @@ class Level
   /** Load data for this level: 
       Returns -1, if the loading of the level failed. */
   int  load(const std::string& filename);
+
+  void reload_bricks_and_coins();
 
   void load_gfx();
   
