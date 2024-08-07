@@ -246,6 +246,9 @@ Level::init_defaults()
   bkgd_bottom.green = 255;
   bkgd_bottom.blue  = 255;
 
+  badguy_data.clear();
+  reset_points.clear();
+
   for(int i = 0; i < 15; ++i)
     {
       ia_tiles[i].resize(width+1, 0);
@@ -282,6 +285,8 @@ Level::load(const std::string& subset, int level)
 int 
 Level::load(const std::string& filename)
 {
+  init_defaults();
+
   lisp_object_t* root_obj = lisp_read_from_file(filename);
   if (!root_obj)
     {
@@ -668,8 +673,10 @@ Level::load_gfx()
       snprintf(fname, 1024, "%s/background/%s", st_dir, bkgd_image.c_str());
       if(!faccessible(fname))
         snprintf(fname, 1024, "%s/images/background/%s", datadir.c_str(), bkgd_image.c_str());
-      delete img_bkgd;
-      img_bkgd = new Surface(fname, IGNORE_ALPHA);
+      if (!img_bkgd)
+      {
+          img_bkgd = new Surface(fname, IGNORE_ALPHA);
+      }
     }
   else
     {

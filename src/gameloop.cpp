@@ -90,9 +90,15 @@ GameSession::restart_level()
 
   if (world)
   { // Tux has lost a life, so we try to respawn him at the nearest reset point
-      world->get_tux()->init();
       old_x_pos = world->get_tux()->base.x;
+      world->get_tux()->init();
       world->deactivate_world();
+
+      if (st_gl_mode == ST_GL_LOAD_LEVEL_FILE || st_gl_mode == ST_GL_DEMO_GAME)
+          get_level()->load(subset);
+      else
+          get_level()->load(subset, levelnb);
+
       world->activate_world();
   }
   else
