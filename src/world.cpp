@@ -70,8 +70,7 @@ World::World(const std::string& subset, int level_nr)
   set_defaults();
 
   get_level()->load_gfx();
-  activate_bad_guys();
-  activate_particle_systems();
+  activate_world();
   get_level()->load_song();
 
   apply_bonuses();
@@ -103,30 +102,48 @@ World::apply_bonuses()
 
 World::~World()
 {
+  deactivate_world();
+
+  delete level;
+}
+
+void World::activate_world()
+{
+  set_defaults();
+  activate_bad_guys();
+  activate_particle_systems();
+}
+
+void World::deactivate_world()
+{
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
     delete *i;
+  bad_guys.clear();
 
   for (ParticleSystems::iterator i = particle_systems.begin();
           i != particle_systems.end(); ++i)
     delete *i;
+  particle_systems.clear();
 
   for (std::vector<BouncyDistro*>::iterator i = bouncy_distros.begin();
        i != bouncy_distros.end(); ++i)
     delete *i;
+  bouncy_distros.clear();
 
   for (std::vector<BrokenBrick*>::iterator i = broken_bricks.begin();
        i != broken_bricks.end(); ++i)
     delete *i;
+  broken_bricks.clear();
 
   for (std::vector<BouncyBrick*>::iterator i = bouncy_bricks.begin();
        i != bouncy_bricks.end(); ++i)
     delete *i;
+  bouncy_bricks.clear();
 
   for (std::vector<FloatingScore*>::iterator i = floating_scores.begin();
        i != floating_scores.end(); ++i)
     delete *i;
-
-  delete level;
+  floating_scores.clear();
 }
 
 void
@@ -151,6 +168,7 @@ World::activate_bad_guys()
        i != level->badguy_data.end();
        ++i)
     {
+      printf("add bad guy %d\n", i->kind);
       add_bad_guy(i->x, i->y, i->kind, i->stay_on_platform);
     }
 }

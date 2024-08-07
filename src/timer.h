@@ -21,9 +21,9 @@
 #ifndef SUPERTUX_TIMER_H
 #define SUPERTUX_TIMER_H
 
-extern unsigned int st_pause_ticks, st_pause_count;
+extern Uint32 st_pause_ticks, st_pause_count;
 
-unsigned int st_get_ticks(void);
+Uint32 st_get_ticks(void);
 void st_pause_ticks_init(void);
 void st_pause_ticks_start(void);
 void st_pause_ticks_stop(void);
@@ -32,15 +32,15 @@ bool st_pause_ticks_started(void);
 class Timer
 {
  public:
-  unsigned int period;
-  unsigned int time;
-  unsigned int (*get_ticks) (void);  
+  Uint32 period;
+  Uint32 time;
+  Uint32 (*get_ticks) (void);  
 
  public:
   Timer();
   
   void init(bool st_ticks);
-  void start(unsigned int period);
+  void start(Uint32 period);
   void stop();
 
   /*======================================================================

@@ -124,6 +124,9 @@ public:
   Tux(WorldMap* worldmap_);
   ~Tux();
   
+  void loadSprites();
+  void deleteSprites();
+
   void draw(const Point& offset);
   void update(float delta);
 
@@ -222,6 +225,9 @@ private:
 public:
   WorldMap();
   ~WorldMap();
+
+  void loadSprites();
+  void deleteSprites();
 
   void set_map_file(std::string mapfile);
 

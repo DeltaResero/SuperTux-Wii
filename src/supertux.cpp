@@ -43,7 +43,7 @@
 //added as Supertuxs takes a long, long time to load
 Surface* loading_surf = NULL;
 void print_status(const char * st);
-int main(int argc, char * argv[])
+int main(int argc, char ** argv)
 {
 
 #ifdef _WII_

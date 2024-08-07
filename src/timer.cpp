@@ -22,9 +22,9 @@
 #include "defines.h"
 #include "timer.h"
 
-unsigned int st_pause_ticks, st_pause_count;
+Uint32 st_pause_ticks, st_pause_count;
 
-unsigned int st_get_ticks(void)
+Uint32 st_get_ticks(void)
 {
   if(st_pause_count != 0)
     return /*SDL_GetTicks()*/ - st_pause_ticks /*- SDL_GetTicks()*/ + st_pause_count;
@@ -75,7 +75,7 @@ Timer::init(bool st_ticks)
 }
 
 void
-Timer::start(unsigned int period_)
+Timer::start(Uint32 period_)
 {
   time   = get_ticks();
   period = period_;
@@ -126,31 +126,31 @@ Timer::get_gone()
 void
 Timer::fwrite(FILE* fi)
 {
-  unsigned int diff_ticks;
+  Uint32 diff_ticks;
   int tick_mode;
   if(time != 0)
     diff_ticks = get_ticks() - time;
   else
     diff_ticks = 0;
 
-  ::fwrite(&period,sizeof(unsigned int),1,fi);
-  ::fwrite(&diff_ticks,sizeof(unsigned int),1,fi);
+  ::fwrite(&period,sizeof(Uint32),1,fi);
+  ::fwrite(&diff_ticks,sizeof(Uint32),1,fi);
   if(get_ticks == st_get_ticks)
       tick_mode = true;
   else
       tick_mode = false;
-  ::fwrite(&tick_mode,sizeof(unsigned int),1,fi);
+  ::fwrite(&tick_mode,sizeof(Uint32),1,fi);
 }
 
 void
 Timer::fread(FILE* fi)
 {
-  unsigned int diff_ticks;
+  Uint32 diff_ticks;
   int tick_mode;
 
-  ::fread(&period,sizeof(unsigned int),1,fi);
-  ::fread(&diff_ticks,sizeof(unsigned int),1,fi);
-  ::fread(&tick_mode,sizeof(unsigned int),1,fi);
+  ::fread(&period,sizeof(Uint32),1,fi);
+  ::fread(&diff_ticks,sizeof(Uint32),1,fi);
+  ::fread(&tick_mode,sizeof(Uint32),1,fi);
 
   if (tick_mode)
     get_ticks = st_get_ticks;

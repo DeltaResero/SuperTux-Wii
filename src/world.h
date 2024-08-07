@@ -71,6 +71,9 @@ public:
   World() {};
   ~World();
   
+  void activate_world();
+  void deactivate_world();
+
   Level*  get_level() { return level; }
   Player* get_tux() { return &tux; }
 
