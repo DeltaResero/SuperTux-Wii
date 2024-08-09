@@ -43,7 +43,7 @@ Run autogen:
 ```
 Use Configure to generate the makefile for building:
 ```
-./configure --prefix="${DEVKITPRO}/portlibs/ppc" --libdir="${DEVKITPRO}/libogc/" --target=powerpc-eabi
+./configure --prefix="${DEVKITPRO}/portlibs/ppc" --libdir="${DEVKITPRO}/libogc/" --target=powerpc-eabi --disable-opengl
 ```
 Use make to cross-compile the game executable:
 ```

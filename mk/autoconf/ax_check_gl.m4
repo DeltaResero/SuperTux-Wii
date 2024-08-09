@@ -8,7 +8,7 @@ AC_REQUIRE([ACX_PTHREAD])dnl
 # alternative GL implementation (e.g., Mesa), which may or may not depend on X.
 #
 AC_ARG_WITH([apple-opengl-framework],
-            [AC_HELP_STRING([--with-apple-opengl-framework],
+            [AS_HELP_STRING([--with-apple-opengl-framework],
                             [use Apple OpenGL framework (Mac OS X only)])])
 if test "X$with_apple_opengl_framework" = "Xyes"; then
   AC_DEFINE([HAVE_APPLE_OPENGL_FRAMEWORK], [1],
@@ -31,7 +31,7 @@ else
     fi
   fi
 
-  AC_LANG_PUSH(C)
+  AC_LANG_PUSH([C])
 
   AC_CHECK_HEADERS([windows.h])
 
@@ -49,14 +49,19 @@ else
       ax_try_lib="${ax_lib}"
     fi
     LIBS="${ax_try_lib} ${GL_LIBS} ${ax_save_LIBS}"
-    AC_TRY_LINK([
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
 # if HAVE_WINDOWS_H && defined(_WIN32)
 #   include <windows.h>
 # endif
 # include <GL/gl.h>
-],
-    [glBegin(0)],
-    [ax_cv_check_gl_libgl="${ax_try_lib}"; break])
+
+int main() {
+  glBegin(0);
+  return 0;
+}
+]])],
+    [ax_cv_check_gl_libgl="${ax_try_lib}"; break],
+    [ax_cv_check_gl_libgl="no"])
   done
   LIBS=${ax_save_LIBS}
   CPPFLAGS=${ax_save_CPPFLAGS}])
@@ -68,7 +73,7 @@ else
   else
     GL_LIBS="${ax_cv_check_gl_libgl} ${GL_LIBS}"
   fi
-  AC_LANG_POP(C)
+  AC_LANG_POP([C])
 fi
 
 AC_SUBST([GL_CFLAGS])

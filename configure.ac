@@ -63,7 +63,7 @@ else
     AC_MSG_RESULT([disabled])
 fi
 
-AC_MSG_CHECKING(wether OpenGL should be used)
+AC_MSG_CHECKING(whether OpenGL should be used)
 AC_ARG_ENABLE(opengl,
               AS_HELP_STRING([--disable-opengl],[disable OpenGL support]),, enable_opengl="yes")
 if test "x${enable_opengl}" != "xno"; then
@@ -115,7 +115,7 @@ fi
 
 AC_CHECK_LIB(z, gzopen,, AC_MSG_ERROR([*** zlib is missing]))
 
-CXXFLAGS="$CXXFLAGS -DDATA_PREFIX='\"$datadir/supertux\"'" 
+CXXFLAGS="$CXXFLAGS -DDATA_PREFIX='\"$datadir/supertux\"'"
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(mkdir strdup strstr)
