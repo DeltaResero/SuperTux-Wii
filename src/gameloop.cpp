@@ -607,7 +607,7 @@ GameSession::draw()
       Menu::current()->draw();
       mouse_cursor->draw();
     }
-  
+
 #ifdef TSCONTROL
   if (show_mouse) MouseCursor::current()->draw();
   int y = 4*screen->h/5;
@@ -659,7 +659,7 @@ GameSession::draw()
   );
 #endif
 
-  updatescreen();
+  flipscreen();
 }
 
 void
