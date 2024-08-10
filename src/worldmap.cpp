@@ -779,19 +779,25 @@ WorldMap::update(float delta)
               deleteSprites();
               tux->deleteSprites();
 
-              GameSession session(datadir +  "/levels/" + level->name,
-                                  1, ST_GL_LOAD_LEVEL_FILE);
+              GameSession* session = new GameSession(datadir +  "/levels/" + level->name,
+                                                     1, ST_GL_LOAD_LEVEL_FILE);
 
-              switch (session.run())
+              GameSession::ExitStatus result = session->run();
+              bool coffee = session->get_world()->get_tux()->got_coffee;
+              bool big = session->get_world()->get_tux()->size == BIG;
+              delete session;
+              session = 0;
+
+              switch (result)
                 {
                 case GameSession::ES_LEVEL_FINISHED:
                   {
                     bool old_level_state = level->solved;
                     level->solved = true;
 
-                    if (session.get_world()->get_tux()->got_coffee)
+                    if (coffee)
                       player_status.bonus = PlayerStatus::FLOWER_BONUS;
-                    else if (session.get_world()->get_tux()->size == BIG)
+                    else if (big)
                       player_status.bonus = PlayerStatus::GROWUP_BONUS;
                     else
                       player_status.bonus = PlayerStatus::NO_BONUS;
