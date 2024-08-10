@@ -472,7 +472,7 @@ void st_menu(void)
   load_game_menu = new Menu();
   save_game_menu = new Menu();
   game_menu      = new Menu();
-  highscore_menu = new Menu();
+  //highscore_menu = new Menu();
   contrib_menu   = new Menu();
   contrib_subset_menu   = new Menu();
   worldmap_menu  = new Menu();
@@ -574,7 +574,7 @@ void st_menu(void)
   worldmap_menu->additem(MN_HL,"",0,0);
   worldmap_menu->additem(MN_ACTION,"Quit Game",0,0,MNID_QUITWORLDMAP);
 
-  highscore_menu->additem(MN_TEXTFIELD,"Enter your name:",0,0);
+  //highscore_menu->additem(MN_TEXTFIELD,"Enter your name:",0,0);
 }
 
 void update_load_save_game_menu(Menu* pmenu)
@@ -715,8 +715,8 @@ void st_general_setup(void)
   checkbox = new Surface(datadir + "/images/status/checkbox.png", USE_ALPHA);
   checkbox_checked = new Surface(datadir + "/images/status/checkbox-checked.png", USE_ALPHA);
   back = new Surface(datadir + "/images/status/back.png", USE_ALPHA);
-  arrow_left = new Surface(datadir + "/images/icons/left.png", USE_ALPHA);
-  arrow_right = new Surface(datadir + "/images/icons/right.png", USE_ALPHA);
+  //arrow_left = new Surface(datadir + "/images/icons/left.png", USE_ALPHA);
+  //arrow_right = new Surface(datadir + "/images/icons/right.png", USE_ALPHA);
 
   /* Load the mouse-cursor */
   mouse_cursor = new MouseCursor( datadir + "/images/status/mousecursor.png",1);
@@ -743,8 +743,8 @@ void st_general_free(void)
   delete checkbox;
   delete checkbox_checked;
   delete back;
-  delete arrow_left;
-  delete arrow_right;
+  //delete arrow_left;
+  //delete arrow_right;
 
   /* Free mouse-cursor */
   delete mouse_cursor;
@@ -753,7 +753,7 @@ void st_general_free(void)
   delete worldmap_menu;
   delete contrib_subset_menu;
   delete contrib_menu;
-  delete highscore_menu;
+  //delete highscore_menu;
   delete game_menu;
   delete save_game_menu;
   delete load_game_menu;
