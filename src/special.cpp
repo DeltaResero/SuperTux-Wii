@@ -297,7 +297,7 @@ Upgrade::bump(Player* )
   if(kind != UPGRADE_GROWUP)
     return;
 
-  play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
+  //play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
   
   // do a little jump and change direction
   physic.set_velocity(-physic.get_velocity_x(), 3);
