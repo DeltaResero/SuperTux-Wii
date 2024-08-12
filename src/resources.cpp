@@ -27,7 +27,7 @@
 #include "sprite_manager.h"
 #include "setup.h"
 
-Surface* img_waves[3]; 
+Surface* img_waves[3];
 Surface* img_water;
 Surface* img_pole;
 Surface* img_poletop;
@@ -198,41 +198,42 @@ void loadshared()
 /* Free shared data: */
 void unloadshared(void)
 {
-  int i;
-
+  // Free graphics resources
   free_special_gfx();
   free_badguy_gfx();
 
+  // Delete single images
   delete img_water;
-  for (i = 0; i < 3; i++)
-    delete img_waves[i];
-
   delete img_pole;
   delete img_poletop;
-
-  for (i = 0; i < 2; i++)
-    delete img_flag[i];
-
-  for (i = 0; i < 3; i++)
-    {
-      delete img_distro[i];
-    }
-
-  for (i = 0; i < 4; i++)
-    {
-      delete img_cloud[0][i];
-      delete img_cloud[1][i];
-    }
-
   delete tux_life;
 
-  for (i = 0; i < NUM_SOUNDS; i++)
-    free_chunk(sounds[i]);
+  // Delete arrays of images
+  for (int i = 0; i < 3; i++) {
+      delete img_waves[i];
+      delete img_distro[i];
+  }
 
+  for (int i = 0; i < 2; i++) {
+      delete img_flag[i];
+  }
+
+  for (int i = 0; i < 4; i++) {
+      delete img_cloud[0][i];
+      delete img_cloud[1][i];
+  }
+
+  // Free sound resources
+  for (int i = 0; i < NUM_SOUNDS; i++) {
+      free_chunk(sounds[i]);
+  }
+
+  // Delete and nullify managers
   delete sprite_manager;
-  sprite_manager = 0;
+  sprite_manager = nullptr;
+
   delete music_manager;
-  music_manager = 0;
+  music_manager = nullptr;
 }
 
 /* EOF */
