@@ -460,8 +460,10 @@ void st_directory_setup(void)
     }
   printf("Datadir: %s\n", datadir.c_str());
  }
- 
+
 #endif //def _WII_
+
+
 /* Create and setup menus. */
 void st_menu(void)
 {
@@ -690,9 +692,10 @@ void st_general_setup(void)
 
   srand(SDL_GetTicks());
 
+#ifndef _WII_ /* Skip setting an icon for Wii builds */
   /* Set icon image: */
-
   seticon();
+#endif /*#ifndef _WII_*/
 
   /* Unicode needed for input handling: */
 
@@ -1025,6 +1028,7 @@ void st_abort(const std::string& reason, const std::string& details)
   abort();
 }
 
+#ifndef _WII_ /* Wii Homebrew Apps don't need this */'
 /* Set Icon (private) */
 
 void seticon(void)
@@ -1036,13 +1040,13 @@ void seticon(void)
 
   /* Load icon into a surface: */
 
-  icon = IMG_Load((datadir + "/images/icon.xpm").c_str());
+  icon = IMG_Load("supertux.png");
   if (icon == NULL)
     {
       fprintf(stderr,
-              "\nError: I could not load the icon image: %s%s\n"
+              "\nError: I could not load the icon image: supertux.png\n"
               "The Simple DirectMedia error that occured was:\n"
-              "%s\n\n", datadir.c_str(), "/images/icon.xpm", SDL_GetError());
+              "%s\n\n", SDL_GetError());
               print_status("Could not load icon image\n");
       exit(1);
     }
@@ -1065,6 +1069,7 @@ void seticon(void)
 //  free(mask);
   SDL_FreeSurface(icon);
 }
+#endif /* #ifndef _WII_ */
 
 
 /* Parse command-line arguments: */
