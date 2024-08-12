@@ -169,8 +169,7 @@ void loadshared()
   img_distro[2] = new Surface(datadir + "/images/tilesets/coin3.png",
                USE_ALPHA);
 
-  img_distro[3] = new Surface(datadir + "/images/tilesets/coin2.png",
-               USE_ALPHA);
+  img_distro[3] = img_distro[1];
 
 
   /* Tux life: */
@@ -214,9 +213,13 @@ void unloadshared(void)
   for (i = 0; i < 2; i++)
     delete img_flag[i];
 
-  for (i = 0; i < 4; i++)
+  for (i = 0; i < 3; i++)
     {
       delete img_distro[i];
+    }
+
+  for (i = 0; i < 4; i++)
+    {
       delete img_cloud[0][i];
       delete img_cloud[1][i];
     }

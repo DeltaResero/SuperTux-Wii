@@ -54,7 +54,7 @@
 
 static Surface* bkg_title;
 static Surface* logo;
-static Surface* img_choose_subset;
+//static Surface* img_choose_subset;
 
 static bool walking;
 static Timer random_timer;
@@ -248,7 +248,7 @@ void title(void)
   /* Load images: */
   bkg_title = new Surface(datadir + "/images/title/background.jpg", IGNORE_ALPHA);
   logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
-  img_choose_subset = new Surface(datadir + "/images/status/choose-level-subset.png", USE_ALPHA);
+  //img_choose_subset = new Surface(datadir + "/images/status/choose-level-subset.png", USE_ALPHA);
 
   /* Generating contrib maps by only using a string_list */
   // Since there isn't any world dir or anything, add a hardcoded entry for Bonus Island
@@ -414,7 +414,7 @@ void title(void)
   string_list_free(&worldmap_list);
   delete bkg_title;
   delete logo;
-  delete img_choose_subset;
+  //delete img_choose_subset;
 }
 
 // EOF //
