@@ -782,6 +782,8 @@ WorldMap::update(float delta)
               GameSession* session = new GameSession(datadir +  "/levels/" + level->name,
                                                      1, ST_GL_LOAD_LEVEL_FILE);
 
+              loadsounds();
+
               GameSession::ExitStatus result = session->run();
               bool coffee = session->get_world()->get_tux()->got_coffee;
               bool big = session->get_world()->get_tux()->size == BIG;
@@ -829,6 +831,7 @@ WorldMap::update(float delta)
 
                     if (!level->extro_filename.empty())
                       {
+                        unloadsounds();
                         MusicRef theme =
                           music_manager->load_music(datadir + "/music/theme.mod");
                         MusicRef credits = music_manager->load_music(datadir + "/music/credits.ogg");
@@ -865,8 +868,10 @@ WorldMap::update(float delta)
                 }
 
               //unloadsounds(); Needs other loadsounds(); further down this file
+              unloadsounds();
               loadSprites();
               tux->loadSprites();
+
               music_manager->play_music(song);
               Menu::set_current(0);
               if (!savegame_file.empty())

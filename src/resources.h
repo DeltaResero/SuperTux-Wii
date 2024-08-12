@@ -42,6 +42,8 @@ extern MusicManager* music_manager;
 
 void loadshared();
 void unloadshared();
+void loadsounds();
+void unloadsounds();
 
 #endif
 

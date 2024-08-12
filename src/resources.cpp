@@ -43,8 +43,6 @@ MusicManager* music_manager = 0;
 /* Load graphics/sounds shared between all levels: */
 void loadshared()
 {
-  int i;
-
   sprite_manager = new SpriteManager(datadir + "/supertux.strf");
   music_manager = new MusicManager();
   music_manager->enable_music(use_music);
@@ -179,15 +177,7 @@ void loadshared()
 
   /* Sound effects: */
 
-  /* if (use_sound) // this will introduce SERIOUS bugs here ! because "load_sound"
-                    // initialize sounds[i] with the correct pointer's value:
-                    // NULL or something else. And it will be dangerous to
-                    // play with not-initialized pointers.
-                    // This is also true with if (use_music)
-                    Send a mail to me: neoneurone@users.sf.net, if you have another opinion. :)
-  */
-  for (i = 0; i < NUM_SOUNDS; i++)
-    sounds[i] = load_sound(datadir + soundfilenames[i]);
+  //loadsounds();
 
   /* Herring song */
   herring_song = music_manager->load_music(datadir + "/music/salcon.mod");
@@ -224,9 +214,7 @@ void unloadshared(void)
   }
 
   // Free sound resources
-  for (int i = 0; i < NUM_SOUNDS; i++) {
-      free_chunk(sounds[i]);
-  }
+  unloadsounds();
 
   // Delete and nullify managers
   delete sprite_manager;
@@ -234,6 +222,29 @@ void unloadshared(void)
 
   delete music_manager;
   music_manager = nullptr;
+}
+
+void loadsounds()
+{
+  /* if (use_sound) // this will introduce SERIOUS bugs here ! because "load_sound"
+                    // initialize sounds[i] with the correct pointer's value:
+                    // NULL or something else. And it will be dangerous to
+                    // play with not-initialized pointers.
+                    // This is also true with if (use_music)
+                    Send a mail to me: neoneurone@users.sf.net, if you have another opinion. :)
+  */
+  for (int i = 0; i < NUM_SOUNDS; i++)
+    sounds[i] = load_sound(datadir + soundfilenames[i]);
+}
+
+void unloadsounds()
+{
+  for (int i = 0; i < NUM_SOUNDS; i++)
+  {
+    if (!sounds[i]) continue;
+    free_chunk(sounds[i]);
+    sounds[i] = 0;
+  }
 }
 
 /* EOF */

@@ -51,6 +51,7 @@
 #include "worldmap.h"
 #include "resources.h"
 #include "intro.h"
+#include "title.h"
 #include "music_manager.h"
 
 #include "player.h"
@@ -598,17 +599,20 @@ bool process_load_game_menu()
   if(slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
     {
       char slotfile[1024];
-	  if(selecteddevice == 1)
-      snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
-	  if(selecteddevice == 2)
-	  snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
-	  if(selecteddevice == 3)
-	  snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
+      if(selecteddevice == 1)
+        snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
+      if(selecteddevice == 2)
+        snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
+      if(selecteddevice == 3)
+        snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
 
 //      if (access(slotfile, F_OK) != 0)
 //        {
 //          draw_intro();
 //        }
+
+      unloadsounds();
+      deleteDemo();
 
       fadeout();
       WorldMapNS::WorldMap worldmap;

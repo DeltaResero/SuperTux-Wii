@@ -68,6 +68,32 @@ static std::string current_contrib_subset;
 
 static string_list_type worldmap_list;
 
+GameSession* session = 0;
+
+
+GameSession* getSession()
+{
+	return session;
+}
+
+void deleteDemo()
+{
+	if (logo) delete logo;
+	if (session) delete session;
+	logo = 0;
+	session = 0;
+	bkg_title = 0;
+}
+
+void createDemo()
+{
+	deleteDemo();
+	session = new GameSession(datadir + "/levels/misc/menu.stl", 0, ST_GL_DEMO_GAME);
+	bkg_title = session->get_level()->img_bkgd;
+	logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
+}
+
+
 void free_contrib_menu()
 {
   for(std::vector<LevelSubset*>::iterator i = contrib_subsets.begin();
@@ -140,6 +166,8 @@ void check_contrib_menu()
       }
     else if(index < worldmap_list.num_items + (int)contrib_subsets.size())
       {
+	deleteDemo();
+
       // Loading fade
       fadeout();
 
@@ -155,6 +183,7 @@ void check_contrib_menu()
 
       worldmap.display();
 
+	createDemo();
       Menu::set_current(main_menu);
       }
 }
@@ -218,7 +247,6 @@ void draw_demo(GameSession* session, double frame_ratio)
   float last_tux_x_pos = tux->base.x;
   world->action(frame_ratio);
 
-
   // disabled for now, since with the new jump code we easily get deadlocks
   // Jump if tux stays in the same position for one loop, ie. if he is
   // stuck behind a wall
@@ -239,11 +267,12 @@ void title(void)
 
   st_pause_ticks_init();
 
-  GameSession session(datadir + "/levels/misc/menu.stl", 0, ST_GL_DEMO_GAME);
+  createDemo();
 
-  clearscreen(0, 0, 0);
+  // don't get rid of the loading screen!
+  //clearscreen(0, 0, 0);
   loading_surf->draw( 160, 30);
-  updatescreen();
+  //updatescreen();
 
   /* Load images: */
   bkg_title = new Surface(datadir + "/images/title/background.jpg", IGNORE_ALPHA);
@@ -272,6 +301,9 @@ void title(void)
   random_timer.start(rand() % 2000 + 2000);
 
   Menu::set_current(main_menu);
+
+  loadsounds();
+
   while (Menu::current())
     {
       // if we spent to much time on a menu entry
@@ -298,7 +330,7 @@ void title(void)
         }
 
       /* Draw the background: */
-      draw_demo(&session, frame_ratio);
+      draw_demo(session, frame_ratio);
 
       if (Menu::current() == main_menu)
         logo->draw( 160, 30);
@@ -319,8 +351,7 @@ void title(void)
 
           if(menu == main_menu)
             {
-              MusicManager* music_manager;
-	      MusicRef menu_song;
+              MusicRef menu_song;
               switch (main_menu->check())
                 {
                 case MNID_STARTGAME:
@@ -337,14 +368,12 @@ void title(void)
                   Menu::set_current(main_menu);
                   break;
                 case MNID_CREDITS:
-                  music_manager = new MusicManager();
-                  menu_song  = music_manager->load_music(datadir + "/music/credits.ogg");
+                  menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
                   music_manager->halt_music();
                   music_manager->play_music(menu_song,0);
                   display_text_file("CREDITS", bkg_title, SCROLL_SPEED_CREDITS);
                   music_manager->halt_music();
-                  menu_song = music_manager->load_music(datadir + "/music/theme.mod");
-                  music_manager->play_music(menu_song);
+                  session->get_world()->play_music(LEVEL_MUSIC);
                   Menu::set_current(main_menu);
                   break;
                 case MNID_QUITMAINMENU:
@@ -379,6 +408,11 @@ void title(void)
                 }
               else if (process_load_game_menu())
                 {
+                  //printf("done, load demo\n");
+                  createDemo();
+                  //printf("loaded demo, load sounds\n");
+                  loadsounds();
+                  //printf("loaded sounds!!\n");
                   // FIXME: shouldn't be needed if GameSession doesn't relay on global variables
                   // reset tux
                   scroll_x = 0;
@@ -410,6 +444,7 @@ void title(void)
     }
   /* Free surfaces: */
 
+  deleteDemo();
   free_contrib_menu();
   string_list_free(&worldmap_list);
   delete bkg_title;

@@ -19,6 +19,11 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 
+#include "gameloop.h"
+
+GameSession* getSession();
+void createDemo();
+void deleteDemo();
 void title(void);
 
 // EOF //
