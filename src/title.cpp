@@ -166,7 +166,8 @@ void check_contrib_menu()
       }
     else if(index < worldmap_list.num_items + (int)contrib_subsets.size())
       {
-	deleteDemo();
+      unloadsounds();
+      deleteDemo();
 
       // Loading fade
       fadeout();
@@ -183,7 +184,8 @@ void check_contrib_menu()
 
       worldmap.display();
 
-	createDemo();
+      createDemo();
+      loadsounds();
       Menu::set_current(main_menu);
       }
 }

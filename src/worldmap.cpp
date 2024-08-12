@@ -867,7 +867,6 @@ WorldMap::update(float delta)
                   break;
                 }
 
-              //unloadsounds(); Needs other loadsounds(); further down this file
               unloadsounds();
               loadSprites();
               tux->loadSprites();
