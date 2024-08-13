@@ -879,17 +879,19 @@ WorldMap::update(float delta)
               return;
             }
         }
-      else if (level && level->teleport_dest_x != -1 && level->teleport_dest_y != -1) {
-			if (level->x == tux->get_tile_pos().x &&
-              level->y == tux->get_tile_pos().y)
-				{
-					play_sound(sounds[SND_TELEPORT], SOUND_CENTER_SPEAKER);
-					tux->back_direction = D_NONE;
-					tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
-					SDL_Delay(500); //reduced teleport delay from 1 second to 0.5
-				}
-		}
-		else
+      else if (level && level->teleport_dest_x != -1 && level->teleport_dest_y != -1)
+        {
+          if (level->x == tux->get_tile_pos().x && level->y == tux->get_tile_pos().y)
+                {
+                  loadsounds();  // FIXME: only doing it here because world bonus map warp sound
+                  play_sound(sounds[SND_TELEPORT], SOUND_CENTER_SPEAKER);
+                  tux->back_direction = D_NONE;
+                  tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
+                  SDL_Delay(800); // Delay for visual effect & sound completion before unloading
+                  unloadsounds();  // FIXME: ideally should load/unload when loading world maps
+                }
+        }
+      else
         {
           std::cout << "Nothing to enter at: "
                     << tux->get_tile_pos().x << ", " << tux->get_tile_pos().y << std::endl;
