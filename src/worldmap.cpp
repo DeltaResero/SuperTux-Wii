@@ -1118,7 +1118,7 @@ WorldMap::savegame(const std::string& filename)
 
   out << "(supertux-savegame\n"
       << "  (version 1)\n"
-      << "  (title  \"Icyisland - " << nb_solved_levels << "/" << levels.size() << "\")\n"
+      << "  (title  \"" << name << " - " << nb_solved_levels << "/" << levels.size() << "\")\n"
       << "  (lives   " << player_status.lives << ")\n"
       << "  (score   " << player_status.score << ")\n"
       << "  (distros " << player_status.distros << ")\n"
