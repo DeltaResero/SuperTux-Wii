@@ -504,22 +504,23 @@ WorldMap::load_map()
                       level.passive_message = true;
                       reader.read_bool("passive-message", &level.passive_message);
 
-							 level.invisible_teleporter = false;
-							 level.teleport_dest_x = level.teleport_dest_y = -1;
-							 reader.read_int("dest_x", &level.teleport_dest_x);
-							 reader.read_int("dest_y", &level.teleport_dest_y);
-							 reader.read_string("teleport-message", &level.teleport_message);
-							 reader.read_bool("invisible-teleporter", &level.invisible_teleporter);
+                      level.invisible_teleporter = false;
+                      level.teleport_dest_x = level.teleport_dest_y = -1;
+                      reader.read_int("dest_x", &level.teleport_dest_x);
+                      reader.read_int("dest_y", &level.teleport_dest_y);
+                      reader.read_string("teleport-message", &level.teleport_message);
+                      reader.read_bool("invisible-teleporter", &level.invisible_teleporter);
 
-							 level.apply_action_north = level.apply_action_south =
+                      level.apply_action_north = level.apply_action_south =
                             level.apply_action_east = level.apply_action_west = true;
                       reader.read_bool("apply-action-up", &level.apply_action_north);
                       reader.read_bool("apply-action-down", &level.apply_action_south);
                       reader.read_bool("apply-action-left", &level.apply_action_west);
                       reader.read_bool("apply-action-right", &level.apply_action_east);
 
-                      if(!level.name.empty())
-                        get_level_title(&level);   // get level's title
+                      reader.read_string("title",  &level.title); // read level's title directly
+                      //if(!level.name.empty())
+                        //get_level_title(&level);   // get level's title
 
                       levels.push_back(level);
                     }
@@ -536,8 +537,8 @@ WorldMap::load_map()
         }
     }
 
-    lisp_free(root_obj);
-    tux = new Tux(this);
+  lisp_free(root_obj);
+  tux = new Tux(this);
 }
 
 void WorldMap::get_level_title(Levels::pointer level)

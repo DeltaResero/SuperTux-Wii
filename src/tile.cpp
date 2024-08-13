@@ -159,7 +159,7 @@ void TileManager::load_tileset(std::string filename)
               TileGroup new_;
               LispReader reader(lisp_cdr(element));
               reader.read_string("name",  &new_.name);
-              reader.read_int_vector("tiles", &new_.tiles);	      
+              reader.read_int_vector("tiles", &new_.tiles);
               if(!tilegroups_)
                 tilegroups_ = new std::set<TileGroup>;
               tilegroups_->insert(new_).first;
