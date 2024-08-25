@@ -17,56 +17,67 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include <assert.h>
+#include <cassert>
+#include <stdexcept>
 #include "music_manager.h"
 #include "musicref.h"
 #include "sound.h"
 #include "setup.h"
 
+/**
+ * Constructs a MusicManager.
+ * Initializes the current_music to nullptr and sets music_enabled to true.
+ */
 MusicManager::MusicManager()
-  : current_music(0), music_enabled(true)
-{ }
-
-MusicManager::~MusicManager()
+  : current_music(nullptr), music_enabled(true)
 {
-  if(audio_device)
-    Mix_HaltMusic();
 }
 
-MusicRef
-MusicManager::load_music(const std::string& file)
+/**
+ * Destructor for MusicManager.
+ * Stops any currently playing music if an audio device is present.
+ */
+MusicManager::~MusicManager()
 {
-  if(!audio_device)
-    return MusicRef(0);
+  if (audio_device)
+    Mix_HaltMusic();  // Stop any currently playing music on destruction
+}
 
-  if(!exists_music(file))
-    st_abort("Couldn't load musicfile ", file.c_str());
+/**
+ * Loads the music file and returns a reference to the music resource.
+ * @param file The name of the music file to load.
+ * @return A reference to the loaded music resource, or a null reference if failed.
+ * @throws std::runtime_error if the music file does not exist or cannot be loaded.
+ */
+MusicRef MusicManager::load_music(const std::string& file)
+{
+  if (!audio_device)
+    return MusicRef(nullptr);  // Return a null reference if no audio device is available
 
-  std::map<std::string, MusicResource>::iterator i = musics.find(file);
-  assert(i != musics.end());
+  if (!exists_music(file))
+    throw std::runtime_error("Couldn't load music file: " + file);
+
+  auto i = musics.find(file);
+  assert(i != musics.end());  // Ensure the music file exists in the map
   return MusicRef(& (i->second));
 }
 
-bool
-MusicManager::exists_music(const std::string& file)
+/**
+ * Checks if the music file exists and loads it if not already loaded.
+ * @param file The name of the music file to check.
+ * @return True if the music file exists or was loaded successfully, false otherwise.
+ */
+bool MusicManager::exists_music(const std::string& file)
 {
-  if(!audio_device)
+  auto i = musics.find(file);
+  if (i != musics.end())
     return true;
-
-  // song already loaded?
-  std::map<std::string, MusicResource>::iterator i = musics.find(file);
-  if(i != musics.end()) {
-    return true;
-  }
 
   Mix_Music* song = Mix_LoadMUS(file.c_str());
-  if(song == 0)
-    return false;
+  if (!song)
+    return false;  // Return false if the music file couldn't be loaded
 
-  // insert into music list
-  std::pair<std::map<std::string, MusicResource>::iterator, bool> result =
-    musics.insert(
-        std::make_pair(file, MusicResource()));
+  auto result = musics.emplace(file, MusicResource());
   MusicResource& resource = result.first->second;
   resource.manager = this;
   resource.music = song;
@@ -74,78 +85,98 @@ MusicManager::exists_music(const std::string& file)
   return true;
 }
 
-void
-MusicManager::free_music(MusicResource* music)
+/**
+ * Frees the specified music resource.
+ * @param music Pointer to the music resource to free.
+ * Frees the memory associated with the music resource and removes it from the internal map.
+ */
+void MusicManager::free_music(MusicResource* music)
 {
-  Mix_FreeMusic(music->music);
-  for(std::map<std::string, MusicResource>::iterator i = musics.begin(); i != musics.end(); i++)
-  {
-      if (&i->second == music)
-      {
-          musics.erase(i->first);
-          break;
-      }
-  }
+  Mix_FreeMusic(music->music);  // Free the music resource using SDL_mixer
 
-  // TODO free music, currently we can't do this since SDL_mixer seems to have
-  // some bugs if you load/free alot of mod files.
+  for (auto i = musics.begin(); i != musics.end(); ++i)
+  {
+    if (&i->second == music)
+    {
+      musics.erase(i);
+      break;
+    }
+  }
 }
 
-void
-MusicManager::play_music(const MusicRef& musicref, int loops)
+/**
+ * Plays the specified music resource.
+ * @param musicref Reference to the music resource to play.
+ * @param loops Number of times to loop the music (-1 for infinite loops).
+ * If the specified music is already playing, the method does nothing.
+ */
+void MusicManager::play_music(const MusicRef& musicref, int loops)
 {
-  if(!audio_device)
+  if (!audio_device)
     return;
 
-  if(musicref.music == 0 || current_music == musicref.music)
+  if (musicref.music == nullptr || current_music == musicref.music)
     return;
 
-  if(current_music)
+  if (current_music)
     current_music->refcount--;
 
   current_music = musicref.music;
   current_music->refcount++;
 
-  if(music_enabled)
+  if (music_enabled)
     Mix_PlayMusic(current_music->music, loops);
 }
 
-void
-MusicManager::halt_music()
+/**
+ * Halts the currently playing music.
+ * If the reference count of the music reaches zero, the music resource is freed.
+ */
+void MusicManager::halt_music()
 {
-  if(!audio_device)
+  if (!audio_device)
     return;
 
-  Mix_HaltMusic();
+  Mix_HaltMusic();  // Stop the current music
 
-  if(current_music) {
+  if (current_music) {
     current_music->refcount--;
-    if(current_music->refcount == 0)
-      free_music(current_music);
-      current_music = 0;
+    if (current_music->refcount == 0)
+      free_music(current_music);  // Free the music if no longer in use
+    current_music = nullptr;  // Reset the current music to null
   }
 }
 
-void
-MusicManager::enable_music(bool enable)
+/**
+ * Enables or disables music playback.
+ * @param enable True to enable music, false to disable.
+ * If music is disabled, any currently playing music is halted.
+ */
+void MusicManager::enable_music(bool enable)
 {
-  if(!audio_device)
+  if (!audio_device)
     return;
 
-  if(enable == music_enabled)
+  if (enable == music_enabled)
     return;
 
   music_enabled = enable;
-  if(music_enabled == false) {
-    Mix_HaltMusic();
+  if (!music_enabled) {
+    Mix_HaltMusic();  // Stop music if disabling
   } else {
-    Mix_PlayMusic(current_music->music, -1);
+    Mix_PlayMusic(current_music->music, -1);  // Resume or start music if enabling
   }
 }
 
+/**
+ * Destructor for MusicResource.
+ * Frees the associated music resource if the destructor is called,
+ * although this is intentionally avoided due to known SDL_mixer bugs.
+ */
 MusicManager::MusicResource::~MusicResource()
 {
-  // buggy SDL_mixer :-/
-  //Mix_FreeMusic(music);
+  // Mix_FreeMusic(music);
+  // The destructor intentionally does not call Mix_FreeMusic due to known SDL_mixer bugs.
 }
 
+// EOF
