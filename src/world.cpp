@@ -338,21 +338,22 @@ World::action(double frame_ratio)
 void World::scrolling(double frame_ratio)
 {
   if(level->hor_autoscroll_speed)
-    {
+  {
     scroll_x += level->hor_autoscroll_speed * frame_ratio;
     return;
-    }
+  }
 
-  int tux_pos_x = (int)(tux.base.x + (tux.base.width/2));
+  int tux_pos_x = static_cast<int>(tux.base.x + (tux.base.width / 2));
 
   if (level->back_scrolling || debug_mode)
   {
-    if(tux.old_dir != tux.dir && level->back_scrolling)
+    if (tux.old_dir != tux.dir && level->back_scrolling)
       scrolling_timer.start(CHANGE_DIR_SCROLL_SPEED);
 
-    if(scrolling_timer.check())
+    if (scrolling_timer.check())
     {
-      float final_scroll_x;
+      float final_scroll_x = scroll_x; // Initialize with a default value
+
       if (tux.physic.get_velocity_x() > 0)
         final_scroll_x = tux_pos_x - (screen->w - X_SPACE);
       else if (tux.physic.get_velocity_x() < 0)
@@ -400,13 +401,12 @@ void World::scrolling(double frame_ratio)
       else if (tux.dir == LEFT && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
           scroll_x = tux_pos_x - X_SPACE;
     }
-
   }
 
-  // this code prevent the screen to scroll before the start or after the level's end
-  if(scroll_x < 0)
+  // Prevent scrolling before the start or after the level's end
+  if (scroll_x < 0)
     scroll_x = 0;
-  if(scroll_x > level->width * 32 - screen->w)
+  if (scroll_x > level->width * 32 - screen->w)
     scroll_x = level->width * 32 - screen->w;
 }
 
