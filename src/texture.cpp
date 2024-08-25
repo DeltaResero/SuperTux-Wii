@@ -260,11 +260,11 @@ Surface::resize(int w_, int h_)
 
 Surface* Surface::CaptureScreen()
 {
-  Surface *cap_screen;
+  Surface *cap_screen = nullptr;  // Ensure initialization
 
   if (!(screen->flags & SDL_OPENGL))
   {
-    cap_screen = new Surface(SDL_GetVideoSurface(),false);
+    cap_screen = new Surface(SDL_GetVideoSurface(), false);
   }
 
 #ifndef NOOPENGL
@@ -280,29 +280,28 @@ Surface* Surface::CaptureScreen()
                                 0x00FF0000, 0x0000FF00, 0x000000FF, 0
 #endif
                                );
-    if (temp == NULL)
-      st_abort("Error while trying to capture the screen in OpenGL mode","");
+    if (temp == nullptr)
+      st_abort("Error while trying to capture the screen in OpenGL mode", "");
 
-    pixels = (unsigned char*) malloc(3 * screen->w * screen->h);
-    if (pixels == NULL)
+    pixels = static_cast<unsigned char*>(malloc(3 * screen->w * screen->h));
+    if (pixels == nullptr)
     {
       SDL_FreeSurface(temp);
-      st_abort("Error while trying to capture the screen in OpenGL mode","");
+      st_abort("Error while trying to capture the screen in OpenGL mode", "");
     }
 
     glReadPixels(0, 0, screen->w, screen->h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
-    for (i=0; i<screen->h; i++)
-      memcpy(((char *) temp->pixels) + temp->pitch * i, pixels + 3*screen->w * (screen->h-i-1), screen->w*3);
+    for (i = 0; i < screen->h; i++)
+      memcpy(static_cast<char*>(temp->pixels) + temp->pitch * i, pixels + 3 * screen->w * (screen->h - i - 1), screen->w * 3);
     free(pixels);
 
-    cap_screen = new Surface(temp,false);
+    cap_screen = new Surface(temp, false);
     SDL_FreeSurface(temp);
-
   }
 #endif
 
-return cap_screen;
+  return cap_screen;
 }
 
 SDL_Surface*
