@@ -1065,11 +1065,8 @@ void le_change_object_properties(GameObject *pobj)
 void le_checkevents()
 {
   SDLKey key;
-  SDLMod keymod;
   Button* pbutton;
   int x,y;
-
-  keymod = SDL_GetModState();
 
   while(SDL_PollEvent(&event))
   {
@@ -1085,9 +1082,9 @@ void le_checkevents()
 
       /* testing SDL_KEYDOWN, SDL_KEYUP and SDL_QUIT events*/
       if(event.type == SDL_KEYDOWN
-          || ((event.type == SDL_MOUSEBUTTONDOWN || SDL_MOUSEMOTION)
-              && (event.motion.x > 0
-                  && event.motion.x < screen->w - 64 &&
+          || ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEMOTION)
+              && (event.motion.x > 0 &&
+                  event.motion.x < screen->w - 64 &&
                   event.motion.y > 0 && event.motion.y < screen->h)))
       {
         switch(event.type)
@@ -1238,8 +1235,10 @@ void le_checkevents()
 
     if(le_world != NULL)
     {
-      if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || ((event.type == SDL_MOUSEBUTTONDOWN || SDL_MOUSEMOTION) && (event.motion.x > screen->w-64 && event.motion.x < screen->w &&
-          event.motion.y > 0 && event.motion.y < screen->h)))
+      if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
+        ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEMOTION) &&
+        (event.motion.x > screen->w-64 && event.motion.x < screen->w &&
+        event.motion.y > 0 && event.motion.y < screen->h)))
       {
         le_mouse_pressed[LEFT] = false;
         le_mouse_pressed[RIGHT] = false;

@@ -146,10 +146,16 @@ void Button::event(SDL_Event &event)
     }
 
     if(event.button.button == SDL_BUTTON_LEFT)
+    {
       if(event.type == SDL_MOUSEBUTTONDOWN)
+      {
         state = BUTTON_PRESSED;
+      }
       else
+      {
         state = BUTTON_CLICKED;
+      }
+    }
   }
   else if(event.type == SDL_MOUSEMOTION)
   {

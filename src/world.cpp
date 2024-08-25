@@ -746,4 +746,3 @@ World::trybumpbadguy(float x, float y)
 }
 
 /* EOF */
-

@@ -17,16 +17,17 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+
 #include <assert.h>
 #include <stdio.h>
 #include <iostream>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
 #include <SDL.h>
 #include <SDL_image.h>
+
 #ifndef NOOPENGL
 #include <SDL_opengl.h>
 #endif
@@ -34,9 +35,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
+
 #ifndef WIN32
 #include <libgen.h>
 #endif
+
 #include <ctype.h>
 
 #include "defines.h"
@@ -53,7 +56,6 @@
 #include "intro.h"
 #include "title.h"
 #include "music_manager.h"
-
 #include "player.h"
 
 #ifdef WIN32
@@ -162,140 +164,116 @@ FILE * opendata(const char * rel_filename, const char * mode)
   return(fi);
 }
 
-/* Get all names of sub-directories in a certain directory. */
-/* Returns the number of sub-directories found. */
-/* Note: The user has to free the allocated space. */
-string_list_type dsubdirs(const char *rel_path,const  char* expected_file)
-{
-  DIR *dirStructP;
-  struct dirent *direntp;
+/*
+ * Function to process both directories and files.
+ * This function handles the logic for scanning a directory (or subdirectory),
+ * checking for files or subdirectories based on the 'is_subdir' flag, and
+ * applying optional filters like 'expected_file', 'glob', and 'exception_str'.
+ * The results are added to the 'sdirs' list.
+ */
+static void process_directory(const char *base_path, const char *rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs) {
+  DIR *dirStructP;              // Pointer to directory structure
+  struct dirent *direntp;       // Pointer to directory entry
+  char path[1024];              // Buffer to store the constructed path
+  char absolute_filename[1024]; // Buffer to store the full path of directory entries
+  struct stat buf;              // Structure to hold file status
+
+  // Build the full path from base_path and rel_path
+  size_t path_len = strlen(base_path);
+  size_t rel_path_len = strlen(rel_path);
+
+  // Ensure the full path fits within the buffer
+  if (path_len + 1 + rel_path_len < sizeof(path)){
+    strcpy(path, base_path);
+    strcat(path, "/");
+    strcat(path, rel_path);
+  } else {
+    fprintf(stderr, "Path is too long!\n");
+    return;
+  }
+
+  // Open the directory
+  if ((dirStructP = opendir(path)) != NULL) {
+    // Iterate over each entry in the directory
+    while ((direntp = readdir(dirStructP)) != NULL) {
+      size_t dirent_name_len = strlen(direntp->d_name);
+      size_t absolute_filename_len = path_len + 1 + dirent_name_len;
+
+      // Ensure the full path of the directory entry fits within the buffer
+      if (absolute_filename_len < sizeof(absolute_filename)) {
+        strcpy(absolute_filename, path);
+        strcat(absolute_filename, "/");
+        strcat(absolute_filename, direntp->d_name);
+
+        // Check if the entry is a directory or file, based on the is_subdir flag
+        if (stat(absolute_filename, &buf) == 0 &&
+            ((is_subdir && S_ISDIR(buf.st_mode)) || (!is_subdir && S_ISREG(buf.st_mode)))) {
+
+          // If expected_file is provided, check if it exists within the directory
+          if (expected_file != NULL) {
+            char filename[1024];
+            size_t expected_file_len = strlen(expected_file);
+            size_t filename_len = absolute_filename_len + 1 + expected_file_len;
+
+            // Ensure the full path of the expected file fits within the buffer
+            if (filename_len < sizeof(filename)) {
+              strcpy(filename, absolute_filename);
+              strcat(filename, "/");
+              strcat(filename, expected_file);
+              if (!faccessible(filename)) continue; // Skip if file is not accessible
+            } else {
+              fprintf(stderr, "Filename is too long!\n");
+              continue;
+            }
+          }
+
+          // Apply optional filters: skip entries matching exception_str or not matching glob
+          if (exception_str != NULL && strstr(direntp->d_name, exception_str) != NULL)
+            continue;
+
+          if (glob != NULL && strstr(direntp->d_name, glob) == NULL)
+            continue;
+
+          // Add the directory entry name to the list
+          string_list_add_item(sdirs, direntp->d_name);
+        }
+      } else {
+        fprintf(stderr, "Absolute filename is too long!\n");
+        continue;
+      }
+    }
+    closedir(dirStructP);
+  }
+}
+
+/*
+ * Function to get subdirectories within a relative path.
+ * This function scans the provided relative path for subdirectories,
+ * optionally checking for the existence of a specific file within each subdirectory.
+ */
+string_list_type dsubdirs(const char *rel_path, const char *expected_file) {
   string_list_type sdirs;
-  char filename[1024];
-  char path[1024];
-
   string_list_init(&sdirs);
-  sprintf(path,"%s/%s",st_dir,rel_path);
-  if((dirStructP = opendir(path)) != NULL)
-    {
-      while((direntp = readdir(dirStructP)) != NULL)
-        {
-          char absolute_filename[1024];
-          struct stat buf;
 
-          sprintf(absolute_filename, "%s/%s", path, direntp->d_name);
-
-          if (stat(absolute_filename, &buf) == 0 && S_ISDIR(buf.st_mode))
-            {
-              if(expected_file != NULL)
-                {
-                  sprintf(filename,"%s/%s/%s",path,direntp->d_name,expected_file);
-                  if(!faccessible(filename))
-                    continue;
-                }
-
-              string_list_add_item(&sdirs,direntp->d_name);
-            }
-        }
-      closedir(dirStructP);
-    }
-
-  sprintf(path,"%s/%s",datadir.c_str(),rel_path);
-  if((dirStructP = opendir(path)) != NULL)
-    {
-      while((direntp = readdir(dirStructP)) != NULL)
-        {
-          char absolute_filename[1024];
-          struct stat buf;
-
-          sprintf(absolute_filename, "%s/%s", path, direntp->d_name);
-
-          if (stat(absolute_filename, &buf) == 0 && S_ISDIR(buf.st_mode))
-            {
-              if(expected_file != NULL)
-                {
-                  sprintf(filename,"%s/%s/%s",path,direntp->d_name,expected_file);
-                  if(!faccessible(filename))
-                    {
-                      continue;
-                    }
-                  else
-                    {
-                      sprintf(filename,"%s/%s/%s/%s",st_dir,rel_path,direntp->d_name,expected_file);
-                      if(faccessible(filename))
-                        continue;
-                    }
-                }
-
-              string_list_add_item(&sdirs,direntp->d_name);
-            }
-        }
-      closedir(dirStructP);
-    }
+  // Process directories in st_dir and datadir
+  process_directory(st_dir, rel_path, expected_file, true, NULL, NULL, &sdirs);
+  process_directory(datadir.c_str(), rel_path, expected_file, true, NULL, NULL, &sdirs);
 
   return sdirs;
 }
 
-string_list_type dfiles(const char *rel_path, const  char* glob, const  char* exception_str)
-{
-  DIR *dirStructP;
-  struct dirent *direntp;
+/*
+ * Function to get files within a relative path.
+ * This function scans the provided relative path for files,
+ * optionally filtering them based on glob patterns or excluding specific files.
+ */
+string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str) {
   string_list_type sdirs;
-  char path[1024];
-
   string_list_init(&sdirs);
-  sprintf(path,"%s/%s",st_dir,rel_path);
-  if((dirStructP = opendir(path)) != NULL)
-    {
-      while((direntp = readdir(dirStructP)) != NULL)
-        {
-          char absolute_filename[1024];
-          struct stat buf;
 
-          sprintf(absolute_filename, "%s/%s", path, direntp->d_name);
-
-          if (stat(absolute_filename, &buf) == 0 && S_ISREG(buf.st_mode))
-            {
-              if(exception_str != NULL)
-                {
-                  if(strstr(direntp->d_name,exception_str) != NULL)
-                    continue;
-                }
-              if(glob != NULL)
-                if(strstr(direntp->d_name,glob) == NULL)
-                  continue;
-
-              string_list_add_item(&sdirs,direntp->d_name);
-            }
-        }
-      closedir(dirStructP);
-    }
-
-  sprintf(path,"%s/%s",datadir.c_str(),rel_path);
-  if((dirStructP = opendir(path)) != NULL)
-    {
-      while((direntp = readdir(dirStructP)) != NULL)
-        {
-          char absolute_filename[1024];
-          struct stat buf;
-
-          sprintf(absolute_filename, "%s/%s", path, direntp->d_name);
-
-          if (stat(absolute_filename, &buf) == 0 && S_ISREG(buf.st_mode))
-            {
-              if(exception_str != NULL)
-                {
-                  if(strstr(direntp->d_name,exception_str) != NULL)
-                    continue;
-                }
-              if(glob != NULL)
-                if(strstr(direntp->d_name,glob) == NULL)
-                  continue;
-
-              string_list_add_item(&sdirs,direntp->d_name);
-            }
-        }
-      closedir(dirStructP);
-    }
+  // Process files in st_dir and datadir
+  process_directory(st_dir, rel_path, NULL, false, glob, exception_str, &sdirs);
+  process_directory(datadir.c_str(), rel_path, NULL, false, glob, exception_str, &sdirs);
 
   return sdirs;
 }
@@ -324,7 +302,6 @@ void st_directory_setup(void)
   deviceselection = true;
   char home[] = {"sd:/apps/supertux"};
   datadir = "sd:/apps/supertux/data";
-  char str[1024];
   st_dir = (char *) malloc(255);
   strcpy(st_dir, home);
   st_save_dir = (char *) malloc(255);
@@ -342,7 +319,6 @@ void st_directory_setup(void)
       deviceselection = true;
       char home[] = {"usb:/apps/supertux"};
       datadir = "usb:/apps/supertux/data";
-      char str[1024];
       st_dir = (char *) malloc(255);
       strcpy(st_dir, home);
       st_save_dir = (char *) malloc(255);
@@ -362,7 +338,6 @@ void st_directory_setup(void)
       deviceselection = true;
       char home[] = {"/apps/supertux"};
       datadir = "/apps/supertux/data";
-      char str[1024];
       st_dir = (char *) malloc(255);
       strcpy(st_dir, home);
       st_save_dir = (char *) malloc(255);
@@ -1032,7 +1007,7 @@ void st_abort(const std::string& reason, const std::string& details)
   abort();
 }
 
-#ifndef _WII_ /* Wii Homebrew Apps don't need this */'
+#ifndef _WII_ /* Wii Homebrew Apps don't need this */
 /* Set Icon (private) */
 
 void seticon(void)
