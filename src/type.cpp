@@ -1,5 +1,5 @@
 //  $Id: type.cpp 585 2004-04-20 11:09:34Z grumbel $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
 //
@@ -12,113 +12,146 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 
 #include "SDL_image.h"
-#include "string.h"
-#include "stdlib.h"
+#include <cstring>
+#include <cstdlib>
+#include <algorithm>
 #include "setup.h"
 #include "globals.h"
 #include "screen.h"
-#include "defines.h"
 #include "type.h"
 #include "scene.h"
 
+/**
+ * Initializes a string list.
+ * Sets up the initial state of the list with no items and no active item.
+ * @param pstring_list Pointer to the string list to initialize.
+ */
 void string_list_init(string_list_type* pstring_list)
 {
   pstring_list->num_items = 0;
   pstring_list->active_item = -1;
-  pstring_list->item = NULL;
+  pstring_list->item = nullptr;
 }
 
+/**
+ * Returns the active string in the list.
+ * If no item is active, returns an empty string.
+ * @param pstring_list Pointer to the string list.
+ * @return const char* The active string, or an empty string if none.
+ */
 const char* string_list_active(string_list_type* pstring_list)
 {
-  if(pstring_list == NULL)
+  if (pstring_list == nullptr || pstring_list->active_item == -1)
     return "";
 
-  if(pstring_list->active_item != -1)
-    return pstring_list->item[pstring_list->active_item];
-  else
-    return "";
+  return pstring_list->item[pstring_list->active_item];
 }
 
-void string_list_add_item(string_list_type* pstring_list,const  char* str)
+/**
+ * Adds a string to the list.
+ * Allocates memory for the new string and adds it to the list. If no item is active, the new item becomes active.
+ * @param pstring_list Pointer to the string list.
+ * @param str The string to add.
+ */
+void string_list_add_item(string_list_type* pstring_list, const char* str)
 {
-  char *pnew_string;
-  pnew_string = (char*) malloc(sizeof(char)*(strlen(str)+1));
-  strcpy(pnew_string,str);
+  // Allocate memory for the new string
+  char* pnew_string = new char[strlen(str) + 1];
+  std::strcpy(pnew_string, str);
+
+  // Increase the number of items
   ++pstring_list->num_items;
-  pstring_list->item = (char**) realloc(pstring_list->item,sizeof(char**)*pstring_list->num_items);
-  pstring_list->item[pstring_list->num_items-1] = pnew_string;
-  if(pstring_list->active_item == -1)
+
+  // Reallocate the item array to hold the new string
+  pstring_list->item = (char**) std::realloc(pstring_list->item, sizeof(char*) * pstring_list->num_items);
+
+  // Add the new string to the end of the list
+  pstring_list->item[pstring_list->num_items - 1] = pnew_string;
+
+  // If no item is active, set the new item as active
+  if (pstring_list->active_item == -1)
     pstring_list->active_item = 0;
 }
 
+/**
+ * Copies one string list to another.
+ * Frees any existing strings in the destination list and copies all strings from the source list.
+ * @param pstring_list Destination string list.
+ * @param pstring_list_orig Source string list.
+ */
 void string_list_copy(string_list_type* pstring_list, string_list_type pstring_list_orig)
 {
-  int i;
+  // Free the current list
   string_list_free(pstring_list);
-  for(i = 0; i < pstring_list_orig.num_items; ++i)
-    string_list_add_item(pstring_list,pstring_list_orig.item[i]);
+
+  // Copy each item from the original list
+  for (int i = 0; i < pstring_list_orig.num_items; ++i)
+  {
+    string_list_add_item(pstring_list, pstring_list_orig.item[i]);
+  }
 }
 
-int string_list_find(string_list_type* pstring_list,const  char* str)
+/**
+ * Finds a string in the list.
+ * Searches for the given string and returns its index. Returns -1 if not found.
+ * @param pstring_list Pointer to the string list.
+ * @param str The string to search for.
+ * @return int The index of the string, or -1 if not found.
+ */
+int string_list_find(string_list_type* pstring_list, const char* str)
 {
-  int i;
-  for(i = 0; i < pstring_list->num_items; ++i)
+  for (int i = 0; i < pstring_list->num_items; ++i)
+  {
+    if (std::strcmp(pstring_list->item[i], str) == 0)
     {
-      if(strcmp(pstring_list->item[i],str) == 0)
-        {
-          return i;
-        }
+      return i;
     }
+  }
   return -1;
 }
 
+/**
+ * Sorts the strings in the list alphabetically.
+ * Uses a simple bubble sort algorithm to sort the strings in ascending order.
+ * @param pstring_list Pointer to the string list.
+ */
 void string_list_sort(string_list_type* pstring_list)
 {
-  int i,j,y;
-
-  for(j = 0; j < pstring_list->num_items; ++j)
-    for(i = 0; i < pstring_list->num_items-1; ++i)
-      {
-
-        y = strcmp(pstring_list->item[i],pstring_list->item[i+1]);
-        if(y == 0)
-          {
-            continue;
-          }
-        else if(y < 0)
-          {
-            continue;
-          }
-        else if(y > 0)
-          {
-            char* char_pointer;
-            char_pointer = pstring_list->item[i];
-            pstring_list->item[i] = pstring_list->item[i+1];
-            pstring_list->item[i+1] = char_pointer;
-            continue;
-          }
-
-      }
-
+  std::sort(pstring_list->item, pstring_list->item + pstring_list->num_items, [](const char* a, const char* b) {
+    return std::strcmp(a, b) < 0;
+  });
 }
 
+/**
+ * Frees the memory allocated for the string list.
+ * This function deallocates all memory associated with the list and resets its state.
+ * @param pstring_list Pointer to the string list.
+ */
 void string_list_free(string_list_type* pstring_list)
 {
-  if(pstring_list != NULL)
+  if (pstring_list != nullptr)
+  {
+    // Free each string
+    for (int i = 0; i < pstring_list->num_items; ++i)
     {
-      int i;
-      for(i=0; i < pstring_list->num_items; ++i)
-        free(pstring_list->item[i]);
-      free(pstring_list->item);
-      pstring_list->item = NULL;
-      pstring_list->num_items = 0;
-      pstring_list->active_item = -1;
+      delete[] pstring_list->item[i];
     }
+
+    // Free the item array
+    std::free(pstring_list->item);
+
+    // Reset the list
+    pstring_list->item = nullptr;
+    pstring_list->num_items = 0;
+    pstring_list->active_item = -1;
+  }
 }
+
+// EOF
