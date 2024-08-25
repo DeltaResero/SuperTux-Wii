@@ -22,79 +22,96 @@
 #include "lispreader.h"
 #include "sprite_manager.h"
 
+/**
+ * Constructs a SpriteManager and loads sprites from a resource file.
+ * @param filename The path to the resource file containing sprite definitions.
+ */
 SpriteManager::SpriteManager(const std::string& filename)
 {
   load_resfile(filename);
 }
 
+/**
+ * Destroys the SpriteManager and cleans up allocated sprites.
+ * Deletes all dynamically allocated Sprite objects managed by this SpriteManager.
+ */
 SpriteManager::~SpriteManager()
 {
-  for(std::map<std::string, Sprite*>::iterator i = sprites.begin();
-      i != sprites.end(); ++i) {
-    delete i->second;
+  for (auto& pair : sprites)
+  {
+    delete pair.second;
   }
 }
 
-void
-SpriteManager::load_resfile(const std::string& filename)
+/**
+ * Loads sprite definitions from a resource file.
+ * This function reads the resource file, parses the sprite definitions, and creates Sprite objects.
+ * @param filename The path to the resource file.
+ */
+void SpriteManager::load_resfile(const std::string& filename)
 {
   lisp_object_t* root_obj = lisp_read_from_file(filename);
   if (!root_obj)
-    {
-      std::cout << "SpriteManager: Couldn't load: " << filename << std::endl;
-      return;
-    }
+  {
+    std::cerr << "SpriteManager: Couldn't load: " << filename << std::endl;
+    return;
+  }
 
   lisp_object_t* cur = root_obj;
 
-  if (strcmp(lisp_symbol(lisp_car(cur)), "supertux-resources") != 0)
+  if (std::strcmp(lisp_symbol(lisp_car(cur)), "supertux-resources") != 0)
+  {
+    lisp_free(root_obj);
     return;
+  }
+
   cur = lisp_cdr(cur);
 
-  while(cur)
+  while (cur)
+  {
+    lisp_object_t* el = lisp_car(cur);
+
+    if (std::strcmp(lisp_symbol(lisp_car(el)), "sprite") == 0)
     {
-      lisp_object_t* el = lisp_car(cur);
+      Sprite* sprite = new Sprite(lisp_cdr(el));
+      const std::string& sprite_name = sprite->get_name();
 
-      if (strcmp(lisp_symbol(lisp_car(el)), "sprite") == 0)
-        {
-          Sprite* sprite = new Sprite(lisp_cdr(el));
-
-          Sprites::iterator i = sprites.find(sprite->get_name());
-          if (i == sprites.end())
-            {
-              sprites[sprite->get_name()] = sprite;
-            }
-          else
-            {
-              delete i->second;
-              i->second = sprite;
-              std::cout << "Warning: dulpicate entry: '" << sprite->get_name() << "'" << std::endl;
-            }
-        }
-      else
-        {
-          std::cout << "SpriteManager: Unknown tag" << std::endl;
-        }
-
-      cur = lisp_cdr(cur);
+      auto result = sprites.insert({sprite_name, sprite});
+      if (!result.second) // If insertion failed, key already exists
+      {
+        delete result.first->second;
+        result.first->second = sprite;
+        std::cerr << "Warning: duplicate entry: '" << sprite_name << "'" << std::endl;
+      }
     }
+    else
+    {
+      std::cerr << "SpriteManager: Unknown tag" << std::endl;
+    }
+
+    cur = lisp_cdr(cur);
+  }
 
   lisp_free(root_obj);
 }
 
-Sprite*
-SpriteManager::load(const std::string& name)
+/**
+ * Retrieves a Sprite by name.
+ * @param name The name of the sprite to retrieve.
+ * @return Sprite* Pointer to the Sprite object, or nullptr if not found.
+ */
+Sprite* SpriteManager::load(const std::string& name)
 {
-  Sprites::iterator i = sprites.find(name);
-  if (i != sprites.end())
-    {
-      return i->second;
-    }
+  auto it = sprites.find(name);
+  if (it != sprites.end())
+  {
+    return it->second;
+  }
   else
-    {
-      std::cout << "SpriteManager: Sprite '" << name << "' not found" << std::endl;
-      return 0;
-    }
+  {
+    std::cerr << "SpriteManager: Sprite '" << name << "' not found" << std::endl;
+    return nullptr;
+  }
 }
 
-/* EOF */
+// EOF
