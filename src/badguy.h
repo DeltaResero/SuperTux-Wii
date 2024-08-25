@@ -1,5 +1,5 @@
 //  $Id: badguy.h 1048 2004-05-08 23:46:43Z rmcruz $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -14,7 +14,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -94,7 +94,7 @@ public:
 private:
   bool removable;
   bool seen;
-  int squishcount; /// number of times this enemy was squiched
+  int squishcount; // number of times this enemy was squished
   Timer timer;
   Physic physic;
 
@@ -124,12 +124,12 @@ public:
    * invalidate all members. So don't do anything else with member after calling
    * this.
    */
-  void remove_me();  
+  void remove_me();
   bool is_removable() const { return removable; }
- 
+
 private:
   void action_mriceblock(double frame_ratio);
-  void action_jumpy(double frame_ratio); 
+  void action_jumpy(double frame_ratio);
   void action_bomb(double frame_ratio);
   void action_mrbomb(double frame_ratio);
   void action_stalactite(double frame_ratio);
@@ -169,7 +169,7 @@ struct BadGuyData
   bool stay_on_platform;
 
   BadGuyData(BadGuy* pbadguy) : kind(pbadguy->kind), x((int)pbadguy->base.x), y((int)pbadguy->base.y), stay_on_platform(pbadguy->stay_on_platform)  {};
-  BadGuyData(BadGuyKind kind_, int x_, int y_, bool stay_on_platform_) 
+  BadGuyData(BadGuyKind kind_, int x_, int y_, bool stay_on_platform_)
     : kind(kind_), x(x_), y(y_), stay_on_platform(stay_on_platform_) {}
 
   BadGuyData()
@@ -178,7 +178,4 @@ struct BadGuyData
 
 #endif /*SUPERTUX_BADGUY_H*/
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
-
+/* EOF */
