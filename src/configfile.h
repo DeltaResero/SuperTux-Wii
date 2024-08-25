@@ -20,11 +20,20 @@
 #ifndef SUPERTUX_CONFIGFILE_H
 #define SUPERTUX_CONFIGFILE_H
 
-void loadconfig (void);
-void saveconfig (void);
+/**
+ * Loads the configuration file.
+ * This function reads the configuration settings from the file
+ * and applies them to the program.
+ */
+void loadconfig(void);
 
-#endif
+/**
+ * Saves the configuration file.
+ * This function writes the current configuration settings
+ * to the file for future use.
+ */
+void saveconfig(void);
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
+#endif // SUPERTUX_CONFIGFILE_H
+
+// EOF
