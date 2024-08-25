@@ -37,336 +37,426 @@
 #include "setup.h"
 #include "type.h"
 
-/* Needed for line calculations */
-#define SGN(x) ((x)>0 ? 1 : ((x)==0 ? 0:(-1)))
-#define ABS(x) ((x)>0 ? (x) : (-x))
+// Utility macros for sign and absolute value
+#define SGN(x) ((x) > 0 ? 1 : ((x) == 0 ? 0 : (-1)))
+#define ABS(x) ((x) > 0 ? (x) : (-x))
+
+/* --- OpenGL-specific functions --- */
+#ifndef NOOPENGL
+
+/**
+ * Clears the screen using OpenGL with the specified color.
+ * @param r Red component (0-1 range)
+ * @param g Green component (0-1 range)
+ * @param b Blue component (0-1 range)
+ */
+void clearOpenGLScreen(float r, float g, float b)
+{
+  glClearColor(r, g, b, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+/**
+ * Draws a vertical gradient using OpenGL.
+ * The gradient transitions from the top color to the bottom color.
+ * @param top_clr The color at the top of the screen
+ * @param bot_clr The color at the bottom of the screen
+ */
+void drawOpenGLGradient(const Color& top_clr, const Color& bot_clr)
+{
+  glBegin(GL_QUADS);
+  glColor3ub(top_clr.red, top_clr.green, top_clr.blue);
+  glVertex2f(0, 0);
+  glVertex2f(640, 0);
+  glColor3ub(bot_clr.red, bot_clr.green, bot_clr.blue);
+  glVertex2f(640, 480);
+  glVertex2f(0, 480);
+  glEnd();
+}
+
+/**
+ * Draws a line using OpenGL with blending enabled.
+ * The line is drawn from (x1, y1) to (x2, y2) with the specified color and alpha.
+ * @param x1, y1 Starting coordinates of the line
+ * @param x2, y2 Ending coordinates of the line
+ * @param r, g, b RGB color components (0-255 range)
+ * @param a Alpha component (0-255 range)
+ */
+void drawOpenGLLine(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
+{
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glColor4ub(r, g, b, a);
+
+  glBegin(GL_LINES);
+  glVertex2f(static_cast<float>(x1), static_cast<float>(y1));
+  glVertex2f(static_cast<float>(x2), static_cast<float>(y2));
+  glEnd();
+
+  glDisable(GL_BLEND);
+}
+
+/**
+ * Fills a rectangle using OpenGL with the specified color and alpha.
+ * @param x, y Coordinates of the top-left corner of the rectangle
+ * @param w, h Width and height of the rectangle
+ * @param r, g, b RGB color components (0-255 range)
+ * @param a Alpha component (0-255 range)
+ */
+void fillOpenGLRect(float x, float y, float w, float h, int r, int g, int b, int a)
+{
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glColor4ub(r, g, b, a);
+
+  glBegin(GL_POLYGON);
+  glVertex2f(x, y);
+  glVertex2f(x + w, y);
+  glVertex2f(x + w, y + h);
+  glVertex2f(x, y + h);
+  glEnd();
+
+  glDisable(GL_BLEND);
+}
+
+/**
+ * Swaps the OpenGL buffers to display the rendered content on the screen.
+ */
+void swapOpenGLBuffers()
+{
+  SDL_GL_SwapBuffers();
+}
+
+#endif // NOOPENGL
 
 /* --- CLEAR SCREEN --- */
-
+/**
+ * Clears the screen with a given color.
+ * If OpenGL is used, it clears using glClearColor.
+ * Otherwise, it fills the SDL surface.
+ * @param r, g, b RGB color components (0-255 range)
+ */
 void clearscreen(int r, int g, int b)
 {
 #ifndef NOOPENGL
-  if(use_gl)
-    {
-      glClearColor(r/256, g/256, b/256, 1.0);
-      glClear(GL_COLOR_BUFFER_BIT);
-    }
-  else
+  if (use_gl)
   {
+    clearOpenGLScreen(r / 256.0f, g / 256.0f, b / 256.0f);
+    return;
+  }
 #endif
-
-    SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, r, g, b));
-#ifndef NOOPENGL
-
-    }
-#endif
+  SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, r, g, b));
 }
 
 /* --- DRAWS A VERTICAL GRADIENT --- */
-
+/**
+ * Draws a vertical gradient from top color to bottom color.
+ * If OpenGL is used, it utilizes OpenGL functions.
+ * Otherwise, it uses SDL functions to draw the gradient line by line.
+ * @param top_clr The color at the top of the screen
+ * @param bot_clr The color at the bottom of the screen
+ */
 void drawgradient(Color top_clr, Color bot_clr)
 {
 #ifndef NOOPENGL
-  if(use_gl)
-    {
-      glBegin(GL_QUADS);
-      glColor3ub(top_clr.red, top_clr.green, top_clr.blue);
-      glVertex2f(0, 0);
-      glVertex2f(640, 0);
-      glColor3ub(bot_clr.red, bot_clr.green, bot_clr.blue);
-      glVertex2f(640, 480);
-      glVertex2f(0, 480);
-      glEnd();
-    }
-  else
+  if (use_gl)
   {
+    drawOpenGLGradient(top_clr, bot_clr);
+    return;
+  }
 #endif
-
-    for(float y = 0; y < 480; y += 2)
-      fillrect(0, (int)y, 640, 2,
-                     (int)(((float)(top_clr.red-bot_clr.red)/(0-480)) * y + top_clr.red),
-                     (int)(((float)(top_clr.green-bot_clr.green)/(0-480)) * y + top_clr.green),
-                     (int)(((float)(top_clr.blue-bot_clr.blue)/(0-480)) * y + top_clr.blue), 255);
-/* calculates the color for each line, based in the generic equation for functions: y = mx + b */
-
-#ifndef NOOPENGL
-
-    }
-#endif
+  for (float y = 0; y < 480; y += 2)
+  {
+    // Linear interpolation to calculate the color at each line
+    fillrect(0, static_cast<int>(y), 640, 2,
+             static_cast<int>(((top_clr.red - bot_clr.red) / -480.0f) * y + top_clr.red),
+             static_cast<int>(((top_clr.green - bot_clr.green) / -480.0f) * y + top_clr.green),
+             static_cast<int>(((top_clr.blue - bot_clr.blue) / -480.0f) * y + top_clr.blue),
+             255);
+  }
 }
 
-/* --- FADE IN --- */
-
-/** Fades the given surface into a black one. If fade_out is true, it will fade out, else
-it will fade in */
-
-void fade(Surface *surface, int seconds, bool fade_out);
-
-void fade(const std::string& surface, int seconds, bool fade_out)
-{
-Surface* sur = new Surface(datadir + surface, IGNORE_ALPHA);
-fade(sur, seconds, fade_out);
-delete sur;
-}
-
+/* --- FADE IN/OUT --- */
+/**
+ * Fades the given surface to/from black over a specified number of seconds.
+ * @param surface The surface to fade.
+ * @param seconds The duration of the fade effect.
+ * @param fade_out If true, the surface fades out; otherwise, it fades in.
+ */
 void fade(Surface *surface, int seconds, bool fade_out)
 {
-float alpha;
-if (fade_out)
-  alpha = 0;
-else
-  alpha = 255;
+  float alpha = fade_out ? 0.0f : 255.0f;  // Initialize alpha based on fade direction
 
-  int cur_time, old_time;
-  cur_time = SDL_GetTicks();
+  int cur_time = SDL_GetTicks();
+  int old_time = cur_time;
 
-  while(alpha >= 0 && alpha < 256)
-    {
-    surface->draw(0,0,(int)alpha);
-    flipscreen();
+  // Fade loop: adjust alpha based on elapsed time
+  while ((fade_out && alpha < 256.0f) || (!fade_out && alpha >= 0.0f))
+  {
+    surface->draw(0, 0, static_cast<int>(alpha));  // Draw the surface with the current alpha
+    flipscreen();  // Update the screen
 
     old_time = cur_time;
     cur_time = SDL_GetTicks();
 
-    /* Calculate the next alpha value */
-    float calc = (float) ((cur_time - old_time) / seconds);
-    if(fade_out)
-      alpha += 255 * calc;
-    else
-      alpha -= 255 * calc;
+    float calc = static_cast<float>(cur_time - old_time) / seconds;
+    if (fade_out)
+    {
+      alpha += 255.0f * calc;  // Increase alpha for fade out
     }
+    else
+    {
+      alpha -= 255.0f * calc;  // Decrease alpha for fade in
+    }
+  }
 }
 
-/* 'Stolen' from the SDL documentation.
- * Set the pixel at (x, y) to the given value
- * NOTE: The surface must be locked before calling this!
+/**
+ * Wrapper function for fading with a surface file name.
+ * @param surface The name of the surface file.
+ * @param seconds The duration of the fade effect.
+ * @param fade_out If true, the surface fades out; otherwise, it fades in.
+ */
+void fade(const std::string& surface, int seconds, bool fade_out)
+{
+  Surface* sur = new Surface(datadir + surface, IGNORE_ALPHA);
+  fade(sur, seconds, fade_out);
+  delete sur;  // Clean up the dynamically allocated Surface object
+}
+
+/* --- PUT PIXEL --- */
+/**
+ * Set a pixel at (x, y) to the specified value.
+ * Handles different bytes per pixel formats.
  */
 void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
 {
   int bpp = surface->format->BytesPerPixel;
-  /* Here p is the address to the pixel we want to set */
-  Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
+  Uint8 *p = static_cast<Uint8*>(surface->pixels) + y * surface->pitch + x * bpp;
 
-  switch(bpp)
-    {
+  switch (bpp)
+  {
     case 1:
       *p = pixel;
       break;
-
     case 2:
-      *(Uint16 *)p = pixel;
+      *reinterpret_cast<Uint16*>(p) = pixel;
       break;
-
     case 3:
-      if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
-        {
-          p[0] = (pixel >> 16) & 0xff;
-          p[1] = (pixel >> 8) & 0xff;
-          p[2] = pixel & 0xff;
-        }
+      if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+      {
+        p[0] = (pixel >> 16) & 0xff;
+        p[1] = (pixel >> 8) & 0xff;
+        p[2] = pixel & 0xff;
+      }
       else
-        {
-          p[0] = pixel & 0xff;
-          p[1] = (pixel >> 8) & 0xff;
-          p[2] = (pixel >> 16) & 0xff;
-        }
+      {
+        p[0] = pixel & 0xff;
+        p[1] = (pixel >> 8) & 0xff;
+        p[2] = (pixel >> 16) & 0xff;
+      }
       break;
-
     case 4:
-      *(Uint32 *)p = pixel;
+      *reinterpret_cast<Uint32*>(p) = pixel;
       break;
-    }
+  }
 }
 
-/* Draw a single pixel on the screen. */
+/* --- DRAW PIXEL --- */
+/**
+ * Draw a pixel on the screen at (x, y).
+ * Locks the screen for direct access to the pixels if necessary.
+ */
 void drawpixel(int x, int y, Uint32 pixel)
 {
-  /* Lock the screen for direct access to the pixels */
-  if ( SDL_MUSTLOCK(screen) )
+  if (SDL_MUSTLOCK(screen))
+  {
+    if (SDL_LockSurface(screen) < 0)
     {
-      if ( SDL_LockSurface(screen) < 0 )
-        {
-          fprintf(stderr, "Can't lock screen: %s\n", SDL_GetError());
-          return;
-        }
+      std::cerr << "Can't lock screen: " << SDL_GetError() << std::endl;
+      return;
     }
+  }
 
-  if(!(x < 0 || y < 0 || x > screen->w || y > screen->h))
+  if (x >= 0 && y >= 0 && x < screen->w && y < screen->h)
+  {
     putpixel(screen, x, y, pixel);
+  }
 
-  if ( SDL_MUSTLOCK(screen) )
-    {
-      SDL_UnlockSurface(screen);
-    }
-  /* Update just the part of the display that we've changed */
-  SDL_Flip(screen);//SDL_UpdateRect(screen, x, y, 1, 1);
+  if (SDL_MUSTLOCK(screen))
+  {
+    SDL_UnlockSurface(screen);
+  }
+  SDL_Flip(screen);
 }
 
+/* --- DRAW LINE --- */
+/**
+ * Draws a line from (x1, y1) to (x2, y2) with the specified color.
+ * If OpenGL is used, it utilizes OpenGL functions.
+ * Otherwise, it uses the Bresenham line algorithm for SDL rendering.
+ * @param x1, y1 Starting coordinates of the line
+ * @param x2, y2 Ending coordinates of the line
+ * @param r, g, b RGB color components (0-255 range)
+ * @param a Alpha component (0-255 range)
+ */
 void drawline(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
 {
 #ifndef NOOPENGL
-  if(use_gl)
-    {
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glColor4ub(r, g, b,a);
-
-      glBegin(GL_LINES);
-      glVertex2f(x1, y1);
-      glVertex2f(x2, y2);
-      glEnd();
-      glDisable(GL_BLEND);
-    }
-  else
-    {
+  if (use_gl)
+  {
+    drawOpenGLLine(x1, y1, x2, y2, r, g, b, a);
+    return;
+  }
 #endif
+  int lg_delta = x2 - x1;
+  int sh_delta = y2 - y1;
+  int lg_step = SGN(lg_delta);
+  int sh_step = SGN(sh_delta);
+  lg_delta = ABS(lg_delta);
+  sh_delta = ABS(sh_delta);
 
-      /* Basic unantialiased Bresenham line algorithm */
-      int lg_delta, sh_delta, cycle, lg_step, sh_step;
-      Uint32 color = SDL_MapRGBA(screen->format, r, g, b, a);
+  Uint32 color = SDL_MapRGBA(screen->format, r, g, b, a);
 
-      lg_delta = x2 - x1;
-      sh_delta = y2 - y1;
-      lg_step = SGN(lg_delta);
-      lg_delta = ABS(lg_delta);
-      sh_step = SGN(sh_delta);
-      sh_delta = ABS(sh_delta);
-      if (sh_delta < lg_delta)
-        {
-          cycle = lg_delta >> 1;
-          while (x1 != x2)
-            {
-              drawpixel(x1, y1, color);
-              cycle += sh_delta;
-              if (cycle > lg_delta)
-                {
-                  cycle -= lg_delta;
-                  y1 += sh_step;
-                }
-              x1 += lg_step;
-            }
-          drawpixel(x1, y1, color);
-        }
-      cycle = sh_delta >> 1;
-      while (y1 != y2)
-        {
-          drawpixel(x1, y1, color);
-          cycle += lg_delta;
-          if (cycle > sh_delta)
-            {
-              cycle -= sh_delta;
-              x1 += lg_step;
-            }
-          y1 += sh_step;
-        }
+  // Choose the dominant direction (x or y) to determine the step increments
+  int cycle = (sh_delta < lg_delta) ? (lg_delta >> 1) : (sh_delta >> 1);
+
+  if (sh_delta < lg_delta)
+  {
+    while (x1 != x2)
+    {
       drawpixel(x1, y1, color);
-#ifndef NOOPENGL
-
+      cycle += sh_delta;
+      if (cycle > lg_delta)
+      {
+        cycle -= lg_delta;
+        y1 += sh_step;
+      }
+      x1 += lg_step;
     }
-#endif
+  }
+  else
+  {
+    while (y1 != y2)
+    {
+      drawpixel(x1, y1, color);
+      cycle += lg_delta;
+      if (cycle > sh_delta)
+      {
+        cycle -= sh_delta;
+        x1 += lg_step;
+      }
+      y1 += sh_step;
+    }
+  }
+  drawpixel(x1, y1, color);  // Draw the final pixel
 }
 
-/* --- FILL A RECT --- */
-
+/* --- FILL A RECTANGLE --- */
+/**
+ * Fills a rectangle with the specified color.
+ * If OpenGL is used, it utilizes OpenGL functions.
+ * Otherwise, it uses SDL functions to fill the rectangle.
+ * Optimized for minimal floating-point operations.
+ * @param x, y Coordinates of the top-left corner of the rectangle
+ * @param w, h Width and height of the rectangle
+ * @param r, g, b RGB color components (0-255 range)
+ * @param a Alpha component (0-255 range)
+ */
 void fillrect(float x, float y, float w, float h, int r, int g, int b, int a)
 {
-if(w < 0)
-	{
-	x += w;
-	w = -w;
-	}
-if(h < 0)
-	{
-	y += h;
-	h = -h;
-	}
+  // Convert to int as early as possible for efficiency
+  int ix = static_cast<int>(x);
+  int iy = static_cast<int>(y);
+  int iw = static_cast<int>(w);
+  int ih = static_cast<int>(h);
+
+  // Handle negative width and height by adjusting position and making dimensions positive
+  if (iw < 0)
+  {
+    ix += iw;
+    iw = -iw;
+  }
+  if (ih < 0)
+  {
+    iy += ih;
+    ih = -ih;
+  }
 
 #ifndef NOOPENGL
-  if(use_gl)
-    {
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glColor4ub(r, g, b,a);
-
-      glBegin(GL_POLYGON);
-      glVertex2f(x, y);
-      glVertex2f(x+w, y);
-      glVertex2f(x+w, y+h);
-      glVertex2f(x, y+h);
-      glEnd();
-      glDisable(GL_BLEND);
-    }
-  else
-    {
+  if (use_gl)
+  {
+    fillOpenGLRect(static_cast<float>(ix), static_cast<float>(iy), static_cast<float>(iw), static_cast<float>(ih), r, g, b, a);
+    return;
+  }
 #endif
-      SDL_Rect src, rect;
-      SDL_Surface *temp = NULL;
+  SDL_Rect rect = {static_cast<Sint16>(ix), static_cast<Sint16>(iy), static_cast<Uint16>(iw), static_cast<Uint16>(ih)};
+  SDL_Surface *temp = nullptr;
 
-      rect.x = (int)x;
-      rect.y = (int)y;
-      rect.w = (int)w;
-      rect.h = (int)h;
+  if (a != 255)
+  {
+    temp = SDL_CreateRGBSurface(screen->flags, rect.w, rect.h, screen->format->BitsPerPixel,
+                                screen->format->Rmask, screen->format->Gmask, screen->format->Bmask, screen->format->Amask);
 
-      if(a != 255)
-        {
-          temp = SDL_CreateRGBSurface(screen->flags, rect.w, rect.h, screen->format->BitsPerPixel,
-                                      screen->format->Rmask,
-                                      screen->format->Gmask,
-                                      screen->format->Bmask,
-                                      screen->format->Amask);
+    SDL_FillRect(temp, NULL, SDL_MapRGB(screen->format, r, g, b));
+    SDL_SetAlpha(temp, SDL_SRCALPHA, a);
+    SDL_BlitSurface(temp, NULL, screen, &rect);
+    SDL_FreeSurface(temp);
+  }
+  else
+  {
+    SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, r, g, b));
+  }
+}
 
-
-          src.x = 0;
-          src.y = 0;
-          src.w = rect.w;
-          src.h = rect.h;
-
-          SDL_FillRect(temp, &src, SDL_MapRGB(screen->format, r, g, b));
-
-          SDL_SetAlpha(temp, SDL_SRCALPHA, a);
-
-          SDL_BlitSurface(temp,0,screen,&rect);
-
-          SDL_FreeSurface(temp);
-        }
-      else
-        SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, r, g, b));
-
+/* --- FLIP SCREEN --- */
+/**
+ * Flips the screen to update the display.
+ * Uses SDL_GL_SwapBuffers for OpenGL, SDL_Flip otherwise.
+ */
+void flipscreen()
+{
 #ifndef NOOPENGL
-
-    }
+  if (use_gl)
+  {
+    swapOpenGLBuffers();
+    return;
+  }
 #endif
+  SDL_Flip(screen);
 }
 
-
-/* --- UPDATE SCREEN --- */
-
-void updatescreen(void)
-{
-  if(use_gl)  /*clearscreen(0,0,0);*/
-    SDL_GL_SwapBuffers();
-  else
-    SDL_Flip(screen);//SDL_UpdateRect(screen, 0, 0, screen->w, screen->h);
-}
-
-void flipscreen(void)
-{
-  if(use_gl)
-    SDL_GL_SwapBuffers();
-  else
-    SDL_Flip(screen);
-}
-
+/* --- FADE OUT SCREEN --- */
+/**
+ * Clears the screen and displays a "Loading..." message.
+ * Then flips the screen to show the fade-out effect.
+ */
 void fadeout()
 {
   clearscreen(0, 0, 0);
-  white_text->draw_align("Loading...", screen->w/2, screen->h/2, A_HMIDDLE, A_TOP);
+  white_text->draw_align("Loading...", screen->w / 2, screen->h / 2, A_HMIDDLE, A_TOP);
   flipscreen();
 }
 
+/* --- UPDATE A RECTANGLE ON SCREEN --- */
+/**
+ * Updates a specific rectangle on the screen.
+ * Uses SDL_Flip for non-OpenGL rendering.
+ */
 void update_rect(SDL_Surface *scr, Sint32 x, Sint32 y, Sint32 w, Sint32 h)
 {
-  if(!use_gl)
-    SDL_Flip(screen);//SDL_UpdateRect(scr, x, y, w, h);
+  if (!use_gl)
+  {
+    SDL_Flip(screen);
+  }
 }
 
+/* --- UPDATE SCREEN --- */
+/**
+ * Updates the entire screen.
+ * Uses SDL_GL_SwapBuffers for OpenGL, SDL_Flip otherwise.
+ */
+void updatescreen()
+{
+  flipscreen();
+}
