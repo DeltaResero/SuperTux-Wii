@@ -1196,6 +1196,9 @@ void BadGuy::collision(void* p_c_object, int c_object, CollisionType type)
           {
             dir = RIGHT;
             physic.set_velocity_x(std::fabs(physic.get_velocity_x()));
+
+            // in case badguys get "jammed"
+            base.x = pbad_c->base.x + pbad_c->base.width;
           }
           else if (dir == RIGHT)
           {
