@@ -1212,66 +1212,82 @@ void parseargs(int argc, char * argv[])
 
 /* Display usage: */
 
-void usage(char * prog, int ret)
+void usage(char *prog, int ret)
 {
-  FILE * fi;
+  FILE *fi;
 
-
-  /* Determine which stream to write to: */
-
+  // Determine which stream to write to
   if (ret == 0)
+  {
     fi = stdout;
+  }
   else
+  {
     fi = stderr;
+  }
 
+  // Display the usage message
+  fprintf(fi, "Usage: %s [--fullscreen] [--opengl] [--disable-sound] [--disable-music] [--debug-mode] | [--usage | --help | --version] FILENAME\n", prog);
 
-  /* Display the usage message: */
-
-  fprintf(fi, "Usage: %s [--fullscreen] [--opengl] [--disable-sound] [--disable-music] [--debug-mode] | [--usage | --help | --version] FILENAME\n",
-          prog);
-
-
-  /* Quit! */
-
+  // Quit!
   exit(ret);
 }
+
+#ifdef __WII__ // Check for Wii-specific compilation
 #include <gccore.h>
 
-void print_status(const char *st) {
+void print_status(const char *st)
+{
+  static void *xfb = NULL;
+  static GXRModeObj *rmode = NULL;
 
-static void *xfb = NULL;
-static GXRModeObj *rmode = NULL;
+  // Initialise the video system
+  VIDEO_Init();
 
-	// Initialise the video system
-	VIDEO_Init();
+  // Obtain the preferred video mode from the system
+  rmode = VIDEO_GetPreferredMode(NULL);
 
-	// Obtain the preferred video mode from the system
-	// This will correspond to the settings in the Wii menu
-	rmode = VIDEO_GetPreferredMode(NULL);
+  // Allocate memory for the display in the uncached region
+  xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
 
-	// Allocate memory for the display in the uncached region
-	xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-	
-	// Initialise the console, required for printf
-	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
-	
-	// Set up the video registers with the chosen mode
-	VIDEO_Configure(rmode);
-	
-	// Tell the video hardware where our display memory is
-	VIDEO_SetNextFramebuffer(xfb);
-	
-	// Make the display visible
-	VIDEO_SetBlack(FALSE);
+  // Initialise the console, required for printf
+  console_init(xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight, rmode->fbWidth * VI_DISPLAY_PIX_SZ);
 
-	// Flush the video register changes to the hardware
-	VIDEO_Flush();
+  // Set up the video registers with the chosen mode
+  VIDEO_Configure(rmode);
 
-	// Wait for Video setup to complete
-	VIDEO_WaitVSync();
-	if(rmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
-	printf("\n\n");
-	printf("Error!\n %s\n", st);
-	sleep(5);
-	exit(0);
+  // Tell the video hardware where our display memory is
+  VIDEO_SetNextFramebuffer(xfb);
+
+  // Make the display visible
+  VIDEO_SetBlack(FALSE);
+
+  // Flush the video register changes to the hardware
+  VIDEO_Flush();
+
+  // Wait for Video setup to complete
+  VIDEO_WaitVSync();
+  if (rmode->viTVMode & VI_NON_INTERLACE)
+  {
+    VIDEO_WaitVSync();
+  }
+
+  printf("\n\n");
+  printf("Error!\n %s\n", st);
+  sleep(5);
+  exit(0);
 }
+
+#else // Non-Wii print_status
+
+void print_status(const char *st)
+{
+  printf("\n\n");
+  printf("Error!\n %s\n", st);
+  sleep(5);
+  exit(0);
+}
+
+#endif // End of #ifdef __WII__
+
+// EOF

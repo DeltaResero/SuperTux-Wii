@@ -34,25 +34,25 @@ Software license: GPLv2
 
 &nbsp;
 
-### How to Build
+### How to Build: Wii Homebrew Build
 If you don't have the DevkitPPC toolchain set up yet, see the section "DevkitPro PowerPC Build System Setup Guide" first. Once Devkitppc has been set up with all the required ported libraries and libogc, then the following must be performed to build the game.
 
-Run autogen:
+Run autogen (uses Configure to generate the Wii makefile for building):
 ```
-./autogen.sh
-```
-Use Configure to generate the makefile for building:
-```
-./configure --prefix="${DEVKITPRO}/portlibs/ppc" --libdir="${DEVKITPRO}/libogc/" --target=powerpc-eabi --disable-opengl
+./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi --disable-opengl
 ```
 Use make to cross-compile the game executable:
 ```
-make CC=powerpc-eabi-gcc CXX=powerpc-eabi-g++
+make -f Wii
+```
+For configure help:
+```
+./autogen.sh --help
 ```
 &nbsp;
 
 ### Installation
-> On a SD/SDHC/SDHX card or USB device, create a folder named supertux and place it inside a folder named "apps" at the root of your card (example: apps/supertux). Take the newly compiled dol, rename it to boot.dol, and then copy it into the folder you just made. Next copy the icon.png and meta.xml files into that same folder and finally copy over the data folder of this repository into there as well. Upon running SuperTux for the first time, a configuration file and save folder should be generated.
+> On a SD/SDHC/SDHX card or USB device, create a folder named supertux and place it inside a folder named "apps" at the root of your card (example: apps/supertux). Take the newly compiled dol, copy it into the folder you just made, and then rename it to boot.dol. Next copy the icon.png and meta.xml files into that same folder. Lastly, copy over the data folder of this repository into there as well. Upon running SuperTux for the first time, a configuration file and save folder should be generated.
 
 &nbsp;
 
@@ -78,6 +78,18 @@ wii-sdl_ttf
 Following the DevkitPro guide along with installing wii-dev and these dependencies should provide everything required to build this project.
 Although there are currently no plans here to port SuperTux Milestone 2, it doesn't mean it can't happen, especially if all the required libraries get ported, but for now, enjoy this port of SuperTux Classic (Milestone 1).
 
+&nbsp;
+
+### How to Build: Standard Build (mostly for testing)
+Run autogen:
+```
+./autogen.sh
+```
+Use make to compile the game executable:
+```
+make -C build
+```
+Note that installation is not currently supported for the standard builds. To test run, copy the data folder to a safe place and then add the supertux execuble and supertux.png inside it. A template desktop entry file has also been included as supertux.desktop in this project's root directory.
 &nbsp;
 
 ### Disclaimer
