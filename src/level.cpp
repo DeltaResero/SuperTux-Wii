@@ -45,8 +45,7 @@ LevelSubset::LevelSubset()
 }
 
 /**
- * Destructor for LevelSubset.
- * Deletes the image if it was allocated.
+ * Destructor for LevelSubset. Deletes the image if it was allocated.
  */
 LevelSubset::~LevelSubset()
 {
@@ -840,7 +839,7 @@ void Level::load_image(Surface** ptexture, string theme, const char* file, int u
 
 /**
  * Changes the size (width) of the level.
- * @param new_width The new width of the level.
+ * @param new_width The new width of the level
  * Resizes all tile layers to the new width, ensuring a minimum width of 21.
  */
 void Level::change_size(int new_width)
@@ -925,7 +924,7 @@ void Level::free_song()
  * Gets the standard level music.
  * @return A reference to the standard level music.
  */
-MusicRef Level::get_level_music()
+MusicRef Level::get_level_music() const
 {
   return level_song;
 }
@@ -934,7 +933,7 @@ MusicRef Level::get_level_music()
  * Gets the fast version of the level music.
  * @return A reference to the fast version of the level music.
  */
-MusicRef Level::get_level_music_fast()
+MusicRef Level::get_level_music_fast() const
 {
   return level_song_fast;
 }
