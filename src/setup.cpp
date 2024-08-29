@@ -293,47 +293,54 @@ void st_directory_setup(void)
 {
 
   bool deviceselection = false;
-
   FILE *fp = NULL;
+
+  // SD Card
   fp = fopen("sd:/apps/supertux/data/supertux.strf", "rb");
 
-  if(fp){
-
-  deviceselection = true;
-  char home[] = {"sd:/apps/supertux"};
-  datadir = "sd:/apps/supertux/data";
-  st_dir = (char *) malloc(255);
-  strcpy(st_dir, home);
-  st_save_dir = (char *) malloc(255);
-  strcpy(st_save_dir,st_dir);
-  strcat(st_save_dir,"/save");
-  selecteddevice = 1;
+  if(fp)
+  {
+    deviceselection = true;
+    char home[] = {"sd:/apps/supertux"};
+    datadir = "sd:/apps/supertux/data";
+    st_dir = (char *) malloc(255);
+    strcpy(st_dir, home);
+    st_save_dir = (char *) malloc(255);
+    strcpy(st_save_dir, st_dir);
+    strcat(st_save_dir, "/save");
+    selecteddevice = 1;
+    fclose(fp);
   }
 
-  fclose(fp);
 
-  if(!deviceselection){
+  if(!deviceselection)
+  {
+    // USB Flash Drive
+    fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
 
-  fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
-
+    if(fp)
+    {
       deviceselection = true;
       char home[] = {"usb:/apps/supertux"};
       datadir = "usb:/apps/supertux/data";
       st_dir = (char *) malloc(255);
       strcpy(st_dir, home);
       st_save_dir = (char *) malloc(255);
-      strcpy(st_save_dir,st_dir);
-      strcat(st_save_dir,"/save");
+      strcpy(st_save_dir, st_dir);
+      strcat(st_save_dir, "/save");
       selecteddevice = 2;
-      }
+      fclose(fp);
+    }
+  }
 
-  fclose(fp);
 
-    if(!deviceselection){
+  if(!deviceselection)
+  {
+    // Fallback
+    fp = fopen("/apps/supertux/data/supertux.strf", "rb");
 
-  fp = fopen("/apps/supertux/data/supertux.strf", "rb");
-
-  if(fp){
+    if(fp)
+    {
 
       deviceselection = true;
       char home[] = {"/apps/supertux"};
@@ -341,17 +348,18 @@ void st_directory_setup(void)
       st_dir = (char *) malloc(255);
       strcpy(st_dir, home);
       st_save_dir = (char *) malloc(255);
-      strcpy(st_save_dir,st_dir);
-      strcat(st_save_dir,"/save");
+      strcpy(st_save_dir, st_dir);
+      strcat(st_save_dir, "/save");
       selecteddevice = 3;
-      }
+      fclose(fp);
+    }
   }
 
-  fclose(fp);
 
-  if(!deviceselection){
-  print_status("Game data not found on SD or USB!\n");;
-  exit(0);
+  if(!deviceselection)
+  {
+    print_status("Game data not found on SD or USB!\n");;
+    exit(1);
   }
 
   //char home[] = {"sd:/apps/supertux"};
@@ -372,31 +380,29 @@ void st_directory_setup(void)
 /* Set SuperTux configuration and save directories */
 void st_directory_setup(void)
 {
-  char *home;
+  const char *home;
   char str[1024];
-  /* Get home directory (from $HOME variable)... if we can't determine it,
-     use the current directory ("."): */
+
+  /* Get home directory (from $HOME variable)... if we can't determine it, use the current directory ("."): */
   if (getenv("HOME") != NULL)
     home = getenv("HOME");
   else
     home = ".";
 
-  st_dir = (char *) malloc(sizeof(char) * (strlen(home) +
-                                           strlen("/.supertux") + 1));
+  st_dir = (char *) malloc(sizeof(char) * (strlen(home) + strlen("/.supertux") + 1));
   strcpy(st_dir, home);
   strcat(st_dir, "/.supertux");
 
   /* Remove .supertux config-file from old SuperTux versions */
   if(faccessible(st_dir))
-    {
-      remove
-        (st_dir);
-    }
+  {
+      remove (st_dir);
+  }
 
   st_save_dir = (char *) malloc(sizeof(char) * (strlen(st_dir) + strlen("/save") + 1));
 
-  strcpy(st_save_dir,st_dir);
-  strcat(st_save_dir,"/save");
+  strcpy(st_save_dir, st_dir);
+  strcat(st_save_dir, "/save");
 
   /* Create them. In the case they exist they won't destroy anything. */
   mkdir(st_dir, 0755);
@@ -408,37 +414,37 @@ void st_directory_setup(void)
   // User has not that a datadir, so we try some magic
 #ifndef WIN32
   if (datadir.empty())
-    {
-      // Detect datadir
-      char exe_file[PATH_MAX];
-      if (readlink("/proc/self/exe", exe_file, PATH_MAX) < 0)
-        {
-          puts("Couldn't read /proc/self/exe, using default path: " DATA_PREFIX);
-          datadir = DATA_PREFIX;
-        }
-      else
-        {
-          std::string exedir = std::string(dirname(exe_file)) + "/";
+  {
+    /* Detect datadir */
+    char exe_file[PATH_MAX];
 
-          datadir = exedir + "../data"; // SuperTux run from source dir
-          if (access(datadir.c_str(), F_OK) != 0)
-            {
-              datadir = exedir + "../share/supertux"; // SuperTux run from PATH
-              if (access(datadir.c_str(), F_OK) != 0)
-                { // If all fails, fall back to compiled path
-                  datadir = DATA_PREFIX;
-                }
-            }
-        }
-#else
-  datadir = "data";//DATA_PREFIX;
-#endif
+    if (readlink("/proc/self/exe", exe_file, PATH_MAX) < 0)
+    {
+      puts("Couldn't read /proc/self/exe, using default path: " DATA_PREFIX);
+      datadir = DATA_PREFIX;
     }
+    else
+    {
+      std::string exedir = std::string(dirname(exe_file)) + "/";
+      datadir = exedir + "../data"; // SuperTux run from source dir
+      if (access(datadir.c_str(), F_OK) != 0)
+      {
+        datadir = exedir + "../share/supertux"; // SuperTux run from PATH
+        if (access(datadir.c_str(), F_OK) != 0)
+        {
+          datadir = DATA_PREFIX; // If all fails, fall back to compiled path
+        }
+      }
+    }
+  }
+#else
+  datadir = "data"; //DATA_PREFIX;
+#endif
+
   printf("Datadir: %s\n", datadir.c_str());
- }
+}
 
 #endif //def _WII_
-
 
 /* Create and setup menus. */
 void st_menu(void)
@@ -567,49 +573,59 @@ void update_load_save_game_menu(Menu* pmenu)
     }
 }
 
+/* Process the load game menu */
 bool process_load_game_menu()
 {
   int slot = load_game_menu->check();
 
   if(slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
+  {
+    char slotfile[1024];
+
+#ifdef _WII_
+    if(selecteddevice == 1)
     {
-      char slotfile[1024];
       if(selecteddevice == 1)
         snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
-      if(selecteddevice == 2)
+      else if(selecteddevice == 2)
         snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
-      if(selecteddevice == 3)
+      else if(selecteddevice == 3)
         snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
-
-//      if (access(slotfile, F_OK) != 0)
-//        {
-//          draw_intro();
-//        }
-
-      unloadsounds();
-      deleteDemo();
-
-      fadeout();
-      WorldMapNS::WorldMap worldmap;
-
-      //TODO: Define the circumstances under which BonusIsland is chosen
-      worldmap.set_map_file("world1.stwm");
-      worldmap.load_map();
-
-      // Load the game or at least set the savegame_file variable
-      worldmap.loadgame(slotfile);
-
-      worldmap.display();
-
-      Menu::set_current(main_menu);
-
-      st_pause_ticks_stop();
-      return true;
     }
+#else
+    snprintf(slotfile, 1024, "%s/slot%d.stsg", st_save_dir, slot);
+#endif
+
+    // Uncomment if needed to handle starting a new save files (plays intro text)
+//    if (access(slotfile, F_OK) != 0)
+//    {
+//      draw_intro();
+//    }
+
+    unloadsounds();
+    deleteDemo();
+
+    fadeout();
+    WorldMapNS::WorldMap worldmap;
+
+    //TODO: Define the circumstances under which BonusIsland is chosen
+    worldmap.set_map_file("world1.stwm");
+    worldmap.load_map();
+
+    // Load the game or at least set the savegame_file variable
+    worldmap.loadgame(slotfile);
+
+    worldmap.display();
+
+    Menu::set_current(main_menu);
+
+    st_pause_ticks_stop();
+    return true;
+  }
   else
-    {
-      return false;
-    }
+  {
+    return false;
+  }
 }
 
 /* Handle changes made to global settings in the options menu. */
@@ -1167,7 +1183,7 @@ void parseargs(int argc, char * argv[])
         }
       else if (strcmp(argv[i], "--help") == 0)
         {     /* Show help: */
-          puts("Super Tux Wii" VERSION "\n"
+          puts("SuperTux Wii" VERSION "\n"
                "  Please see the file \"README.txt\" for more details.\n");
           printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
           puts("Display Options:\n"
