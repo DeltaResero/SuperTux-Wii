@@ -24,7 +24,8 @@ dnl Use the build directory for auxiliary scripts
 AC_CONFIG_AUX_DIR([build])
 
 dnl Enable out-of-source builds and use bzip2 for distributions
-AM_INIT_AUTOMAKE([foreign dist-bzip2])
+dnl AM_INIT_AUTOMAKE([foreign dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 silent-rules])
 
 dnl Mimium Version of SDL 1.2.x required
 SDL_VERSION=1.2.15
@@ -148,6 +149,9 @@ if test "x$enable_wii" != "xyes"; then
     CXXFLAGS="$CXXFLAGS $GL_CFLAGS"
     LIBS="$LIBS $GL_LIBS"
   fi
+
+  # Enable silent rules if supported
+  m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
   dnl Check for SDL
   PKG_CHECK_MODULES([SDL], [sdl >= $SDL_VERSION],,

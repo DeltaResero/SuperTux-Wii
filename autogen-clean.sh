@@ -35,7 +35,7 @@ fi
 
 # Remove autogen generated and other temporary files
 echo "Removing autogen generated files..."
-rm -f aclocal.m4 compile config.guess config.log config.status config.sub configure configure~ depcomp install-sh missing mkinstalldirs ltmain.sh stamp-h.in ltconfig stamp-h config.h.in Wii
+rm -f aclocal.m4 compile config.guess config.log config.status config.sub configure configure~ depcomp install-sh missing mkinstalldirs ltmain.sh stamp-h.in ltconfig stamp-h config.h.in Wii Makefile.in
 rm -rf autom4te.cache
 rm -rf build/*
 
