@@ -742,7 +742,6 @@ GameSession::run()
       else
         {
           ++pause_menu_frame;
-          SDL_Delay(2);
         }
 
       draw();
@@ -762,7 +761,11 @@ GameSession::run()
          the results in SDL mode aren't perfect (thought the 100 FPS are reached), even on an AMD2500+. */
       if(end_sequence && last_update_time >= update_time - 12)
         {
-          SDL_Delay(2);
+#ifdef _WII_
+          // No delay for Wii
+#else
+          SDL_Delay(10); // FIXME: Tux spams micro-jumps without it after the end goal
+#endif
           update_time = st_get_ticks();
         }
 

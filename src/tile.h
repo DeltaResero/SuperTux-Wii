@@ -78,7 +78,7 @@ public:
   int next_tile;
 
   int anim_speed;
-  
+
   /** Draw a tile on the screen: */
   static void draw(float x, float y, unsigned int c, Uint8 alpha = 255);
   static void draw_stretched(float x, float y, int w, int h, unsigned int c, Uint8 alpha = 255);

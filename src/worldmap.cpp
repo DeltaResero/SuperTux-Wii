@@ -887,7 +887,7 @@ WorldMap::update(float delta)
                   play_sound(sounds[SND_TELEPORT], SOUND_CENTER_SPEAKER);
                   tux->back_direction = D_NONE;
                   tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
-                  SDL_Delay(800); // Delay for visual effect & sound completion before unloading
+                  //SDL_Delay(800); // Delay for visual effect & sound completion before unloading
                   unloadsounds();  // FIXME: ideally should load/unload when loading world maps
                 }
         }
@@ -1098,8 +1098,6 @@ WorldMap::display()
         if (show_mouse) mouse_cursor->draw();
 #endif
       flipscreen();
-
-      SDL_Delay(2);
     }
 }
 
@@ -1230,7 +1228,4 @@ WorldMap::loadmap(const std::string& filename)
 
 } // namespace WorldMapNS
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
-
+// EOF

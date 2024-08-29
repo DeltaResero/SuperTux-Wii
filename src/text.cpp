@@ -366,8 +366,6 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
 
     if (scroll < 0)
       scroll = 0;
-
-    SDL_Delay(2);  // Small delay to control frame rate
   }
 
   string_list_free(&names);

@@ -73,6 +73,10 @@ static std::string current_contrib_subset;         // Currently selected contrib
 
 static string_list_type worldmap_list;  // List of available world maps
 
+#ifdef _WII_
+  static double fractional_increment = 0.0; // Static variable to manage the fractional increment
+#endif
+
 GameSession* session = nullptr;  // Pointer to the current game session
 
 /**
@@ -294,7 +298,17 @@ void draw_demo(GameSession* session, double frame_ratio)
 
   world->play_music(LEVEL_MUSIC);
 
-  global_frame_counter++;
+#ifdef _WII_ //FIXME: very hackish way to get our "?" blocks to animate approximate correctly
+  // Increment global_frame_counter by 1 every second call
+  fractional_increment += 0.5;
+  if (fractional_increment >= 1.0)
+  {
+    global_frame_counter++;
+    fractional_increment -= 1.0;
+  }
+#else // non-Wii builds
+  global_frame_counter++; //increment every call as per normal
+#endif
   tux->key_event((SDLKey) keymap.right, DOWN);
 
   // Check if the random timer has triggered an event
@@ -414,7 +428,7 @@ void title(void)
         Menu::current()->event(event);
       }
 
-      // FIXME: QUIT signal should be handled more generic, not locally
+      // FIXME: QUIT signal should be handled more generically, not locally
       if (event.type == SDL_QUIT)
       {
         Menu::set_current(0);
@@ -534,7 +548,17 @@ void title(void)
 
     // Pause the loop for a short duration
     frame++;
-    SDL_Delay(2);
+#ifdef _WII_
+    /*FIXME: Gets 60fps now on Wii by removing SDL_Delay, but animation of "?" blocks are
+     * about 2x too fast unless we compensate by only incrementing global frame counter
+     * half as often in draw_demo when building for Wii. This is a very hackish; please fix!
+     */
+#else
+    /* FIXME: Default delay is 25 which should work as normal for non-Wii provided the machine
+     * is modern enough to actually handle this delay properly
+     */
+      SDL_Delay(25);
+#endif
   }
 
   // Free surfaces and resources
@@ -545,5 +569,4 @@ void title(void)
   delete logo;
   //delete img_choose_subset;
 }
-
 // EOF
