@@ -90,6 +90,7 @@ AC_C_CONST
 dnl ===========================================================================
 dnl Give advanced users some options to play with
 
+dnl Check if GNU profiling support is set to enabled
 AC_MSG_CHECKING([for gprof mode])
 AC_ARG_ENABLE([gprof],
   AS_HELP_STRING([--enable-gprof],[enable GNU profiling support]),
@@ -102,6 +103,7 @@ else
   AC_MSG_RESULT([disabled])
 fi
 
+dnl Check for enabling debugging mode
 AC_MSG_CHECKING([for debug mode])
 AC_ARG_ENABLE([debug],
   AS_HELP_STRING([--enable-debug],[enable debugging mode]),
@@ -114,14 +116,18 @@ else
   AC_MSG_RESULT([disabled])
 fi
 
+dnl Check if OpenGL should be enabled
 AC_MSG_CHECKING([whether OpenGL should be used])
 AC_ARG_ENABLE([opengl],
   AS_HELP_STRING([--disable-opengl],[disable OpenGL support]),
   , enable_opengl="yes")
 if test "x${enable_opengl}" != "xno"; then
   AC_MSG_RESULT([yes])
+  AC_MSG_WARN([OpenGL is not currently supported on the Wii platform.])
+  AC_MSG_WARN([It is recommended to reconfigure with --disable-opengl.])
 else
   AC_MSG_RESULT([no])
+  CXXFLAGS="$CXXFLAGS -DNOOPENGL"
 fi
 
 dnl Enable touchscreen controls
@@ -157,6 +163,7 @@ if test "x$enable_wii" != "xyes"; then
   PKG_CHECK_MODULES([SDL], [sdl >= $SDL_VERSION],,
     AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
 
+  dnl Output our configured flags
   CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
   CFLAGS="$CFLAGS $SDL_CFLAGS"
   LIBS="$LIBS $SDL_LIBS"
