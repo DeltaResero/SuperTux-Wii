@@ -312,7 +312,6 @@ void st_directory_setup(void)
     fclose(fp);
   }
 
-
   if(!deviceselection)
   {
     // USB Flash Drive
@@ -332,7 +331,6 @@ void st_directory_setup(void)
       fclose(fp);
     }
   }
-
 
   if(!deviceselection)
   {
@@ -354,7 +352,6 @@ void st_directory_setup(void)
       fclose(fp);
     }
   }
-
 
   if(!deviceselection)
   {
@@ -684,7 +681,6 @@ void process_options_menu(void)
 void st_general_setup(void)
 {
   /* Seed random number generator: */
-
   srand(SDL_GetTicks());
 
 #ifndef _WII_ /* Skip setting an icon for Wii builds */
@@ -1024,51 +1020,27 @@ void st_abort(const std::string& reason, const std::string& details)
 }
 
 #ifndef _WII_ /* Wii Homebrew Apps don't need this */
-/* Set Icon (private) */
-
-void seticon(void)
+void seticon(void) /* Set Icon (private) */
 {
-//  int masklen;
-//  Uint8 * mask;
-  SDL_Surface * icon;
-
-
-  /* Load icon into a surface: */
-
-  icon = IMG_Load("supertux.png");
+  /* Attempt to load icon into a surface: */
+  SDL_Surface *icon = IMG_Load("supertux.png");
   if (icon == NULL)
-    {
-      fprintf(stderr,
-              "\nError: I could not load the icon image: supertux.png\n"
-              "The Simple DirectMedia error that occured was:\n"
-              "%s\n\n", SDL_GetError());
-              print_status("Could not load icon image\n");
-      exit(1);
-    }
+  {
+    fprintf(stderr,
+            "\nWarning: Could not load the icon image: supertux.png\n"
+            "The Simple DirectMedia error that occurred was:\n"
+            "%s\n\n", SDL_GetError());
+    // Fail gracefully if the icon is not found
+    return;
+  }
 
-
-  /* Create mask: */
-/*
-  masklen = (((icon -> w) + 7) / 8) * (icon -> h);
-  mask = (Uint8*) malloc(masklen * sizeof(Uint8));
-  memset(mask, 0xFF, masklen);
-*/
-
-  /* Set icon: */
-
-  SDL_WM_SetIcon(icon, NULL);//mask);
-
-
-  /* Free icon surface & mask: */
-
-//  free(mask);
-  SDL_FreeSurface(icon);
+  SDL_WM_SetIcon(icon, NULL); /* Set icon: */
+  SDL_FreeSurface(icon);      /* Free icon surface & mask: */
 }
 #endif /* #ifndef _WII_ */
 
 
 /* Parse command-line arguments: */
-
 void parseargs(int argc, char * argv[])
 {
   int i;
@@ -1076,7 +1048,6 @@ void parseargs(int argc, char * argv[])
   loadconfig();
 
   /* Parse arguments: */
-
   for (i = 1; i < argc; i++)
     {
       if (strcmp(argv[i], "--fullscreen") == 0 ||
@@ -1142,7 +1113,6 @@ void parseargs(int argc, char * argv[])
         {
 #ifndef NOOPENGL
           /* Use OpengGL: */
-
           use_gl = true;
 #endif
         }
