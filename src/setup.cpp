@@ -1035,7 +1035,7 @@ void st_abort(const std::string& reason, const std::string& details)
   abort();
 }
 
-#ifndef _WII_ /* Wii Homebrew Apps don't need this */
+#ifndef _WII_ /* Wii Homebrew Apps don't use a window manager nor take arguments */
 void seticon(void) /* Set Icon (private) */
 {
   /* Attempt to load icon into a surface: */
@@ -1053,8 +1053,6 @@ void seticon(void) /* Set Icon (private) */
   SDL_WM_SetIcon(icon, NULL); /* Set icon: */
   SDL_FreeSurface(icon);      /* Free icon surface & mask: */
 }
-#endif /* #ifndef _WII_ */
-
 
 /* Parse command-line arguments: */
 void parseargs(int argc, char * argv[])
@@ -1070,16 +1068,14 @@ void parseargs(int argc, char * argv[])
           strcmp(argv[i], "-f") == 0)
         {
           /* Use full screen: */
-
           use_fullscreen = true;
         }
       else if (strcmp(argv[i], "--window") == 0 ||
                strcmp(argv[i], "-w") == 0)
         {
           /* Use window mode: */
-
           use_fullscreen = false;
-        }      
+        }
       else if (strcmp(argv[i], "--joystick") == 0 || strcmp(argv[i], "-j") == 0)
         {
           assert(i+1 < argc);
@@ -1121,7 +1117,6 @@ void parseargs(int argc, char * argv[])
       else if (strcmp(argv[i], "--show-fps") == 0)
         {
           /* Use full screen: */
-
           show_fps = true;
         }
       else if (strcmp(argv[i], "--opengl") == 0 ||
@@ -1139,7 +1134,6 @@ void parseargs(int argc, char * argv[])
       else if (strcmp(argv[i], "--usage") == 0)
         {
           /* Show usage: */
-
           usage(argv[0], 0);
         }
       else if (strcmp(argv[i], "--version") == 0)
@@ -1205,15 +1199,12 @@ void parseargs(int argc, char * argv[])
       else
         {
           /* Unknown - complain! */
-
           usage(argv[0], 1);
         }
     }
 }
 
-
 /* Display usage: */
-
 void usage(char *prog, int ret)
 {
   FILE *fi;
@@ -1234,6 +1225,7 @@ void usage(char *prog, int ret)
   // Quit!
   exit(ret);
 }
+#endif /* #ifndef _WII_ */
 
 #ifdef _WII_ // Check for Wii-specific compilation
 #include <gccore.h>

@@ -151,12 +151,14 @@ bool process_load_game_menu();
  */
 void update_load_save_game_menu(Menu* pmenu);
 
+#ifndef _WII_
 /**
  * Parses command-line arguments passed to the game.
  * @param argc The number of arguments.
  * @param argv The array of argument strings.
  */
 void parseargs(int argc, char * argv[]);
+#endif
 
 #endif /* SUPERTUX_SETUP_H */
 // EOF

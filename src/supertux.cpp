@@ -63,9 +63,7 @@ int main(int argc, char ** argv)
 
 #ifndef _WII_
   parseargs(argc, argv);
-  ////
 #endif
-
 
 
   st_audio_setup();
