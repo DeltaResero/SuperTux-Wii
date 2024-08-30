@@ -792,15 +792,16 @@ void st_video_setup(void)
 //    }
 
   /* Open display: */
-  if(use_gl)
+  if (use_gl)
     st_video_setup_gl();
   else
     st_video_setup_sdl();
 
   Surface::reload_all();
 
-  /* Set window manager stuff: */
-  SDL_WM_SetCaption("SuperTux " VERSION, "SuperTux");
+#ifndef _WII_ /* Skip window manager setup for Wii builds */
+  SDL_WM_SetCaption("SuperTux Wii " VERSION, "SuperTux Wii");
+#endif /* #ifndef _WII_ */
 }
 
 void st_video_setup_sdl(void)
