@@ -473,7 +473,13 @@ void st_menu(void)
 #else
   options_menu->additem(MN_DEACTIVE,"OpenGL (not supported)",use_gl, 0, MNID_OPENGL);
 #endif
-  //options_menu->additem(MN_TOGGLE,"Fullscreen",use_fullscreen,0, MNID_FULLSCREEN);
+#ifdef _WII_
+  // For Wii, always enable fullscreen and grey out the option
+  options_menu->additem(MN_DEACTIVE,"Fullscreen (no window mode)",true,0, MNID_FULLSCREEN);
+#else
+  options_menu->additem(MN_TOGGLE,"Fullscreen",use_fullscreen,0, MNID_FULLSCREEN);
+#endif
+
   if(audio_device)
     {
       options_menu->additem(MN_TOGGLE,"Sound     ", use_sound,0, MNID_SOUND);
@@ -642,11 +648,15 @@ void process_options_menu(void)
 #endif
       break;
     case MNID_FULLSCREEN:
+#ifndef _WII_
       if(use_fullscreen != options_menu->isToggled(MNID_FULLSCREEN))
         {
           use_fullscreen = !use_fullscreen;
           st_video_setup();
         }
+#else
+      options_menu->get_item_by_id(MNID_FULLSCREEN).toggled = false;
+#endif
       break;
     case MNID_SOUND:
       if(use_sound != options_menu->isToggled(MNID_SOUND))
@@ -798,7 +808,10 @@ void st_video_setup_sdl(void)
 
   if (use_fullscreen)
     {
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF ); /* | SDL_HWSURFACE); */
+      /* Set the video mode to fullscreen mode with double buffering for smoother rendering
+       * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
+      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_DOUBLEBUF);
+
       if (screen == NULL)
         {
           fprintf(stderr,
@@ -811,6 +824,8 @@ void st_video_setup_sdl(void)
     }
   else
     {
+      /* Set the video mode to window mode with double buffering for smoother rendering
+       * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
       screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF );
 
       if (screen == NULL)
@@ -1219,7 +1234,7 @@ void usage(char *prog, int ret)
   exit(ret);
 }
 
-#ifdef __WII__ // Check for Wii-specific compilation
+#ifdef _WII_ // Check for Wii-specific compilation
 #include <gccore.h>
 
 void print_status(const char *st)
@@ -1263,9 +1278,7 @@ void print_status(const char *st)
   sleep(5);
   exit(0);
 }
-
 #else // Non-Wii print_status
-
 void print_status(const char *st)
 {
   printf("\n\n");
@@ -1273,7 +1286,6 @@ void print_status(const char *st)
   sleep(5);
   exit(0);
 }
-
-#endif // End of #ifdef __WII__
+#endif // End of #ifdef _WII_
 
 // EOF
