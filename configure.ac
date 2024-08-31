@@ -16,7 +16,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 dnl Initialization
 AC_PREREQ([2.72])
-AC_INIT([SuperTux],[0.1.4d-wii])
+AC_INIT([SuperTux-Wii],[0.1.4d-wii])
 AC_CONFIG_SRCDIR([src/supertux.cpp])
 AC_CANONICAL_TARGET
 
@@ -24,10 +24,9 @@ dnl Use the build directory for auxiliary scripts
 AC_CONFIG_AUX_DIR([build])
 
 dnl Enable out-of-source builds and use bzip2 for distributions
-dnl AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_INIT_AUTOMAKE([foreign dist-bzip2 silent-rules])
 
-dnl Mimium Version of SDL 1.2.x required
+dnl Minimum Version of SDL 1.2.x required
 SDL_VERSION=1.2.15
 
 dnl Set default flags
@@ -36,7 +35,12 @@ CXXFLAGS=""
 LIBS=""
 LDFLAGS=""
 
-dnl Option to enable Wii build
+dnl Standard tool configuration
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+
+dnl Check if option to enable Wii build was set
 AC_ARG_ENABLE([wii],
   AS_HELP_STRING([--enable-wii], [Build for the Wii platform]),
   [enable_wii="$enableval"],
@@ -44,7 +48,7 @@ AC_ARG_ENABLE([wii],
 
 if test "x$enable_wii" = "xyes"; then
   dnl Wii (Homebrew) Build
-  AC_MSG_RESULT([Building for Wii Homebrew])
+  AC_MSG_RESULT([Configuring Wii Homebrew Build...])
   AM_CONDITIONAL([ENABLE_WII], [true])
 
   dnl Ensure the Wii toolchain is available in the environment
@@ -59,26 +63,80 @@ if test "x$enable_wii" = "xyes"; then
   CXX="$DEVKITPPC/bin/powerpc-eabi-g++"
   host_alias="powerpc-eabi"
 
+  dnl Check/Handle if OpenGL is set to enable for Wii
+  if test "x${enable_opengl}" != "xno"; then
+    dnl Use OpenGX via the already included -lopengx, but implementation is still incomplete
+    AC_MSG_WARN([OpenGL is not currently supported on the Wii platform.])
+    AC_MSG_WARN([It is recommended to reconfigure with --disable-opengl.])
+  else
+    dnl Disable OpenGL/OpenGX (mostly) and use Wii SDL 1.2
+    CXXFLAGS="$CXXFLAGS -DNOOPENGL"
+  fi
+
   dnl Generate the Wii-specific Makefile using Wii.in
   AC_CONFIG_FILES([Wii:Wii.in])
   AC_MSG_NOTICE("Library checks intentionally skipped.")
   AC_MSG_NOTICE("For now we assume everything is properly set up")
   dnl FIXME: Add in proper library detection here via PKG_CONFIG/PKG_CHECK_MODULES if possible
-  dnl FIXME: Doesn't find/use devkitPPC strip unless we use an enviroment variable to override
+  dnl FIXME: Doesn't find/use devkitPPC strip unless we use an environment variable to override
 
 else
   dnl Standard Build
   AM_CONDITIONAL([ENABLE_WII], [false])
-  AC_MSG_RESULT([Stardard Build])
+  AC_MSG_RESULT([Configuring Standard Build...])
 
   dnl Generate the Makefile for native builds
   AC_CONFIG_FILES([Makefile])
-fi
 
-dnl Standard tool configuration
-AC_PROG_CC
-AC_PROG_CXX
-AC_PROG_INSTALL
+  dnl Check if OpenGL should be enabled
+  AC_ARG_ENABLE([opengl],
+    AS_HELP_STRING([--disable-opengl],[disable OpenGL support]),
+    , enable_opengl="yes")
+
+  if test "x${enable_opengl}" = "xno"; then
+    CXXFLAGS="$CXXFLAGS -DNOOPENGL"
+  else
+    AX_CHECK_GL
+    if test "x$no_gl" = "xyes"; then
+      CXXFLAGS="$CXXFLAGS -DNOOPENGL"
+      enable_opengl="no"
+    else
+      CFLAGS="$CFLAGS $GL_CFLAGS"
+      CXXFLAGS="$CXXFLAGS $GL_CFLAGS"
+      LIBS="$LIBS $GL_LIBS -lGL"
+    fi
+  fi
+
+  dnl Enable silent rules if supported
+  m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+  dnl Check for SDL
+  PKG_CHECK_MODULES([SDL], [sdl >= $SDL_VERSION],,
+    AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
+
+  dnl Output our configured flags
+  CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+  CFLAGS="$CFLAGS $SDL_CFLAGS"
+  LIBS="$LIBS $SDL_LIBS"
+
+  dnl Checks for additional SDL components
+  PKG_CHECK_MODULES([SDL_MIXER], [SDL_mixer], ,
+    AC_MSG_ERROR([SDL_mixer library required]))
+  CXXFLAGS="$CXXFLAGS $SDL_MIXER_CFLAGS"
+  CFLAGS="$CFLAGS $SDL_MIXER_CFLAGS"
+  LIBS="$LIBS $SDL_MIXER_LIBS"
+  PKG_CHECK_MODULES([SDL_IMAGE], [SDL_image], ,
+    AC_MSG_ERROR([SDL_image library required]))
+  CXXFLAGS="$CXXFLAGS $SDL_IMAGE_CFLAGS"
+  CFLAGS="$CFLAGS $SDL_IMAGE_CFLAGS"
+  LIBS="$LIBS $SDL_IMAGE_LIBS"
+
+  dnl Check for zlib
+  AC_CHECK_LIB([z], [gzopen],, AC_MSG_ERROR([*** zlib is missing]))
+
+  dnl Set our data prefix
+  CXXFLAGS="$CXXFLAGS -DDATA_PREFIX='\"$datadir/supertux\"'"
+fi
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
@@ -116,20 +174,6 @@ else
   AC_MSG_RESULT([disabled])
 fi
 
-dnl Check if OpenGL should be enabled
-AC_MSG_CHECKING([whether OpenGL should be used])
-AC_ARG_ENABLE([opengl],
-  AS_HELP_STRING([--disable-opengl],[disable OpenGL support]),
-  , enable_opengl="yes")
-if test "x${enable_opengl}" != "xno"; then
-  AC_MSG_RESULT([yes])
-  AC_MSG_WARN([OpenGL is not currently supported on the Wii platform.])
-  AC_MSG_WARN([It is recommended to reconfigure with --disable-opengl.])
-else
-  AC_MSG_RESULT([no])
-  CXXFLAGS="$CXXFLAGS -DNOOPENGL"
-fi
-
 dnl Enable touchscreen controls
 AC_ARG_ENABLE([touchscreen],
   AS_HELP_STRING([--enable-touchscreen],[Touchscreen Controls [default=no]]),
@@ -138,74 +182,55 @@ if test "x$enable_touchscreen" = "xyes"; then
   CXXFLAGS="$CXXFLAGS -DTSCONTROL"
 fi
 
-dnl ===========================================================================
-
-dnl If not building for Wii
-if test "x$enable_wii" != "xyes"; then
-
-  dnl Test if our system even has OpenGL
-  if test "x${enable_opengl}" != "xno"; then
-    AX_CHECK_GL
-  fi
-  if test "x$no_gl" = "xyes" -o "x$enable_opengl" = "xno"; then
-    CXXFLAGS="$CXXFLAGS -DNOOPENGL"
-    enable_opengl="no"
-  else
-    CFLAGS="$CFLAGS $GL_CFLAGS"
-    CXXFLAGS="$CXXFLAGS $GL_CFLAGS"
-    LIBS="$LIBS $GL_LIBS"
-  fi
-
-  # Enable silent rules if supported
-  m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-
-  dnl Check for SDL
-  PKG_CHECK_MODULES([SDL], [sdl >= $SDL_VERSION],,
-    AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
-
-  dnl Output our configured flags
-  CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
-  CFLAGS="$CFLAGS $SDL_CFLAGS"
-  LIBS="$LIBS $SDL_LIBS"
-
-  dnl Checks for additional libraries.
-  PKG_CHECK_MODULES([SDL_MIXER], [SDL_mixer], ,
-    AC_MSG_ERROR([SDL_mixer library required]))
-  CXXFLAGS="$CXXFLAGS $SDL_MIXER_CFLAGS"
-  CFLAGS="$CFLAGS $SDL_MIXER_CFLAGS"
-  LIBS="$LIBS $SDL_MIXER_LIBS"
-  PKG_CHECK_MODULES([SDL_IMAGE], [SDL_image], ,
-    AC_MSG_ERROR([SDL_image library required]))
-  CXXFLAGS="$CXXFLAGS $SDL_IMAGE_CFLAGS"
-  CFLAGS="$CFLAGS $SDL_IMAGE_CFLAGS"
-  LIBS="$LIBS $SDL_IMAGE_LIBS"
-
-  AC_CHECK_LIB([z], [gzopen],, AC_MSG_ERROR([*** zlib is missing]))
-
-  CXXFLAGS="$CXXFLAGS -DDATA_PREFIX='\"$datadir/supertux\"'"
-fi
-
 dnl Checks for library functions.
 AC_CHECK_FUNCS([mkdir strdup strstr])
 
-dnl Verbose output for debugging (uncomment to enable)
-AC_MSG_NOTICE("Flags Applied:")
-AC_MSG_NOTICE([Using CFLAGS: $CFLAGS])
-AC_MSG_NOTICE([Using CXXFLAGS: $CXXFLAGS])
-AC_MSG_NOTICE([Using LDFLAGS: $LDFLAGS])
+dnl Attempt to remove duplicate flags if we have autoconf-archive available
+m4_ifdef([AX_REMOVE_DUPLICATE_FLAGS], [
+  dnl Remove duplicate flags (if any)
+  AX_REMOVE_DUPLICATE_FLAGS([CFLAGS])
+  AX_REMOVE_DUPLICATE_FLAGS([CXXFLAGS])
+  AX_REMOVE_DUPLICATE_FLAGS([LDFLAGS])
+], [
+  # Warn the user if the macro is not available
+  AC_MSG_NOTICE([])
+  AC_MSG_NOTICE([==========================])
+  AC_MSG_WARN([The macro AX_REMOVE_DUPLICATE_FLAGS is not available.])
+  AC_MSG_NOTICE([Consider installing autoconf-archive for better flag management.])
+  AC_MSG_NOTICE([==========================])
+  AC_MSG_NOTICE([])
+])
 
 dnl Output the configuration files
 AC_OUTPUT
 
+dnl Verbose output of configured flags and libraries
+AC_MSG_NOTICE([])
+AC_MSG_NOTICE([ - Build Flags -])
+AC_MSG_NOTICE([--------------------------])
+AC_MSG_NOTICE([CFLAGS:  $CFLAGS])
+AC_MSG_NOTICE([==========================])
+AC_MSG_NOTICE([CXXFLAGS: $CXXFLAGS])
+AC_MSG_NOTICE([==========================])
+AC_MSG_NOTICE([LDFLAGS:  $LDFLAGS])
+AC_MSG_NOTICE([==========================])
+AC_MSG_NOTICE([LIBS:  $LIBS])
+AC_MSG_NOTICE([==========================])
+AC_MSG_NOTICE([])
+
 dnl Summary output
-AC_MSG_NOTICE([""])
-AC_MSG_NOTICE([Features:])
-AC_MSG_NOTICE([=========])
+AC_MSG_NOTICE([])
+AC_MSG_NOTICE([==========================])
+AC_MSG_NOTICE([SuperTux Wii Configuration])
+AC_MSG_NOTICE([==========================])
+AC_MSG_NOTICE([])
+AC_MSG_NOTICE([ - Features -])
+AC_MSG_NOTICE([--------------------------])
 AC_MSG_NOTICE([Profile Mode:   $enable_gprof])
 AC_MSG_NOTICE([Debug Mode:     $enable_debug])
 AC_MSG_NOTICE([OpenGL Support: $enable_opengl])
 AC_MSG_NOTICE([Touchscreen:    $enable_touchscreen])
 AC_MSG_NOTICE([Wii Build:      $enable_wii])
-AC_MSG_NOTICE([""])
+AC_MSG_NOTICE([])
 
-# EOF
+dnl EOF

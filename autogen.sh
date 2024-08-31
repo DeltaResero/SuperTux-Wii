@@ -52,4 +52,7 @@ else
   echo "Build configured. To build, use: make -C build"
 fi
 
+# And one more thing...
+echo "For faster builds, append -jN (replace N with your number of CPU cores)"
+
 # EOF #
