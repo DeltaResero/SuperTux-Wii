@@ -565,9 +565,6 @@ GameSession::check_end_conditions()
 
       if (player_status.lives < 0)
         { // No more lives!?
-          if(st_gl_mode != ST_GL_TEST)
-            drawendscreen();
-
           exit_status = ES_GAME_OVER;
         }
       else
@@ -866,30 +863,6 @@ GameSession::drawstatus()
       white_text->draw("FPS", 460, 40 + offset_y, 1);
       gold_text->draw(str, 520, 40 + offset_y, 1); // (460+60)=520
     }
-}
-
-void
-GameSession::drawendscreen()
-{
-  char str[80];
-
-  if (get_level()->img_bkgd)
-    get_level()->img_bkgd->draw(0, 0);
-  else
-    drawgradient(get_level()->bkgd_top, get_level()->bkgd_bottom);
-
-  blue_text->drawf("GAMEOVER", 0, 200, A_HMIDDLE, A_TOP, 1);
-
-  sprintf(str, "SCORE: %d", player_status.score);
-  gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
-
-  sprintf(str, "COINS: %d", player_status.distros);
-  gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
-
-  flipscreen();
-
-  SDL_Event event;
-  wait_for_event(event,2000,5000,true);
 }
 
 void
