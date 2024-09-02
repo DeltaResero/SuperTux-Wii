@@ -196,8 +196,8 @@ GameSession::start_timers()
 void
 GameSession::on_escape_press()
 {
-  // Don't let the player open the menu when they're dying
-  if(world->get_tux()->dying)
+  // Don't let the player open the menu when they're dying or in the end sequence
+  if(world->get_tux()->dying || end_sequence != NO_ENDSEQUENCE)
     return;
 
   if(game_pause)
