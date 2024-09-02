@@ -29,11 +29,7 @@ struct square
 };
 
 /* selection modes */
-enum {
-  SM_CURSOR,
-  SM_SQUARE,
-  SM_NONE
-};
+enum SelectionMode { SM_CURSOR, SM_SQUARE, SM_NONE };
 
 int leveleditor(char* filename = NULL);
 void newlevel(void);
