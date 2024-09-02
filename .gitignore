@@ -57,6 +57,7 @@ config.status.lineno
 config.sub
 configure
 configure.scan
+COPYING
 depcomp
 install-sh
 libtool

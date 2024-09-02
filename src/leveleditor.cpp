@@ -1082,7 +1082,7 @@ void le_checkevents()
 
       /* testing SDL_KEYDOWN, SDL_KEYUP and SDL_QUIT events*/
       if(event.type == SDL_KEYDOWN
-          || ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEMOTION)
+          || ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)
               && (event.motion.x > 0 &&
                   event.motion.x < screen->w - 64 &&
                   event.motion.y > 0 && event.motion.y < screen->h)))
@@ -1236,7 +1236,7 @@ void le_checkevents()
     if(le_world != NULL)
     {
       if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP ||
-        ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEMOTION) &&
+        ((event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) &&
         (event.motion.x > screen->w-64 && event.motion.x < screen->w &&
         event.motion.y > 0 && event.motion.y < screen->h)))
       {
