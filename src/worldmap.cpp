@@ -203,19 +203,19 @@ Tux::~Tux()
 
 void Tux::loadSprites()
 {
-	largetux_sprite = new Surface(datadir +  "/images/worldmap/tux.png", USE_ALPHA);
-	firetux_sprite = new Surface(datadir +  "/images/worldmap/firetux.png", USE_ALPHA);
-	smalltux_sprite = new Surface(datadir +  "/images/worldmap/smalltux.png", USE_ALPHA);
+  largetux_sprite = new Surface(datadir +  "/images/worldmap/tux.png", USE_ALPHA);
+  firetux_sprite = new Surface(datadir +  "/images/worldmap/firetux.png", USE_ALPHA);
+  smalltux_sprite = new Surface(datadir +  "/images/worldmap/smalltux.png", USE_ALPHA);
 }
 
 void Tux::deleteSprites()
 {
-	if (smalltux_sprite) delete smalltux_sprite;
-	if (firetux_sprite) delete firetux_sprite;
-	if (largetux_sprite) delete largetux_sprite;
-	smalltux_sprite = 0;
-	firetux_sprite = 0;
-	largetux_sprite = 0;
+  if (smalltux_sprite) delete smalltux_sprite;
+  if (firetux_sprite) delete firetux_sprite;
+  if (largetux_sprite) delete largetux_sprite;
+  smalltux_sprite = 0;
+  firetux_sprite = 0;
+  largetux_sprite = 0;
 }
 
 void
@@ -429,14 +429,14 @@ void WorldMap::loadSprites()
 
 void WorldMap::deleteSprites()
 {
-      if (level_sprite) delete level_sprite;
-	if (leveldot_green) delete leveldot_green;
-	if (leveldot_red) delete leveldot_red;
-	if (leveldot_teleporter) delete leveldot_teleporter;
-	level_sprite = 0;
-	leveldot_green = 0;
-	leveldot_red = 0;
-	leveldot_teleporter = 0;
+  if (level_sprite) delete level_sprite;
+  if (leveldot_green) delete leveldot_green;
+  if (leveldot_red) delete leveldot_red;
+  if (leveldot_teleporter) delete leveldot_teleporter;
+  level_sprite = 0;
+  leveldot_green = 0;
+  leveldot_red = 0;
+  leveldot_teleporter = 0;
 }
 
 void
@@ -472,8 +472,8 @@ WorldMap::load_map()
               LispReader reader(lisp_cdr(element));
               reader.read_string("name",  &name);
               reader.read_string("music", &music);
-   	      reader.read_int("start_pos_x", &start_x);
-	      reader.read_int("start_pos_y", &start_y);
+              reader.read_int("start_pos_x", &start_x);
+              reader.read_int("start_pos_y", &start_y);
             }
           else if (strcmp(lisp_symbol(lisp_car(element)), "levels") == 0)
             {
@@ -841,8 +841,8 @@ WorldMap::update(float delta)
                         // Display final credits and go back to the main menu
                         display_text_file(level->extro_filename,
                                           "/images/background/extro.jpg", SCROLL_SPEED_MESSAGE);
-			music_manager->play_music(credits,0);
-			display_text_file("CREDITS",
+                        music_manager->play_music(credits,0);
+                        display_text_file("CREDITS",
                                           "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
                         music_manager->play_music(theme);
                         quit = true;
@@ -908,7 +908,7 @@ WorldMap::update(float delta)
                   play_sound(sounds[SND_TELEPORT], SOUND_CENTER_SPEAKER);
                   tux->back_direction = D_NONE;
                   tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
-                  //SDL_Delay(800); // Delay for visual effect & sound completion before unloading
+                  SDL_Delay(800); // Delay for visual effect & sound completion before unloading
                   unloadsounds();  // FIXME: ideally should load/unload when loading world maps
                 }
         }

@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <SDL.h>
 #include <SDL_image.h>
-#include <filesystem>  // Modern file handling
+#include <filesystem>
 
 #ifndef WIN32
 #include <sys/types.h>
