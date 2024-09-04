@@ -358,19 +358,6 @@ void st_directory_setup(void)
     print_status("Game data not found on SD or USB!\n");;
     exit(1);
   }
-
-  //char home[] = {"sd:/apps/supertux"};
-
-  /* Create them. In the case they exist they won't destroy anything. */
-  //mkdir(st_dir, 0755);
-  //mkdir(st_save_dir, 0755);
-
-  //sprintf(str, "%s/levels", st_dir);
-  //mkdir(str, 0755);
-
-  // User has not that a datadir, so we try some magic
-  //if (datadir.empty())
-  //datadir = "sd:/apps/supertux/data";
 }
 #else
 
@@ -779,23 +766,14 @@ void st_video_setup(void)
       print_status("Could not initialize video\n");
       exit(1);
     }
-    
-//    int flags = IMG_INIT_PNG;//|IMG_INIT_TIF|IMG_INIT_JPG;
-//    int initted = IMG_Init(flags);
-//    if ((initted & flags) != flags) {
-    
-//              char err_str[256];
-            
-//          sprintf(err_str, "Failed to initialize image loaders %d != %d (%s)\n", flags, initted, IMG_GetError());
-          
-//    print_status(err_str);
-//    }
 
-  /* Open display: */
+  /* Open display and select video setup based on if we have OpenGL support: */
+  #ifndef NOOPENGL
   if (use_gl)
-    st_video_setup_gl();
+    st_video_setup_gl();  // Call OpenGL setup function if OpenGL is enabled
   else
-    st_video_setup_sdl();
+  #endif
+    st_video_setup_sdl();  // Call SDL setup function otherwise
 
   Surface::reload_all();
 
@@ -841,10 +819,9 @@ void st_video_setup_sdl(void)
     }
 }
 
+#ifndef NOOPENGL
 void st_video_setup_gl(void)
 {
-#ifndef NOOPENGL
-
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
@@ -893,10 +870,8 @@ void st_video_setup_gl(void)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(0.0f, 0.0f, 0.0f);
-
-#endif
-
 }
+#endif
 
 void st_joystick_setup(void)
 {
@@ -1227,11 +1202,13 @@ void usage(char *prog, int ret)
 }
 #endif /* #ifndef _WII_ */
 
-#ifdef _WII_ // Check for Wii-specific compilation
-#include <gccore.h>
-
 void print_status(const char *st)
 {
+#ifdef _WII_ // Check for Wii-specific compilation
+  //FIXME: Need a non-OpenGX Wii Specific Way
+#ifndef NOOPENGL
+  #include <gccore.h>
+
   static void *xfb = NULL;
   static GXRModeObj *rmode = NULL;
 
@@ -1265,20 +1242,11 @@ void print_status(const char *st)
   {
     VIDEO_WaitVSync();
   }
-
+#endif
+#endif
   printf("\n\n");
   printf("Error!\n %s\n", st);
   sleep(5);
   exit(0);
 }
-#else // Non-Wii print_status
-void print_status(const char *st)
-{
-  printf("\n\n");
-  printf("Error!\n %s\n", st);
-  sleep(5);
-  exit(0);
-}
-#endif // End of #ifdef _WII_
-
 // EOF

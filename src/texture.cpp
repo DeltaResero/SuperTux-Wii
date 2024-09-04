@@ -35,7 +35,7 @@ Surface::Surfaces Surface::surfaces;
  * @param use_alpha Whether to use alpha transparency.
  */
 SurfaceData::SurfaceData(SDL_Surface* temp, int use_alpha_)
-    : type(SURFACE), surface(nullptr), use_alpha(use_alpha_)
+  : type(SURFACE), surface(nullptr), use_alpha(use_alpha_)
 {
   // Copy the given surface and make sure that it is not stored in
   // video memory
@@ -60,7 +60,7 @@ SurfaceData::SurfaceData(SDL_Surface* temp, int use_alpha_)
  * @param use_alpha Whether to use alpha transparency.
  */
 SurfaceData::SurfaceData(const std::string& file_, int use_alpha_)
-    : type(LOAD), surface(nullptr), file(file_), use_alpha(use_alpha_)
+  : type(LOAD), surface(nullptr), file(file_), use_alpha(use_alpha_)
 {
 }
 
@@ -74,8 +74,8 @@ SurfaceData::SurfaceData(const std::string& file_, int use_alpha_)
  * @param use_alpha Whether to use alpha transparency.
  */
 SurfaceData::SurfaceData(const std::string& file_, int x_, int y_, int w_, int h_, int use_alpha_)
-    : type(LOAD_PART), surface(nullptr), file(file_), use_alpha(use_alpha_),
-      x(x_), y(y_), w(w_), h(h_)
+  : type(LOAD_PART), surface(nullptr), file(file_), use_alpha(use_alpha_),
+    x(x_), y(y_), w(w_), h(h_)
 {
 }
 
@@ -147,9 +147,7 @@ SurfaceOpenGL* SurfaceData::create_SurfaceOpenGL()
       return nullptr;
   }
 }
-#endif
 
-#ifndef NOOPENGL
 /**
  * Quick utility function for texture creation.
  * @param input The input value (integer).
@@ -172,7 +170,7 @@ inline int power_of_two(int input)
  * @param use_alpha Whether to use alpha transparency.
  */
 Surface::Surface(SDL_Surface* surf, int use_alpha)
-    : data(surf, use_alpha), w(0), h(0)
+  : data(surf, use_alpha), w(0), h(0)
 {
   impl = data.create();
   if (impl)
@@ -189,7 +187,7 @@ Surface::Surface(SDL_Surface* surf, int use_alpha)
  * @param use_alpha Whether to use alpha transparency.
  */
 Surface::Surface(const std::string& file, int use_alpha)
-    : data(file, use_alpha), w(0), h(0)
+  : data(file, use_alpha), w(0), h(0)
 {
   impl = data.create();
   if (impl)
@@ -210,7 +208,7 @@ Surface::Surface(const std::string& file, int use_alpha)
  * @param use_alpha Whether to use alpha transparency.
  */
 Surface::Surface(const std::string& file, int x, int y, int w, int h, int use_alpha)
-    : data(file, x, y, w, h, use_alpha), w(0), h(0)
+  : data(file, x, y, w, h, use_alpha), w(0), h(0)
 {
   impl = data.create();
   if (impl)
@@ -692,14 +690,14 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   SDL_Surface* conv;
 
   w = power_of_two(surf->w);
-  h = power_of_two(surf->h),
+  h = power_of_two(surf->h);
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
   conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, surf->format->BitsPerPixel,
-                                  0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+                              0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
 #else
   conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, surf->format->BitsPerPixel,
-                                  0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+                              0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
 #endif
 
   /* Save the alpha blending attributes */
