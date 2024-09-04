@@ -68,12 +68,18 @@ After setting up DevkitPPC including the environment variables, use (dkp-)pacman
 ```
 libogc
 libfat-ogc
-zlib
-libwupc
+ppc-vorbisidec
+ppc-zlib
 wii-sdl
 wii-sdl_image
 wii-sdl_mixer
 wii-sdl_ttf
+```
+For the incomplete WIP OpenGL/OpenGX backend, the following are also required:
+```
+wii-freeglut
+wii-glu
+wii-opengx
 ```
 Following the DevkitPro guide along with installing wii-dev and these dependencies should provide everything required to build this project.
 Although there are currently no plans here to port SuperTux Milestone 2, it doesn't mean it can't happen, especially if all the required libraries get ported, but for now, enjoy this port of SuperTux Classic (Milestone 1).

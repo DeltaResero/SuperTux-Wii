@@ -68,9 +68,17 @@ if test "x$enable_wii" = "xyes"; then
     dnl Use OpenGX via the already included -lopengx, but implementation is still incomplete
     AC_MSG_WARN([OpenGL is not currently supported on the Wii platform.])
     AC_MSG_WARN([It is recommended to reconfigure with --disable-opengl.])
+    enable_opengl="yes"
+    dnl Do not escape the backticks here
+    CFLAGS="$CFLAGS \`\$(PREFIX)pkg-config --cflags glut sdl\`"
+    LIBS="$LIBS \`\$(PREFIX)pkg-config --libs glut opengl sdl SDL_mixer\` -lGLU -lglut -lopengx"
   else
     dnl Disable OpenGL/OpenGX (mostly) and use Wii SDL 1.2
+    enable_opengl="no"
+    dnl Do not escape the backticks here
+    CFLAGS="$CFLAGS \`\$(PREFIX)pkg-config --cflags sdl\`"
     CXXFLAGS="$CXXFLAGS -DNOOPENGL"
+    LIBS="$LIBS \`\$(PREFIX)pkg-config --libs sdl SDL_mixer\`"
   fi
 
   dnl Generate the Wii-specific Makefile using Wii.in
@@ -79,7 +87,6 @@ if test "x$enable_wii" = "xyes"; then
   AC_MSG_NOTICE("For now we assume everything is properly set up")
   dnl FIXME: Add in proper library detection here via PKG_CONFIG/PKG_CHECK_MODULES if possible
   dnl FIXME: Doesn't find/use devkitPPC strip unless we use an environment variable to override
-
 else
   dnl Standard Build
   AM_CONDITIONAL([ENABLE_WII], [false])
@@ -100,10 +107,12 @@ else
     if test "x$no_gl" = "xyes"; then
       CXXFLAGS="$CXXFLAGS -DNOOPENGL"
       enable_opengl="no"
+      AC_MSG_RESULT([disabled])
     else
       CFLAGS="$CFLAGS $GL_CFLAGS"
       CXXFLAGS="$CXXFLAGS $GL_CFLAGS"
       LIBS="$LIBS $GL_LIBS -lGL"
+      AC_MSG_RESULT([enabled])
     fi
   fi
 
@@ -200,6 +209,11 @@ m4_ifdef([AX_REMOVE_DUPLICATE_FLAGS], [
   AC_MSG_NOTICE([==========================])
   AC_MSG_NOTICE([])
 ])
+
+dnl Substitute CFLAGS and LIBS into Makefile
+AC_SUBST([CFLAGS])
+AC_SUBST([CXXFLAGS])
+AC_SUBST([LIBS])
 
 dnl Output the configuration files
 AC_OUTPUT

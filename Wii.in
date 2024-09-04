@@ -29,17 +29,17 @@ PORTLIBS := $(DEVKITPRO)/portlibs/wii
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		=	@CFLAGS@ -D_WII_ -O3 -Wall $(MACHDEP) $(INCLUDE) `$(PREFIX)pkg-config --cflags sdl`
-CXXFLAGS	=	@CXXFLAGS@ $(CFLAGS)
+CFLAGS		=	-D_WII_ -O3 -Wall $(MACHDEP) $(INCLUDE) @CFLAGS@
+CXXFLAGS	=	$(CFLAGS) @CXXFLAGS@
 
-LDFLAGS		=	@LDFLAGS@ $(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(LIBOGC_LIB) -logc
+LDFLAGS		=	$(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(LIBOGC_LIB) -logc @LDFLAGS@
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	`$(PREFIX)pkg-config --libs sdl SDL_mixer` -lSDL_image  \
-                 -ljpeg -lpng -lfreetype -lvorbisidec -logg\
-                -lz -lfat -lwiiuse -lbte -logc -lm -lwiikeyboard -lmad -L$(PORTLIBS)/lib -lopengx
+LIBS	:=	-lSDL_image -ljpeg -lpng -lfreetype -lvorbisidec -logg -lz -lfat \
+		    -lwiiuse -lbte -logc -lm -lwiikeyboard -lmad -L$(PORTLIBS)/lib \
+		    @LIBS@
 
 
 #--------------------------------------------------------------------------------

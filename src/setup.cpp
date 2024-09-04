@@ -32,6 +32,10 @@
 #include <SDL_opengl.h>
 #endif
 
+#ifdef _WII_
+#include <gccore.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -1202,12 +1206,10 @@ void usage(char *prog, int ret)
 }
 #endif /* #ifndef _WII_ */
 
+
 void print_status(const char *st)
 {
 #ifdef _WII_ // Check for Wii-specific compilation
-  //FIXME: Need a non-OpenGX Wii Specific Way
-#ifndef NOOPENGL
-  #include <gccore.h>
 
   static void *xfb = NULL;
   static GXRModeObj *rmode = NULL;
@@ -1242,7 +1244,6 @@ void print_status(const char *st)
   {
     VIDEO_WaitVSync();
   }
-#endif
 #endif
   printf("\n\n");
   printf("Error!\n %s\n", st);
