@@ -60,7 +60,10 @@ SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, int use_alpha);
 
 class SurfaceImpl;
 class SurfaceSDL;
+
+#ifndef NOOPENGL
 class SurfaceOpenGL;
+#endif
 
 /**
  * This class holds all the data necessary to construct a surface.
@@ -118,11 +121,13 @@ public:
    */
   SurfaceSDL* create_SurfaceSDL();
 
+#ifndef NOOPENGL
   /**
    * Creates a SurfaceOpenGL instance based on the SurfaceData.
    * @return A pointer to the created SurfaceOpenGL.
    */
   SurfaceOpenGL* create_SurfaceOpenGL();
+#endif
 
   /**
    * Creates a SurfaceImpl instance based on the SurfaceData.

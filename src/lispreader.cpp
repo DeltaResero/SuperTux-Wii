@@ -1,4 +1,4 @@
-/* $Id: lispreader.cpp 2273 2005-01-08 12:40:47Z rmcruz $ */
+// $Id: lispreader.cpp 2273 2005-01-08 12:40:47Z rmcruz $
 /*
  * lispreader.c
  *
@@ -1389,4 +1389,4 @@ lisp_object_t* lisp_read_from_file(const std::string& filename)
     }
 }
 
-// EOF //
+// EOF

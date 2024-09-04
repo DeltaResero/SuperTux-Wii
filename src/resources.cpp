@@ -247,4 +247,4 @@ void unloadsounds()
   }
 }
 
-/* EOF */
+// EOF

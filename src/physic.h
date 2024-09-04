@@ -1,5 +1,5 @@
 //  $Id: physic.h 597 2004-04-20 17:58:12Z grumbel $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -45,7 +45,7 @@ public:
 
     float get_velocity_x();
     float get_velocity_y();
-    
+
     /** sets acceleration applied to the object. (Note that gravity is
      * eventually added to the vertical acceleration)
      */
@@ -73,3 +73,5 @@ private:
 };
 
 #endif /*SUPERTUX_PHYSIC_H*/
+
+// EOF

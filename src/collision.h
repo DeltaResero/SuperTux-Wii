@@ -141,4 +141,4 @@ Tile* collision_goal(const base_type& base);
 
 #endif /* SUPERTUX_COLLISION_H */
 
-/* EOF */
+// EOF

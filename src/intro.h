@@ -19,6 +19,4 @@
 
 void draw_intro();
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
+// EOF

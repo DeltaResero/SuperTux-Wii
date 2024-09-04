@@ -1,5 +1,5 @@
 //  $Id: gameobjs.cpp 834 2004-04-29 10:45:24Z matzebraun $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -13,7 +13,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -210,5 +210,4 @@ FloatingScore::draw()
   gold_text->draw(str, (int)base.x + 16 - strlen(str) * 8, (int)base.y, 1);
 }
 
-/* EOF */
-
+// EOF

@@ -136,3 +136,5 @@ Physic::apply(float frame_ratio, float &x, float &y)
   vx += ax * frame_ratio;
   vy += (ay + grav) * frame_ratio;
 }
+
+// EOF

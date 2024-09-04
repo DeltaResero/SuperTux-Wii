@@ -974,4 +974,4 @@ void Menu::event(SDL_Event& event)
   }
 }
 
-// EOF //
+// EOF

@@ -352,4 +352,4 @@ bool isdistro(float x, float y)
   return tile && tile->distro;
 }
 
-/* EOF */
+// EOF

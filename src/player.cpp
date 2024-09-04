@@ -781,5 +781,4 @@ Player::check_bounds(bool back_scrolling, bool hor_autoscroll)
 
 }
 
-// EOF //
-
+// EOF

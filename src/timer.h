@@ -1,5 +1,5 @@
 //  $Id: timer.h 1081 2004-05-10 20:00:22Z tobgle $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -38,7 +38,7 @@ class Timer
 
  public:
   Timer();
-  
+
   void init(bool st_ticks);
   void start(Uint32 period);
   void stop();
@@ -64,6 +64,4 @@ class Timer
 
 #endif /*SUPERTUX_TIMER_H*/
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
+// EOF

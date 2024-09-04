@@ -160,4 +160,4 @@ void saveconfig()
   }
 }
 
-/* EOF */
+// EOF

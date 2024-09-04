@@ -1,5 +1,5 @@
 //  $Id: gameloop.h 1201 2004-05-15 22:22:54Z sik0fewl $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2004 Bill Kendrick <bill@newbreedsoftware.com>
 //                     Tobias Glaesser <tobi.web@gmx.de>
@@ -14,7 +14,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -122,3 +122,4 @@ void bumpbrick(float x, float y);
 
 #endif /*SUPERTUX_GAMELOOP_H*/
 
+// EOF

@@ -1,5 +1,5 @@
 //  $Id: high_scores.cpp 719 2004-04-25 21:55:39Z grumbel $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2004 Adam Czachorowski <gislan@o2.pl>
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -171,3 +171,5 @@ void save_hs(int score)
       fclose(fi);
     }*/
 }
+
+// EOF

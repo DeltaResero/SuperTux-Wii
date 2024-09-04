@@ -159,4 +159,4 @@ int Sprite::get_height() const
   return surfaces[get_current_frame()]->h;
 }
 
-/* EOF */
+// EOF

@@ -73,5 +73,4 @@ float scroll_x;
 
 unsigned int global_frame_counter;
 
-// EOF //
-
+// EOF

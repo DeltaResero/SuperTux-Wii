@@ -27,7 +27,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <math.h>
 #include <time.h>
 #include <SDL.h>
 
@@ -917,4 +916,4 @@ std::string slotinfo(int slot)
   return tmp;
 }
 
-
+// EOF

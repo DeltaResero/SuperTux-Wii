@@ -47,5 +47,4 @@ void unloadsounds();
 
 #endif
 
-/* EOF */
-
+// EOF

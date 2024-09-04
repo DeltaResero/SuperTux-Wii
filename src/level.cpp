@@ -975,4 +975,4 @@ unsigned int Level::get_tile_at(int x, int y) const
   return ia_tiles[y][x];
 }
 
-/* EOF */
+// EOF

@@ -178,4 +178,4 @@ struct BadGuyData
 
 #endif /*SUPERTUX_BADGUY_H*/
 
-/* EOF */
+// EOF
