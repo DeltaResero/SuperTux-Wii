@@ -227,8 +227,8 @@ public:
 extern Surface* checkbox;
 extern Surface* checkbox_checked;
 extern Surface* back;
-extern Surface* arrow_left;
-extern Surface* arrow_right;
+//extern Surface* arrow_left;
+//extern Surface* arrow_right;
 
 extern Menu* contrib_menu;
 extern Menu* contrib_subset_menu;
@@ -238,12 +238,9 @@ extern Menu* worldmap_menu;
 extern Menu* options_menu;
 extern Menu* options_keys_menu;
 extern Menu* options_joystick_menu;
-extern Menu* highscore_menu;
 extern Menu* load_game_menu;
 extern Menu* save_game_menu;
 
 #endif /*SUPERTUX_MENU_H*/
 
-/* Local Variables: */
-/* mode: c++ */
-/* End: */
+// EOF

@@ -444,7 +444,6 @@ void st_menu(void)
   load_game_menu = new Menu();
   save_game_menu = new Menu();
   game_menu      = new Menu();
-  //highscore_menu = new Menu();
   contrib_menu   = new Menu();
   contrib_subset_menu   = new Menu();
   worldmap_menu  = new Menu();
@@ -697,14 +696,10 @@ void st_general_setup(void)
 
   black_text  = new Text(datadir + "/images/status/letters-black.png", TEXT_TEXT, 16,18);
   gold_text   = new Text(datadir + "/images/status/letters-gold.png", TEXT_TEXT, 16,18);
-  //silver_text = new Text(datadir + "/images/status/letters-silver.png", TEXT_TEXT, 16,18);
   blue_text   = new Text(datadir + "/images/status/letters-blue.png", TEXT_TEXT, 16,18);
-  //red_text    = new Text(datadir + "/images/status/letters-red.png", TEXT_TEXT, 16,18);
-  //green_text  = new Text(datadir + "/images/status/letters-green.png", TEXT_TEXT, 16,18);
   white_text  = new Text(datadir + "/images/status/letters-white.png", TEXT_TEXT, 16,18);
   white_small_text = new Text(datadir + "/images/status/letters-white-small.png", TEXT_TEXT, 8,9);
   white_big_text   = new Text(datadir + "/images/status/letters-white-big.png", TEXT_TEXT, 20,22);
-  //yellow_nums = new Text(datadir + "/images/status/numbers.png", TEXT_NUM, 32,32);
 
   /* Load GUI/menu images: */
   checkbox = new Surface(datadir + "/images/status/checkbox.png", USE_ALPHA);
@@ -725,14 +720,10 @@ void st_general_free(void)
   /* Free global images: */
   delete black_text;
   delete gold_text;
-  //delete silver_text;
   delete white_text;
   delete blue_text;
-  //delete red_text;
-  //delete green_text;
   delete white_small_text;
   delete white_big_text;
-  //delete yellow_nums;
 
   /* Free GUI/menu images: */
   delete checkbox;
@@ -748,7 +739,6 @@ void st_general_free(void)
   delete worldmap_menu;
   delete contrib_subset_menu;
   delete contrib_menu;
-  //delete highscore_menu;
   delete game_menu;
   delete save_game_menu;
   delete load_game_menu;

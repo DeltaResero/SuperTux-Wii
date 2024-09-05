@@ -37,15 +37,14 @@
 #include "scene.h"
 #include "leveleditor.h"
 #include "timer.h"
-#include "high_scores.h"
 
 #define FLICK_CURSOR_TIME 500
 
 Surface* checkbox;
 Surface* checkbox_checked;
 Surface* back;
-Surface* arrow_left;
-Surface* arrow_right;
+//Surface* arrow_left;
+//Surface* arrow_right;
 
 Menu* main_menu      = 0;
 Menu* game_menu      = 0;
@@ -53,7 +52,6 @@ Menu* worldmap_menu  = 0;
 Menu* options_menu   = 0;
 Menu* options_keys_menu     = 0;
 Menu* options_joystick_menu = 0;
-Menu* highscore_menu = 0;
 Menu* load_game_menu = 0;
 Menu* save_game_menu = 0;
 Menu* contrib_menu   = 0;
@@ -700,8 +698,8 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
       int text_pos   = (text_width + font_width) / 2;
 
       /* Draw arrows */
-      arrow_left->draw(x_pos - list_pos + text_pos - 17, y_pos - 8);
-      arrow_right->draw(x_pos - list_pos + text_pos - 1 + list_pos_2, y_pos - 8);
+      //arrow_left->draw(x_pos - list_pos + text_pos - 17, y_pos - 8);
+      //arrow_right->draw(x_pos - list_pos + text_pos - 1 + list_pos_2, y_pos - 8);
 
       /* Draw input background */
       fillrect(x_pos - list_pos + text_pos - 1, y_pos - 10, list_pos_2 + 2, 20, 255, 255, 255, 255);

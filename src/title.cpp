@@ -38,7 +38,6 @@
 #include "globals.h"
 #include "title.h"
 #include "screen.h"
-#include "high_scores.h"
 #include "menu.h"
 #include "texture.h"
 #include "timer.h"

@@ -1,5 +1,5 @@
 //  $Id: globals.cpp 1025 2004-05-07 13:46:50Z rmcruz $
-// 
+//
 //  SuperTux
 //  Copyright (C) 2004 SuperTux Development Team, see AUTHORS for details
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -28,10 +28,10 @@ JoystickKeymap::JoystickKeymap()
   a_button     = 0;
   b_button     = 1;
   start_button = 2;
-  
+
   x_axis = 0;
   y_axis = 1;
-    
+
   dead_zone = 4096;
 }
 
@@ -40,11 +40,7 @@ JoystickKeymap joystick_keymap;
 SDL_Surface * screen;
 Text* black_text;
 Text* gold_text;
-Text* silver_text;
 Text* blue_text;
-Text* red_text;
-Text* green_text;
-Text* yellow_nums;
 Text* white_text;
 Text* white_small_text;
 Text* white_big_text;
@@ -74,7 +70,7 @@ int wait_for_event(SDL_Event& event,unsigned int min_delay, unsigned int max_del
   int i;
   Timer maxdelay;
   Timer mindelay;
-  
+
   maxdelay.init(false);
   mindelay.init(false);
 
@@ -125,3 +121,5 @@ int wait_for_event(SDL_Event& event,unsigned int min_delay, unsigned int max_del
 
   return 0;
 }
+
+// EOF

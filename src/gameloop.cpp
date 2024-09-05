@@ -40,7 +40,6 @@
 #include "gameloop.h"
 #include "screen.h"
 #include "setup.h"
-#include "high_scores.h"
 #include "menu.h"
 #include "badguy.h"
 #include "world.h"

@@ -129,7 +129,4 @@ extern World global_world;
 
 #endif /*SUPERTUX_WORLD_H*/
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
-
+// EOF

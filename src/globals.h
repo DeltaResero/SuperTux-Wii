@@ -52,14 +52,10 @@ extern JoystickKeymap joystick_keymap;
 extern SDL_Surface * screen;
 extern Text* black_text;
 extern Text* gold_text;
-extern Text* silver_text;
 extern Text* white_text;
 extern Text* white_small_text;
 extern Text* white_big_text;
 extern Text* blue_text;
-extern Text* red_text;
-extern Text* green_text;
-extern Text* yellow_nums;
 
 extern MouseCursor * mouse_cursor;
 
@@ -86,3 +82,5 @@ extern SDL_Joystick * js;
 int wait_for_event(SDL_Event& event,unsigned int min_delay = 0, unsigned int max_delay = 0, bool empty_events = false);
 
 #endif /* SUPERTUX_GLOBALS_H */
+
+// EOF
