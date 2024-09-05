@@ -551,8 +551,9 @@ void Menu::action()
     }
   }
 
-  MenuItem& new_item = item[active_item];
-  if (new_item.kind == MN_DEACTIVE || new_item.kind == MN_LABEL || new_item.kind == MN_HL)
+  if(item[active_item].kind == MN_DEACTIVE ||
+     item[active_item].kind == MN_LABEL ||
+     item[active_item].kind == MN_HL)
   {
     // Skip the horizontal line item
     if (menuaction != MENU_ACTION_UP && menuaction != MENU_ACTION_DOWN)
