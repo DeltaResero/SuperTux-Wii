@@ -334,11 +334,12 @@ World::action(double frame_ratio)
 // the time it takes to move the camera (in ms)
 #define CHANGE_DIR_SCROLL_SPEED 2000
 
-/* This functions takes cares of the scrolling */
+/* This function takes care of the scrolling */
 void World::scrolling(double frame_ratio)
 {
-  if(level->hor_autoscroll_speed)
+  if (level->hor_autoscroll_speed)
   {
+    // Auto-scroll horizontally based on level configuration
     scroll_x += level->hor_autoscroll_speed * frame_ratio;
     return;
   }
@@ -352,8 +353,11 @@ void World::scrolling(double frame_ratio)
 
     if (scrolling_timer.check())
     {
-      float final_scroll_x = scroll_x; // Initialize with a default value
+      float final_scroll_x = scroll_x; // Initialize with current scroll position
+      float constant1;
+      float constant2;
 
+      // Determine the target scroll position based on player velocity and direction
       if (tux.physic.get_velocity_x() > 0)
         final_scroll_x = tux_pos_x - (screen->w - X_SPACE);
       else if (tux.physic.get_velocity_x() < 0)
@@ -366,14 +370,36 @@ void World::scrolling(double frame_ratio)
           final_scroll_x = tux_pos_x - X_SPACE;
       }
 
-      scroll_x +=   (final_scroll_x - scroll_x)
-                  / (frame_ratio * (CHANGE_DIR_SCROLL_SPEED / 100))
-                  + (tux.physic.get_velocity_x() * frame_ratio + tux.physic.get_acceleration_x() * frame_ratio * frame_ratio);
-      // std::cerr << tux_pos_x << " " << final_scroll_x << " " << scroll_x << std::endl;
+      // Apply smoothing parameters
+      if ((tux.physic.get_velocity_x() > 0 && tux.dir == RIGHT) ||
+          (tux.physic.get_velocity_x() < 0 && tux.dir == LEFT))
+      {
+        constant1 = 1.0;
+        constant2 = .4;
+      }
+      else
+      {
+        constant1 = 0.;
+        constant2 = 0.;
+      }
 
+      float number = 2.5 / (frame_ratio * CHANGE_DIR_SCROLL_SPEED / 1000) *
+                     exp((CHANGE_DIR_SCROLL_SPEED - scrolling_timer.get_left()) / 1400.);
+      if (tux.dir == LEFT) number *= -1.;
+
+      // Update the scroll position with smoothing
+      scroll_x += number
+          + constant1 * tux.physic.get_velocity_x() * frame_ratio
+          + constant2 * tux.physic.get_acceleration_x() * frame_ratio * frame_ratio;
+
+      // Ensure scroll_x doesn't overshoot the target position
+      if ((tux.dir == RIGHT && final_scroll_x - scroll_x < 0) ||
+          (tux.dir == LEFT && final_scroll_x - scroll_x > 0))
+        scroll_x = final_scroll_x;
     }
     else
     {
+      // Handle scrolling based on player movement in debug mode or back scrolling
       if (tux.physic.get_velocity_x() > 0 && scroll_x < tux_pos_x - (screen->w - X_SPACE))
         scroll_x = tux_pos_x - (screen->w - X_SPACE);
       else if (tux.physic.get_velocity_x() < 0 && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
@@ -387,8 +413,7 @@ void World::scrolling(double frame_ratio)
       }
     }
   }
-
-  else /*no debug*/
+  else /* no debug */
   {
     if (tux.physic.get_velocity_x() > 0 && scroll_x < tux_pos_x - (screen->w - X_SPACE))
       scroll_x = tux_pos_x - (screen->w - X_SPACE);
@@ -397,9 +422,9 @@ void World::scrolling(double frame_ratio)
     else
     {
       if (tux.dir == RIGHT && scroll_x < tux_pos_x - (screen->w - X_SPACE))
-          scroll_x = tux_pos_x - (screen->w - X_SPACE);
+        scroll_x = tux_pos_x - (screen->w - X_SPACE);
       else if (tux.dir == LEFT && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
-          scroll_x = tux_pos_x - X_SPACE;
+        scroll_x = tux_pos_x - X_SPACE;
     }
   }
 
