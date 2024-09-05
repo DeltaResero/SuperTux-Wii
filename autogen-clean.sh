@@ -35,11 +35,11 @@ fi
 
 # Remove autogen generated and other temporary files after make clean
 echo "Removing autogen generated files in the project root..."
-rm -f aclocal.m4 compile config.guess config.sub depcomp install-sh missing mkinstalldirs ltmain.sh stamp-h.in ltconfig stamp-h config.h.in configure config.status config.log
+rm -f aclocal.m4 compile config.guess config.sub depcomp install-sh missing mkinstalldirs ltmain.sh stamp-h.in ltconfig stamp-h config.h.in configure configure~ config.status config.log
 
 # Remove all generated and temporary files inside the build directory after make clean
 echo "Removing autogen generated files in the build directory..."
-rm -f build/aclocal.m4 build/compile build/config.guess build/config.sub build/depcomp build/install-sh build/missing build/mkinstalldirs build/ltmain.sh build/stamp-h.in build/ltconfig build/stamp-h build/config.h.in build/configure build/config.status build/config.log build/Makefile
+rm -f build/aclocal.m4 build/compile build/config.guess build/config.sub build/depcomp build/install-sh build/missing build/mkinstalldirs build/ltmain.sh build/stamp-h.in build/ltconfig build/stamp-h build/config.h.in build/configure build/configure~ build/config.status build/config.log build/Makefile
 
 # Remove remaining generated files/folders
 rm -rf autom4te.cache
