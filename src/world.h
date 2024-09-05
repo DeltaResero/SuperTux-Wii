@@ -70,7 +70,7 @@ public:
   World(const std::string& subset, int level_nr);
   World() {};
   ~World();
-  
+
   void activate_world();
   void deactivate_world();
 
@@ -80,18 +80,18 @@ public:
   void set_defaults();
 
   void draw();
-  void action(double frame_ratio);
-  void scrolling(double frame_ratio);   // camera scrolling
+  void action(float frame_ratio);
+  void scrolling(float frame_ratio);   // camera scrolling
 
   void play_music(int musictype);
   int get_music_type();
-  
+
 
   /** Checks for all possible collisions. And calls the
       collision_handlers, which the collision_objects provide for this
       case (or not). */
   void collision_handler();
-  
+
   void activate_particle_systems();
   void activate_bad_guys();
 

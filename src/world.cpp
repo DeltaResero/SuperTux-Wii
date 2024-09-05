@@ -276,41 +276,41 @@ World::draw()
 }
 
 void
-World::action(double frame_ratio)
+World::action(float elapsed_time)
 {
-  tux.action(frame_ratio);
+  tux.action(elapsed_time);
   tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
-  scrolling(frame_ratio);
+  scrolling(elapsed_time);
 
   /* Handle bouncy distros: */
   for (unsigned int i = 0; i < bouncy_distros.size(); i++)
-    bouncy_distros[i]->action(frame_ratio);
+    bouncy_distros[i]->action(elapsed_time);
 
   /* Handle broken bricks: */
   for (unsigned int i = 0; i < broken_bricks.size(); i++)
-    broken_bricks[i]->action(frame_ratio);
+    broken_bricks[i]->action(elapsed_time);
 
   // Handle all kinds of game objects
   for (unsigned int i = 0; i < bouncy_bricks.size(); i++)
-    bouncy_bricks[i]->action(frame_ratio);
+    bouncy_bricks[i]->action(elapsed_time);
 
   for (unsigned int i = 0; i < floating_scores.size(); i++)
-    floating_scores[i]->action(frame_ratio);
+    floating_scores[i]->action(elapsed_time);
 
   for (unsigned int i = 0; i < bullets.size(); ++i)
-    bullets[i].action(frame_ratio);
+    bullets[i].action(elapsed_time);
 
   for (unsigned int i = 0; i < upgrades.size(); i++)
-    upgrades[i].action(frame_ratio);
+    upgrades[i].action(elapsed_time);
 
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
-    (*i)->action(frame_ratio);
+    (*i)->action(elapsed_time);
 
   /* update particle systems */
   std::vector<ParticleSystem*>::iterator p;
   for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
     {
-      (*p)->simulate(frame_ratio);
+      (*p)->simulate(elapsed_time);
     }
 
   /* Handle all possible collisions. */
@@ -335,12 +335,12 @@ World::action(double frame_ratio)
 #define CHANGE_DIR_SCROLL_SPEED 2000
 
 /* This function takes care of the scrolling */
-void World::scrolling(double frame_ratio)
+void World::scrolling(float elapsed_time)
 {
   if (level->hor_autoscroll_speed)
   {
     // Auto-scroll horizontally based on level configuration
-    scroll_x += level->hor_autoscroll_speed * frame_ratio;
+    scroll_x += level->hor_autoscroll_speed * elapsed_time;
     return;
   }
 
@@ -383,14 +383,14 @@ void World::scrolling(double frame_ratio)
         constant2 = 0.;
       }
 
-      float number = 2.5 / (frame_ratio * CHANGE_DIR_SCROLL_SPEED / 1000) *
+      float number = 2.5 / (elapsed_time * CHANGE_DIR_SCROLL_SPEED / 1000) *
                      exp((CHANGE_DIR_SCROLL_SPEED - scrolling_timer.get_left()) / 1400.);
       if (tux.dir == LEFT) number *= -1.;
 
       // Update the scroll position with smoothing
       scroll_x += number
-          + constant1 * tux.physic.get_velocity_x() * frame_ratio
-          + constant2 * tux.physic.get_acceleration_x() * frame_ratio * frame_ratio;
+          + constant1 * tux.physic.get_velocity_x() * elapsed_time
+          + constant2 * tux.physic.get_acceleration_x() * elapsed_time * elapsed_time;
 
       // Ensure scroll_x doesn't overshoot the target position
       if ((tux.dir == RIGHT && final_scroll_x - scroll_x < 0) ||
