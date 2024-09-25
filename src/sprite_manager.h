@@ -1,4 +1,4 @@
-//  $Id: sprite_manager.h 737 2004-04-26 12:21:23Z grumbel $
+//  sprite_manager.h
 //
 //  SuperTux
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>

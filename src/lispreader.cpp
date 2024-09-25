@@ -1,4 +1,3 @@
-// $Id: lispreader.cpp 2273 2005-01-08 12:40:47Z rmcruz $
 /*
  * lispreader.c
  *

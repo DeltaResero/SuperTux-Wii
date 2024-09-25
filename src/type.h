@@ -1,4 +1,4 @@
-//  $Id: type.h 1026 2004-05-07 20:48:22Z tobgle $
+//  type.h
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -88,3 +88,4 @@ void  string_list_free(string_list_type* pstring_list);
 
 #endif /*SUPERTUX_TYPE_H*/
 
+// EOF

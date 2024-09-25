@@ -1,5 +1,5 @@
-//  $Id: particlesystem.h 585 2004-04-20 11:09:34Z grumbel $
-// 
+//  particlesystem.h
+//
 //  SuperTux
 //  Copyright (C) 2004 Matthias Braun <matze@braunis.de>
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -43,7 +43,7 @@ class ParticleSystem
 public:
     ParticleSystem();
     virtual ~ParticleSystem();
-    
+
     void draw(float scrollx, float scrolly, int layer);
 
     virtual void simulate(float elapsed_time) = 0;
@@ -59,7 +59,7 @@ protected:
         int layer;
         Surface* texture;
     };
-    
+
     std::vector<Particle*> particles;
     float virtual_width, virtual_height;
 };
@@ -71,14 +71,14 @@ public:
     virtual ~SnowParticleSystem();
 
     virtual void simulate(float elapsed_time);
-    
+
 private:
     class SnowParticle : public Particle
     {
     public:
         float speed;
     };
-    
+
     Surface* snowimages[3];
 };
 
@@ -96,9 +96,10 @@ private:
     public:
         float speed;
     };
-    
+
     Surface* cloudimage;
 };
 
 #endif
 
+// EOF

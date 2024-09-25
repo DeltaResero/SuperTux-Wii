@@ -1,4 +1,4 @@
-//  $Id: intro.h 705 2004-04-25 14:27:49Z grumbel $
+//  intro.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

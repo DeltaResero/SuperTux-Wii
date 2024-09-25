@@ -1,4 +1,4 @@
-//  $Id: button.h 1076 2004-05-10 16:09:49Z tobgle $
+//  button.h
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

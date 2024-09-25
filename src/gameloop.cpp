@@ -1,4 +1,4 @@
-//  $Id: gameloop.cpp 2664 2005-07-01 17:23:40Z matzebraun $
+//  gameloop.cpp
 //
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

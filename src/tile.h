@@ -1,5 +1,5 @@
-//  $Id: tile.h 1041 2004-05-08 11:35:04Z tobgle $
-// 
+//  tile.h
+//
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -42,10 +42,10 @@ public:
 
   std::vector<Surface*> images;
   std::vector<Surface*> editor_images;
-  
+
   std::vector<std::string>  filenames;
   std::vector<std::string> editor_filenames;
-  
+
   /** solid tile that is indestructable by Tux */
   bool solid;
 
@@ -100,18 +100,18 @@ class TileManager
  private:
   TileManager();
   ~TileManager();
-  
+
   std::vector<Tile*> tiles;
   static TileManager* instance_ ;
   static std::set<TileGroup>* tilegroups_;
   void load_tileset(std::string filename);
 
   std::string current_tileset;
-  
+
  public:
   static TileManager* instance() { return instance_ ? instance_ : instance_ = new TileManager(); }
   static void destroy_instance() { delete instance_; instance_ = 0; }
-  
+
   static std::set<TileGroup>* tilegroups() { if(!instance_) { instance_ = new TileManager(); } return tilegroups_ ? tilegroups_ : tilegroups_ = new std::set<TileGroup>; }
   Tile* get(unsigned int id) {
     if(id < tiles.size())
@@ -124,8 +124,10 @@ class TileManager
         // user code doesn't have to check for NULL pointers all over
         // the place
         return tiles[0]; 
-      } 
+      }
   }
 };
 
 #endif
+
+// EOF

@@ -1,4 +1,4 @@
-//  $Id: text.cpp 1016 2004-05-07 00:20:29Z rmcruz $
+//  text.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

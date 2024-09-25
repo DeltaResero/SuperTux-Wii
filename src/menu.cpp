@@ -1,4 +1,4 @@
-//  $Id: menu.cpp 2653 2005-06-29 12:39:52Z matzebraun $
+//  menu.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

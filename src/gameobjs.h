@@ -1,5 +1,5 @@
-//  $Id: gameobjs.h 922 2004-05-02 21:28:32Z tobgle $
-// 
+//  gameobjs.h
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -13,7 +13,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
@@ -34,7 +34,7 @@
 class BouncyDistro : public GameObject
 {
  public:
-  
+
   void init(float x, float y);
   void action(double frame_ratio);
   void draw(); 
@@ -78,15 +78,13 @@ class FloatingScore : public GameObject
  public:
   int value;
   Timer timer;
-  
+
   void init(float x, float y, int s);
   void action(double frame_ratio);
   void draw();
   std::string type() { return "FloatingScore"; };
 };
 
-#endif 
+#endif
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
+// EOF

@@ -1,4 +1,4 @@
-//  $Id: supertux.cpp 997 2004-05-05 16:07:20Z rmcruz $
+//  supertux.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -37,7 +37,7 @@
     #include <wiiuse/wpad.h>
     #include <ogc/lwp_watchdog.h>
     #include <fat.h>
-	//#include <dopmii/FileSystem.h>
+    //#include <dopmii/FileSystem.h>
 #endif
 
 //added as Supertuxs takes a long, long time to load
@@ -110,3 +110,5 @@ int main(int argc, char ** argv)
 
   return 0;
 }
+
+// EOF

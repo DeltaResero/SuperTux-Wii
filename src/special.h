@@ -1,4 +1,4 @@
-//  $Id: special.h 922 2004-05-02 21:28:32Z tobgle $
+//  special.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
@@ -51,7 +51,7 @@ public:
   void draw();
   void collision(void* p_c_object, int c_object, CollisionType type);
   std::string type() { return "Upgrade"; };
-  
+
   ~Upgrade() {};
 
 private:
@@ -70,7 +70,7 @@ class Bullet : public GameObject
   int life_count;
   base_type base;
   base_type old_base;
-  
+
   void init(float x, float y, float xm, Direction dir);
   void action(double frame_ratio);
   void draw();
@@ -86,3 +86,5 @@ private:
 };
 
 #endif /*SUPERTUX_SPECIAL_H*/
+
+// EOF

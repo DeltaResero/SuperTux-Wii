@@ -1,5 +1,5 @@
-//  $Id: world.h 1696 2004-08-03 18:47:15Z rmcruz $
-// 
+//  world.h
+//
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>
@@ -14,7 +14,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -124,7 +124,7 @@ public:
   void apply_bonuses();
 };
 
-/** FIMXE: Workaround for the leveleditor mainly */
+/** FIXME: Workaround for the leveleditor mainly */
 extern World global_world;
 
 #endif /*SUPERTUX_WORLD_H*/

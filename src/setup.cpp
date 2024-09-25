@@ -1,4 +1,4 @@
-//  $Id: setup.cpp 2702 2005-07-08 12:18:16Z wansti $
+//  setup.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
@@ -550,8 +550,6 @@ void st_menu(void)
   worldmap_menu->additem(MN_GOTO,"Options",0,options_menu);
   worldmap_menu->additem(MN_HL,"",0,0);
   worldmap_menu->additem(MN_ACTION,"Quit Game",0,0,MNID_QUITWORLDMAP);
-
-  //highscore_menu->additem(MN_TEXTFIELD,"Enter your name:",0,0);
 }
 
 void update_load_save_game_menu(Menu* pmenu)
@@ -1240,4 +1238,5 @@ void print_status(const char *st)
   sleep(5);
   exit(0);
 }
+
 // EOF

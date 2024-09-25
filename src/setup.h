@@ -1,4 +1,4 @@
-//  $Id: setup.h 803 2004-04-28 13:18:54Z grumbel $
+//  setup.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
@@ -161,4 +161,5 @@ void parseargs(int argc, char * argv[]);
 #endif
 
 #endif /* SUPERTUX_SETUP_H */
+
 // EOF

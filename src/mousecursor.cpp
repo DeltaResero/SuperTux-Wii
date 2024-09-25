@@ -1,4 +1,4 @@
-//  $Id: mousecursor.cpp 1076 2004-05-10 16:09:49Z tobgle $
+//  mousecursor.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2004 Ricardo Cruz <rick2@aeiou.pt>

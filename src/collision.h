@@ -1,4 +1,4 @@
-//  $Id: collision.h 760 2004-04-26 19:11:54Z grumbel $
+//  collision.h
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

@@ -1,4 +1,4 @@
-//  $Id: worldmap.cpp 2702 2005-07-08 12:18:16Z wansti $
+//  worldmap.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>

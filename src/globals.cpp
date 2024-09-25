@@ -1,4 +1,4 @@
-//  $Id: globals.cpp 1025 2004-05-07 13:46:50Z rmcruz $
+//  globals.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 SuperTux Development Team, see AUTHORS for details

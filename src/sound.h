@@ -1,4 +1,4 @@
-//  $Id: sound.h 1741 2004-08-10 22:50:39Z rmcruz $
+//  sound.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
@@ -86,3 +86,5 @@ void free_chunk(Mix_Chunk*chunk);
 void play_sound(Mix_Chunk * snd, enum Sound_Speaker whichSpeaker);
 
 #endif /*SUPERTUX_SOUND_H*/
+
+// EOF

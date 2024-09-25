@@ -1,4 +1,4 @@
-//  $Id: music_manager.h 827 2004-04-29 00:15:11Z grumbel $
+//  music_manager.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

@@ -1,5 +1,5 @@
-//  $Id: worldmap.h 1746 2004-08-11 11:09:42Z wansti $
-// 
+//  worldmap.h
+//
 //  SuperTux
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>
 //
@@ -12,7 +12,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -60,7 +60,7 @@ class Tile
 public:
   Tile();
   ~Tile();
-  
+
   Surface* sprite;
 
   // Directions in which Tux is allowed to walk from this tile
@@ -123,7 +123,7 @@ private:
 public: 
   Tux(WorldMap* worldmap_);
   ~Tux();
-  
+
   void loadSprites();
   void deleteSprites();
 
@@ -157,7 +157,7 @@ private:
   std::vector<int> tilemap;
   int width;
   int height;
-  
+
   int start_x;
   int start_y;
 
@@ -179,12 +179,12 @@ public:
     /** Message to show in the Map during a certain time */
     std::string display_map_message;
     bool passive_message;
-	 
-	 /** Teleporters */
-	 int teleport_dest_x;
-	 int teleport_dest_y;
-	 std::string teleport_message;
-	 bool invisible_teleporter;
+
+    /** Teleporters */
+    int teleport_dest_x;
+    int teleport_dest_y;
+    std::string teleport_message;
+    bool invisible_teleporter;
 
     /** If false, disables the auto walking after finishing a level */
     bool auto_path;
@@ -235,7 +235,7 @@ public:
   void display();
 
   void load_map();
-  
+
   void get_input();
 
   /** Update Tux position */
@@ -258,10 +258,10 @@ public:
 
   const std::string& get_world_title() const
     { return name; }
-  
+
   const int& get_start_x() const
     { return start_x; }
-  
+
   const int& get_start_y() const
     { return start_y; }
 
@@ -279,6 +279,4 @@ private:
 
 #endif
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
+// EOF

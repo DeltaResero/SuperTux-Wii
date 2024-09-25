@@ -1,4 +1,4 @@
-//  $Id: globals.h 1025 2004-05-07 13:46:50Z rmcruz $
+//  globals.h
 //
 //  SuperTux
 //  Copyright (C) 2004 Bill Kendrick <bill@newbreedsoftware.com>

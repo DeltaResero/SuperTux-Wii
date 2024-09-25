@@ -1,4 +1,4 @@
-//  $Id: player.h 2620 2005-06-18 12:12:10Z matzebraun $
+//  player.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
@@ -54,7 +54,7 @@ public:
   int left;
   int right;
   int fire;
-  
+
   PlayerKeymap();
 };
 
@@ -151,9 +151,9 @@ public:
   void grow();
 
   void jump_of_badguy(BadGuy* badguy);
-  
+
   std::string type() { return "Player";};
-  
+
 private:
   void handle_horizontal_input();
   void handle_vertical_input();
@@ -162,6 +162,4 @@ private:
 
 #endif /*SUPERTUX_PLAYER_H*/
 
-/* Local Variables: */
-/* mode:c++ */
-/* End: */
+// EOF

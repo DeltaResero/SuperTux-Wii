@@ -1,4 +1,4 @@
-//  $Id: texture.h 1053 2004-05-09 18:08:02Z tobgle $
+//  texture.h
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

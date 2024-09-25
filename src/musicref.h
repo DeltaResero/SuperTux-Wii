@@ -1,4 +1,4 @@
-//  $Id: musicref.h 682 2004-04-24 14:49:04Z grumbel $
+//  musicref.h
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2004 Matthias Braun <matze@braunis.de>
@@ -37,7 +37,7 @@ public:
 private:
   friend class MusicManager;
   MusicRef(MusicManager::MusicResource* music);
-  
+
   MusicManager::MusicResource* music;
 };
 

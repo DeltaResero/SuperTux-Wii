@@ -1,4 +1,4 @@
-//  $Id: player.cpp 2620 2005-06-18 12:12:10Z matzebraun $
+//  player.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>

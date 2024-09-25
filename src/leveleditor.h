@@ -1,5 +1,5 @@
-//  $Id: leveleditor.h 1201 2004-05-15 22:22:54Z sik0fewl $
-// 
+//  leveleditor.h
+//
 //  SuperTux
 //  Copyright (C) 2003 Ricardo Cruz <rick2@aeiou.pt>
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
@@ -13,7 +13,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-// 
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -41,3 +41,5 @@ int le_init(void);
 void le_checkevents(void);
 
 #endif /*SUPERTUX_LEVELEDITOR_H*/
+
+// EOF

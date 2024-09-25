@@ -1,4 +1,4 @@
-//  $Id: collision.cpp 1026 2004-05-07 20:48:22Z tobgle $
+//  collision.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

@@ -1,4 +1,4 @@
-//  $Id: tile.cpp 1011 2004-05-06 19:55:39Z tobgle $
+//  tile.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 Tobias Glaesser <tobi.web@gmx.de>

@@ -1,4 +1,4 @@
-//  $Id: resources.cpp 2684 2005-07-02 12:19:22Z wansti $
+//  resources.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>

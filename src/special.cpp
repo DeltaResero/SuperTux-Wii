@@ -1,4 +1,4 @@
-//  $Id: special.cpp 1812 2004-08-18 21:27:29Z rmcruz $
+//  special.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
@@ -91,7 +91,7 @@ Bullet::action(double frame_ratio)
   base.y = base.y + base.ym * frame_ratio;
 
   collision_swept_object_map(&old_base,&base);
-      
+
   if (issolid(base.x, base.y + 4) || issolid(base.x, base.y))
     {
       base.y  = old_y;
@@ -117,7 +117,7 @@ Bullet::action(double frame_ratio)
 
 }
 
-void 
+void
 Bullet::draw()
 {
   if (base.x >= scroll_x - base.width &&
@@ -298,7 +298,7 @@ Upgrade::bump(Player* )
     return;
 
   //play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
-  
+
   // do a little jump and change direction
   physic.set_velocity(-physic.get_velocity_x(), 3);
   dir = dir == LEFT ? RIGHT : LEFT;
@@ -371,3 +371,4 @@ void free_special_gfx()
 {
 }
 
+// EOF

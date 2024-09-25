@@ -1,4 +1,4 @@
-//  $Id: scene.cpp 1827 2004-08-25 03:45:22Z sik0fewl $
+//  scene.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>

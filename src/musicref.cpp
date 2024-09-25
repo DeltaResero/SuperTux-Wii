@@ -1,4 +1,4 @@
-//  $Id: musicref.cpp 682 2004-04-24 14:49:04Z grumbel $
+//  musicref.cpp
 //
 //  SuperTux -  A Jump'n Run
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

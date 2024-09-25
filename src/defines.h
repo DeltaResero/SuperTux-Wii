@@ -1,4 +1,4 @@
-//  $Id: defines.h 2695 2005-07-06 23:04:04Z wansti $
+//  defines.h
 //
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

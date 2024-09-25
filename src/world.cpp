@@ -1,4 +1,4 @@
-//  $Id: world.cpp 1696 2004-08-03 18:47:15Z rmcruz $
+//  world.cpp
 //
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>

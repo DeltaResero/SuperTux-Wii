@@ -1,4 +1,4 @@
-//  $Id: leveleditor.cpp 2631 2005-06-21 21:52:22Z wansti $
+//  leveleditor.cpp
 //
 //  SuperTux
 //  Copyright (C) 2003 Ricardo Cruz <rick2@aeiou.pt>
@@ -1869,3 +1869,5 @@ void le_showhelp()
   le_selection_mode = temp_le_selection_mode;
   le_help_shown = false;
 }
+
+// EOF

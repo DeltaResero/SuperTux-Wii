@@ -1,4 +1,4 @@
-//  $Id: particlesystem.cpp 585 2004-04-20 11:09:34Z grumbel $
+//  particlesystem.cpp
 //
 //  SuperTux
 //  Copyright (C) 2004 Matthias Braun <matze@braunis.de>
@@ -235,4 +235,5 @@ void CloudParticleSystem::simulate(float elapsed_time)
     cloud_particle->x += cloud_particle->speed * elapsed_time;
   }
 }
+
 // EOF

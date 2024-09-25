@@ -1,4 +1,4 @@
-//  $Id: title.cpp 2702 2005-07-08 12:18:16Z wansti $
+//  title.cpp
 //
 //  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
@@ -568,4 +568,5 @@ void title(void)
   delete logo;
   //delete img_choose_subset;
 }
+
 // EOF
