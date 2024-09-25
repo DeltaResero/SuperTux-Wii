@@ -61,8 +61,7 @@ the game:
 1. Run `autogen.sh` (uses `Configure` to generate the Wii makefile for
    building):
    ```
-   ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc"
-   --host=powerpc-eabi --target=powerpc-eabi --disable-opengl
+   ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi --disable-opengl
    ```
 
 2. Use `make` to cross-compile the game executable:

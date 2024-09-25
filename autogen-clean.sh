@@ -30,7 +30,7 @@ if [ "$makefile_found" = false ]; then
     rm -f src/*.o
     echo "Removing compiled supertux binaries outside of 'build'..."
     rm -f src/supertux
-    rm -f *.elf *.dol
+    rm -f -- *.elf *.dol
 fi
 
 # Remove autogen generated and other temporary files after make clean
@@ -53,8 +53,8 @@ find . -name "*.orig" -type f -exec rm -f {} +
 rm -f Makefile.in Makefile Wii
 
 # Remove legacy autogen generated and other temporary files
-echo "Checking for and removing legacy Makefile.."
-rm -f */Makefile.am */Makefile.in */Makefile
+echo "Checking for and removing legacy Makefile..."
+rm -f -- */Makefile.am */Makefile.in */Makefile
 rm -rf src/.deps
 
 # Script Complete

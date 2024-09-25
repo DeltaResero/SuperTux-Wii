@@ -37,7 +37,7 @@ if [ "$show_help" = "yes" ]; then
 elif [ "$enable_wii" = "yes" ]; then
   # --enable-wii is specified, so set STRIP environment variable for Wii builds
   # FIXME: Hackish workaround to get configure to see the right strip
-  export STRIP=$DEVKITPPC/bin/powerpc-eabi-strip
+  export STRIP="$DEVKITPPC/bin/powerpc-eabi-strip"
   # Run configure script in the current directory for Wii builds
   ./configure "$@"
   unset STRIP
@@ -55,4 +55,4 @@ fi
 # And one more thing...
 echo "For faster builds, append -jN (replace N with your number of CPU cores)"
 
-# EOF #
+# EOF
