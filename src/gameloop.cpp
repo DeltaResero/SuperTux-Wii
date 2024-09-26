@@ -166,13 +166,13 @@ GameSession::levelintro(void)
   else
     drawgradient(get_level()->bkgd_top, get_level()->bkgd_bottom);
 
-  sprintf(str, "%s", world->get_level()->name.c_str());
+  snprintf(str, sizeof(str), "%s", world->get_level()->name.c_str());
   gold_text->drawf(str, 0, 200, A_HMIDDLE, A_TOP, 1);
 
-  sprintf(str, "TUX x %d", player_status.lives);
+  snprintf(str, sizeof(str), "TUX x %d", player_status.lives);
   white_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
 
-  sprintf(str, "by %s", world->get_level()->author.c_str());
+  snprintf(str, sizeof(str), "by %s", world->get_level()->author.c_str());
   white_small_text->drawf(str, 0, 360, A_HMIDDLE, A_TOP, 1);
 
 
@@ -821,7 +821,7 @@ GameSession::drawstatus()
 {
   char str[60];
 
-  sprintf(str, "%d", player_status.score);
+  snprintf(str, sizeof(str), "%d", player_status.score);
   white_text->draw("SCORE", 20, offset_y, 1);
   gold_text->draw(str, 116, offset_y, 1);
 
@@ -833,19 +833,19 @@ GameSession::drawstatus()
   if(!time_left.check()) {
     white_text->draw("TIME'S UP", 258, offset_y, 1); // (300-42)=258
   } else if (time_left.get_left() > TIME_WARNING || (global_frame_counter % 10) < 5) {
-    sprintf(str, "%d", time_left.get_left() / 1000 );
+    snprintf(str, sizeof(str), "%d", time_left.get_left() / 1000);
     white_text->draw("TIME", 258, offset_y, 1);  // (300-42)=258
     gold_text->draw(str, 342, offset_y, 1); // (300+42)=342
   }
 
-  sprintf(str, "%d", player_status.distros);
+  snprintf(str, sizeof(str), "%d", player_status.distros);
   white_text->draw("COINS", 460, offset_y, 1);
   gold_text->draw(str, 555, offset_y, 1);
 
   white_text->draw("LIVES", 460, 20 + offset_y, 1);
   if (player_status.lives >= 5)
     {
-      sprintf(str, "%dx", player_status.lives);
+      snprintf(str, sizeof(str), "%dx", player_status.lives);
       gold_text->draw_align(str, 597, 20 + offset_y, A_RIGHT, A_TOP);
       tux_life->draw(545+(18*3), 20 + offset_y);
     }
@@ -857,7 +857,7 @@ GameSession::drawstatus()
 
   if(show_fps)
     {
-      sprintf(str, "%2.1f", fps_fps);
+      snprintf(str, sizeof(str), "%2.1f", fps_fps);
       white_text->draw("FPS", 460, 40 + offset_y, 1);
       gold_text->draw(str, 520, 40 + offset_y, 1); // (460+60)=520
     }
@@ -875,10 +875,10 @@ GameSession::drawresultscreen(void)
 
   blue_text->drawf("Result:", 0, 200, A_HMIDDLE, A_TOP, 1);
 
-  sprintf(str, "SCORE: %d", player_status.score);
+  snprintf(str, sizeof(str), "SCORE: %d", player_status.score);
   gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
 
-  sprintf(str, "COINS: %d", player_status.distros);
+  snprintf(str, sizeof(str), "COINS: %d", player_status.distros);
   gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
 
   flipscreen();
@@ -892,7 +892,7 @@ std::string slotinfo(int slot)
   char tmp[1024];
   char slotfile[1024];
   std::string title;
-  sprintf(slotfile,"%s/slot%d.stsg",st_save_dir,slot);
+  snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", st_save_dir, slot);
 
   lisp_object_t* savegame = lisp_read_from_file(slotfile);
   if (savegame)
