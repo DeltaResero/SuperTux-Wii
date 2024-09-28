@@ -1,6 +1,6 @@
 //  scene.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
 //
 //  This program is free software; you can redistribute it and/or
@@ -23,29 +23,29 @@
 #include "texture.h"
 #include "timer.h"
 
-#define FRAME_RATE 10 // 100 Frames per second (10ms)
+#define FRAME_RATE 10  // 100 Frames per second (10ms)
 
-// Player stats
+// Holds the player's status
 struct PlayerStatus
 {
-  int  score;
-  int  distros;
-  int  lives;
+  int score;
+  int distros;
+  int lives;
   enum BonusType { NO_BONUS, GROWUP_BONUS, FLOWER_BONUS };
   BonusType bonus;
 
-  int  score_multiplier;
+  int score_multiplier;
 
-  PlayerStatus();
-
-  void reset();
+  PlayerStatus();  // Constructor to initialize the player's status
+  void reset();    // Resets the player's score, lives, and bonuses
 };
 
+// Utility functions to convert BonusType to and from strings
 std::string bonus_to_string(PlayerStatus::BonusType b);
 PlayerStatus::BonusType string_to_bonus(const std::string& str);
 
+// Global variables for player status and frame management
 extern PlayerStatus player_status;
-
 extern float scroll_x;
 extern unsigned int global_frame_counter;
 

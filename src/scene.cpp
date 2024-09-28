@@ -1,6 +1,6 @@
 //  scene.cpp
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
 //
 //  This program is free software; you can redistribute it and/or
@@ -21,8 +21,13 @@
 #include "scene.h"
 #include "defines.h"
 
+// Global player status
 PlayerStatus player_status;
 
+/**
+ * Constructor for PlayerStatus.
+ * Initializes score, lives, and bonus to default values.
+ */
 PlayerStatus::PlayerStatus()
   : score(0),
     distros(0),
@@ -32,6 +37,9 @@ PlayerStatus::PlayerStatus()
 {
 }
 
+/**
+ * Resets the player's status, including score, lives, and bonus.
+ */
 void PlayerStatus::reset()
 {
   score = 0;
@@ -41,10 +49,15 @@ void PlayerStatus::reset()
   score_multiplier = 1;
 }
 
+/**
+ * Converts a PlayerStatus::BonusType to a human-readable string.
+ * @param b The bonus type to convert.
+ * @return The corresponding string ("none", "growup", or "iceflower").
+ */
 std::string bonus_to_string(PlayerStatus::BonusType b)
 {
   switch (b)
-    {
+  {
     case PlayerStatus::NO_BONUS:
       return "none";
     case PlayerStatus::GROWUP_BONUS:
@@ -53,24 +66,38 @@ std::string bonus_to_string(PlayerStatus::BonusType b)
       return "iceflower";
     default:
       return "none";
-    }
+  }
 }
 
+/**
+ * Converts a string to a PlayerStatus::BonusType.
+ * @param str The string to convert ("none", "growup", or "iceflower").
+ * @return The corresponding BonusType, or NO_BONUS if invalid.
+ */
 PlayerStatus::BonusType string_to_bonus(const std::string& str)
 {
   if (str == "none")
+  {
     return PlayerStatus::NO_BONUS;
+  }
   else if (str == "growup")
+  {
     return PlayerStatus::GROWUP_BONUS;
+  }
   else if (str == "iceflower")
+  {
     return PlayerStatus::FLOWER_BONUS;
+  }
   else
+  {
     return PlayerStatus::NO_BONUS;
+  }
 }
 
 // FIXME: Move this into a view class
-float scroll_x;
+float scroll_x = 0.0f;
 
-unsigned int global_frame_counter;
+// Global frame counter
+unsigned int global_frame_counter = 0;
 
 // EOF
