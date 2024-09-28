@@ -85,8 +85,7 @@ INSTALLING UNDER LINUX/UNIX
 
 ICON FILE
 ---------
-  A 32x32, XPM-format icon file is available if you wish to use
+  A 32x32, PNG-format icon file is available if you wish to use
   an icon for a menu entry for this game.
 
-  The file is "icon.xpm", and can be found at  the data/images/
-  directory.
+  The file is "icon.png", and can be found at source root directory.
