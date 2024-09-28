@@ -1,6 +1,6 @@
 //  sound.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Duong-Khang NGUYEN <neoneurone@users.sf.net>
 //
@@ -56,7 +56,6 @@ enum {
   SND_SQUISH,
   SND_FALL,
   SND_RICOCHET,
-  //SND_BUMP_UPGRADE,
   SND_UPGRADE,
   SND_EXCELLENT,
   SND_COFFEE,

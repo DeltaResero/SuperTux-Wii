@@ -1,6 +1,6 @@
 //  player.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
 //
 //  This program is free software; you can redistribute it and/or

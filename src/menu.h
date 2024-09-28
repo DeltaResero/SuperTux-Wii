@@ -63,13 +63,13 @@ enum LevelEditorMainMenuIDs {
   MNID_SUBSETSETTINGS,
   MNID_QUITLEVELEDITOR
   };
-  
+
 enum LevelEditorSubsetSettingsIDs {
   MNID_SUBSETTITLE,
   MNID_SUBSETDESCRIPTION,
   MNID_SUBSETSAVECHANGES
   };
-  
+
 enum LevelEditorSubsetNewIDs {
  MNID_SUBSETNAME,
  MNID_CREATESUBSET
@@ -138,7 +138,7 @@ private:
 
 class Menu
 {
-private:  
+private:
   static std::vector<Menu*> last_menus;
   static Menu* current_;
 
@@ -179,7 +179,7 @@ private:
   /* input implementation variables */
   int delete_character;
   char mn_input_char;
-  
+
 public:
   Timer effect;
   int arrange_left;
@@ -192,9 +192,9 @@ public:
 
   void additem(MenuItem* pmenu_item);
   void additem(MenuItemKind kind, const std::string& text, int init_toggle, Menu* target_menu, int id = -1, int *int_p = NULL);
-  
+
   void  action ();
-  
+
   /** Remove all entries from the menu */
   void clear();
 

@@ -89,7 +89,7 @@ public:
     virtual ~CloudParticleSystem();
 
     virtual void simulate(float elapsed_time);
-    
+
 private:
     class CloudParticle : public Particle
     {

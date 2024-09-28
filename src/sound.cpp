@@ -1,6 +1,6 @@
 //  sound.cpp
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Duong-Khang NGUYEN <neoneurone@users.sf.net>
 //
@@ -39,7 +39,6 @@ const char * soundfilenames[NUM_SOUNDS] = {
                                        "/sounds/squish.wav",
                                        "/sounds/fall.wav",
                                        "/sounds/ricochet.wav",
-                                       //"/sounds/bumpupgrade.wav",
                                        "/sounds/upgrade.wav",
                                        "/sounds/excellent.wav",
                                        "/sounds/coffee.wav",

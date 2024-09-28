@@ -28,7 +28,7 @@
 #include "menu.h"
 #include "mousecursor.h"
 
-//added as Supertux takes a long, long time to load
+// Loading Screen as Supertux takes a long, long time to load on Wii
 extern Surface* loading_surf;
 
 extern std::string datadir;

@@ -1,6 +1,6 @@
 //  worldmap.cpp
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2004 Ingo Ruhnke <grumbel@gmx.de>
 //
 //  This program is free software; you can redistribute it and/or

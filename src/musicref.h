@@ -1,6 +1,6 @@
 //  musicref.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2004 Matthias Braun <matze@braunis.de>
 //
 //  This program is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
 
 #include "music_manager.h"
 
-/** This class holds a reference to a music file and maintains a correct
- * refcount for that file.
- */
+// Class to handle references to music resources
 class MusicRef
 {
 public:
@@ -32,15 +30,15 @@ public:
   MusicRef(const MusicRef& other);
   ~MusicRef();
 
-  MusicRef& operator= (const MusicRef& other);
+  MusicRef& operator=(const MusicRef& other);
 
 private:
   friend class MusicManager;
-  MusicRef(MusicManager::MusicResource* music);
+  MusicRef(MusicManager::MusicResource* music);  // Private constructor used by MusicManager
 
-  MusicManager::MusicResource* music;
+  MusicManager::MusicResource* music;  // Pointer to the actual music resource
 };
 
-#endif
+#endif // HEADER_MUSIC_RESOURCE_H
 
 // EOF

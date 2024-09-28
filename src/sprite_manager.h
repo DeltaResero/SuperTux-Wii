@@ -24,10 +24,7 @@
 #include <string>
 #include "sprite.h"
 
-/**
- * Manages loading and accessing sprites by name.
- * Stores sprites in a map for efficient retrieval.
- */
+// Manages loading and accessing sprites by name
 class SpriteManager
 {
  private:
@@ -35,29 +32,12 @@ class SpriteManager
   Sprites sprites;                                // Collection of sprites
 
  public:
-  /**
-   * Constructs a SpriteManager and loads sprites from a resource file.
-   * @param filename Path to the resource file.
-   */
-  SpriteManager(const std::string& filename);
+  SpriteManager(const std::string& filename); // Loads sprites from a resource file
+  ~SpriteManager(); // Destructor, frees allocated sprites
 
-  /**
-   * Destroys the SpriteManager and cleans up allocated sprites.
-   */
-  ~SpriteManager();
+  void load_resfile(const std::string& filename); // Loads sprite definitions from a resource file
 
-  /**
-   * Loads sprite definitions from a resource file.
-   * @param filename Path to the resource file.
-   */
-  void load_resfile(const std::string& filename);
-
-  /**
-   * Retrieves a Sprite by name.
-   * WARNING: Do not delete the returned object.
-   * @param name Name of the sprite to retrieve.
-   * @return Sprite* Pointer to the Sprite object, or nullptr if not found.
-   */
+  // Retrieves a Sprite by name, do not delete the returned object
   Sprite* load(const std::string& name);
 };
 

@@ -1,6 +1,6 @@
 //  special.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2003 Tobias Glaesser <tobi.web@gmx.de>
 //
 //  This program is free software; you can redistribute it and/or
@@ -27,8 +27,7 @@
 #include "player.h"
 #include "physic.h"
 
-/* Upgrade types: */
-
+// Upgrade types
 enum UpgradeKind {
   UPGRADE_GROWUP,
   UPGRADE_ICEFLOWER,
@@ -43,7 +42,7 @@ class Upgrade : public GameObject
 {
 public:
   UpgradeKind kind;
-  Direction  dir;
+  Direction dir;
   Physic physic;
 
   void init(float x, float y, Direction dir, UpgradeKind kind);
@@ -55,12 +54,8 @@ public:
   ~Upgrade() {};
 
 private:
-  /** removes the Upgrade from the global upgrade list. Note that after this
-   * call the class doesn't exist anymore! So don't use any member variables
-   * anymore then
-   */
+  // Removes the upgrade from the global upgrade list, class does not exist afterward
   void remove_me();
-
   void bump(Player* player);
 };
 
@@ -78,10 +73,7 @@ class Bullet : public GameObject
   std::string type() { return "Bullet"; };
 
 private:
-  /** removes the Upgrade from the global upgrade list. Note that after this
-   * call the class doesn't exist anymore! So don't use any member variables
-   * anymore then
-   */
+  // Removes the bullet from the global bullet list, class does not exist afterward
   void remove_me();
 };
 

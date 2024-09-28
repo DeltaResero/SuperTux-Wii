@@ -25,10 +25,7 @@
 #include "lispreader.h"
 #include "texture.h"
 
-/**
- * Represents a 2D sprite with animation support.
- * Manages loading, updating, and rendering of sprite frames.
- */
+// Represents a 2D sprite with animation
 class Sprite
 {
  private:
@@ -43,69 +40,21 @@ class Sprite
   void init_defaults();          // Initialize default values for the sprite
 
  public:
-  /**
-   * Constructs a Sprite from Lisp data.
-   * @param cur Pointer to Lisp data structure.
-   */
-  Sprite(lisp_object_t* cur);
+  Sprite(lisp_object_t* cur);    // Constructs a Sprite from Lisp data
+  ~Sprite();                     // Destructor
 
-  /**
-   * Destroys the Sprite object and frees allocated resources.
-   */
-  ~Sprite();
+  void reset();                  // Resets animation timer
+  void update(float delta);      // Updates the animation
 
-  /**
-   * Resets the sprite's animation timer.
-   */
-  void reset();
+  void draw(float x, float y);   // Draws the sprite at coordinates
+  void draw_part(float sx, float sy, float x, float y, float w, float h); // Draws part of the sprite
 
-  /**
-   * Updates the sprite animation based on the time delta.
-   * @param delta Time passed since the last update.
-   */
-  void update(float delta);
+  int get_current_frame() const; // Gets the current frame index
 
-  /**
-   * Draws the sprite at the specified coordinates.
-   * @param x X coordinate to draw the sprite.
-   * @param y Y coordinate to draw the sprite.
-   */
-  void draw(float x, float y);
+  std::string get_name() const { return name; }  // Gets the name of the sprite
 
-  /**
-   * Draws a portion of the sprite at the specified coordinates.
-   * @param sx Source X coordinate within the sprite.
-   * @param sy Source Y coordinate within the sprite.
-   * @param x Destination X coordinate to draw the sprite.
-   * @param y Destination Y coordinate to draw the sprite.
-   * @param w Width of the portion to draw.
-   * @param h Height of the portion to draw.
-   */
-  void draw_part(float sx, float sy, float x, float y, float w, float h);
-
-  /**
-   * Gets the current frame index based on the elapsed time.
-   * @return int The index of the current frame.
-   */
-  int get_current_frame() const;
-
-  /**
-   * Gets the name of the sprite.
-   * @return std::string The name of the sprite.
-   */
-  std::string get_name() const { return name; }
-
-  /**
-   * Gets the width of the current sprite frame.
-   * @return int The width of the current frame in pixels.
-   */
-  int get_width() const;
-
-  /**
-   * Gets the height of the current sprite frame.
-   * @return int The height of the current frame in pixels.
-   */
-  int get_height() const;
+  int get_width() const;         // Gets the width of the current frame
+  int get_height() const;        // Gets the height of the current frame
 };
 
 #endif

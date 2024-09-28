@@ -1,6 +1,6 @@
 //  mousecursor.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2004 Ricardo Cruz <rick2@aeiou.pt>
 //
 //  This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@
 #include "timer.h"
 #include "texture.h"
 
-#define MC_FRAME_PERIOD 800  // in ms
+#define MC_FRAME_PERIOD 800  // Frame period in ms
+#define MC_STATES_NB 3       // Number of cursor states
 
-#define MC_STATES_NB 3
 enum {
   MC_NORMAL,
   MC_CLICK,
@@ -39,31 +39,10 @@ public:
   MouseCursor(std::string cursor_file, int frames);
   ~MouseCursor();
 
-  /**
-   * Returns the current state of the cursor.
-   * @return The current state of the cursor as an integer.
-   */
-  int state() const;  // Mark as const in both header and source files
-
-  /**
-   * Sets the cursor's state.
-   * @param nstate The new state to set for the cursor.
-   */
-  void set_state(int nstate);
-
-  /**
-   * Sets the midpoint of the cursor.
-   * @param x The x-coordinate of the cursor midpoint.
-   * @param y The y-coordinate of the cursor midpoint.
-   */
-  void set_mid(int x, int y);
-
-  /**
-   * Draws the cursor on the screen.
-   * The cursor is drawn based on its current state and position.
-   * The cursor's frame is updated periodically based on a timer.
-   */
-  void draw();
+  int state() const; // Returns the current state of the cursor
+  void set_state(int nstate); // Sets the cursor's state
+  void set_mid(int x, int y); // Sets the midpoint of the cursor
+  void draw(); // Draws the cursor on the screen
 
   static MouseCursor* current() { return current_; };
   static void set_current(MouseCursor* pcursor) { current_ = pcursor; };

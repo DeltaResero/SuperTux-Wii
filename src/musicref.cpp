@@ -1,6 +1,6 @@
 //  musicref.cpp
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //  Copyright (C) 2004 Matthias Braun <matze@braunis.de>
 //

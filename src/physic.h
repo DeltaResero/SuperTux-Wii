@@ -64,11 +64,11 @@ public:
     void apply(float frame_ratio, float &x, float &y); 
 
 private:
-    /// horizontal and vertical acceleration
+    // horizontal and vertical acceleration
     float ax, ay;
-    /// horizontal and vertical velocity
+    // horizontal and vertical velocity
     float vx, vy;
-    /// should we respect gravity in out calculations?
+    // should we respect gravity in out calculations?
     bool gravity_enabled;
 };
 

@@ -1,6 +1,6 @@
 //  intro.cpp
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2000 Bill Kendrick <bill@newbreedsoftware.com>
 //
 //  This program is free software; you can redistribute it and/or

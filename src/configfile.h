@@ -1,6 +1,6 @@
 //  configfile.h
 //
-//  SuperTux -  A Jump'n Run
+//  SuperTux
 //  Copyright (C) 2004 Michael George <mike@georgetech.com>
 //
 //  This program is free software; you can redistribute it and/or
@@ -20,19 +20,8 @@
 #ifndef SUPERTUX_CONFIGFILE_H
 #define SUPERTUX_CONFIGFILE_H
 
-/**
- * Loads the configuration file.
- * This function reads the configuration settings from the file
- * and applies them to the program.
- */
-void loadconfig(void);
-
-/**
- * Saves the configuration file.
- * This function writes the current configuration settings
- * to the file for future use.
- */
-void saveconfig(void);
+void loadconfig(void); // Loads the configuration file
+void saveconfig(void); // Saves the configuration file
 
 #endif // SUPERTUX_CONFIGFILE_H
 
