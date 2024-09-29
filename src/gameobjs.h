@@ -37,7 +37,7 @@ class BouncyDistro : public GameObject
 
   void init(float x, float y);
   void action(double frame_ratio);
-  void draw(); 
+  void draw();
   std::string type() { return "BouncyDistro"; };
 };
 

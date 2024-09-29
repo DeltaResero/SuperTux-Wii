@@ -18,6 +18,7 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
+
 #include <algorithm>
 #include <cstring>
 #include "world.h"
@@ -25,72 +26,89 @@
 #include "gameloop.h"
 #include "gameobjs.h"
 
-void
-BouncyDistro::init(float x, float y)
+/**
+ * Initializes a BouncyDistro object.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ */
+void BouncyDistro::init(float x, float y)
 {
   base.x = x;
   base.y = y;
   base.ym = -2;
 }
 
-void
-BouncyDistro::action(double frame_ratio)
+/**
+ * Updates the position of the BouncyDistro and removes it when it reaches the ground.
+ * @param frame_ratio The ratio of the current frame.
+ */
+void BouncyDistro::action(double frame_ratio)
 {
-  base.y = base.y + base.ym * frame_ratio;
-
+  base.y += base.ym * frame_ratio;
   base.ym += 0.1 * frame_ratio;
 
   if (base.ym >= 0)
-    {
-      std::vector<BouncyDistro*>::iterator i
-        = std::find(World::current()->bouncy_distros.begin(), 
-                    World::current()->bouncy_distros.end(), 
-                    this);
-      if (i != World::current()->bouncy_distros.end())
-        World::current()->bouncy_distros.erase(i);
-    }
+  {
+    std::vector<BouncyDistro*>::iterator i = std::find(
+        World::current()->bouncy_distros.begin(),
+        World::current()->bouncy_distros.end(),
+        this);
+    if (i != World::current()->bouncy_distros.end())
+      World::current()->bouncy_distros.erase(i);
+  }
 }
 
-void
-BouncyDistro::draw()
+/**
+ * Draws the BouncyDistro on the screen.
+ */
+void BouncyDistro::draw()
 {
-  img_distro[0]->draw(base.x - scroll_x,
-                      base.y);
+  img_distro[0]->draw(base.x - scroll_x, base.y);
 }
 
-
-void
-BrokenBrick::init(Tile* tile_, float x, float y, float xm, float ym)
+/**
+ * Initializes a BrokenBrick object.
+ * @param tile_ The Tile object associated with the BrokenBrick.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ * @param xm The horizontal velocity.
+ * @param ym The vertical velocity.
+ */
+void BrokenBrick::init(Tile* tile_, float x, float y, float xm, float ym)
 {
-  tile    = tile_;
-  base.x  = x;
-  base.y  = y;
+  tile = tile_;
+  base.x = x;
+  base.y = y;
   base.xm = xm;
   base.ym = ym;
-
   timer.init(true);
   timer.start(200);
 }
 
-void
-BrokenBrick::action(double frame_ratio)
+/**
+ * Updates the position of the BrokenBrick and removes it when the timer expires.
+ * @param frame_ratio The ratio of the current frame.
+ */
+void BrokenBrick::action(double frame_ratio)
 {
-  base.x = base.x + base.xm * frame_ratio;
-  base.y = base.y + base.ym * frame_ratio;
+  base.x += base.xm * frame_ratio;
+  base.y += base.ym * frame_ratio;
 
   if (!timer.check())
-    {
-      std::vector<BrokenBrick*>::iterator i
-        = std::find(World::current()->broken_bricks.begin(), 
-                    World::current()->broken_bricks.end(), 
-                    this);
-      if (i != World::current()->broken_bricks.end())
-        World::current()->broken_bricks.erase(i);
-    }
+  {
+    std::vector<BrokenBrick*>::iterator i = std::find(
+        World::current()->broken_bricks.begin(),
+        World::current()->broken_bricks.end(),
+        this);
+    if (i != World::current()->broken_bricks.end())
+      World::current()->broken_bricks.erase(i);
+  }
 }
 
-void
-BrokenBrick::draw()
+/**
+ * Draws the BrokenBrick on the screen.
+ */
+void BrokenBrick::draw()
 {
   SDL_Rect src, dest;
   src.x = rand() % 16;
@@ -98,27 +116,34 @@ BrokenBrick::draw()
   src.w = 16;
   src.h = 16;
 
-  dest.x = (int)(base.x - scroll_x);
-  dest.y = (int)base.y;
+  dest.x = static_cast<int>(base.x - scroll_x);
+  dest.y = static_cast<int>(base.y);
   dest.w = 16;
   dest.h = 16;
-  
-  if (tile->images.size() > 0)
-    tile->images[0]->draw_part(src.x,src.y,dest.x,dest.y,dest.w,dest.h);
+
+  if (!tile->images.empty())
+    tile->images[0]->draw_part(src.x, src.y, dest.x, dest.y, dest.w, dest.h);
 }
 
-void
-BouncyBrick::init(float x, float y)
+/**
+ * Initializes a BouncyBrick object.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ */
+void BouncyBrick::init(float x, float y)
 {
-  base.x   = x;
-  base.y   = y;
-  offset   = 0;
+  base.x = x;
+  base.y = y;
+  offset = 0;
   offset_m = -BOUNCY_BRICK_SPEED;
-  shape    = World::current()->get_level()->gettileid(x, y);
+  shape = World::current()->get_level()->gettileid(x, y);
 }
 
-void
-BouncyBrick::action(double frame_ratio)
+/**
+ * Updates the bouncing behavior of the BouncyBrick and removes it when it stops bouncing.
+ * @param frame_ratio The ratio of the current frame.
+ */
+void BouncyBrick::action(double frame_ratio)
 {
   offset = (offset + offset_m * frame_ratio);
 
@@ -126,58 +151,58 @@ BouncyBrick::action(double frame_ratio)
   if (offset < -BOUNCY_BRICK_MAX_OFFSET)
     offset_m = BOUNCY_BRICK_SPEED;
 
-
   /* Stop bouncing? */
   if (offset >= 0)
-    {
-      std::vector<BouncyBrick*>::iterator i
-        = std::find(World::current()->bouncy_bricks.begin(), 
-                    World::current()->bouncy_bricks.end(), 
-                    this);
-      if (i != World::current()->bouncy_bricks.end())
-        World::current()->bouncy_bricks.erase(i);
-    }
+  {
+    std::vector<BouncyBrick*>::iterator i = std::find(
+        World::current()->bouncy_bricks.begin(),
+        World::current()->bouncy_bricks.end(),
+        this);
+    if (i != World::current()->bouncy_bricks.end())
+      World::current()->bouncy_bricks.erase(i);
+  }
 }
 
-void
-BouncyBrick::draw()
+/**
+ * Draws the BouncyBrick on the screen.
+ */
+void BouncyBrick::draw()
 {
   SDL_Rect dest;
-  
-  if (base.x >= scroll_x - 32 &&
-      base.x <= scroll_x + screen->w)
+
+  if (base.x >= scroll_x - 32 && base.x <= scroll_x + screen->w)
+  {
+    dest.x = static_cast<int>(base.x - scroll_x);
+    dest.y = static_cast<int>(base.y);
+    dest.w = 32;
+    dest.h = 32;
+
+    Level* plevel = World::current()->get_level();
+
+    // FIXME: overdrawing hack to clean the tile from the screen to paint it later at an offsetted position
+    if (plevel->bkgd_image[0] == '\0')
     {
-      dest.x = (int)(base.x - scroll_x);
-      dest.y = (int)base.y;
-      dest.w = 32;
-      dest.h = 32;
-
-      Level* plevel = World::current()->get_level();
-
-      // FIXME: overdrawing hack to clean the tile from the screen to
-      // paint it later at on offseted position
-      if(plevel->bkgd_image[0] == '\0')
-        {
-          fillrect(base.x - scroll_x, base.y,
-                   32,32, 
-                   plevel->bkgd_top.red, plevel->bkgd_top.green, plevel->bkgd_top.blue, 0);
-// FIXME: doesn't respect the gradient, futhermore is this necessary at all??
-        }
-      else
-        {
-          int s = ((int)scroll_x / 2)%640;
-          plevel->img_bkgd->draw_part(dest.x + s, dest.y, 
-                                      dest.x, dest.y,dest.w,dest.h);
-        }
-
-      Tile::draw(base.x - scroll_x,
-                 base.y + offset,
-                 shape);
+      fillrect(base.x - scroll_x, base.y, 32, 32,
+               plevel->bkgd_top.red, plevel->bkgd_top.green, plevel->bkgd_top.blue, 0);
+      // FIXME: doesn't respect the gradient, furthermore is this necessary at all??
     }
+    else
+    {
+      int s = static_cast<int>(scroll_x / 2) % 640;
+      plevel->img_bkgd->draw_part(dest.x + s, dest.y, dest.x, dest.y, dest.w, dest.h);
+    }
+
+    Tile::draw(base.x - scroll_x, base.y + offset, shape);
+  }
 }
 
-void
-FloatingScore::init(float x, float y, int s)
+/**
+ * Initializes a FloatingScore object.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ * @param s The score value to display.
+ */
+void FloatingScore::init(float x, float y, int s)
 {
   base.x = x;
   base.y = y - 16;
@@ -186,28 +211,42 @@ FloatingScore::init(float x, float y, int s)
   value = s;
 }
 
-void
-FloatingScore::action(double frame_ratio)
+/**
+ * Updates the position of FloatingScore, making it float upward.
+ * Removes the object from the world when its timer expires.
+ * @param frame_ratio Ratio of the current frame.
+ */
+void FloatingScore::action(double frame_ratio)
 {
-  base.y = base.y - 2 * frame_ratio;
+  base.y -= 2 * frame_ratio;
 
-  if(!timer.check())
-    {
-      std::vector<FloatingScore*>::iterator i
-        = std::find(World::current()->floating_scores.begin(), 
-                    World::current()->floating_scores.end(), 
-                    this);
-      if (i != World::current()->floating_scores.end())
-        World::current()->floating_scores.erase(i);
-    }
+  if (!timer.check())
+  {
+    std::vector<FloatingScore*>::iterator i = std::find(
+        World::current()->floating_scores.begin(),
+        World::current()->floating_scores.end(),
+        this);
+    if (i != World::current()->floating_scores.end())
+      World::current()->floating_scores.erase(i);
+  }
 }
 
-void
-FloatingScore::draw()
+/**
+ * Draws the FloatingScore on the screen.
+ */
+void FloatingScore::draw()
 {
-  char str[10];
-  sprintf(str, "%d", value);
-  gold_text->draw(str, (int)base.x + 16 - strlen(str) * 8, (int)base.y, 1);
+  char str[10];  // Buffer to hold the score as a string
+
+  // Safely format the score into the string using snprintf to avoid buffer overflow
+  snprintf(str, sizeof(str), "%d", value);
+
+  // Precompute string length and x position
+  int str_len = strnlen(str, sizeof(str));
+  int x_pos = static_cast<int>(base.x + 16 - str_len * 8);
+
+  // Draw the score string
+  gold_text->draw(str, x_pos, static_cast<int>(base.y), 1);
 }
 
 // EOF
