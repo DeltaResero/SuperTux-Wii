@@ -180,8 +180,12 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
   MenuItem* pnew_item = new MenuItem;
 
   pnew_item->kind = kind_;
-  pnew_item->text = (char*)malloc(sizeof(char) * (strlen(text_) + 1));
-  strcpy(pnew_item->text, text_);
+
+  // Allocate memory and copy string manually, ensuring null-termination
+  size_t len = strnlen(text_, 63);  // Limit to 63 characters
+  pnew_item->text = (char*)malloc(len + 1);  // Allocate space for null-terminator
+  memcpy(pnew_item->text, text_, len);
+  pnew_item->text[len] = '\0';  // Manually null-terminate
 
   if (kind_ == MN_TOGGLE)
   {
@@ -225,8 +229,12 @@ void MenuItem::change_text(const char* text_)
   if (text_)
   {
     free(text);
-    text = (char*)malloc(sizeof(char) * (strlen(text_) + 1));
-    strcpy(text, text_);
+
+    // Allocate memory and copy string manually, ensuring null-termination
+    size_t len = strnlen(text_, 63);  // Limit to 63 characters
+    text = (char*)malloc(len + 1);  // Allocate space for null-terminator
+    memcpy(text, text_, len);
+    text[len] = '\0';  // Manually null-terminate
   }
 }
 
@@ -236,11 +244,15 @@ void MenuItem::change_text(const char* text_)
  */
 void MenuItem::change_input(const char* text_)
 {
-  if (text)
+  if (text_)
   {
     free(input);
-    input = (char*)malloc(sizeof(char) * (strlen(text_) + 1));
-    strcpy(input, text_);
+
+    // Allocate memory and copy string manually, ensuring null-termination
+    size_t len = strnlen(text_, 63);  // Limit to 63 characters
+    input = (char*)malloc(len + 1);  // Allocate space for null-terminator
+    memcpy(input, text_, len);
+    input[len] = '\0';  // Manually null-terminate
   }
 }
 
@@ -265,13 +277,14 @@ std::string MenuItem::get_input_with_symbol(bool active_item)
   }
 
   char str[1024];
+
   if (input_flickering)
   {
-    sprintf(str, "%s_", input);
+    snprintf(str, sizeof(str), "%s_", input);
   }
   else
   {
-    sprintf(str, "%s ", input);
+    snprintf(str, sizeof(str), "%s ", input);
   }
 
   return std::string(str);
@@ -483,7 +496,7 @@ void Menu::action()
             }
             else
             {
-              puts("NULLL");
+              puts("NULL");
             }
             break;
 
@@ -517,9 +530,9 @@ void Menu::action()
         {
           if (item[active_item].input != NULL)
           {
-            int i = strlen(item[active_item].input);
+            int i = strnlen(item[active_item].input, 1024);  // Safely get string length
 
-            while (delete_character > 0) // remove characters
+            while (delete_character > 0)  // remove characters
             {
               item[active_item].input[i - 1] = '\0';
               delete_character--;
@@ -533,7 +546,7 @@ void Menu::action()
         {
           if (item[active_item].input != NULL)
           {
-            int i = strlen(item[active_item].input);
+            int i = strnlen(item[active_item].input, 1024);  // Safely get string length
             item[active_item].input = (char*)realloc(item[active_item].input, sizeof(char) * (i + 2));
             item[active_item].input[i] = mn_input_char;
             item[active_item].input[i + 1] = '\0';
@@ -545,15 +558,16 @@ void Menu::action()
             item[active_item].input[1] = '\0';
           }
         }
+        break;
 
       case MENU_ACTION_NONE:
         break;
     }
   }
 
-  if(item[active_item].kind == MN_DEACTIVE ||
-     item[active_item].kind == MN_LABEL ||
-     item[active_item].kind == MN_HL)
+  if (item[active_item].kind == MN_DEACTIVE ||
+      item[active_item].kind == MN_LABEL ||
+      item[active_item].kind == MN_HL)
   {
     // Skip the horizontal line item
     if (menuaction != MENU_ACTION_UP && menuaction != MENU_ACTION_DOWN)
@@ -617,9 +631,11 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
   int x_pos       = pos_x;
   int y_pos       = pos_y + 24 * index - menu_height / 2 + 12 + effect_offset;
   int shadow_size = 2;
-  int text_width  = strlen(pitem.text) * font_width;
-  int input_width = (strlen(pitem.input) + 1) * font_width;
-  int list_width  = strlen(string_list_active(pitem.list)) * font_width;
+
+  // Fix: Use strnlen to safely calculate text widths
+  int text_width  = strnlen(pitem.text, 1024) * font_width;  // Limit to 1024 characters
+  int input_width = (strnlen(pitem.input, 1024) + 1) * font_width;  // Limit to 1024 characters
+  int list_width  = strnlen(string_list_active(pitem.list), 1024) * font_width;  // Limit to 1024 characters
   Text* text_font = white_text;
 
   if (arrange_left)
@@ -750,7 +766,10 @@ int Menu::get_width() const
   int menu_width = 0;
   for (unsigned int i = 0; i < item.size(); ++i)
   {
-    int w = strlen(item[i].text) + (item[i].input ? strlen(item[i].input) + 1 : 0) + strlen(string_list_active(item[i].list));
+    int w = strnlen(item[i].text, 1024) +
+            (item[i].input ? strnlen(item[i].input, 1024) + 1 : 0) +
+            strnlen(string_list_active(item[i].list), 1024);  // Limit to 1024 characters
+
     if (w > menu_width)
     {
       menu_width = w;
