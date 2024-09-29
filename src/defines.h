@@ -19,91 +19,83 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 
-#if !defined( SUPERTUX_DEFINES_H )
-
+#if !defined(SUPERTUX_DEFINES_H)
 #define SUPERTUX_DEFINES_H
-/* Version: */
 
+/* Version */
 #ifndef VERSION
-	#define VERSION "0.1.4d-wii"
+  #define VERSION "0.1.4d-wii"
 #endif
 
-/* Frames per second: */
+/* FPS */
+#define FPS (1000 / 25)  // 25 frames per second
 
-#define FPS (1000 / 25)
-
-enum Direction { LEFT = 0, RIGHT = 1 };
-
-/* Direction (keyboard/joystick) states: */
-
-#define UP 0
-#define DOWN 1
-
-/* Dying types: */
-
-/* ---- NO 0 */
-enum DyingType {
-  DYING_NOT = 0,
-  DYING_SQUISHED = 1,
-  DYING_FALLING = 2
+/* Directions */
+enum Direction
+{
+  LEFT = 0,
+  RIGHT = 1
 };
 
-/* Sizes: */
+#define UP 0       // Up direction state
+#define DOWN 1     // Down direction state
 
+/* Dying types */
+enum DyingType
+{
+  DYING_NOT = 0,         // Not dying
+  DYING_SQUISHED = 1,    // Squished to death
+  DYING_FALLING = 2      // Fell to death
+};
+
+/* Sizes */
 #define SMALL 0
 #define BIG 1
 
-/* Speed constraints: */
+/* Speed limits */
+#define MAX_WALK_XM 2.3   // Max horizontal speed while walking
+#define MAX_RUN_XM 3.2    // Max horizontal speed while running
+#define MAX_YM 20.0       // Max vertical speed (falling)
 
-#define MAX_WALK_XM 2.3
-#define MAX_RUN_XM 3.2
-#define MAX_YM 20.0
-#define MAX_JUMP_TIME 375
-#define MAX_LIVES 99
+#define MAX_JUMP_TIME 375 // Max jump duration (ms)
+#define MAX_LIVES 99      // Max lives
 
-#define WALK_SPEED 1.0
-#define RUN_SPEED 1.5
-#define JUMP_SPEED 1.2
+#define WALK_SPEED 1.0    // Speed when walking
+#define RUN_SPEED 1.5     // Speed when running
+#define JUMP_SPEED 1.2    // Speed when jumping
 
-/* gameplay related defines */
+/* Gameplay limits */
+#define START_LIVES 4        // Initial lives
+#define MAX_BULLETS 2        // Max bullets player can have
+#define YM_FOR_JUMP 6.0      // Min vertical speed needed for a jump
+#define WALK_ACCELERATION_X 0.03 // Horizontal acceleration while walking
+#define RUN_ACCELERATION_X 0.04  // Horizontal acceleration while running
+#define KILL_BOUNCE_YM 8.0   // Vertical speed after enemy kill bounce
 
-#define START_LIVES 4
+/* Skid settings */
+#define SKID_XM 2.0          // Horizontal skid speed
+#define SKID_TIME 200        // Skid duration (ms)
 
-#define MAX_BULLETS 2
+/* World sizes */
+#define OFFSCREEN_DISTANCE 256 // Distance to offscreen limit
+#define LEVEL_WIDTH 375        // Width of a level
 
-#define YM_FOR_JUMP 6.0
-#define WALK_ACCELERATION_X 0.03
-#define RUN_ACCELERATION_X 0.04
-#define KILL_BOUNCE_YM 8.0
+/* Timing */
+#define KICKING_TIME 200      // Kicking duration (ms)
 
-#define SKID_XM 2.0
-#define SKID_TIME 200
-
-/* Size constraints: */
-
-#define OFFSCREEN_DISTANCE 256
-
-#define LEVEL_WIDTH 375
-
-/* Timing constants (in ms): */
-
-#define KICKING_TIME 200
-
-/* Scrolling text speed */
-
-#define SCROLL_SPEED_CREDITS 1.2
-#define SCROLL_SPEED_MESSAGE 1.0
+/* Scroll speeds */
+#define SCROLL_SPEED_CREDITS 1.2   // Scroll speed for credits
+#define SCROLL_SPEED_MESSAGE 1.0   // Scroll speed for messages
 
 /* Debugging */
-
 #ifdef DEBUG
-        #define DEBUG_MSG( msg ) { \
-       	printf( msg ); printf("\n"); \
-        }
-        #else
-       #define DEBUG_MSG( msg ) {}
+  #define DEBUG_MSG( msg ) { \
+    printf("%s", msg); printf("\n"); \
+  }
+#else
+  #define DEBUG_MSG( msg ) {}
 #endif
 
-#endif
+#endif /* SUPERTUX_DEFINES_H */
 
 // EOF
