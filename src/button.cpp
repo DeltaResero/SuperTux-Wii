@@ -129,7 +129,10 @@ void Button::draw()
     }
 
     snprintf(str, sizeof(str), "(%s)", SDL_GetKeyName(shortcut));
-    white_small_text->draw(str, i + rect.x - static_cast<int>(strlen(str)) * white_small_text->w, rect.y + white_small_text->h + 2, 1);
+
+    size_t str_len = strnlen(str, sizeof(str));
+
+    white_small_text->draw(str, i + rect.x - static_cast<int>(str_len) * white_small_text->w, rect.y + white_small_text->h + 2, 1);
   }
 
   if (state == BUTTON_PRESSED || state == BUTTON_DEACTIVE)
