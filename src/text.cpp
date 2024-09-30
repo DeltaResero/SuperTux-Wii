@@ -18,15 +18,25 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "globals.h"
 #include "defines.h"
 #include "screen.h"
 #include "text.h"
 
+#define MAX_TEXT_LEN 1024  // Define a maximum length for safety
+#define MAX_VEL     10      // Maximum velocity for scrolling text
+#define SPEED_INC   0.01    // Speed increment for scrolling
+#define SCROLL      60      // Fixed scroll amount when space/enter is pressed
+#define ITEMS_SPACE 4       // Space between lines of text
+
+/**
+ * Constructor for the Text class.
+ * Initializes the font surface and applies a shadow effect.
+ */
 Text::Text(const std::string& file, int kind_, int w_, int h_)
-    : kind(kind_), w(w_), h(h_)
+  : kind(kind_), w(w_), h(h_)
 {
   // Load the main font surface
   chars = new Surface(file, USE_ALPHA);
@@ -51,6 +61,10 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
   SDL_FreeSurface(conv);
 }
 
+/**
+ * Destructor for the Text class.
+ * Cleans up dynamically allocated surfaces.
+ */
 Text::~Text()
 {
   // Free allocated memory
@@ -58,6 +72,15 @@ Text::~Text()
   delete shadow_chars;
 }
 
+/**
+ * Draw text on the screen with an optional shadow.
+ *
+ * @param text The text string to be drawn.
+ * @param x X-coordinate to draw the text.
+ * @param y Y-coordinate to draw the text.
+ * @param shadowsize Size of the shadow effect.
+ * @param update Whether the screen should be updated.
+ */
 void Text::draw(const char* text, int x, int y, int shadowsize, int update)
 {
   if (text != nullptr)
@@ -72,14 +95,14 @@ void Text::draw(const char* text, int x, int y, int shadowsize, int update)
 }
 
 /**
- * Draws a string of characters on a surface.
+ * Draw characters on a surface based on their ASCII values.
  *
  * This function takes a string of text and renders each character onto the provided surface.
  * It handles multiple types of characters, including symbols, numbers, uppercase and lowercase
  * letters. It also correctly handles newlines, ensuring that text is drawn across multiple lines
  * if necessary.
  *
- * @param pchars Surface to draw characters on.
+ * @param pchars Surface to draw the characters on.
  * @param text The string of text to be drawn.
  * @param x The starting x-coordinate on the surface.
  * @param y The starting y-coordinate on the surface.
@@ -92,8 +115,8 @@ void Text::draw(const char* text, int x, int y, int shadowsize, int update)
  */
 void Text::draw_chars(Surface* pchars, const char* text, int x, int y, int update)
 {
-  // Calculate the length of the string to be drawn
-  int len = strlen(text);
+  // Use strnlen to avoid over-read, limit string length to MAX_TEXT_LEN
+  int len = strnlen(text, MAX_TEXT_LEN);
 
   // Loop through each character in the string
   for (int i = 0, j = 0; i < len; ++i, ++j)
@@ -101,7 +124,7 @@ void Text::draw_chars(Surface* pchars, const char* text, int x, int y, int updat
     int offset_x = 0;  // Horizontal offset on the source surface (spritesheet)
     int offset_y = 0;  // Vertical offset on the source surface (spritesheet)
 
-    // Determine the position of the character on the source surface based on its ASCII value
+    // Determine the position of the character on the spritesheet based on its ASCII value
     if (text[i] >= ' ' && text[i] <= '/')  // ASCII range for symbols (e.g., '!', '"', '#')
     {
       offset_x = (text[i] - ' ') * w;
@@ -148,24 +171,38 @@ void Text::draw_chars(Surface* pchars, const char* text, int x, int y, int updat
   }
 }
 
+/**
+ * Draw aligned text on the screen.
+ *
+ * @param text The text string to be drawn.
+ * @param x X-coordinate for alignment.
+ * @param y Y-coordinate for alignment.
+ * @param halign Horizontal alignment type.
+ * @param valign Vertical alignment type.
+ * @param shadowsize Size of the shadow effect.
+ * @param update Whether the screen should be updated.
+ */
 void Text::draw_align(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
 {
   if (text != nullptr)
   {
-    // Adjust x and y coordinates based on horizontal and vertical alignment
+    size_t text_len = strnlen(text, MAX_TEXT_LEN);
+
+    // Adjust x and y coordinates based on horizontal alignment
     switch (halign)
     {
       case A_RIGHT:
-        x -= strlen(text) * w;
+        x -= text_len * w;
         break;
       case A_HMIDDLE:
-        x -= (strlen(text) * w) / 2;
+        x -= (text_len * w) / 2;
         break;
       case A_LEFT:
       default:
         break;
     }
 
+    // Adjust x and y coordinates based on vertical alignment
     switch (valign)
     {
       case A_BOTTOM:
@@ -184,16 +221,30 @@ void Text::draw_align(const char* text, int x, int y, TextHAlign halign, TextVAl
   }
 }
 
+/**
+ * Draw text with additional formatting and alignment.
+ *
+ * @param text The text string to be drawn.
+ * @param x X-coordinate for alignment.
+ * @param y Y-coordinate for alignment.
+ * @param halign Horizontal alignment type.
+ * @param valign Vertical alignment type.
+ * @param shadowsize Size of the shadow effect.
+ * @param update Whether the screen should be updated.
+ */
 void Text::drawf(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
 {
   if (text != nullptr)
   {
-    // Adjust x and y based on the alignment and screen dimensions
-    if (halign == A_RIGHT)  // Right-align text
-      x += screen->w - (strlen(text) * w);
-    else if (halign == A_HMIDDLE)  // Center-align text horizontally
-      x += screen->w / 2 - (strlen(text) * w) / 2;
+    size_t text_len = strnlen(text, MAX_TEXT_LEN);
 
+    // Adjust for horizontal alignment and screen dimensions
+    if (halign == A_RIGHT)  // Right-align text
+      x += screen->w - (text_len * w);
+    else if (halign == A_HMIDDLE)  // Center-align text horizontally
+      x += screen->w / 2 - (text_len * w) / 2;
+
+    // Adjust for vertical alignment and screen dimensions
     if (valign == A_BOTTOM)  // Bottom-align text
       y += screen->h - h;
     else if (valign == A_VMIDDLE)  // Center-align text vertically
@@ -204,13 +255,25 @@ void Text::drawf(const char* text, int x, int y, TextHAlign halign, TextVAlign v
   }
 }
 
+/**
+ * Erase text by drawing the background over it.
+ *
+ * @param text The text to erase.
+ * @param x X-coordinate of the text.
+ * @param y Y-coordinate of the text.
+ * @param ptexture Background texture to draw over the text.
+ * @param update Whether the screen should be updated.
+ * @param shadowsize Size of the shadow effect.
+ */
 void Text::erasetext(const char* text, int x, int y, Surface* ptexture, int update, int shadowsize)
 {
   // Erase text by drawing the background texture over it
   SDL_Rect dest;
+  size_t text_len = strnlen(text, MAX_TEXT_LEN);
+
   dest.x = x;
   dest.y = y;
-  dest.w = strlen(text) * w + shadowsize;
+  dest.w = text_len * w + shadowsize;
   dest.h = h;
 
   // Clamp the width to the screen width
@@ -224,17 +287,33 @@ void Text::erasetext(const char* text, int x, int y, Surface* ptexture, int upda
     update_rect(screen, dest.x, dest.y, dest.w, dest.h);
 }
 
+/**
+ * Erase centered text on the screen.
+ *
+ * @param text The text to erase.
+ * @param y Y-coordinate of the text.
+ * @param ptexture Background texture to draw over the text.
+ * @param update Whether the screen should be updated.
+ * @param shadowsize Size of the shadow effect.
+ */
 void Text::erasecenteredtext(const char* text, int y, Surface* ptexture, int update, int shadowsize)
 {
   // Erase text centered horizontally on the screen
-  erasetext(text, screen->w / 2 - (strlen(text) * 8), y, ptexture, update, shadowsize);
+  size_t text_len = strnlen(text, MAX_TEXT_LEN);
+  erasetext(text, screen->w / 2 - (text_len * 8), y, ptexture, update, shadowsize);
 }
 
-#define MAX_VEL     10
-#define SPEED_INC   0.01
-#define SCROLL      60
-#define ITEMS_SPACE 4
-
+/**
+ * Display a text file on the screen using a surface file.
+ *
+ * This is an overloaded version of display_text_file that takes a
+ * string representing the surface file, loads it, and displays the
+ * contents of the text file with scrolling functionality.
+ *
+ * @param file The file to display.
+ * @param surface The surface file as a string to be loaded.
+ * @param scroll_speed Speed of the scrolling effect.
+ */
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed)
 {
   Surface* sur = new Surface(datadir + surface, IGNORE_ALPHA);
@@ -242,6 +321,13 @@ void display_text_file(const std::string& file, const std::string& surface, floa
   delete sur;
 }
 
+/**
+ * Display a text file on the screen, with a scrolling effect.
+ *
+ * @param file The file to display.
+ * @param surface Surface to draw the text on.
+ * @param scroll_speed Speed of the scrolling effect.
+ */
 void display_text_file(const std::string& file, Surface* surface, float scroll_speed)
 {
   int done = 0;
@@ -253,22 +339,23 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
   char temp[1024];
   string_list_type names;
   char filename[1024];
-  string_list_init(&names);
-  sprintf(filename, "%s/%s", datadir.c_str(), file.c_str());
 
-  // Read the text file and add each line to the list
+  string_list_init(&names);
+  snprintf(filename, sizeof(filename), "%s/%s", datadir.c_str(), file.c_str());
+
+  // Read file line by line
   if ((fi = fopen(filename, "r")) != nullptr)
   {
     while (fgets(temp, sizeof(temp), fi) != nullptr)
     {
-      temp[strlen(temp) - 1] = '\0';  // Remove newline character
+      temp[strnlen(temp, sizeof(temp)) - 1] = '\0';  // Remove newline character
       string_list_add_item(&names, temp);
     }
     fclose(fi);
   }
   else
   {
-    // Handle file not found case by adding error messages
+    // Error messages if file not found
     string_list_add_item(&names, "File was not found!");
     string_list_add_item(&names, filename);
     string_list_add_item(&names, "Shame on the guy, who");
