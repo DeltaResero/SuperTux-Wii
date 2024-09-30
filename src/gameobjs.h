@@ -54,6 +54,10 @@ class BrokenBrick : public GameObject
   Timer timer;
   Tile* tile;
 
+  // Cached random values to avoid repeated rand() calls in draw
+  int random_offset_x;
+  int random_offset_y;
+
   void init(Tile* tile, float x, float y, float xm, float ym);
   void action(double frame_ratio);
   void draw();

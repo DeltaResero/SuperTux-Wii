@@ -81,6 +81,10 @@ void BrokenBrick::init(Tile* tile_, float x, float y, float xm, float ym)
   base.y = y;
   base.xm = xm;
   base.ym = ym;
+
+  random_offset_x = rand() % 16;  // Cache random value for x offset
+  random_offset_y = rand() % 16;  // Cache random value for y offset
+
   timer.init(true);
   timer.start(200);
 }
@@ -111,8 +115,8 @@ void BrokenBrick::action(double frame_ratio)
 void BrokenBrick::draw()
 {
   SDL_Rect src, dest;
-  src.x = rand() % 16;
-  src.y = rand() % 16;
+  src.x = random_offset_x;  // Use cached value for x offset
+  src.y = random_offset_y;  // Use cached value for y offset
   src.w = 16;
   src.h = 16;
 
@@ -237,16 +241,10 @@ void FloatingScore::action(double frame_ratio)
 void FloatingScore::draw()
 {
   char str[10];  // Buffer to hold the score as a string
-
-  // Safely format the score into the string using snprintf to avoid buffer overflow
-  snprintf(str, sizeof(str), "%d", value);
-
-  // Precompute string length and x position
-  int str_len = strnlen(str, sizeof(str));
-  int x_pos = static_cast<int>(base.x + 16 - str_len * 8);
-
-  // Draw the score string
-  gold_text->draw(str, x_pos, static_cast<int>(base.y), 1);
+  snprintf(str, sizeof(str), "%d", value);  // Safely format the score
+  int str_len = strnlen(str, sizeof(str));  // Safely determine string length
+  int x_pos = static_cast<int>(base.x + 16 - str_len * 8);  // Calculate x position
+  gold_text->draw(str, x_pos, static_cast<int>(base.y), 1);  // Draw score
 }
 
 // EOF
