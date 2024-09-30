@@ -100,10 +100,13 @@ void BrokenBrick::action(double frame_ratio)
 
   if (!timer.check())
   {
-    // Use reverse iterator to erase element efficiently
-    auto i = std::find(World::current()->broken_bricks.rbegin(), World::current()->broken_bricks.rend(), this);
-    if (i != World::current()->broken_bricks.rend())
-      World::current()->broken_bricks.erase(std::next(i).base());
+    auto& broken_bricks = World::current()->broken_bricks;
+    auto i = std::find(broken_bricks.begin(), broken_bricks.end(), this);
+    if (i != broken_bricks.end())
+    {
+      std::iter_swap(i, broken_bricks.end() - 1);  // Swap with the last element
+      broken_bricks.pop_back();  // Remove the last element
+    }
   }
 }
 
@@ -156,9 +159,13 @@ void BouncyBrick::action(double frame_ratio)
   /* Stop bouncing? */
   if (offset >= 0)
   {
-    auto i = std::find(World::current()->bouncy_bricks.rbegin(), World::current()->bouncy_bricks.rend(), this);
-    if (i != World::current()->bouncy_bricks.rend())
-      World::current()->bouncy_bricks.erase(std::next(i).base());
+    auto& bouncy_bricks = World::current()->bouncy_bricks;
+    auto i = std::find(bouncy_bricks.begin(), bouncy_bricks.end(), this);
+    if (i != bouncy_bricks.end())
+    {
+      std::iter_swap(i, bouncy_bricks.end() - 1);  // Swap with the last element
+      bouncy_bricks.pop_back();  // Remove the last element
+    }
   }
 }
 
@@ -221,9 +228,13 @@ void FloatingScore::action(double frame_ratio)
 
   if (!timer.check())
   {
-    auto i = std::find(World::current()->floating_scores.rbegin(), World::current()->floating_scores.rend(), this);
-    if (i != World::current()->floating_scores.rend())
-      World::current()->floating_scores.erase(std::next(i).base());
+    auto& floating_scores = World::current()->floating_scores;
+    auto i = std::find(floating_scores.begin(), floating_scores.end(), this);
+    if (i != floating_scores.end())
+    {
+      std::iter_swap(i, floating_scores.end() - 1);  // Swap with the last element
+      floating_scores.pop_back();  // Remove the last element
+    }
   }
 }
 
