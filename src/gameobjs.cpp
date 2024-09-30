@@ -150,7 +150,7 @@ void BouncyBrick::init(float x, float y)
  */
 void BouncyBrick::action(double frame_ratio)
 {
-  offset = (offset + offset_m * frame_ratio);
+  offset += offset_m * frame_ratio;
 
   /* Go back down? */
   if (offset < -BOUNCY_BRICK_MAX_OFFSET)
