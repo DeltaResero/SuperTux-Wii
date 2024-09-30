@@ -16,6 +16,7 @@ Version: 1.4
 Software license: GPLv2
 ```
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c5a92eed2d314cf8836347624e4ed136)](https://app.codacy.com/gh/DeltaResero/SuperTux-Wii?utm_source=github.com&utm_medium=referral&utm_content=DeltaResero/SuperTux-Wii&utm_campaign=Badge_Grade)
 [![Github All Releases](https://img.shields.io/github/downloads/DeltaResero/SuperTux-Wii/total.svg?maxAge=2592000)](https://github.com/DeltaResero/SuperTux-Wii)
 [![License](https://img.shields.io/badge/license-GPLv2-blue.svg)](https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f)](
