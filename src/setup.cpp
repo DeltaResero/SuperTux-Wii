@@ -452,7 +452,6 @@ void st_menu(void)
   main_menu->additem(MN_GOTO, "Start Game",0,load_game_menu, MNID_STARTGAME);
   main_menu->additem(MN_GOTO, "Bonus Levels",0,contrib_menu, MNID_CONTRIB);
   main_menu->additem(MN_GOTO, "Options",0,options_menu, MNID_OPTIONMENU);
-  //main_menu->additem(MN_ACTION,"Level Editor",0,0, MNID_LEVELEDITOR);
   main_menu->additem(MN_ACTION,"Credits",0,0, MNID_CREDITS);
   main_menu->additem(MN_ACTION,"Quit",0,0, MNID_QUITMAINMENU);
 
@@ -1071,10 +1070,6 @@ void parseargs(int argc, char * argv[])
                         << "  Start-Button: " << joystick_keymap.start_button << std::endl;
             }
         }
-      else if (strcmp(argv[i], "--leveleditor") == 0)
-        {
-          launch_leveleditor_mode = true;
-        }
       else if (strcmp(argv[i], "--datadir") == 0
                || strcmp(argv[i], "-d") == 0 )
         {
@@ -1148,7 +1143,6 @@ void parseargs(int argc, char * argv[])
                "Misc Options:\n"
                "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
                "  --joymap XAXIS:YAXIS:A:B:START\n"
-               "  --leveleditor       Opens the leveleditor in a file. (Only works when a file is provided.)\n"
                "                      Define how joystick buttons and axis should be mapped\n"
                "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
                "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"

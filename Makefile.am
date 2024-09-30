@@ -18,7 +18,6 @@ if !ENABLE_WII
   # Source files
   supertux_SOURCES = \
     src/badguy.cpp src/badguy.h \
-    src/button.cpp src/button.h \
     src/collision.cpp src/collision.h \
     src/configfile.cpp src/configfile.h \
     src/intro.cpp src/intro.h \
@@ -26,7 +25,6 @@ if !ENABLE_WII
     src/globals.cpp src/globals.h \
     src/high_scores.cpp src/high_scores.h \
     src/level.cpp src/level.h \
-    src/leveleditor.cpp src/leveleditor.h \
     src/lispreader.cpp src/lispreader.h \
     src/menu.cpp src/menu.h \
     src/particlesystem.cpp src/particlesystem.h \

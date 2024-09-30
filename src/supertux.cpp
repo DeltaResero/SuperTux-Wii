@@ -27,7 +27,6 @@
 #include "intro.h"
 #include "title.h"
 #include "gameloop.h"
-#include "leveleditor.h"
 #include "screen.h"
 #include "worldmap.h"
 #include "resources.h"
@@ -81,19 +80,15 @@ int main(int argc, char ** argv)
   st_menu();
   loadshared();
 
-  if (launch_leveleditor_mode && level_startup_file)
-    {
-    leveleditor(level_startup_file);
-    }
-  else if (level_startup_file)
-    {
-      GameSession session(level_startup_file, 1, ST_GL_LOAD_LEVEL_FILE);
-      session.run();
-    }
+  if (level_startup_file)
+  {
+    GameSession session(level_startup_file, 1, ST_GL_LOAD_LEVEL_FILE);
+    session.run();
+  }
   else
-    {
-      title();
-    }
+  {
+    title();
+  }
 
   clearscreen(0, 0, 0);
   updatescreen();

@@ -33,7 +33,6 @@ enum MainMenuIDs {
   MNID_STARTGAME,
   MNID_CONTRIB,
   MNID_OPTIONMENU,
-  MNID_LEVELEDITOR,
   MNID_CREDITS,
   MNID_QUITMAINMENU
   };
@@ -56,42 +55,6 @@ enum GameMenuIDs {
 enum WorldMapMenuIDs {
   MNID_RETURNWORLDMAP,
   MNID_QUITWORLDMAP
-  };
-
-enum LevelEditorMainMenuIDs {
-  MNID_RETURNLEVELEDITOR,
-  MNID_SUBSETSETTINGS,
-  MNID_QUITLEVELEDITOR
-  };
-
-enum LevelEditorSubsetSettingsIDs {
-  MNID_SUBSETTITLE,
-  MNID_SUBSETDESCRIPTION,
-  MNID_SUBSETSAVECHANGES
-  };
-
-enum LevelEditorSubsetNewIDs {
- MNID_SUBSETNAME,
- MNID_CREATESUBSET
-};
-
-enum LevelEditorSettingsMenuIDs {
-  MNID_NAME,
-  MNID_AUTHOR,
-  MNID_SONG,
-  MNID_BGIMG,
-  MNID_PARTICLE,
-  MNID_LENGTH,
-  MNID_TIME,
-  MNID_GRAVITY,
-  MNID_BGSPEED,
-  MNID_TopRed,
-  MNID_TopGreen,
-  MNID_TopBlue,
-  MNID_BottomRed,
-  MNID_BottomGreen,
-  MNID_BottomBlue,
-  MNID_APPLY
   };
 
 bool confirm_dialog(std::string text);

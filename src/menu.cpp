@@ -35,7 +35,6 @@
 #include "setup.h"
 #include "sound.h"
 #include "scene.h"
-#include "leveleditor.h"
 #include "timer.h"
 
 #define FLICK_CURSOR_TIME 500

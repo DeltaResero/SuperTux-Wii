@@ -44,7 +44,6 @@
 #include "setup.h"
 #include "level.h"
 #include "gameloop.h"
-#include "leveleditor.h"
 #include "scene.h"
 #include "player.h"
 #include "math.h"
@@ -469,10 +468,6 @@ void title(void)
           case MNID_CONTRIB:
             // Open the contribution menu
             generate_contrib_menu();
-            break;
-          case MNID_LEVELEDITOR:
-            leveleditor();
-            Menu::set_current(main_menu);
             break;
           case MNID_CREDITS:
             menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
