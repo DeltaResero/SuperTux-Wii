@@ -337,10 +337,9 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
   int length;
   FILE* fi;
   char temp[1024];
-  string_list_type names;
+  std::vector<std::string> names;  // Replaced string_list_type with std::vector<std::string>
   char filename[1024];
 
-  string_list_init(&names);
   snprintf(filename, sizeof(filename), "%s/%s", datadir.c_str(), file.c_str());
 
   // Read file line by line
@@ -349,27 +348,26 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     while (fgets(temp, sizeof(temp), fi) != nullptr)
     {
       temp[strnlen(temp, sizeof(temp)) - 1] = '\0';  // Remove newline character
-      string_list_add_item(&names, temp);
+      names.emplace_back(temp);  // Add each line to the vector
     }
     fclose(fi);
   }
   else
   {
     // Error messages if file not found
-    string_list_add_item(&names, "File was not found!");
-    string_list_add_item(&names, filename);
-    string_list_add_item(&names, "Shame on the guy, who");
-    string_list_add_item(&names, "forgot to include it");
-    string_list_add_item(&names, "in your SuperTux distribution.");
+    names.emplace_back("File was not found!");
+    names.emplace_back(filename);
+    names.emplace_back("Shame on the guy, who");
+    names.emplace_back("forgot to include it");
+    names.emplace_back("in your SuperTux distribution.");
   }
 
-  length = names.num_items;
+  length = names.size();
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
-  Uint32 lastticks = SDL_GetTicks();
+  Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
   while (!done)
   {
-    // Handle user input
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -380,9 +378,11 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
           {
             case SDLK_UP:
               speed -= SPEED_INC;
+              speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
               break;
             case SDLK_DOWN:
               speed += SPEED_INC;
+              speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
               break;
             case SDLK_SPACE:
             case SDLK_RETURN:
@@ -404,11 +404,10 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
       }
     }
 
-    // Clamp speed to prevent it from exceeding the max velocity
-    if (speed > MAX_VEL)
-      speed = MAX_VEL;
-    else if (speed < -MAX_VEL)
-      speed = -MAX_VEL;
+    // Re-use the previously declared 'ticks'
+    Uint32 ticks = SDL_GetTicks();
+    scroll += speed * (ticks - lastticks);
+    lastticks = ticks;
 
     // Draw the background and the scrolling text
     surface->draw_bg();
@@ -416,26 +415,26 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     y = 0;
     for (int i = 0; i < length; ++i)
     {
-      switch (names.item[i][0])
+      switch (names[i][0])  // Access vector elements using 'names[i]'
       {
         case ' ':
-          white_small_text->drawf(names.item[i] + 1, 0, screen->h + y - int(scroll),
-            A_HMIDDLE, A_TOP, 1);
+          white_small_text->drawf(names[i].c_str() + 1, 0, screen->h + y - int(scroll),
+                                  A_HMIDDLE, A_TOP, 1);
           y += white_small_text->h + ITEMS_SPACE;
           break;
         case '\t':
-          white_text->drawf(names.item[i] + 1, 0, screen->h + y - int(scroll),
-            A_HMIDDLE, A_TOP, 1);
+          white_text->drawf(names[i].c_str() + 1, 0, screen->h + y - int(scroll),
+                            A_HMIDDLE, A_TOP, 1);
           y += white_text->h + ITEMS_SPACE;
           break;
         case '-':
-          white_big_text->drawf(names.item[i] + 1, 0, screen->h + y - int(scroll),
-            A_HMIDDLE, A_TOP, 3);
+          white_big_text->drawf(names[i].c_str() + 1, 0, screen->h + y - int(scroll),
+                                A_HMIDDLE, A_TOP, 3);
           y += white_big_text->h + ITEMS_SPACE;
           break;
         default:
-          blue_text->drawf(names.item[i], 0, screen->h + y - int(scroll),
-            A_HMIDDLE, A_TOP, 1);
+          blue_text->drawf(names[i].c_str(), 0, screen->h + y - int(scroll),
+                           A_HMIDDLE, A_TOP, 1);
           y += blue_text->h + ITEMS_SPACE;
           break;
       }
@@ -447,15 +446,11 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     if (screen->h + y - scroll < 0 && 20 + screen->h + y - scroll < 0)
       done = 1;
 
-    Uint32 ticks = SDL_GetTicks();
-    scroll += speed * (ticks - lastticks);
-    lastticks = ticks;
-
     if (scroll < 0)
       scroll = 0;
   }
 
-  string_list_free(&names);
+  // No need to call string_list_free since std::vector handles memory automatically
   SDL_EnableKeyRepeat(0, 0);  // Disable key repeating
   Menu::set_current(main_menu);
 }
