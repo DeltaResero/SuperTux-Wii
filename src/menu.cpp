@@ -184,8 +184,18 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
   // Allocate memory and copy string manually, ensuring null-termination
   size_t len = strnlen(text_, 63);  // Limit to 63 characters
   pnew_item->text = (char*)malloc(len + 1);  // Allocate space for null-terminator
-  memcpy(pnew_item->text, text_, len);
-  pnew_item->text[len] = '\0';  // Manually null-terminate
+  if (pnew_item->text != nullptr)
+  {
+    memcpy(pnew_item->text, text_, len);
+    pnew_item->text[len] = '\0';  // Manually null-terminate
+  }
+  else
+  {
+    #ifdef DEBUG
+    fprintf(stderr, "Memory allocation failed for pnew_item->text\n");
+    #endif
+    pnew_item->text = nullptr;  // Ensure safe fallback
+  }
 
   if (kind_ == MN_TOGGLE)
   {
@@ -198,16 +208,36 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
 
   pnew_item->target_menu = target_menu_;
   pnew_item->input = (char*)malloc(sizeof(char));
-  pnew_item->input[0] = '\0';
+  if (pnew_item->input != nullptr)
+  {
+    pnew_item->input[0] = '\0';
+  }
+  else
+  {
+    #ifdef DEBUG
+    fprintf(stderr, "Memory allocation failed for pnew_item->input\n");
+    #endif
+    pnew_item->input = nullptr;
+  }
 
   if (kind_ == MN_STRINGSELECT)
   {
     pnew_item->list = (string_list_type*)malloc(sizeof(string_list_type));
-    string_list_init(pnew_item->list);
+    if (pnew_item->list != nullptr)
+    {
+      string_list_init(pnew_item->list);
+    }
+    else
+    {
+      #ifdef DEBUG
+      fprintf(stderr, "Memory allocation failed for pnew_item->list\n");
+      #endif
+      pnew_item->list = nullptr;
+    }
   }
   else
   {
-    pnew_item->list = NULL;
+    pnew_item->list = nullptr;
   }
 
   pnew_item->id = id;
@@ -233,8 +263,18 @@ void MenuItem::change_text(const char* text_)
     // Allocate memory and copy string manually, ensuring null-termination
     size_t len = strnlen(text_, 63);  // Limit to 63 characters
     text = (char*)malloc(len + 1);  // Allocate space for null-terminator
-    memcpy(text, text_, len);
-    text[len] = '\0';  // Manually null-terminate
+    if (text != nullptr)
+    {
+      memcpy(text, text_, len);
+      text[len] = '\0';  // Manually null-terminate
+    }
+    else
+    {
+      #ifdef DEBUG
+      fprintf(stderr, "Memory allocation failed for text\n");
+      #endif
+      text = nullptr;
+    }
   }
 }
 
@@ -251,8 +291,18 @@ void MenuItem::change_input(const char* text_)
     // Allocate memory and copy string manually, ensuring null-termination
     size_t len = strnlen(text_, 63);  // Limit to 63 characters
     input = (char*)malloc(len + 1);  // Allocate space for null-terminator
-    memcpy(input, text_, len);
-    input[len] = '\0';  // Manually null-terminate
+    if (input != nullptr)
+    {
+      memcpy(input, text_, len);
+      input[len] = '\0';  // Manually null-terminate
+    }
+    else
+    {
+      #ifdef DEBUG
+      fprintf(stderr, "Memory allocation failed for input\n");
+      #endif
+      input = nullptr;
+    }
   }
 }
 
