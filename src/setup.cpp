@@ -17,7 +17,6 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
 #include <assert.h>
 #include <stdio.h>
 #include <iostream>
@@ -90,16 +89,16 @@ int faccessible(const char *filename)
 {
   struct stat filestat;
   if (stat(filename, &filestat) == -1)
-    {
-      return false;
-    }
+  {
+    return false;
+  }
   else
-    {
-      if(S_ISREG(filestat.st_mode))
-        return true;
-      else
-        return false;
-    }
+  {
+    if(S_ISREG(filestat.st_mode))
+      return true;
+    else
+      return false;
+  }
 }
 
 /* Can we write to this location? */
@@ -108,9 +107,9 @@ int fwriteable(const char *filename)
   FILE* fi;
   fi = fopen(filename, "wa");
   if (fi == NULL)
-    {
-      return false;
-    }
+  {
+    return false;
+  }
   fclose(fi);
   return true;
 }
@@ -119,23 +118,23 @@ int fwriteable(const char *filename)
 int fcreatedir(const char* relative_dir)
 {
   char path[1024];
-  snprintf(path, 1024, "%s/%s/", st_dir, relative_dir);
+  snprintf(path, sizeof(path), "%s/%s/", st_dir, relative_dir);
   if(mkdir(path,0755) != 0)
+  {
+    snprintf(path, sizeof(path), "%s/%s/", datadir.c_str(), relative_dir);
+    if(mkdir(path,0755) != 0)
     {
-      snprintf(path, 1024, "%s/%s/", datadir.c_str(), relative_dir);
-      if(mkdir(path,0755) != 0)
-        {
-          return false;
-        }
-      else
-        {
-          return true;
-        }
+      return false;
     }
-  else
+    else
     {
       return true;
     }
+  }
+  else
+  {
+    return true;
+  }
 }
 
 FILE * opendata(const char * rel_filename, const char * mode)
@@ -143,26 +142,32 @@ FILE * opendata(const char * rel_filename, const char * mode)
   char * filename = NULL;
   FILE * fi;
 
-  filename = (char *) malloc(sizeof(char) * (strlen(st_dir) +
-                                             strlen(rel_filename) + 1));
+  // Safely handle strings that may not be null-terminated
+  size_t st_dir_len = strnlen(st_dir, 1024);
+  size_t rel_filename_len = strnlen(rel_filename, 1024);
 
-  strcpy(filename, st_dir);
-  /* Open the high score file: */
+  filename = (char *) malloc(st_dir_len + rel_filename_len + 1);
+  if (filename == NULL)
+  {
+    fprintf(stderr, "Memory allocation failed\n");
+    return NULL;
+  }
 
-  strcat(filename, rel_filename);
+  // Use snprintf to avoid buffer overflows
+  snprintf(filename, st_dir_len + rel_filename_len + 1, "%s%s", st_dir, rel_filename);
 
   /* Try opening the file: */
   fi = fopen(filename, mode);
 
   if (fi == NULL)
-    {
-      fprintf(stderr, "Warning: Unable to open the file \"%s\" ", filename);
+  {
+    fprintf(stderr, "Warning: Unable to open the file \"%s\" ", filename);
 
-      if (strcmp(mode, "r") == 0)
-        fprintf(stderr, "for read!!!\n");
-      else if (strcmp(mode, "w") == 0)
-        fprintf(stderr, "for write!!!\n");
-    }
+    if (strcmp(mode, "r") == 0)
+      fprintf(stderr, "for read!!!\n");
+    else if (strcmp(mode, "w") == 0)
+      fprintf(stderr, "for write!!!\n");
+  }
   free( filename );
 
   return(fi);
@@ -175,75 +180,91 @@ FILE * opendata(const char * rel_filename, const char * mode)
  * applying optional filters like 'expected_file', 'glob', and 'exception_str'.
  * The results are added to the 'sdirs' list.
  */
-static void process_directory(const char *base_path, const char *rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs) {
-  DIR *dirStructP;              // Pointer to directory structure
-  struct dirent *direntp;       // Pointer to directory entry
-  char path[1024];              // Buffer to store the constructed path
-  char absolute_filename[1024]; // Buffer to store the full path of directory entries
-  struct stat buf;              // Structure to hold file status
+static void process_directory(const char *base_path, const char *rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs)
+{
+  DIR *dirStructP;               // Pointer to directory structure
+  struct dirent *direntp;        // Pointer to directory entry
+  char path[1024];               // Buffer to store the constructed path
+  char absolute_filename[1024];  // Buffer to store the full path of directory entries
+  struct stat buf;               // Structure to hold file status
 
-  // Build the full path from base_path and rel_path
-  size_t path_len = strlen(base_path);
-  size_t rel_path_len = strlen(rel_path);
+  // Safely handle strings that may not be null-terminated
+  size_t path_len = strnlen(base_path, sizeof(path) - 1);     // -1 for null terminator
+  size_t rel_path_len = strnlen(rel_path, sizeof(path) - 1);  // -1 for null terminator
 
   // Ensure the full path fits within the buffer
-  if (path_len + 1 + rel_path_len < sizeof(path)){
-    strcpy(path, base_path);
-    strcat(path, "/");
-    strcat(path, rel_path);
-  } else {
+  if (path_len + 1 + rel_path_len < sizeof(path))
+  {
+    // Safely construct the path using strncat
+    snprintf(path, sizeof(path), "%s", base_path);  // Initialize with base_path
+    strncat(path, "/", sizeof(path) - strlen(path) - 1);  // Add separator
+    strncat(path, rel_path, sizeof(path) - strlen(path) - 1);  // Add relative path
+  }
+  else
+  {
     fprintf(stderr, "Path is too long!\n");
     return;
   }
 
   // Open the directory
-  if ((dirStructP = opendir(path)) != NULL) {
+  if ((dirStructP = opendir(path)) != NULL)
+  {
     // Iterate over each entry in the directory
-    while ((direntp = readdir(dirStructP)) != NULL) {
-      size_t dirent_name_len = strlen(direntp->d_name);
-      size_t absolute_filename_len = path_len + 1 + dirent_name_len;
+    while ((direntp = readdir(dirStructP)) != NULL)
+    {
+      size_t dirent_name_len = strnlen(direntp->d_name, NAME_MAX + 1);
 
-      // Ensure the full path of the directory entry fits within the buffer
-      if (absolute_filename_len < sizeof(absolute_filename)) {
-        strcpy(absolute_filename, path);
-        strcat(absolute_filename, "/");
-        strcat(absolute_filename, direntp->d_name);
+      // Calculate total length needed for full path
+      size_t total_len = path_len + 1 + dirent_name_len;  // +1 for '/'
 
-        // Check if the entry is a directory or file, based on the is_subdir flag
-        if (stat(absolute_filename, &buf) == 0 &&
-            ((is_subdir && S_ISDIR(buf.st_mode)) || (!is_subdir && S_ISREG(buf.st_mode)))) {
+      // Ensure the full path of the directory entry fits in the absolute_filename buffer
+      if (total_len < sizeof(absolute_filename))
+      {
+        snprintf(absolute_filename, sizeof(absolute_filename), "%s", path);  // Initialize with path
+        strncat(absolute_filename, "/", sizeof(absolute_filename) - strlen(absolute_filename) - 1);  // Add separator
+        strncat(absolute_filename, direntp->d_name, sizeof(absolute_filename) - strlen(absolute_filename) - 1);  // Add directory entry
+      }
+      else
+      {
+        fprintf(stderr, "Path or directory entry too long! Total length: %zu, Buffer size: %zu\n", total_len, sizeof(absolute_filename));
+        continue; // Skip the current entry to prevent truncation
+      }
 
-          // If expected_file is provided, check if it exists within the directory
-          if (expected_file != NULL) {
-            char filename[1024];
-            size_t expected_file_len = strlen(expected_file);
-            size_t filename_len = absolute_filename_len + 1 + expected_file_len;
+      // Check if the entry is a directory or file, based on the is_subdir flag
+      if (stat(absolute_filename, &buf) == 0 &&
+          ((is_subdir && S_ISDIR(buf.st_mode)) || (!is_subdir && S_ISREG(buf.st_mode))))
+      {
+        // If expected_file is provided, check if it exists within the directory
+        if (expected_file != NULL)
+        {
+          char filename[1024];
+          size_t expected_file_len = strnlen(expected_file, NAME_MAX + 1);
+          size_t combined_len = total_len + 1 + expected_file_len; // Combine lengths of path and file
 
-            // Ensure the full path of the expected file fits within the buffer
-            if (filename_len < sizeof(filename)) {
-              strcpy(filename, absolute_filename);
-              strcat(filename, "/");
-              strcat(filename, expected_file);
-              if (!faccessible(filename)) continue; // Skip if file is not accessible
-            } else {
-              fprintf(stderr, "Filename is too long!\n");
-              continue;
-            }
+          // Ensure combined length of absolute_filename and expected_file fits within filename buffer
+          if (combined_len < sizeof(filename))
+          {
+            snprintf(filename, sizeof(filename), "%s", absolute_filename);  // Initialize with absolute_filename
+            strncat(filename, "/", sizeof(filename) - strlen(filename) - 1);  // Add separator
+            strncat(filename, expected_file, sizeof(filename) - strlen(filename) - 1);  // Add expected_file
+            if (!faccessible(filename)) continue;  // Skip if file is not accessible
           }
-
-          // Apply optional filters: skip entries matching exception_str or not matching glob
-          if (exception_str != NULL && strstr(direntp->d_name, exception_str) != NULL)
-            continue;
-
-          if (glob != NULL && strstr(direntp->d_name, glob) == NULL)
-            continue;
-
-          // Add the directory entry name to the list
-          string_list_add_item(sdirs, direntp->d_name);
+          else
+          {
+            fprintf(stderr, "Filename too long! Combined length: %zu, Buffer size: %zu\n", combined_len, sizeof(filename));
+            continue; // Skip if filename is too long
+          }
         }
-      } else {
-        fprintf(stderr, "Absolute filename is too long!\n");
-        continue;
+
+        // Apply optional filters: skip entries matching exception_str or not matching glob
+        if (exception_str != NULL && strstr(direntp->d_name, exception_str) != NULL)
+          continue;
+
+        if (glob != NULL && strstr(direntp->d_name, glob) == NULL)
+          continue;
+
+        // Add the directory entry name to the list
+        string_list_add_item(sdirs, direntp->d_name);
       }
     }
     closedir(dirStructP);
@@ -255,7 +276,8 @@ static void process_directory(const char *base_path, const char *rel_path, const
  * This function scans the provided relative path for subdirectories,
  * optionally checking for the existence of a specific file within each subdirectory.
  */
-string_list_type dsubdirs(const char *rel_path, const char *expected_file) {
+string_list_type dsubdirs(const char *rel_path, const char *expected_file)
+{
   string_list_type sdirs;
   string_list_init(&sdirs);
 
@@ -271,7 +293,8 @@ string_list_type dsubdirs(const char *rel_path, const char *expected_file) {
  * This function scans the provided relative path for files,
  * optionally filtering them based on glob patterns or excluding specific files.
  */
-string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str) {
+string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str)
+{
   string_list_type sdirs;
   string_list_init(&sdirs);
 
@@ -295,7 +318,6 @@ void free_strings(char **strings, int num)
 /* Set SuperTux configuration and save directories */
 void st_directory_setup(void)
 {
-
   bool deviceselection = false;
   FILE *fp = NULL;
 
@@ -359,7 +381,7 @@ void st_directory_setup(void)
 
   if(!deviceselection)
   {
-    print_status("Game data not found on SD or USB!\n");;
+    print_status("Game data not found on SD or USB!\n");
     exit(1);
   }
 }
@@ -384,7 +406,7 @@ void st_directory_setup(void)
   /* Remove .supertux config-file from old SuperTux versions */
   if(faccessible(st_dir))
   {
-      remove (st_dir);
+    remove (st_dir);
   }
 
   st_save_dir = (char *) malloc(sizeof(char) * (strlen(st_dir) + strlen("/save") + 1));
@@ -994,8 +1016,9 @@ void st_shutdown(void)
 
 void st_abort(const std::string& reason, const std::string& details)
 {
-    std::string errmsg = "\nError: " + reason + "\n" + details + "\n";
-  fprintf(stderr, errmsg.c_str());
+  std::string errmsg = "\nError: " + reason + "\n" + details + "\n";
+
+  fprintf(stderr, "%s", errmsg.c_str());
   print_status(errmsg.c_str());
   st_shutdown();
   abort();
@@ -1029,140 +1052,149 @@ void parseargs(int argc, char * argv[])
 
   /* Parse arguments: */
   for (i = 1; i < argc; i++)
+  {
+    if (strcmp(argv[i], "--fullscreen") == 0 ||
+        strcmp(argv[i], "-f") == 0)
     {
-      if (strcmp(argv[i], "--fullscreen") == 0 ||
-          strcmp(argv[i], "-f") == 0)
-        {
-          /* Use full screen: */
-          use_fullscreen = true;
-        }
-      else if (strcmp(argv[i], "--window") == 0 ||
-               strcmp(argv[i], "-w") == 0)
-        {
-          /* Use window mode: */
-          use_fullscreen = false;
-        }
-      else if (strcmp(argv[i], "--joystick") == 0 || strcmp(argv[i], "-j") == 0)
-        {
-          assert(i+1 < argc);
-          joystick_num = atoi(argv[++i]);
-        }
-      else if (strcmp(argv[i], "--joymap") == 0)
-        {
-          assert(i+1 < argc);
-          if (sscanf(argv[++i],
-                     "%d:%d:%d:%d:%d",
-                     &joystick_keymap.x_axis,
-                     &joystick_keymap.y_axis,
-                     &joystick_keymap.a_button,
-                     &joystick_keymap.b_button,
-                     &joystick_keymap.start_button) != 5)
-            {
-              puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
-            }
-          else
-            {
-              std::cout << "Using new joymap:\n"
-                        << "  X-Axis:       " << joystick_keymap.x_axis << "\n"
-                        << "  Y-Axis:       " << joystick_keymap.y_axis << "\n"
-                        << "  A-Button:     " << joystick_keymap.a_button << "\n"
-                        << "  B-Button:     " << joystick_keymap.b_button << "\n"
-                        << "  Start-Button: " << joystick_keymap.start_button << std::endl;
-            }
-        }
-      else if (strcmp(argv[i], "--datadir") == 0
-               || strcmp(argv[i], "-d") == 0 )
-        {
-          assert(i+1 < argc);
-          datadir = argv[++i];
-        }
-      else if (strcmp(argv[i], "--show-fps") == 0)
-        {
-          /* Use full screen: */
-          show_fps = true;
-        }
-      else if (strcmp(argv[i], "--opengl") == 0 ||
-               strcmp(argv[i], "-gl") == 0)
-        {
-#ifndef NOOPENGL
-          /* Use OpengGL: */
-          use_gl = true;
-#endif
-        }
-      else if (strcmp(argv[i], "--sdl") == 0)
-          {
-            use_gl = false;
-          }
-      else if (strcmp(argv[i], "--usage") == 0)
-        {
-          /* Show usage: */
-          usage(argv[0], 0);
-        }
-      else if (strcmp(argv[i], "--version") == 0)
-        {
-          /* Show version: */
-          printf("SuperTux " VERSION "\n");
-          exit(0);
-        }
-      else if (strcmp(argv[i], "--disable-sound") == 0)
-        {
-          /* Disable the compiled in sound feature */
-          printf("Sounds disabled \n");
-          use_sound = false;
-          audio_device = false;
-        }
-      else if (strcmp(argv[i], "--disable-music") == 0)
-        {
-          /* Disable the compiled in sound feature */
-          printf("Music disabled \n");
-          use_music = false;
-        }
-      else if (strcmp(argv[i], "--debug-mode") == 0)
-        {
-          /* Enable the debug-mode */
-          debug_mode = true;
-
-        }
-      else if (strcmp(argv[i], "--help") == 0)
-        {     /* Show help: */
-          puts("SuperTux Wii" VERSION "\n"
-               "  Please see the file \"README.txt\" for more details.\n");
-          printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
-          puts("Display Options:\n"
-               "  -w, --window        Run in window mode.\n"
-               "  -f, --fullscreen    Run in fullscreen mode.\n"
-               "  -gl, --opengl       If opengl support was compiled in, this will enable\n"
-               "                      the OpenGL mode.\n"
-               "  --sdl               Use non-opengl renderer\n"
-               "\n"
-               "Sound Options:\n"
-               "  --disable-sound     If sound support was compiled in,  this will\n"
-               "                      disable sound for this session of the game.\n"
-               "  --disable-music     Like above, but this will disable music.\n"
-               "\n"
-               "Misc Options:\n"
-               "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
-               "  --joymap XAXIS:YAXIS:A:B:START\n"
-               "                      Define how joystick buttons and axis should be mapped\n"
-               "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
-               "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
-               "  --help              Display a help message summarizing command-line\n"
-               "                      options, license and game controls.\n"
-               "  --usage             Display a brief message summarizing command-line options.\n"
-               "  --version           Display the version of SuperTux you're running.\n\n"
-               );
-          exit(0);
-        }
-      else if (argv[i][0] != '-')
-        {
-          level_startup_file = argv[i];
-        }
-      else
-        {
-          /* Unknown - complain! */
-          usage(argv[0], 1);
-        }
+      /* Use full screen: */
+      use_fullscreen = true;
     }
+    else if (strcmp(argv[i], "--window") == 0 ||
+             strcmp(argv[i], "-w") == 0)
+    {
+      /* Use window mode: */
+      use_fullscreen = false;
+    }
+    else if (strcmp(argv[i], "--joystick") == 0 || strcmp(argv[i], "-j") == 0)
+    {
+      assert(i + 1 < argc);
+
+      // Fix: Avoid `atoi`, use `strtol` with error checking
+      char *endptr;
+      joystick_num = strtol(argv[++i], &endptr, 10);
+      if (*endptr != '\0')
+      {
+        fprintf(stderr, "Invalid joystick number: %s\n", argv[i]);
+        exit(1);
+      }
+    }
+    else if (strcmp(argv[i], "--joymap") == 0)
+    {
+      assert(i + 1 < argc);
+
+      // Fix: Added field width specifiers to `sscanf` to avoid overflow
+      if (sscanf(argv[++i], "%4d:%4d:%4d:%4d:%4d",
+                 &joystick_keymap.x_axis,
+                 &joystick_keymap.y_axis,
+                 &joystick_keymap.a_button,
+                 &joystick_keymap.b_button,
+                 &joystick_keymap.start_button) != 5)
+      {
+        puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
+      }
+      else
+      {
+        std::cout << "Using new joymap:\n"
+                  << "  X-Axis:       " << joystick_keymap.x_axis << "\n"
+                  << "  Y-Axis:       " << joystick_keymap.y_axis << "\n"
+                  << "  A-Button:     " << joystick_keymap.a_button << "\n"
+                  << "  B-Button:     " << joystick_keymap.b_button << "\n"
+                  << "  Start-Button: " << joystick_keymap.start_button << std::endl;
+      }
+    }
+    else if (strcmp(argv[i], "--datadir") == 0 ||
+             strcmp(argv[i], "-d") == 0 )
+    {
+      assert(i + 1 < argc);
+      datadir = argv[++i];
+    }
+    else if (strcmp(argv[i], "--show-fps") == 0)
+    {
+      /* Show FPS: */
+      show_fps = true;
+    }
+    else if (strcmp(argv[i], "--opengl") == 0 ||
+             strcmp(argv[i], "-gl") == 0)
+    {
+#ifndef NOOPENGL
+      /* Use OpenGL: */
+      use_gl = true;
+#endif
+    }
+    else if (strcmp(argv[i], "--sdl") == 0)
+    {
+      use_gl = false;
+    }
+    else if (strcmp(argv[i], "--usage") == 0)
+    {
+      /* Show usage: */
+      usage(argv[0], 0);
+    }
+    else if (strcmp(argv[i], "--version") == 0)
+    {
+      /* Show version: */
+      printf("SuperTux " VERSION "\n");
+      exit(0);
+    }
+    else if (strcmp(argv[i], "--disable-sound") == 0)
+    {
+      /* Disable the compiled-in sound feature */
+      printf("Sounds disabled \n");
+      use_sound = false;
+      audio_device = false;
+    }
+    else if (strcmp(argv[i], "--disable-music") == 0)
+    {
+      /* Disable the compiled-in music feature */
+      printf("Music disabled \n");
+      use_music = false;
+    }
+    else if (strcmp(argv[i], "--debug-mode") == 0)
+    {
+      /* Enable the debug-mode */
+      debug_mode = true;
+    }
+    else if (strcmp(argv[i], "--help") == 0)
+    {
+      /* Show help: */
+      puts("SuperTux Wii" VERSION "\n"
+           "  Please see the file \"README.txt\" for more details.\n");
+      printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
+      puts("Display Options:\n"
+           "  -w, --window        Run in window mode.\n"
+           "  -f, --fullscreen    Run in fullscreen mode.\n"
+           "  -gl, --opengl       If opengl support was compiled in, this will enable\n"
+           "                      the OpenGL mode.\n"
+           "  --sdl               Use non-opengl renderer\n"
+           "\n"
+           "Sound Options:\n"
+           "  --disable-sound     If sound support was compiled in,  this will\n"
+           "                      disable sound for this session of the game.\n"
+           "  --disable-music     Like above, but this will disable music.\n"
+           "\n"
+           "Misc Options:\n"
+           "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
+           "  --joymap XAXIS:YAXIS:A:B:START\n"
+           "                      Define how joystick buttons and axis should be mapped\n"
+           "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
+           "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
+           "  --help              Display a help message summarizing command-line\n"
+           "                      options, license and game controls.\n"
+           "  --usage             Display a brief message summarizing command-line options.\n"
+           "  --version           Display the version of SuperTux you're running.\n\n"
+           );
+      exit(0);
+    }
+    else if (argv[i][0] != '-')
+    {
+      level_startup_file = argv[i];
+    }
+    else
+    {
+      /* Unknown - complain! */
+      usage(argv[0], 1);
+    }
+  }
 }
 
 /* Display usage: */
