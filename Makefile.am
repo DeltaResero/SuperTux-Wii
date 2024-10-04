@@ -23,7 +23,6 @@ if !ENABLE_WII
     src/intro.cpp src/intro.h \
     src/gameloop.cpp src/gameloop.h \
     src/globals.cpp src/globals.h \
-    src/high_scores.cpp src/high_scores.h \
     src/level.cpp src/level.h \
     src/lispreader.cpp src/lispreader.h \
     src/menu.cpp src/menu.h \
