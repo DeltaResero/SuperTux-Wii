@@ -702,10 +702,9 @@ void st_general_setup(void)
   /* Seed random number generator: */
   srand(SDL_GetTicks());
 
-#ifndef _WII_ /* Skip setting an icon for Wii builds */
-  /* Set icon image: */
-  seticon();
-#endif /*#ifndef _WII_*/
+#ifndef _WII_
+  seticon();  /* Set window manager icon image */
+#endif
 
   /* Unicode needed for input handling: */
 
@@ -1024,6 +1023,11 @@ void st_abort(const std::string& reason, const std::string& details)
   abort();
 }
 
+void load_config_file()
+{
+  loadconfig();  // Load the config file and if none exist create one
+}
+
 #ifndef _WII_ /* Wii Homebrew Apps don't use a window manager nor take arguments */
 void seticon(void) /* Set Icon (private) */
 {
@@ -1047,8 +1051,6 @@ void seticon(void) /* Set Icon (private) */
 void parseargs(int argc, char * argv[])
 {
   int i;
-
-  loadconfig();
 
   /* Parse arguments: */
   for (i = 1; i < argc; i++)

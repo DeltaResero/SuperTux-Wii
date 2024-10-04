@@ -59,11 +59,10 @@ int main(int argc, char ** argv)
 #endif
 
   st_directory_setup();
-
+  load_config_file();  // load configuration file
 #ifndef _WII_
   parseargs(argc, argv);
 #endif
-
 
   st_audio_setup();
   st_video_setup();

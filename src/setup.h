@@ -49,6 +49,8 @@ void process_options_menu(void); // Processes the options menu
 bool process_load_game_menu(); // Returns true if the game loop was entered
 void update_load_save_game_menu(Menu* pmenu); // Updates the load/save game menu
 
+void load_config_file(void);  // Load config file
+
 #ifndef _WII_
 void parseargs(int argc, char * argv[]); // Parses command-line arguments
 #endif
