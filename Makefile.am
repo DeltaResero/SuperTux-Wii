@@ -81,11 +81,12 @@ if !ENABLE_WII
     $(wildcard data/sounds/*.wav)
 
   desktopdir = $(datadir)/applications
-  desktop_DATA = supertux.desktop
+  desktop_DATA = extras/supertux.desktop
 endif
-# List all .m4 files explicitly
-EXTRA_DIST = AUTHORS README LICENSE INSTALL NEWS LEVELDESIGN ChangeLog \
-             supertux.desktop supertux.png autogen.sh \
+
+# List all extra files for distribution
+EXTRA_DIST = AUTHORS README LICENSE INSTALL NEWS autogen.sh autogen-clean.sh configure.ac \
+             extras/supertux.desktop extras/supertux.png \
              mk/autoconf/acx_pthread.m4 \
              mk/autoconf/ax_check_gl.m4 \
              mk/autoconf/sdl.m4

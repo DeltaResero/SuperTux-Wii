@@ -1037,7 +1037,6 @@ void st_abort(const std::string& reason, const std::string& details)
   std::string errmsg = "\nError: " + reason + "\n" + details + "\n";
 
   // Output error message
-  // NOTE: outputting to an error log might make more sense here
   fprintf(stderr, "%s", errmsg.c_str());
   print_status(errmsg.c_str());
 

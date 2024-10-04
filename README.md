@@ -74,14 +74,32 @@ For configure help:
 ./autogen.sh --help
 ```
 
-### Installation
+### Installing SuperTux on Wii (Homebrew Channel)
 
-On an SD/SDHC/SDHX card or USB device, create a folder named `supertux`
-inside the `apps` folder (e.g., `apps/supertux`). Take the newly compiled
-`.dol` file, copy it into the folder, and rename it to `boot.dol`. Copy
-`icon.png` and `meta.xml` into the same folder. Lastly, copy the `data`
-folder from the repository into the same directory. Upon running SuperTux
-for the first time, a configuration file and save folder should be generated.
+1. Create a folder called `supertux` inside the `apps` folder on your SD/USB device:
+   ```
+   apps/supertux
+   ```
+
+2. Copy the compiled `.dol` file into the `apps/supertux` folder and rename it to `boot.dol`.
+   ```
+   apps/supertux/boot.dol
+   ```
+
+3. Copy the `icon.png` and `meta.xml` files from the `hbc/apps/supertux/` directory in the repository to your SD/USB device:
+   ```
+   apps/supertux/icon.png
+   apps/supertux/meta.xml
+   ```
+
+4. Copy the `data` folder from the repository into the apps/supertux folder of your SD/USB device.
+   ```
+   apps/supertux/data
+   ```
+
+5. Launch SuperTux from the Homebrew Channel. The game will create a config file and save folder on the first run.
+
+
 
 &nbsp;
 
@@ -126,10 +144,10 @@ Use `make` to compile the game executable:
 make -C build
 ```
 
-Note: Installation is not currently supported for standard builds. To test-run,
-copy the `data` folder to a safe place, then add the `supertux` executable and
-`supertux.png` inside it. A template `.desktop` entry file has been included
-in the root directory as `supertux.desktop`.
+Note: Installation is untested and not supported nor recommended unsupport standard builds.
+To test-run, copy the `data` folder to a safe place, then add the `build/supertux` executable
+and `extras/supertux.png` image alongside it. A template `.desktop` entry file has been
+included in the `extras` directory as `supertux.desktop`.
 
 &nbsp;
 
