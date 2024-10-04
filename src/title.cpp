@@ -365,15 +365,18 @@ void title(void)
   // Create the demo session
   createDemo();
 
-  // don't get rid of the loading screen!
-  //clearscreen(0, 0, 0);
+  // Draw loading screen as a placeholder while loading resources
   loading_surf->draw(160, 30);
   //updatescreen();
 
-  // Load and draw the title screen background
+  // Load and draw the title screen background and logo
   bkg_title = new Surface(datadir + "/images/title/background.jpg", IGNORE_ALPHA);
   logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
   //img_choose_subset = new Surface(datadir + "/images/status/choose-level-subset.png", USE_ALPHA);
+
+  // After title screen elements are loaded, delete the loading surface
+  delete loading_surf;
+  loading_surf = NULL; // Set to NULL to avoid accidental use
 
   // Initialize the worldmap list and add items to the menu
   string_list_init(&worldmap_list);

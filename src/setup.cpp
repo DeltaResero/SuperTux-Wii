@@ -1006,21 +1006,38 @@ void st_audio_setup(void)
 
 void st_shutdown(void)
 {
+  // Close the audio system and free resources
   close_audio();
+
+  // Quit SDL subsystems
   SDL_Quit();
+
+  // Save the current game configuration
   saveconfig();
+
+#ifdef _WII_
+  // Reset the system and return to the system menu
+  SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+#endif
 }
 
 /* --- ABORT! --- */
 
 void st_abort(const std::string& reason, const std::string& details)
 {
+  // Construct the error message
   std::string errmsg = "\nError: " + reason + "\n" + details + "\n";
 
+  // Output error message
+  // NOTE: outputting to an error log might make more sense here
   fprintf(stderr, "%s", errmsg.c_str());
   print_status(errmsg.c_str());
+
+  // Perform standard shutdown
   st_shutdown();
-  abort();
+
+  // Use abort as a final fallback
+  abort();  // This ensures the process terminates if shutdown doesn't fully exit
 }
 
 void load_config_file()

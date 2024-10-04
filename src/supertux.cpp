@@ -39,9 +39,22 @@
     //#include <dopmii/FileSystem.h>
 #endif
 
-//added as Supertuxs takes a long, long time to load
+// Loading Screen as SuperTux on Wii takes a long, long time to load
 Surface* loading_surf = NULL;
+
+// Prints the provided status message. FIXME: this is currently a placeholder
 void print_status(const char * st);
+
+/**
+ * Main function of SuperTux.
+ * This function sets up the game environment, handles configuration, initializes audio, video,
+ * and input systems, and either loads the game session or starts the title screen.
+ * For Wii builds, it also handles FAT library initialization and system setup.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line arguments.
+ * @return int Program exit code.
+ */
 int main(int argc, char ** argv)
 {
 
@@ -51,56 +64,66 @@ int main(int argc, char ** argv)
   //IO::USB OurUSB;
   //OurUSB.Startup();
   //OurUSB.Mount();
-  sleep(1);//delay here allows us to use usb disks behind hubs.
+
+  // Wii-specific setup for FAT library and USB disk handling.
+  sleep(1);  // Delay to allow USB disks behind hubs to initialize.
   bool res = fatInitDefault();
   if (res == 0) {
-  print_status("Failed to initialize FAT library!\n");
+    print_status("Failed to initialize FAT library!\n");
   }
 #endif
 
+  // Setup directory paths and load configuration
   st_directory_setup();
-  load_config_file();  // load configuration file
+  load_config_file();  // Load configuration file
+
 #ifndef _WII_
-  parseargs(argc, argv);
+  parseargs(argc, argv);  // Parse command-line arguments
 #endif
 
+  // Setup audio and video
   st_audio_setup();
   st_video_setup();
-  SDL_ShowCursor(false);
+  SDL_ShowCursor(false);  // Hide SDL cursor (SuperTux has it's own cursor)
 
+  // Initialize and show the loading screen
   clearscreen(0, 0, 0);
   loading_surf = new Surface(datadir + "/images/title/loading.png", USE_ALPHA);
-  loading_surf->draw( 160, 30);
-  updatescreen();
+  loading_surf->draw(160, 30);
+  updatescreen();  // Refresh screen to show the loading screen
 
-
+  // Initialize input systems, game settings, and menus
   st_joystick_setup();
   st_general_setup();
   st_menu();
-  loadshared();
+  loadshared();  // Load shared game resources (graphics, sounds, etc.)
 
+  // Check if a level startup file is specified (start a game session), otherwise show the title screen
   if (level_startup_file)
   {
     GameSession session(level_startup_file, 1, ST_GL_LOAD_LEVEL_FILE);
-    session.run();
+    session.run();  // Run the specified game session
   }
   else
   {
-    title();
+    title();  // Start the title screen, loading_surf is deleted inside the title() function
   }
 
+  // Clear the screen and update
   clearscreen(0, 0, 0);
   updatescreen();
 
+  // Unload shared resources and clean up game state
   unloadshared();
-  st_general_free();
-  TileManager::destroy_instance();
-#ifdef DEBUG
-  Surface::debug_check();
-#endif
-  st_shutdown();
+  st_general_free();  // Free general game resources
+  TileManager::destroy_instance();  // Destroy the singleton instance of TileManager
 
-  delete loading_surf;
+#ifdef DEBUG
+  Surface::debug_check();  // Check for any debug issues in surfaces
+#endif
+
+  // Perform system shutdown and cleanup
+  st_shutdown();
 
   return 0;
 }
