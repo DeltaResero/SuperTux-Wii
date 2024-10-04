@@ -190,9 +190,9 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
   }
   else
   {
-    #ifdef DEBUG
+#ifdef DEBUG
     fprintf(stderr, "Memory allocation failed for pnew_item->text\n");
-    #endif
+#endif
     pnew_item->text = nullptr;  // Ensure safe fallback
   }
 
@@ -213,9 +213,9 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
   }
   else
   {
-    #ifdef DEBUG
+#ifdef DEBUG
     fprintf(stderr, "Memory allocation failed for pnew_item->input\n");
-    #endif
+#endif
     pnew_item->input = nullptr;
   }
 
@@ -228,9 +228,9 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
     }
     else
     {
-      #ifdef DEBUG
+#ifdef DEBUG
       fprintf(stderr, "Memory allocation failed for pnew_item->list\n");
-      #endif
+#endif
       pnew_item->list = nullptr;
     }
   }
@@ -269,9 +269,9 @@ void MenuItem::change_text(const char* text_)
     }
     else
     {
-      #ifdef DEBUG
+#ifdef DEBUG
       fprintf(stderr, "Memory allocation failed for text\n");
-      #endif
+#endif
       text = nullptr;
     }
   }
@@ -297,9 +297,9 @@ void MenuItem::change_input(const char* text_)
     }
     else
     {
-      #ifdef DEBUG
+#ifdef DEBUG
       fprintf(stderr, "Memory allocation failed for input\n");
-      #endif
+#endif
       input = nullptr;
     }
   }
