@@ -73,7 +73,7 @@
 #define SCREEN_W 640
 #define SCREEN_H 480
 
-/* Stores wether we're loading from and saving to SD or USB (Wii Only) */
+/* Stores whether we're loading from and saving to SD or USB (Wii Only) */
 int selecteddevice;
 
 /* Local function prototypes: */
@@ -306,9 +306,10 @@ string_list_type dfiles(const char *rel_path, const char* glob, const char* exce
 
 void free_strings(char **strings, int num)
 {
-  int i;
-  for(i=0; i < num; ++i)
+  for (int i = 0; i < num; ++i)
+  {
     free(strings[i]);
+  }
 }
 
 #ifdef _WII_
@@ -419,8 +420,8 @@ void st_directory_setup(void)
   sprintf(str, "%s/levels", st_dir);
   mkdir(str, 0755);
 
-  // User has not that a datadir, so we try some magic
 #ifndef WIN32
+  // Handle datadir detection logic (Linux version)
   if (datadir.empty())
   {
     /* Detect datadir */
@@ -434,19 +435,20 @@ void st_directory_setup(void)
     else
     {
       std::string exedir = std::string(dirname(exe_file)) + "/";
-      datadir = exedir + "../data"; // SuperTux run from source dir
+      datadir = exedir + "../data";  // SuperTux run from source dir
       if (access(datadir.c_str(), F_OK) != 0)
       {
-        datadir = exedir + "../share/supertux"; // SuperTux run from PATH
+        datadir = exedir + "../share/supertux";  // SuperTux run from PATH
         if (access(datadir.c_str(), F_OK) != 0)
         {
-          datadir = DATA_PREFIX; // If all fails, fall back to compiled path
+          datadir = DATA_PREFIX;  // If all fails, fall back to compiled path
         }
       }
     }
   }
 #else
-  datadir = "data"; //DATA_PREFIX;
+  // For Windows, use default data path
+  datadir = "data";  // DATA_PREFIX;
 #endif
 
   printf("Datadir: %s\n", datadir.c_str());
