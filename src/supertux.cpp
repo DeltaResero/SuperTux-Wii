@@ -42,8 +42,6 @@
 // Loading Screen as SuperTux on Wii takes a long, long time to load
 Surface* loading_surf = NULL;
 
-// Prints the provided status message. FIXME: this is currently a placeholder
-void print_status(const char * st);
 
 /**
  * Main function of SuperTux.
@@ -68,9 +66,11 @@ int main(int argc, char ** argv)
   // Wii-specific setup for FAT library and USB disk handling.
   sleep(1);  // Delay to allow USB disks behind hubs to initialize.
   bool res = fatInitDefault();
-  if (res == 0) {
-    print_status("Failed to initialize FAT library!\n");
+  if (res == 0)
+  {
+    st_abort("FAT Library Initialization Failed", "Unable to initialize FAT library for SD/USB access.");
   }
+
 #endif
 
   // Setup directory paths and load configuration

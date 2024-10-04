@@ -82,7 +82,6 @@ bool tv_overscan_enabled = false;
 int offset_y = tv_overscan_enabled ? 40 : 0;
 void seticon(void);
 void usage(char * prog, int ret);
-void print_status(const char * st);
 
 /* Does the given file exist and is it accessible? */
 int faccessible(const char *filename)
@@ -381,8 +380,7 @@ void st_directory_setup(void)
 
   if(!deviceselection)
   {
-    print_status("Game data not found on SD or USB!\n");
-    exit(1);
+    st_abort("Game data not found", "SD or USB device could not be accessed.");
   }
 }
 #else
@@ -770,14 +768,18 @@ void st_video_setup(void)
 {
   /* Init SDL Video: */
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-      fprintf(stderr,
-              "\nError: I could not initialize video!\n"
-              "The Simple DirectMedia error that occured was:\n"
-              "%s\n\n", SDL_GetError());
-      print_status("Could not initialize video\n");
-      exit(1);
-    }
+  {
+    // Get the SDL error message
+    const char* sdl_error = SDL_GetError();
+
+    // Construct a detailed abort message
+    std::string error_message = "Could not initialize video!\n";
+    error_message += "The Simple DirectMedia Layer error that occurred was:\n";
+    error_message += sdl_error;
+
+    // Call st_abort with the detailed message
+    st_abort("Video Initialization Failed", error_message);
+  }
 
   /* Open display and select video setup based on if we have OpenGL support: */
   #ifndef NOOPENGL
@@ -806,7 +808,7 @@ void st_video_setup_sdl(void)
       if (screen == NULL)
         {
           fprintf(stderr,
-                  "\nWarning: I could not set up fullscreen video for "
+                  "\nWarning: Could not set up fullscreen video for "
                   "640x480 mode.\n"
                   "The Simple DirectMedia error that occured was:\n"
                   "%s\n\n", SDL_GetError());
@@ -814,21 +816,25 @@ void st_video_setup_sdl(void)
         }
     }
   else
-    {
-      /* Set the video mode to window mode with double buffering for smoother rendering
-       * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF );
+  {
+    /* Set the video mode to window mode with double buffering for smoother rendering
+     * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
+    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF);
 
-      if (screen == NULL)
-        {
-          fprintf(stderr,
-                  "\nError: I could not set up video for 640x480 mode.\n"
-                  "The Simple DirectMedia error that occured was:\n"
-                  "%s\n\n", SDL_GetError());
-                  print_status("Could not set video mode\n");
-          exit(1);
-        }
+    if (screen == NULL)
+    {
+      // Get the SDL error message
+      const char* sdl_error = SDL_GetError();
+
+      // Construct a detailed abort message
+      std::string error_message = "Could not set up video for 640x480 mode.\n";
+      error_message += "The Simple DirectMedia Layer error that occurred was:\n";
+      error_message += sdl_error;
+
+      // Call st_abort with the detailed message
+      st_abort("Video Mode Setup Failed", error_message);
     }
+  }
 }
 
 #ifndef NOOPENGL
@@ -1032,6 +1038,10 @@ void st_abort(const std::string& reason, const std::string& details)
   // NOTE: outputting to an error log might make more sense here
   fprintf(stderr, "%s", errmsg.c_str());
   print_status(errmsg.c_str());
+
+  // Wait for 3 seconds before exiting to allow reading the error message
+  struct timespec req = {3, 0};  // 3 seconds sleep
+  nanosleep(&req, nullptr);
 
   // Perform standard shutdown
   st_shutdown();
@@ -1280,8 +1290,6 @@ void print_status(const char *st)
 #endif
   printf("\n\n");
   printf("Error!\n %s\n", st);
-  sleep(5);
-  exit(0);
 }
 
 // EOF

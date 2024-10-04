@@ -55,6 +55,8 @@ void load_config_file(void);  // Load config file
 void parseargs(int argc, char * argv[]); // Parses command-line arguments
 #endif
 
+void print_status(const char *st);
+
 #endif /* SUPERTUX_SETUP_H */
 
 // EOF
