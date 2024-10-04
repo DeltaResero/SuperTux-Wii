@@ -109,9 +109,8 @@ int main(int argc, char ** argv)
     title();  // Start the title screen, loading_surf is deleted inside the title() function
   }
 
-  // Clear the screen and update
+  // Clear the screen (but don't flip the buffer at shutdown)
   clearscreen(0, 0, 0);
-  updatescreen();
 
   // Unload shared resources and clean up game state
   unloadshared();
