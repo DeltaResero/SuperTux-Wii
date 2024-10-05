@@ -17,12 +17,12 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include <assert.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdio>
 #include <iostream>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
 #include <unistd.h>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -43,7 +43,7 @@
 #include <libgen.h>
 #endif
 
-#include <ctype.h>
+#include <cctype>
 
 #include "defines.h"
 #include "globals.h"
@@ -83,7 +83,11 @@ int offset_y = tv_overscan_enabled ? 40 : 0;
 void seticon(void);
 void usage(char * prog, int ret);
 
-/* Does the given file exist and is it accessible? */
+/**
+ * Checks if the given file exists and is accessible.
+ * @param filename Path to the file.
+ * @return true if the file exists and is accessible, false otherwise.
+ */
 int faccessible(const char *filename)
 {
   struct stat filestat;
@@ -100,12 +104,16 @@ int faccessible(const char *filename)
   }
 }
 
-/* Can we write to this location? */
+/**
+ * Checks if the given file is writable.
+ * @param filename Path to the file.
+ * @return true if the file is writable, false otherwise.
+ */
 int fwriteable(const char *filename)
 {
   FILE* fi;
   fi = fopen(filename, "wa");
-  if (fi == NULL)
+  if (fi == nullptr)
   {
     return false;
   }
@@ -113,7 +121,12 @@ int fwriteable(const char *filename)
   return true;
 }
 
-/* Makes sure a directory is created in either the SuperTux home directory or the SuperTux base directory.*/
+/**
+ * Attempts to create a directory in the SuperTux home directory first
+ * and if it fails, it tries to create the directory in the base directory.
+ * @param relative_dir The relative path of the directory to be created.
+ * @return true if the directory was successfully created or already exists, false otherwise.
+ */
 int fcreatedir(const char* relative_dir)
 {
   char path[1024];
@@ -136,9 +149,18 @@ int fcreatedir(const char* relative_dir)
   }
 }
 
+/**
+ * Opens a file located in the SuperTux data directory.
+ * Constructs the full file path by appending the relative
+ * filename to the SuperTux data directory and attempts to
+ * open the file in the specified mode (read/write).
+ * @param rel_filename Relative path of the file within the data directory.
+ * @param mode Mode in which the file should be opened (read/write).
+ * @return Pointer to the opened file, or nullptr if the file could not be opened.
+ */
 FILE * opendata(const char * rel_filename, const char * mode)
 {
-  char * filename = NULL;
+  char * filename = nullptr;
   FILE * fi;
 
   // Safely handle strings that may not be null-terminated
@@ -146,10 +168,10 @@ FILE * opendata(const char * rel_filename, const char * mode)
   size_t rel_filename_len = strnlen(rel_filename, 1024);
 
   filename = (char *) malloc(st_dir_len + rel_filename_len + 1);
-  if (filename == NULL)
+  if (filename == nullptr)
   {
     fprintf(stderr, "Memory allocation failed\n");
-    return NULL;
+    return nullptr;
   }
 
   // Use snprintf to avoid buffer overflows
@@ -158,7 +180,7 @@ FILE * opendata(const char * rel_filename, const char * mode)
   /* Try opening the file: */
   fi = fopen(filename, mode);
 
-  if (fi == NULL)
+  if (fi == nullptr)
   {
     fprintf(stderr, "Warning: Unable to open the file \"%s\" ", filename);
 
@@ -172,12 +194,20 @@ FILE * opendata(const char * rel_filename, const char * mode)
   return(fi);
 }
 
-/*
+/**
  * Function to process both directories and files.
  * This function handles the logic for scanning a directory (or subdirectory),
  * checking for files or subdirectories based on the 'is_subdir' flag, and
  * applying optional filters like 'expected_file', 'glob', and 'exception_str'.
  * The results are added to the 'sdirs' list.
+ *
+ * @param base_path Base path to the directory.
+ * @param rel_path Relative path to the directory.
+ * @param expected_file If non-NULL, check for this file in the directory.
+ * @param is_subdir Flag indicating if directories should be processed.
+ * @param glob Optional glob pattern to filter files.
+ * @param exception_str Optional exception string to exclude specific files.
+ * @param sdirs List where the results will be stored.
  */
 static void process_directory(const char *base_path, const char *rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs)
 {
@@ -206,10 +236,10 @@ static void process_directory(const char *base_path, const char *rel_path, const
   }
 
   // Open the directory
-  if ((dirStructP = opendir(path)) != NULL)
+  if ((dirStructP = opendir(path)) != nullptr)
   {
     // Iterate over each entry in the directory
-    while ((direntp = readdir(dirStructP)) != NULL)
+    while ((direntp = readdir(dirStructP)) != nullptr)
     {
       size_t dirent_name_len = strnlen(direntp->d_name, NAME_MAX + 1);
 
@@ -234,7 +264,7 @@ static void process_directory(const char *base_path, const char *rel_path, const
           ((is_subdir && S_ISDIR(buf.st_mode)) || (!is_subdir && S_ISREG(buf.st_mode))))
       {
         // If expected_file is provided, check if it exists within the directory
-        if (expected_file != NULL)
+        if (expected_file != nullptr)
         {
           char filename[1024];
           size_t expected_file_len = strnlen(expected_file, NAME_MAX + 1);
@@ -256,10 +286,10 @@ static void process_directory(const char *base_path, const char *rel_path, const
         }
 
         // Apply optional filters: skip entries matching exception_str or not matching glob
-        if (exception_str != NULL && strstr(direntp->d_name, exception_str) != NULL)
+        if (exception_str != nullptr && strstr(direntp->d_name, exception_str) != nullptr)
           continue;
 
-        if (glob != NULL && strstr(direntp->d_name, glob) == NULL)
+        if (glob != nullptr && strstr(direntp->d_name, glob) == nullptr)
           continue;
 
         // Add the directory entry name to the list
@@ -270,10 +300,13 @@ static void process_directory(const char *base_path, const char *rel_path, const
   }
 }
 
-/*
+/**
  * Function to get subdirectories within a relative path.
  * This function scans the provided relative path for subdirectories,
  * optionally checking for the existence of a specific file within each subdirectory.
+ * @param rel_path Relative path to the directory.
+ * @param expected_file If non-NULL, check for this file in each subdirectory.
+ * @return List of subdirectories.
  */
 string_list_type dsubdirs(const char *rel_path, const char *expected_file)
 {
@@ -281,16 +314,20 @@ string_list_type dsubdirs(const char *rel_path, const char *expected_file)
   string_list_init(&sdirs);
 
   // Process directories in st_dir and datadir
-  process_directory(st_dir, rel_path, expected_file, true, NULL, NULL, &sdirs);
-  process_directory(datadir.c_str(), rel_path, expected_file, true, NULL, NULL, &sdirs);
+  process_directory(st_dir, rel_path, expected_file, true, nullptr, nullptr, &sdirs);
+  process_directory(datadir.c_str(), rel_path, expected_file, true, nullptr, nullptr, &sdirs);
 
   return sdirs;
 }
 
-/*
- * Function to get files within a relative path.
- * This function scans the provided relative path for files,
- * optionally filtering them based on glob patterns or excluding specific files.
+/**
+ * Gets files within a relative path.
+ * This scans the provided relative path for files, optionally filtering
+ * them based on glob patterns or excluding specific files.
+ * @param rel_path Relative path to the directory.
+ * @param glob Optional glob pattern to filter files.
+ * @param exception_str Optional string to exclude specific files.
+ * @return List of files.
  */
 string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str)
 {
@@ -298,12 +335,17 @@ string_list_type dfiles(const char *rel_path, const char* glob, const char* exce
   string_list_init(&sdirs);
 
   // Process files in st_dir and datadir
-  process_directory(st_dir, rel_path, NULL, false, glob, exception_str, &sdirs);
-  process_directory(datadir.c_str(), rel_path, NULL, false, glob, exception_str, &sdirs);
+  process_directory(st_dir, rel_path, nullptr, false, glob, exception_str, &sdirs);
+  process_directory(datadir.c_str(), rel_path, nullptr, false, glob, exception_str, &sdirs);
 
   return sdirs;
 }
 
+/**
+ * Frees an array of strings that were dynamically allocated.
+ * @param strings Array of string pointers to be freed.
+ * @param num Number of strings in the array.
+ */
 void free_strings(char **strings, int num)
 {
   for (int i = 0; i < num; ++i)
@@ -314,17 +356,18 @@ void free_strings(char **strings, int num)
 
 #ifdef _WII_
 
-/* --- SETUP --- */
-/* Set SuperTux configuration and save directories */
+/**
+ * Set SuperTux configuration and save directories
+ */
 void st_directory_setup(void)
 {
   bool deviceselection = false;
-  FILE *fp = NULL;
+  FILE *fp = nullptr;
 
   // SD Card
   fp = fopen("sd:/apps/supertux/data/supertux.strf", "rb");
 
-  if(fp)
+  if (fp)
   {
     deviceselection = true;
     char home[] = {"sd:/apps/supertux"};
@@ -338,7 +381,7 @@ void st_directory_setup(void)
     fclose(fp);
   }
 
-  if(!deviceselection)
+  if (!deviceselection)
   {
     // USB Flash Drive
     fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
@@ -358,7 +401,7 @@ void st_directory_setup(void)
     }
   }
 
-  if(!deviceselection)
+  if (!deviceselection)
   {
     // Fallback
     fp = fopen("/apps/supertux/data/supertux.strf", "rb");
@@ -379,14 +422,21 @@ void st_directory_setup(void)
     }
   }
 
-  if(!deviceselection)
+  if (!deviceselection)
   {
     st_abort("Game data not found", "SD or USB device could not be accessed.");
   }
 }
+
 #else
 
-/* Set SuperTux configuration and save directories */
+/**
+ * Sets SuperTux configuration and save directories.
+ *
+ * This sets up the directory structure, including the base directory and
+ * save directory. It handles home directory detection, creation of
+ * necessary directories, and datadir detection on Linux systems.
+ */
 void st_directory_setup(void)
 {
   const char *home;
@@ -459,130 +509,127 @@ void st_directory_setup(void)
 /* Create and setup menus. */
 void st_menu(void)
 {
-  main_menu      = new Menu();
-  options_menu   = new Menu();
-  options_keys_menu     = new Menu();
+  main_menu = new Menu();
+  options_menu = new Menu();
+  options_keys_menu = new Menu();
   options_joystick_menu = new Menu();
   load_game_menu = new Menu();
   save_game_menu = new Menu();
-  game_menu      = new Menu();
-  contrib_menu   = new Menu();
-  contrib_subset_menu   = new Menu();
-  worldmap_menu  = new Menu();
+  game_menu = new Menu();
+  contrib_menu = new Menu();
+  contrib_subset_menu = new Menu();
+  worldmap_menu = new Menu();
 
-  main_menu->set_pos(screen->w/2, 335);
-  main_menu->additem(MN_GOTO, "Start Game",0,load_game_menu, MNID_STARTGAME);
-  main_menu->additem(MN_GOTO, "Bonus Levels",0,contrib_menu, MNID_CONTRIB);
-  main_menu->additem(MN_GOTO, "Options",0,options_menu, MNID_OPTIONMENU);
-  main_menu->additem(MN_ACTION,"Credits",0,0, MNID_CREDITS);
-  main_menu->additem(MN_ACTION,"Quit",0,0, MNID_QUITMAINMENU);
+  main_menu->set_pos(screen->w / 2, 335);
+  main_menu->additem(MN_GOTO, "Start Game", 0, load_game_menu, MNID_STARTGAME);
+  main_menu->additem(MN_GOTO, "Bonus Levels", 0, contrib_menu, MNID_CONTRIB);
+  main_menu->additem(MN_GOTO, "Options", 0, options_menu, MNID_OPTIONMENU);
+  main_menu->additem(MN_ACTION, "Credits", 0, nullptr, MNID_CREDITS);
+  main_menu->additem(MN_ACTION, "Quit", 0, nullptr, MNID_QUITMAINMENU);
 
-  options_menu->additem(MN_LABEL,"Options",0,0);
-  options_menu->additem(MN_HL,"",0,0);
+  options_menu->additem(MN_LABEL, "Options", 0, nullptr);
+  options_menu->additem(MN_HL, "", 0, nullptr);
 #ifndef NOOPENGL
-  options_menu->additem(MN_TOGGLE,"OpenGL",use_gl,0, MNID_OPENGL);
+  options_menu->additem(MN_TOGGLE, "OpenGL", use_gl, 0, MNID_OPENGL);
 #else
-  options_menu->additem(MN_DEACTIVE,"OpenGL (not supported)",use_gl, 0, MNID_OPENGL);
+  options_menu->additem(MN_DEACTIVE, "OpenGL (not supported)", use_gl, 0, MNID_OPENGL);
 #endif
 #ifdef _WII_
   // For Wii, always enable fullscreen and grey out the option
-  options_menu->additem(MN_DEACTIVE,"Fullscreen (no window mode)",true,0, MNID_FULLSCREEN);
+  options_menu->additem(MN_DEACTIVE, "Fullscreen (no window mode)", true, 0, MNID_FULLSCREEN);
 #else
-  options_menu->additem(MN_TOGGLE,"Fullscreen",use_fullscreen,0, MNID_FULLSCREEN);
+  options_menu->additem(MN_TOGGLE, "Fullscreen", use_fullscreen, 0, MNID_FULLSCREEN);
 #endif
 
-  if(audio_device)
-    {
-      options_menu->additem(MN_TOGGLE,"Sound     ", use_sound,0, MNID_SOUND);
-      options_menu->additem(MN_TOGGLE,"Music     ", use_music,0, MNID_MUSIC);
-    }
+  if (audio_device)
+  {
+    options_menu->additem(MN_TOGGLE, "Sound      ", use_sound, 0, MNID_SOUND);
+    options_menu->additem(MN_TOGGLE, "Music      ", use_music, 0, MNID_MUSIC);
+  }
   else
-    {
-      options_menu->additem(MN_DEACTIVE,"Sound     ", false,0, MNID_SOUND);
-      options_menu->additem(MN_DEACTIVE,"Music     ", false,0, MNID_MUSIC);
-    }
+  {
+    options_menu->additem(MN_DEACTIVE, "Sound      ", false, 0, MNID_SOUND);
+    options_menu->additem(MN_DEACTIVE, "Music      ", false, 0, MNID_MUSIC);
+  }
+
 #ifdef TSCONTROL
-  options_menu->additem(MN_TOGGLE,"Show Mouse",show_mouse,0, MNID_SHOWMOUSE);
+  options_menu->additem(MN_TOGGLE, "Show Mouse ", show_mouse, 0, MNID_SHOWMOUSE);
 #endif
-  options_menu->additem(MN_TOGGLE,"Show FPS  ",show_fps,0, MNID_SHOWFPS);
-  options_menu->additem(MN_TOGGLE,"TV Overscan",tv_overscan_enabled,0, MNID_TV_OVERSCAN);
-  options_menu->additem(MN_GOTO,"Keyboard Setup",0,options_keys_menu);
+  options_menu->additem(MN_TOGGLE, "Show FPS   ", show_fps, 0, MNID_SHOWFPS);
+  options_menu->additem(MN_TOGGLE, "TV Overscan", tv_overscan_enabled, 0, MNID_TV_OVERSCAN);
+  options_menu->additem(MN_GOTO, "Keyboard Setup", 0, options_keys_menu);
 
-  //if(use_joystick)
-  //  options_menu->additem(MN_GOTO,"Joystick Setup",0,options_joystick_menu);
+  options_menu->additem(MN_HL, "", 0, nullptr);
+  options_menu->additem(MN_BACK, "Back", 0, nullptr);
 
-  options_menu->additem(MN_HL,"",0,0);
-  options_menu->additem(MN_BACK,"Back",0,0);
+  options_keys_menu->additem(MN_LABEL, "Key Setup", 0, nullptr);
+  options_keys_menu->additem(MN_HL, "", 0, nullptr);
+  options_keys_menu->additem(MN_CONTROLFIELD, "Left move", 0, 0, 0, &keymap.left);
+  options_keys_menu->additem(MN_CONTROLFIELD, "Right move", 0, 0, 0, &keymap.right);
+  options_keys_menu->additem(MN_CONTROLFIELD, "Jump", 0, 0, 0, &keymap.jump);
+  options_keys_menu->additem(MN_CONTROLFIELD, "Duck", 0, 0, 0, &keymap.duck);
+  options_keys_menu->additem(MN_CONTROLFIELD, "Power/Run", 0, 0, 0, &keymap.fire);
+  options_keys_menu->additem(MN_HL, "", 0, nullptr);
+  options_keys_menu->additem(MN_BACK, "Back", 0, nullptr);
 
-  options_keys_menu->additem(MN_LABEL,"Key Setup",0,0);
-  options_keys_menu->additem(MN_HL,"",0,0);
-  options_keys_menu->additem(MN_CONTROLFIELD,"Left move", 0,0, 0,&keymap.left);
-  options_keys_menu->additem(MN_CONTROLFIELD,"Right move", 0,0, 0,&keymap.right);
-  options_keys_menu->additem(MN_CONTROLFIELD,"Jump", 0,0, 0,&keymap.jump);
-  options_keys_menu->additem(MN_CONTROLFIELD,"Duck", 0,0, 0,&keymap.duck);
-  options_keys_menu->additem(MN_CONTROLFIELD,"Power/Run", 0,0, 0,&keymap.fire);
-  options_keys_menu->additem(MN_HL,"",0,0);
-  options_keys_menu->additem(MN_BACK,"Back",0,0);
+  if (use_joystick)
+  {
+    options_joystick_menu->additem(MN_LABEL, "Joystick Setup", 0, nullptr);
+    options_joystick_menu->additem(MN_HL, "", 0, nullptr);
+    options_joystick_menu->additem(MN_CONTROLFIELD, "X axis", 0, 0, 0, &joystick_keymap.x_axis);
+    options_joystick_menu->additem(MN_CONTROLFIELD, "Y axis", 0, 0, 0, &joystick_keymap.y_axis);
+    options_joystick_menu->additem(MN_CONTROLFIELD, "A button", 0, 0, 0, &joystick_keymap.a_button);
+    options_joystick_menu->additem(MN_CONTROLFIELD, "B button", 0, 0, 0, &joystick_keymap.b_button);
+    options_joystick_menu->additem(MN_CONTROLFIELD, "Start", 0, 0, 0, &joystick_keymap.start_button);
+    options_joystick_menu->additem(MN_CONTROLFIELD, "DeadZone", 0, 0, 0, &joystick_keymap.dead_zone);
+    options_joystick_menu->additem(MN_HL, "", 0, nullptr);
+    options_joystick_menu->additem(MN_BACK, "Back", 0, nullptr);
+  }
 
-  if(use_joystick)
-    {
-    options_joystick_menu->additem(MN_LABEL,"Joystick Setup",0,0);
-    options_joystick_menu->additem(MN_HL,"",0,0);
-    options_joystick_menu->additem(MN_CONTROLFIELD,"X axis", 0,0, 0,&joystick_keymap.x_axis);
-    options_joystick_menu->additem(MN_CONTROLFIELD,"Y axis", 0,0, 0,&joystick_keymap.y_axis);
-    options_joystick_menu->additem(MN_CONTROLFIELD,"A button", 0,0, 0,&joystick_keymap.a_button);
-    options_joystick_menu->additem(MN_CONTROLFIELD,"B button", 0,0, 0,&joystick_keymap.b_button);
-    options_joystick_menu->additem(MN_CONTROLFIELD,"Start", 0,0, 0,&joystick_keymap.start_button);
-    options_joystick_menu->additem(MN_CONTROLFIELD,"DeadZone", 0,0, 0,&joystick_keymap.dead_zone);
-    options_joystick_menu->additem(MN_HL,"",0,0);
-    options_joystick_menu->additem(MN_BACK,"Back",0,0);
-    }
+  load_game_menu->additem(MN_LABEL, "Start Game", 0, nullptr);
+  load_game_menu->additem(MN_HL, "", 0, nullptr);
+  load_game_menu->additem(MN_DEACTIVE, "Slot 1", 0, nullptr, 1);
+  load_game_menu->additem(MN_DEACTIVE, "Slot 2", 0, nullptr, 2);
+  load_game_menu->additem(MN_DEACTIVE, "Slot 3", 0, nullptr, 3);
+  load_game_menu->additem(MN_DEACTIVE, "Slot 4", 0, nullptr, 4);
+  load_game_menu->additem(MN_DEACTIVE, "Slot 5", 0, nullptr, 5);
+  load_game_menu->additem(MN_HL, "", 0, nullptr);
+  load_game_menu->additem(MN_BACK, "Back", 0, nullptr);
 
-  load_game_menu->additem(MN_LABEL,"Start Game",0,0);
-  load_game_menu->additem(MN_HL,"",0,0);
-  load_game_menu->additem(MN_DEACTIVE,"Slot 1",0,0, 1);
-  load_game_menu->additem(MN_DEACTIVE,"Slot 2",0,0, 2);
-  load_game_menu->additem(MN_DEACTIVE,"Slot 3",0,0, 3);
-  load_game_menu->additem(MN_DEACTIVE,"Slot 4",0,0, 4);
-  load_game_menu->additem(MN_DEACTIVE,"Slot 5",0,0, 5);
-  load_game_menu->additem(MN_HL,"",0,0);
-  load_game_menu->additem(MN_BACK,"Back",0,0);
+  save_game_menu->additem(MN_LABEL, "Save Game", 0, nullptr);
+  save_game_menu->additem(MN_HL, "", 0, nullptr);
+  save_game_menu->additem(MN_DEACTIVE, "Slot 1", 0, nullptr, 1);
+  save_game_menu->additem(MN_DEACTIVE, "Slot 2", 0, nullptr, 2);
+  save_game_menu->additem(MN_DEACTIVE, "Slot 3", 0, nullptr, 3);
+  save_game_menu->additem(MN_DEACTIVE, "Slot 4", 0, nullptr, 4);
+  save_game_menu->additem(MN_DEACTIVE, "Slot 5", 0, nullptr, 5);
+  save_game_menu->additem(MN_HL, "", 0, nullptr);
+  save_game_menu->additem(MN_BACK, "Back", 0, nullptr);
 
-  save_game_menu->additem(MN_LABEL,"Save Game",0,0);
-  save_game_menu->additem(MN_HL,"",0,0);
-  save_game_menu->additem(MN_DEACTIVE,"Slot 1",0,0, 1);
-  save_game_menu->additem(MN_DEACTIVE,"Slot 2",0,0, 2);
-  save_game_menu->additem(MN_DEACTIVE,"Slot 3",0,0, 3);
-  save_game_menu->additem(MN_DEACTIVE,"Slot 4",0,0, 4);
-  save_game_menu->additem(MN_DEACTIVE,"Slot 5",0,0, 5);
-  save_game_menu->additem(MN_HL,"",0,0);
-  save_game_menu->additem(MN_BACK,"Back",0,0);
+  game_menu->additem(MN_LABEL, "Pause", 0, nullptr);
+  game_menu->additem(MN_HL, "", 0, nullptr);
+  game_menu->additem(MN_ACTION, "Continue", 0, nullptr, MNID_CONTINUE);
+  game_menu->additem(MN_GOTO, "Options", 0, options_menu);
+  game_menu->additem(MN_HL, "", 0, nullptr);
+  game_menu->additem(MN_ACTION, "Abort Level", 0, nullptr, MNID_ABORTLEVEL);
 
-  game_menu->additem(MN_LABEL,"Pause",0,0);
-  game_menu->additem(MN_HL,"",0,0);
-  game_menu->additem(MN_ACTION,"Continue",0,0,MNID_CONTINUE);
-  game_menu->additem(MN_GOTO,"Options",0,options_menu);
-  game_menu->additem(MN_HL,"",0,0);
-  game_menu->additem(MN_ACTION,"Abort Level",0,0,MNID_ABORTLEVEL);
-
-  worldmap_menu->additem(MN_LABEL,"Pause",0,0);
-  worldmap_menu->additem(MN_HL,"",0,0);
-  worldmap_menu->additem(MN_ACTION,"Continue",0,0,MNID_RETURNWORLDMAP);
-  worldmap_menu->additem(MN_GOTO,"Options",0,options_menu);
-  worldmap_menu->additem(MN_HL,"",0,0);
-  worldmap_menu->additem(MN_ACTION,"Quit Game",0,0,MNID_QUITWORLDMAP);
+  worldmap_menu->additem(MN_LABEL, "Pause", 0, nullptr);
+  worldmap_menu->additem(MN_HL, "", 0, nullptr);
+  worldmap_menu->additem(MN_ACTION, "Continue", 0, nullptr, MNID_RETURNWORLDMAP);
+  worldmap_menu->additem(MN_GOTO, "Options", 0, options_menu);
+  worldmap_menu->additem(MN_HL, "", 0, nullptr);
+  worldmap_menu->additem(MN_ACTION, "Quit Game", 0, nullptr, MNID_QUITWORLDMAP);
 }
 
 void update_load_save_game_menu(Menu* pmenu)
 {
   for(int i = 2; i < 7; ++i)
-    {
-      // FIXME: Insert a real savegame struct/class here instead of
-      // doing string vodoo
-      std::string tmp = slotinfo(i - 1);
-      pmenu->item[i].kind = MN_ACTION;
-      pmenu->item[i].change_text(tmp.c_str());
-    }
+  {
+    // FIXME: Insert a real savegame struct/class here instead of doing string vodoo
+    std::string tmp = slotinfo(i - 1);
+    pmenu->item[i].kind = MN_ACTION;
+    pmenu->item[i].change_text(tmp.c_str());
+  }
 }
 
 /* Process the load game menu */
@@ -597,12 +644,15 @@ bool process_load_game_menu()
 #ifdef _WII_
     if(selecteddevice == 1)
     {
-      if(selecteddevice == 1)
-        snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
-      else if(selecteddevice == 2)
-        snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
-      else if(selecteddevice == 3)
-        snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
+      snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
+    }
+    else if(selecteddevice == 2)
+    {
+      snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
+    }
+    else if(selecteddevice == 3)
+    {
+      snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
     }
 #else
     snprintf(slotfile, 1024, "%s/slot%d.stsg", st_save_dir, slot);
@@ -616,22 +666,18 @@ bool process_load_game_menu()
 
     unloadsounds();
     deleteDemo();
-
     fadeout();
-    WorldMapNS::WorldMap worldmap;
 
     //TODO: Define the circumstances under which BonusIsland is chosen
+    WorldMapNS::WorldMap worldmap;
     worldmap.set_map_file("world1.stwm");
     worldmap.load_map();
-
-    // Load the game or at least set the savegame_file variable
     worldmap.loadgame(slotfile);
-
     worldmap.display();
 
     Menu::set_current(main_menu);
-
     st_pause_ticks_stop();
+
     return true;
   }
   else
@@ -640,7 +686,9 @@ bool process_load_game_menu()
   }
 }
 
-/* Handle changes made to global settings in the options menu. */
+/*
+ * Handle changes made to global settings in the options menu.
+ */
 void process_options_menu(void)
 {
   switch (options_menu->check())
