@@ -357,7 +357,8 @@ void free_strings(char **strings, int num)
 #ifdef _WII_
 
 /**
- * Set SuperTux configuration and save directories
+ * Set SuperTux configuration and save directories (HBC Wii specific)
+ * This sets up the directory structure, including the save directory.
  */
 void st_directory_setup(void)
 {
@@ -370,13 +371,15 @@ void st_directory_setup(void)
   if (fp)
   {
     deviceselection = true;
-    char home[] = {"sd:/apps/supertux"};
     datadir = "sd:/apps/supertux/data";
-    st_dir = (char *) malloc(255);
-    strcpy(st_dir, home);
-    st_save_dir = (char *) malloc(255);
-    strcpy(st_save_dir, st_dir);
-    strcat(st_save_dir, "/save");
+    st_dir = strdup("sd:/apps/supertux");
+    st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+
+    // Ensure 'save' and 'levels' directories exist
+    mkdir(st_dir, 0755);
+    mkdir(st_save_dir, 0755);
+    mkdir((std::string(st_dir) + "/levels").c_str(), 0755); // Levels directory
+
     selecteddevice = 1;
     fclose(fp);
   }
@@ -389,13 +392,15 @@ void st_directory_setup(void)
     if(fp)
     {
       deviceselection = true;
-      char home[] = {"usb:/apps/supertux"};
       datadir = "usb:/apps/supertux/data";
-      st_dir = (char *) malloc(255);
-      strcpy(st_dir, home);
-      st_save_dir = (char *) malloc(255);
-      strcpy(st_save_dir, st_dir);
-      strcat(st_save_dir, "/save");
+      st_dir = strdup("usb:/apps/supertux");
+      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+
+      // Ensure 'save' and 'levels' directories exist
+      mkdir(st_dir, 0755);
+      mkdir(st_save_dir, 0755);
+      mkdir((std::string(st_dir) + "/levels").c_str(), 0755);
+
       selecteddevice = 2;
       fclose(fp);
     }
@@ -408,15 +413,16 @@ void st_directory_setup(void)
 
     if(fp)
     {
-
       deviceselection = true;
-      char home[] = {"/apps/supertux"};
       datadir = "/apps/supertux/data";
-      st_dir = (char *) malloc(255);
-      strcpy(st_dir, home);
-      st_save_dir = (char *) malloc(255);
-      strcpy(st_save_dir, st_dir);
-      strcat(st_save_dir, "/save");
+      st_dir = strdup("/apps/supertux");
+      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+
+      // Ensure 'save' and 'levels' directories exist
+      mkdir(st_dir, 0755);
+      mkdir(st_save_dir, 0755);
+      mkdir((std::string(st_dir) + "/levels").c_str(), 0755);
+
       selecteddevice = 3;
       fclose(fp);
     }
@@ -431,7 +437,7 @@ void st_directory_setup(void)
 #else
 
 /**
- * Sets SuperTux configuration and save directories.
+ * Set SuperTux configuration and save directories (non HBC Wii)
  *
  * This sets up the directory structure, including the base directory and
  * save directory. It handles home directory detection, creation of
@@ -442,33 +448,25 @@ void st_directory_setup(void)
   const char *home;
   char str[1024];
 
-  /* Get home directory (from $HOME variable)... if we can't determine it, use the current directory ("."): */
-  if (getenv("HOME") != NULL)
-    home = getenv("HOME");
-  else
-    home = ".";
+  /* Get home directory from $HOME variable or use current directory (".") */
+  home = getenv("HOME") ? getenv("HOME") : ".";
 
-  st_dir = (char *) malloc(sizeof(char) * (strlen(home) + strlen("/.supertux") + 1));
-  strcpy(st_dir, home);
-  strcat(st_dir, "/.supertux");
+  st_dir = strdup((std::string(home) + "/.supertux").c_str());
 
   /* Remove .supertux config-file from old SuperTux versions */
   if(faccessible(st_dir))
   {
-    remove (st_dir);
+    remove(st_dir);
   }
 
-  st_save_dir = (char *) malloc(sizeof(char) * (strlen(st_dir) + strlen("/save") + 1));
+  st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
 
-  strcpy(st_save_dir, st_dir);
-  strcat(st_save_dir, "/save");
-
-  /* Create them. In the case they exist they won't destroy anything. */
+  /* Create directories. If they exist, they won't be destroyed. */
   mkdir(st_dir, 0755);
   mkdir(st_save_dir, 0755);
 
-  sprintf(str, "%s/levels", st_dir);
-  mkdir(str, 0755);
+  snprintf(str, sizeof(str), "%s/levels", st_dir);
+  mkdir(str, 0755);  // Ensure 'levels' directory exists
 
 #ifndef WIN32
   // Handle datadir detection logic (Linux version)
@@ -491,7 +489,7 @@ void st_directory_setup(void)
         datadir = exedir + "../share/supertux";  // SuperTux run from PATH
         if (access(datadir.c_str(), F_OK) != 0)
         {
-          datadir = DATA_PREFIX;  // If all fails, fall back to compiled path
+          datadir = DATA_PREFIX;  // Fallback to compiled path
         }
       }
     }
