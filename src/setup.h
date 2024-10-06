@@ -24,9 +24,9 @@
 #include "sound.h"
 #include "type.h"
 
-int faccessible(const char *filename); // Checks if the file is accessible
-int fcreatedir(const char* relative_dir); // Creates a directory relative to the current working directory
-int fwriteable(const char *filename); // Checks if the file is writable
+bool faccessible(const char *filename); // Checks if the file is accessible
+bool fcreatedir(const char* relative_dir); // Creates a directory relative to the current working directory
+bool fwriteable(const char *filename); // Checks if the file is writable
 FILE * opendata(const char * filename, const char * mode); // Opens a data file
 
 string_list_type dsubdirs(const char *rel_path, const char* expected_file); // Retrieves a list of subdirectories with the expected file

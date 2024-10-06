@@ -88,20 +88,14 @@ void usage(char * prog, int ret);
  * @param filename Path to the file.
  * @return true if the file exists and is accessible, false otherwise.
  */
-int faccessible(const char *filename)
+bool faccessible(const char *filename)
 {
   struct stat filestat;
   if (stat(filename, &filestat) == -1)
   {
     return false;
   }
-  else
-  {
-    if(S_ISREG(filestat.st_mode))
-      return true;
-    else
-      return false;
-  }
+  return S_ISREG(filestat.st_mode);
 }
 
 /**
@@ -109,10 +103,9 @@ int faccessible(const char *filename)
  * @param filename Path to the file.
  * @return true if the file is writable, false otherwise.
  */
-int fwriteable(const char *filename)
+bool fwriteable(const char *filename)
 {
-  FILE* fi;
-  fi = fopen(filename, "wa");
+  FILE* fi = fopen(filename, "wa");
   if (fi == nullptr)
   {
     return false;
@@ -127,26 +120,19 @@ int fwriteable(const char *filename)
  * @param relative_dir The relative path of the directory to be created.
  * @return true if the directory was successfully created or already exists, false otherwise.
  */
-int fcreatedir(const char* relative_dir)
+bool fcreatedir(const char* relative_dir)
 {
   char path[1024];
   snprintf(path, sizeof(path), "%s/%s/", st_dir, relative_dir);
-  if(mkdir(path,0755) != 0)
+  if (mkdir(path, 0755) != 0)
   {
     snprintf(path, sizeof(path), "%s/%s/", datadir.c_str(), relative_dir);
-    if(mkdir(path,0755) != 0)
+    if (mkdir(path, 0755) != 0)
     {
       return false;
     }
-    else
-    {
-      return true;
-    }
   }
-  else
-  {
-    return true;
-  }
+  return true;  // Return true if the directory was created successfully or already exists
 }
 
 /**
@@ -160,38 +146,35 @@ int fcreatedir(const char* relative_dir)
  */
 FILE * opendata(const char * rel_filename, const char * mode)
 {
-  char * filename = nullptr;
-  FILE * fi;
-
-  // Safely handle strings that may not be null-terminated
   size_t st_dir_len = strnlen(st_dir, 1024);
   size_t rel_filename_len = strnlen(rel_filename, 1024);
+  char* filename = (char *) malloc(st_dir_len + rel_filename_len + 1);
 
-  filename = (char *) malloc(st_dir_len + rel_filename_len + 1);
   if (filename == nullptr)
   {
     fprintf(stderr, "Memory allocation failed\n");
     return nullptr;
   }
 
-  // Use snprintf to avoid buffer overflows
   snprintf(filename, st_dir_len + rel_filename_len + 1, "%s%s", st_dir, rel_filename);
-
-  /* Try opening the file: */
-  fi = fopen(filename, mode);
+  FILE* fi = fopen(filename, mode);
 
   if (fi == nullptr)
   {
     fprintf(stderr, "Warning: Unable to open the file \"%s\" ", filename);
 
-    if (strcmp(mode, "r") == 0)
+    if (!strcmp(mode, "r"))
+    {
       fprintf(stderr, "for read!!!\n");
-    else if (strcmp(mode, "w") == 0)
+    }
+    else if (!strcmp(mode, "w"))
+    {
       fprintf(stderr, "for write!!!\n");
+    }
   }
-  free( filename );
 
-  return(fi);
+  free(filename);
+  return fi;
 }
 
 /**
@@ -224,7 +207,7 @@ static void process_directory(const char *base_path, const char *rel_path, const
   // Ensure the full path fits within the buffer
   if (path_len + 1 + rel_path_len < sizeof(path))
   {
-    // Safely construct the path using strncat
+    // Safely construct the path using snprintf and strncat
     snprintf(path, sizeof(path), "%s", base_path);  // Initialize with base_path
     strncat(path, "/", sizeof(path) - strlen(path) - 1);  // Add separator
     strncat(path, rel_path, sizeof(path) - strlen(path) - 1);  // Add relative path
@@ -236,7 +219,8 @@ static void process_directory(const char *base_path, const char *rel_path, const
   }
 
   // Open the directory
-  if ((dirStructP = opendir(path)) != nullptr)
+  dirStructP = opendir(path);
+  if (dirStructP != nullptr)
   {
     // Iterate over each entry in the directory
     while ((direntp = readdir(dirStructP)) != nullptr)
@@ -268,7 +252,7 @@ static void process_directory(const char *base_path, const char *rel_path, const
         {
           char filename[1024];
           size_t expected_file_len = strnlen(expected_file, NAME_MAX + 1);
-          size_t combined_len = total_len + 1 + expected_file_len; // Combine lengths of path and file
+          size_t combined_len = total_len + 1 + expected_file_len;  // Combine lengths of path and file
 
           // Ensure combined length of absolute_filename and expected_file fits within filename buffer
           if (combined_len < sizeof(filename))
@@ -276,21 +260,29 @@ static void process_directory(const char *base_path, const char *rel_path, const
             snprintf(filename, sizeof(filename), "%s", absolute_filename);  // Initialize with absolute_filename
             strncat(filename, "/", sizeof(filename) - strlen(filename) - 1);  // Add separator
             strncat(filename, expected_file, sizeof(filename) - strlen(filename) - 1);  // Add expected_file
-            if (!faccessible(filename)) continue;  // Skip if file is not accessible
+
+            if (!faccessible(filename))
+            {
+              continue;  // Skip if file is not accessible
+            }
           }
           else
           {
             fprintf(stderr, "Filename too long! Combined length: %zu, Buffer size: %zu\n", combined_len, sizeof(filename));
-            continue; // Skip if filename is too long
+            continue;  // Skip if filename is too long
           }
         }
 
         // Apply optional filters: skip entries matching exception_str or not matching glob
         if (exception_str != nullptr && strstr(direntp->d_name, exception_str) != nullptr)
+        {
           continue;
+        }
 
         if (glob != nullptr && strstr(direntp->d_name, glob) == nullptr)
+        {
           continue;
+        }
 
         // Add the directory entry name to the list
         string_list_add_item(sdirs, direntp->d_name);
@@ -313,7 +305,6 @@ string_list_type dsubdirs(const char *rel_path, const char *expected_file)
   string_list_type sdirs;
   string_list_init(&sdirs);
 
-  // Process directories in st_dir and datadir
   process_directory(st_dir, rel_path, expected_file, true, nullptr, nullptr, &sdirs);
   process_directory(datadir.c_str(), rel_path, expected_file, true, nullptr, nullptr, &sdirs);
 
@@ -334,7 +325,6 @@ string_list_type dfiles(const char *rel_path, const char* glob, const char* exce
   string_list_type sdirs;
   string_list_init(&sdirs);
 
-  // Process files in st_dir and datadir
   process_directory(st_dir, rel_path, nullptr, false, glob, exception_str, &sdirs);
   process_directory(datadir.c_str(), rel_path, nullptr, false, glob, exception_str, &sdirs);
 
@@ -378,7 +368,7 @@ void st_directory_setup(void)
     // Ensure 'save' and 'levels' directories exist
     mkdir(st_dir, 0755);
     mkdir(st_save_dir, 0755);
-    mkdir((std::string(st_dir) + "/levels").c_str(), 0755); // Levels directory
+    mkdir((std::string(st_dir) + "/levels").c_str(), 0755);
 
     selecteddevice = 1;
     fclose(fp);
