@@ -151,7 +151,7 @@ void free_contrib_menu()
 void generate_contrib_menu()
 {
   // Get a list of level subsets from the directory
-  string_list_type level_subsets = dsubdirs("/levels", "info");
+  string_list_type level_subsets = dsubdirs("levels", "info");
 
   // Free any existing menu items and subsets
   free_contrib_menu();

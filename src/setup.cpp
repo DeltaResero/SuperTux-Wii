@@ -17,6 +17,8 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+#include <filesystem>
+#include <fstream>
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -33,14 +35,6 @@
 
 #ifdef _WII_
 #include <gccore.h>
-#endif
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-
-#ifndef WIN32
-#include <libgen.h>
 #endif
 
 #include <cctype>
@@ -63,7 +57,6 @@
 
 #ifdef WIN32
 #define mkdir(dir, mode)    mkdir(dir)
-// on win32 we typically don't want LFS paths
 #undef DATA_PREFIX
 #define DATA_PREFIX "./data/"
 #endif
@@ -83,6 +76,8 @@ int offset_y = tv_overscan_enabled ? 40 : 0;
 void seticon(void);
 void usage(char * prog, int ret);
 
+namespace fs = std::filesystem;
+
 /**
  * Checks if the given file exists and is accessible.
  * @param filename Path to the file.
@@ -90,12 +85,7 @@ void usage(char * prog, int ret);
  */
 bool faccessible(const char *filename)
 {
-  struct stat filestat;
-  if (stat(filename, &filestat) == -1)
-  {
-    return false;
-  }
-  return S_ISREG(filestat.st_mode);
+  return fs::exists(filename) && fs::is_regular_file(filename);
 }
 
 /**
@@ -105,13 +95,8 @@ bool faccessible(const char *filename)
  */
 bool fwriteable(const char *filename)
 {
-  FILE* fi = fopen(filename, "wa");
-  if (fi == nullptr)
-  {
-    return false;
-  }
-  fclose(fi);
-  return true;
+  std::ofstream file(filename, std::ios::app);
+  return file.is_open();
 }
 
 /**
@@ -122,182 +107,114 @@ bool fwriteable(const char *filename)
  */
 bool fcreatedir(const char* relative_dir)
 {
-  char path[1024];
-  snprintf(path, sizeof(path), "%s/%s/", st_dir, relative_dir);
-  if (mkdir(path, 0755) != 0)
+  fs::path path = fs::path(st_dir) / relative_dir;
+
+  if (!fs::create_directories(path))
   {
-    snprintf(path, sizeof(path), "%s/%s/", datadir.c_str(), relative_dir);
-    if (mkdir(path, 0755) != 0)
+    path = fs::path(datadir) / relative_dir;
+    if (!fs::create_directories(path))
     {
       return false;
     }
   }
-  return true;  // Return true if the directory was created successfully or already exists
+  return true;
 }
 
 /**
  * Opens a file located in the SuperTux data directory.
- * Constructs the full file path by appending the relative
- * filename to the SuperTux data directory and attempts to
- * open the file in the specified mode (read/write).
  * @param rel_filename Relative path of the file within the data directory.
  * @param mode Mode in which the file should be opened (read/write).
  * @return Pointer to the opened file, or nullptr if the file could not be opened.
  */
 FILE * opendata(const char * rel_filename, const char * mode)
 {
-  size_t st_dir_len = strnlen(st_dir, 1024);
-  size_t rel_filename_len = strnlen(rel_filename, 1024);
-  char* filename = (char *) malloc(st_dir_len + rel_filename_len + 1);
+  fs::path filename = fs::path(st_dir) / rel_filename;
 
-  if (filename == nullptr)
-  {
-    fprintf(stderr, "Memory allocation failed\n");
-    return nullptr;
-  }
-
-  snprintf(filename, st_dir_len + rel_filename_len + 1, "%s%s", st_dir, rel_filename);
-  FILE* fi = fopen(filename, mode);
+  FILE* fi = fopen(filename.c_str(), mode);
 
   if (fi == nullptr)
   {
-    fprintf(stderr, "Warning: Unable to open the file \"%s\" ", filename);
-
-    if (!strcmp(mode, "r"))
+    std::cerr << "Warning: Unable to open the file \"" << filename << "\" ";
+    if (strcmp(mode, "r") == 0)
     {
-      fprintf(stderr, "for read!!!\n");
+      std::cerr << "for read!!!\n";
     }
-    else if (!strcmp(mode, "w"))
+    else if (strcmp(mode, "w") == 0)
     {
-      fprintf(stderr, "for write!!!\n");
+      std::cerr << "for write!!!\n";
     }
   }
 
-  free(filename);
   return fi;
 }
 
 /**
  * Function to process both directories and files.
- * This function handles the logic for scanning a directory (or subdirectory),
- * checking for files or subdirectories based on the 'is_subdir' flag, and
- * applying optional filters like 'expected_file', 'glob', and 'exception_str'.
- * The results are added to the 'sdirs' list.
- *
+ * This function handles the logic for scanning a directory (or subdirectory).
  * @param base_path Base path to the directory.
  * @param rel_path Relative path to the directory.
- * @param expected_file If non-NULL, check for this file in the directory.
- * @param is_subdir Flag indicating if directories should be processed.
- * @param glob Optional glob pattern to filter files.
- * @param exception_str Optional exception string to exclude specific files.
- * @param sdirs List where the results will be stored.
  */
-static void process_directory(const char *base_path, const char *rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs)
+static void process_directory(const std::string &base_path, const std::string &rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs)
 {
-  DIR *dirStructP;               // Pointer to directory structure
-  struct dirent *direntp;        // Pointer to directory entry
-  char path[1024];               // Buffer to store the constructed path
-  char absolute_filename[1024];  // Buffer to store the full path of directory entries
-  struct stat buf;               // Structure to hold file status
+  // Construct the full path
+  fs::path path = fs::path(base_path) / rel_path;
 
-  // Safely handle strings that may not be null-terminated
-  size_t path_len = strnlen(base_path, sizeof(path) - 1);     // -1 for null terminator
-  size_t rel_path_len = strnlen(rel_path, sizeof(path) - 1);  // -1 for null terminator
+#ifdef DEBUG
+  // Debug output: print the full path being accessed in debug mode
+  std::cerr << "Accessing directory: " << path << std::endl;
+#endif
 
-  // Ensure the full path fits within the buffer
-  if (path_len + 1 + rel_path_len < sizeof(path))
+  // Check if the path exists
+  if (!fs::exists(path))
   {
-    // Safely construct the path using snprintf and strncat
-    snprintf(path, sizeof(path), "%s", base_path);  // Initialize with base_path
-    strncat(path, "/", sizeof(path) - strlen(path) - 1);  // Add separator
-    strncat(path, rel_path, sizeof(path) - strlen(path) - 1);  // Add relative path
-  }
-  else
-  {
-    fprintf(stderr, "Path is too long!\n");
+    // Suppress error message if the path is optional
+    if (glob != nullptr || exception_str != nullptr) {
+      // Optional contrib path, silently ignore if it doesn't exist
+      return;
+    }
+
+    // Otherwise, log the path does not exist error
+    std::cerr << "Path does not exist: " << path << std::endl;
     return;
   }
 
-  // Open the directory
-  dirStructP = opendir(path);
-  if (dirStructP != nullptr)
+  // Iterate through directory entries
+  for (const auto& entry : fs::directory_iterator(path))
   {
-    // Iterate over each entry in the directory
-    while ((direntp = readdir(dirStructP)) != nullptr)
+    // Check if entry matches directory or file based on is_subdir flag
+    if ((is_subdir && entry.is_directory()) || (!is_subdir && entry.is_regular_file()))
     {
-      size_t dirent_name_len = strnlen(direntp->d_name, NAME_MAX + 1);
 
-      // Calculate total length needed for full path
-      size_t total_len = path_len + 1 + dirent_name_len;  // +1 for '/'
-
-      // Ensure the full path of the directory entry fits in the absolute_filename buffer
-      if (total_len < sizeof(absolute_filename))
+      // If expected_file is provided, check if it exists in the directory
+      if (expected_file != nullptr)
       {
-        snprintf(absolute_filename, sizeof(absolute_filename), "%s", path);  // Initialize with path
-        strncat(absolute_filename, "/", sizeof(absolute_filename) - strlen(absolute_filename) - 1);  // Add separator
-        strncat(absolute_filename, direntp->d_name, sizeof(absolute_filename) - strlen(absolute_filename) - 1);  // Add directory entry
-      }
-      else
-      {
-        fprintf(stderr, "Path or directory entry too long! Total length: %zu, Buffer size: %zu\n", total_len, sizeof(absolute_filename));
-        continue; // Skip the current entry to prevent truncation
-      }
-
-      // Check if the entry is a directory or file, based on the is_subdir flag
-      if (stat(absolute_filename, &buf) == 0 &&
-          ((is_subdir && S_ISDIR(buf.st_mode)) || (!is_subdir && S_ISREG(buf.st_mode))))
-      {
-        // If expected_file is provided, check if it exists within the directory
-        if (expected_file != nullptr)
-        {
-          char filename[1024];
-          size_t expected_file_len = strnlen(expected_file, NAME_MAX + 1);
-          size_t combined_len = total_len + 1 + expected_file_len;  // Combine lengths of path and file
-
-          // Ensure combined length of absolute_filename and expected_file fits within filename buffer
-          if (combined_len < sizeof(filename))
-          {
-            snprintf(filename, sizeof(filename), "%s", absolute_filename);  // Initialize with absolute_filename
-            strncat(filename, "/", sizeof(filename) - strlen(filename) - 1);  // Add separator
-            strncat(filename, expected_file, sizeof(filename) - strlen(filename) - 1);  // Add expected_file
-
-            if (!faccessible(filename))
-            {
-              continue;  // Skip if file is not accessible
-            }
-          }
-          else
-          {
-            fprintf(stderr, "Filename too long! Combined length: %zu, Buffer size: %zu\n", combined_len, sizeof(filename));
-            continue;  // Skip if filename is too long
-          }
-        }
-
-        // Apply optional filters: skip entries matching exception_str or not matching glob
-        if (exception_str != nullptr && strstr(direntp->d_name, exception_str) != nullptr)
+        fs::path expected_path = entry.path() / expected_file;
+        if (!faccessible(expected_path.c_str()))
         {
           continue;
         }
-
-        if (glob != nullptr && strstr(direntp->d_name, glob) == nullptr)
-        {
-          continue;
-        }
-
-        // Add the directory entry name to the list
-        string_list_add_item(sdirs, direntp->d_name);
       }
+
+      // Apply optional filters
+      if (exception_str != nullptr && entry.path().string().find(exception_str) != std::string::npos)
+      {
+        continue;
+      }
+
+      if (glob != nullptr && entry.path().string().find(glob) == std::string::npos)
+      {
+        continue;
+      }
+
+      // Add the item to the list (only filename, not full path)
+      string_list_add_item(sdirs, entry.path().filename().string().c_str());
     }
-    closedir(dirStructP);
   }
 }
 
 /**
  * Function to get subdirectories within a relative path.
- * This function scans the provided relative path for subdirectories,
- * optionally checking for the existence of a specific file within each subdirectory.
  * @param rel_path Relative path to the directory.
- * @param expected_file If non-NULL, check for this file in each subdirectory.
  * @return List of subdirectories.
  */
 string_list_type dsubdirs(const char *rel_path, const char *expected_file)
@@ -306,18 +223,14 @@ string_list_type dsubdirs(const char *rel_path, const char *expected_file)
   string_list_init(&sdirs);
 
   process_directory(st_dir, rel_path, expected_file, true, nullptr, nullptr, &sdirs);
-  process_directory(datadir.c_str(), rel_path, expected_file, true, nullptr, nullptr, &sdirs);
+  process_directory(datadir, rel_path, expected_file, true, nullptr, nullptr, &sdirs);
 
   return sdirs;
 }
 
 /**
  * Gets files within a relative path.
- * This scans the provided relative path for files, optionally filtering
- * them based on glob patterns or excluding specific files.
  * @param rel_path Relative path to the directory.
- * @param glob Optional glob pattern to filter files.
- * @param exception_str Optional string to exclude specific files.
  * @return List of files.
  */
 string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str)
@@ -326,22 +239,9 @@ string_list_type dfiles(const char *rel_path, const char* glob, const char* exce
   string_list_init(&sdirs);
 
   process_directory(st_dir, rel_path, nullptr, false, glob, exception_str, &sdirs);
-  process_directory(datadir.c_str(), rel_path, nullptr, false, glob, exception_str, &sdirs);
+  process_directory(datadir, rel_path, nullptr, false, glob, exception_str, &sdirs);
 
   return sdirs;
-}
-
-/**
- * Frees an array of strings that were dynamically allocated.
- * @param strings Array of string pointers to be freed.
- * @param num Number of strings in the array.
- */
-void free_strings(char **strings, int num)
-{
-  for (int i = 0; i < num; ++i)
-  {
-    free(strings[i]);
-  }
 }
 
 #ifdef _WII_
@@ -353,68 +253,68 @@ void free_strings(char **strings, int num)
 void st_directory_setup(void)
 {
   bool deviceselection = false;
-  FILE *fp = nullptr;
+  std::FILE *fp = nullptr;
 
   // SD Card
-  fp = fopen("sd:/apps/supertux/data/supertux.strf", "rb");
+  fp = std::fopen("sd:/apps/supertux/data/supertux.strf", "rb");
 
   if (fp)
   {
     deviceselection = true;
     datadir = "sd:/apps/supertux/data";
-    st_dir = strdup("sd:/apps/supertux");
-    st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+    st_dir = strdup("sd:/apps/supertux");  // Use strdup here for compatibility
+    st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
 
     // Ensure 'save' and 'levels' directories exist
-    mkdir(st_dir, 0755);
-    mkdir(st_save_dir, 0755);
-    mkdir((std::string(st_dir) + "/levels").c_str(), 0755);
+    fs::create_directories(st_dir);
+    fs::create_directories(st_save_dir);
+    fs::create_directories((std::string(st_dir) + "/levels").c_str());
 
     selecteddevice = 1;
-    fclose(fp);
+    std::fclose(fp);
   }
 
   if (!deviceselection)
   {
     // USB Flash Drive
-    fp = fopen("usb:/apps/supertux/data/supertux.strf", "rb");
+    fp = std::fopen("usb:/apps/supertux/data/supertux.strf", "rb");
 
-    if(fp)
+    if (fp)
     {
       deviceselection = true;
       datadir = "usb:/apps/supertux/data";
-      st_dir = strdup("usb:/apps/supertux");
-      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+      st_dir = strdup("usb:/apps/supertux");  // Use strdup here for compatibility
+      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
 
       // Ensure 'save' and 'levels' directories exist
-      mkdir(st_dir, 0755);
-      mkdir(st_save_dir, 0755);
-      mkdir((std::string(st_dir) + "/levels").c_str(), 0755);
+      fs::create_directories(st_dir);
+      fs::create_directories(st_save_dir);
+      fs::create_directories((std::string(st_dir) + "/levels").c_str());
 
       selecteddevice = 2;
-      fclose(fp);
+      std::fclose(fp);
     }
   }
 
   if (!deviceselection)
   {
     // Fallback
-    fp = fopen("/apps/supertux/data/supertux.strf", "rb");
+    fp = std::fopen("/apps/supertux/data/supertux.strf", "rb");
 
-    if(fp)
+    if (fp)
     {
       deviceselection = true;
       datadir = "/apps/supertux/data";
-      st_dir = strdup("/apps/supertux");
-      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+      st_dir = strdup("/apps/supertux");  // Use strdup here for compatibility
+      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
 
       // Ensure 'save' and 'levels' directories exist
-      mkdir(st_dir, 0755);
-      mkdir(st_save_dir, 0755);
-      mkdir((std::string(st_dir) + "/levels").c_str(), 0755);
+      fs::create_directories(st_dir);
+      fs::create_directories(st_save_dir);
+      fs::create_directories((std::string(st_dir) + "/levels").c_str());
 
       selecteddevice = 3;
-      fclose(fp);
+      std::fclose(fp);
     }
   }
 
@@ -424,11 +324,10 @@ void st_directory_setup(void)
   }
 }
 
-#else
+#else  // #ifndef _WII_
 
 /**
  * Set SuperTux configuration and save directories (non HBC Wii)
- *
  * This sets up the directory structure, including the base directory and
  * save directory. It handles home directory detection, creation of
  * necessary directories, and datadir detection on Linux systems.
@@ -441,22 +340,22 @@ void st_directory_setup(void)
   /* Get home directory from $HOME variable or use current directory (".") */
   home = getenv("HOME") ? getenv("HOME") : ".";
 
-  st_dir = strdup((std::string(home) + "/.supertux").c_str());
+  st_dir = strdup((std::string(home) + "/.supertux").c_str());  // Use strdup here for compatibility
 
   /* Remove .supertux config-file from old SuperTux versions */
-  if(faccessible(st_dir))
+  if (faccessible(st_dir))
   {
-    remove(st_dir);
+    fs::remove(st_dir);
   }
 
-  st_save_dir = strdup((std::string(st_dir) + "/save").c_str());
+  st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
 
   /* Create directories. If they exist, they won't be destroyed. */
-  mkdir(st_dir, 0755);
-  mkdir(st_save_dir, 0755);
+  fs::create_directories(st_dir);
+  fs::create_directories(st_save_dir);
 
   snprintf(str, sizeof(str), "%s/levels", st_dir);
-  mkdir(str, 0755);  // Ensure 'levels' directory exists
+  fs::create_directories(str);  // Ensure 'levels' directory exists
 
 #ifndef WIN32
   // Handle datadir detection logic (Linux version)
@@ -472,11 +371,14 @@ void st_directory_setup(void)
     }
     else
     {
-      std::string exedir = std::string(dirname(exe_file)) + "/";
-      datadir = exedir + "../data";  // SuperTux run from source dir
+      std::filesystem::path exedir = std::filesystem::path(exe_file).parent_path();
+      std::string exedir_str = exedir.string() + "/";  // Ensure trailing slash
+
+      // Use `exedir_str` to maintain trailing slash behavior
+      datadir = exedir_str + "../data";  // SuperTux run from source dir
       if (access(datadir.c_str(), F_OK) != 0)
       {
-        datadir = exedir + "../share/supertux";  // SuperTux run from PATH
+        datadir = exedir_str + "../share/supertux";  // SuperTux run from PATH
         if (access(datadir.c_str(), F_OK) != 0)
         {
           datadir = DATA_PREFIX;  // Fallback to compiled path
@@ -484,15 +386,20 @@ void st_directory_setup(void)
       }
     }
   }
-#else
+#else  // #ifdef WIN32
   // For Windows, use default data path
-  datadir = "data";  // DATA_PREFIX;
+  datadir = "data";
 #endif
 
+#ifdef DEBUG
+  // Print the paths for verification in debug mode
+  printf("st_dir: %s\n", st_dir);
+  printf("st_save_dir: %s\n", st_save_dir);
   printf("Datadir: %s\n", datadir.c_str());
+  #endif
 }
 
-#endif //def _WII_
+#endif  // def _WII_
 
 /* Create and setup menus. */
 void st_menu(void)
@@ -611,7 +518,7 @@ void st_menu(void)
 
 void update_load_save_game_menu(Menu* pmenu)
 {
-  for(int i = 2; i < 7; ++i)
+  for (int i = 2; i < 7; ++i)
   {
     // FIXME: Insert a real savegame struct/class here instead of doing string vodoo
     std::string tmp = slotinfo(i - 1);
@@ -625,20 +532,20 @@ bool process_load_game_menu()
 {
   int slot = load_game_menu->check();
 
-  if(slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
+  if (slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
   {
     char slotfile[1024];
 
 #ifdef _WII_
-    if(selecteddevice == 1)
+    if (selecteddevice == 1)
     {
       snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
     }
-    else if(selecteddevice == 2)
+    else if (selecteddevice == 2)
     {
       snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
     }
-    else if(selecteddevice == 3)
+    else if (selecteddevice == 3)
     {
       snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
     }
@@ -656,7 +563,7 @@ bool process_load_game_menu()
     deleteDemo();
     fadeout();
 
-    //TODO: Define the circumstances under which BonusIsland is chosen
+    // TODO: Define the circumstances under which BonusIsland is chosen
     WorldMapNS::WorldMap worldmap;
     worldmap.set_map_file("world1.stwm");
     worldmap.load_map();
@@ -680,59 +587,64 @@ bool process_load_game_menu()
 void process_options_menu(void)
 {
   switch (options_menu->check())
-    {
+  {
     case MNID_OPENGL:
 #ifndef NOOPENGL
-      if(use_gl != options_menu->isToggled(MNID_OPENGL))
-        {
-          use_gl = !use_gl;
-          st_video_setup();
-        }
+      if (use_gl != options_menu->isToggled(MNID_OPENGL))
+      {
+        use_gl = !use_gl;
+        st_video_setup();
+      }
 #else
       options_menu->get_item_by_id(MNID_OPENGL).toggled = false;
 #endif
       break;
     case MNID_FULLSCREEN:
 #ifndef _WII_
-      if(use_fullscreen != options_menu->isToggled(MNID_FULLSCREEN))
-        {
-          use_fullscreen = !use_fullscreen;
-          st_video_setup();
-        }
+      if (use_fullscreen != options_menu->isToggled(MNID_FULLSCREEN))
+      {
+        use_fullscreen = !use_fullscreen;
+        st_video_setup();
+      }
 #else
       options_menu->get_item_by_id(MNID_FULLSCREEN).toggled = false;
 #endif
       break;
     case MNID_SOUND:
-      if(use_sound != options_menu->isToggled(MNID_SOUND))
+      if (use_sound != options_menu->isToggled(MNID_SOUND))
         use_sound = !use_sound;
       break;
     case MNID_MUSIC:
-      if(use_music != options_menu->isToggled(MNID_MUSIC))
-        {
-          use_music = !use_music;
-          music_manager->enable_music(use_music);
-        }
+      if (use_music != options_menu->isToggled(MNID_MUSIC))
+      {
+        use_music = !use_music;
+        music_manager->enable_music(use_music);
+      }
       break;
 #ifdef TSCONTROL
     case MNID_SHOWMOUSE:
-	  if(show_mouse != options_menu->isToggled(MNID_SHOWMOUSE))
-	    show_mouse = !show_mouse;
-	  break;
+      if (show_mouse != options_menu->isToggled(MNID_SHOWMOUSE))
+        show_mouse = !show_mouse;
+      break;
 #endif
     case MNID_SHOWFPS:
-      if(show_fps != options_menu->isToggled(MNID_SHOWFPS))
+      if (show_fps != options_menu->isToggled(MNID_SHOWFPS))
         show_fps = !show_fps;
       break;
     case MNID_TV_OVERSCAN:
-      if(tv_overscan_enabled != options_menu->isToggled(MNID_TV_OVERSCAN)){
+      if (tv_overscan_enabled != options_menu->isToggled(MNID_TV_OVERSCAN))
+      {
         tv_overscan_enabled = !tv_overscan_enabled;
         offset_y = tv_overscan_enabled ? 40 : 0;
       }
       break;
-    }
+  }
 }
 
+/**
+ * This function setting up the visual and input components
+ * used throughout the game's menus and gameplay.
+ */
 void st_general_setup(void)
 {
   /* Seed random number generator: */
@@ -743,34 +655,36 @@ void st_general_setup(void)
 #endif
 
   /* Unicode needed for input handling: */
-
   SDL_EnableUNICODE(1);
 
   /* Load global images: */
-
-  black_text  = new Text(datadir + "/images/status/letters-black.png", TEXT_TEXT, 16,18);
-  gold_text   = new Text(datadir + "/images/status/letters-gold.png", TEXT_TEXT, 16,18);
-  blue_text   = new Text(datadir + "/images/status/letters-blue.png", TEXT_TEXT, 16,18);
-  white_text  = new Text(datadir + "/images/status/letters-white.png", TEXT_TEXT, 16,18);
-  white_small_text = new Text(datadir + "/images/status/letters-white-small.png", TEXT_TEXT, 8,9);
-  white_big_text   = new Text(datadir + "/images/status/letters-white-big.png", TEXT_TEXT, 20,22);
+  black_text = new Text(datadir + "/images/status/letters-black.png", TEXT_TEXT, 16, 18);
+  gold_text = new Text(datadir + "/images/status/letters-gold.png", TEXT_TEXT, 16, 18);
+  blue_text = new Text(datadir + "/images/status/letters-blue.png", TEXT_TEXT, 16, 18);
+  white_text = new Text(datadir + "/images/status/letters-white.png", TEXT_TEXT, 16, 18);
+  white_small_text = new Text(datadir + "/images/status/letters-white-small.png", TEXT_TEXT, 8, 9);
+  white_big_text = new Text(datadir + "/images/status/letters-white-big.png", TEXT_TEXT, 20, 22);
 
   /* Load GUI/menu images: */
   checkbox = new Surface(datadir + "/images/status/checkbox.png", USE_ALPHA);
   checkbox_checked = new Surface(datadir + "/images/status/checkbox-checked.png", USE_ALPHA);
   back = new Surface(datadir + "/images/status/back.png", USE_ALPHA);
-  //arrow_left = new Surface(datadir + "/images/icons/left.png", USE_ALPHA);
-  //arrow_right = new Surface(datadir + "/images/icons/right.png", USE_ALPHA);
+  // arrow_left = new Surface(datadir + "/images/icons/left.png", USE_ALPHA);
+  // arrow_right = new Surface(datadir + "/images/icons/right.png", USE_ALPHA);
 
   /* Load the mouse-cursor */
-  mouse_cursor = new MouseCursor( datadir + "/images/status/mousecursor.png",1);
+  mouse_cursor = new MouseCursor(datadir + "/images/status/mousecursor.png", 1);
   MouseCursor::set_current(mouse_cursor);
-
 }
 
+/**
+ * Frees all globally loaded resources, including fonts, GUI/menu images,
+ * mouse cursor, and all game-related menus. This function is called when
+ * exiting or restarting the game to ensure all dynamically allocated
+ * memory is properly released to avoid memory leaks.
+ */
 void st_general_free(void)
 {
-
   /* Free global images: */
   delete black_text;
   delete gold_text;
@@ -783,8 +697,8 @@ void st_general_free(void)
   delete checkbox;
   delete checkbox_checked;
   delete back;
-  //delete arrow_left;
-  //delete arrow_right;
+  // delete arrow_left;
+  // delete arrow_right;
 
   /* Free mouse-cursor */
   delete mouse_cursor;
@@ -802,6 +716,10 @@ void st_general_free(void)
   delete main_menu;
 }
 
+/*
+ * This function is responsible for configuring the visual display, including
+ * windowed and fullscreen modes, and preparing the screen for rendering.
+ */
 void st_video_setup(void)
 {
   /* Init SDL Video: */
@@ -820,11 +738,11 @@ void st_video_setup(void)
   }
 
   /* Open display and select video setup based on if we have OpenGL support: */
-  #ifndef NOOPENGL
+#ifndef NOOPENGL
   if (use_gl)
     st_video_setup_gl();  // Call OpenGL setup function if OpenGL is enabled
   else
-  #endif
+#endif
     st_video_setup_sdl();  // Call SDL setup function otherwise
 
   Surface::reload_all();
@@ -834,25 +752,28 @@ void st_video_setup(void)
 #endif /* #ifndef _WII_ */
 }
 
+/**
+ * Configures the video mode using SDL (Software Rendering).
+ * This function is called when OpenGL is not available or not selected.
+ */
 void st_video_setup_sdl(void)
 {
-
   if (use_fullscreen)
-    {
-      /* Set the video mode to fullscreen mode with double buffering for smoother rendering
-       * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_DOUBLEBUF);
+  {
+    /* Set the video mode to fullscreen mode with double buffering for smoother rendering
+     * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
+    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_DOUBLEBUF);
 
-      if (screen == NULL)
-        {
-          fprintf(stderr,
-                  "\nWarning: Could not set up fullscreen video for "
-                  "640x480 mode.\n"
-                  "The Simple DirectMedia error that occured was:\n"
-                  "%s\n\n", SDL_GetError());
-          use_fullscreen = false;
-        }
+    if (screen == NULL)
+    {
+      fprintf(stderr,
+              "\nWarning: Could not set up fullscreen video for "
+              "640x480 mode.\n"
+              "The Simple DirectMedia error that occurred was:\n"
+              "%s\n\n", SDL_GetError());
+      use_fullscreen = false;
     }
+  }
   else
   {
     /* Set the video mode to window mode with double buffering for smoother rendering
@@ -876,6 +797,11 @@ void st_video_setup_sdl(void)
 }
 
 #ifndef NOOPENGL
+/**
+ * Configures the video mode using OpenGL.
+ * This is only used when OpenGL is enabled and provides more advanced
+ * graphics rendering capabilities.
+ */
 void st_video_setup_gl(void)
 {
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
@@ -885,32 +811,28 @@ void st_video_setup_gl(void)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
   if (use_fullscreen)
+  {
+    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_OPENGL);
+    if (screen == nullptr)
     {
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_OPENGL) ; /* | SDL_HWSURFACE); */
-      if (screen == NULL)
-        {
-          fprintf(stderr,
-                  "\nWarning: I could not set up fullscreen video for "
-                  "640x480 mode.\n"
-                  "The Simple DirectMedia error that occured was:\n"
-                  "%s\n\n", SDL_GetError());
-          use_fullscreen = false;
-        }
+      std::string error_msg = "Warning: Could not set up fullscreen video for 640x480 mode.\n"
+                              "The Simple DirectMedia error that occurred was:\n";
+      error_msg += SDL_GetError();
+      fprintf(stderr, "%s\n\n", error_msg.c_str());
+      use_fullscreen = false;
     }
+  }
   else
+  {
+    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_OPENGL);
+    if (screen == nullptr)
     {
-      screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_OPENGL);
-
-      if (screen == NULL)
-        {
-          fprintf(stderr,
-                  "\nError: I could not set up video for 640x480 mode.\n"
-                  "The Simple DirectMedia error that occured was:\n"
-                  "%s\n\n", SDL_GetError());
-                  print_status("Could not set video mode2\n");
-          exit(1);
-        }
+      std::string error_msg = "Error: Could not set up video for 640x480 mode.\n"
+                              "The Simple DirectMedia error that occurred was:\n";
+      error_msg += SDL_GetError();
+      st_abort("Video Setup Failed", error_msg);
     }
+  }
 
   /*
    * Set up OpenGL for 2D rendering.
@@ -929,125 +851,121 @@ void st_video_setup_gl(void)
 }
 #endif
 
+/**
+ * Function for initializing joystick support
+ */
 void st_joystick_setup(void)
 {
-
   /* Init Joystick: */
-
   use_joystick = true;
 
   if (SDL_Init(SDL_INIT_JOYSTICK) < 0)
-    {
-      fprintf(stderr, "Warning: I could not initialize joystick!\n"
-              "The Simple DirectMedia error that occured was:\n"
-              "%s\n\n", SDL_GetError());
+  {
+    std::string error_msg = "Warning: Could not initialize joystick!\n"
+                            "The Simple DirectMedia error that occurred was:\n";
+    error_msg += SDL_GetError();
+    fprintf(stderr, "%s\n\n", error_msg.c_str());
 
+    use_joystick = false;
+  }
+  else
+  {
+    /* Open joystick: */
+    if (SDL_NumJoysticks() <= 0)
+    {
+      fprintf(stderr, "Warning: No joysticks are available.\n");
       use_joystick = false;
     }
-  else
+    else
     {
-      /* Open joystick: */
-      if (SDL_NumJoysticks() <= 0)
-        {
-          fprintf(stderr, "Warning: No joysticks are available.\n");
+      js = SDL_JoystickOpen(joystick_num);
+      if (js == nullptr)
+      {
+        std::string error_msg = "Warning: Could not open joystick " + std::to_string(joystick_num) + ".\n"
+                                "The Simple DirectMedia error that occurred was:\n";
+        error_msg += SDL_GetError();
+        fprintf(stderr, "%s\n\n", error_msg.c_str());
 
+        use_joystick = false;
+      }
+      else
+      {
+        if (SDL_JoystickNumAxes(js) < 2)
+        {
+          fprintf(stderr, "Warning: Joystick does not have enough axes!\n");
           use_joystick = false;
         }
-      else
+        else if (SDL_JoystickNumButtons(js) < 2)
         {
-          js = SDL_JoystickOpen(joystick_num);
-
-          if (js == NULL)
-            {
-              fprintf(stderr, "Warning: Could not open joystick %d.\n"
-                      "The Simple DirectMedia error that occured was:\n"
-                      "%s\n\n", joystick_num, SDL_GetError());
-
-              use_joystick = false;
-            }
-          else
-            {
-              if (SDL_JoystickNumAxes(js) < 2)
-                {
-                  fprintf(stderr,
-                          "Warning: Joystick does not have enough axes!\n");
-
-                  use_joystick = false;
-                }
-              else
-                {
-                  if (SDL_JoystickNumButtons(js) < 2)
-                    {
-                      fprintf(stderr,
-                              "Warning: "
-                              "Joystick does not have enough buttons!\n");
-
-                      use_joystick = false;
-                    }
-                }
-            }
+          fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
+          use_joystick = false;
         }
+      }
     }
+  }
 }
 
+/**
+ * Initializes the SDL audio system and opens the audio device.
+ * This function tries to set up audio silently even if sound/music
+ * is disabled via command-line. If audio setup fails, sound and music
+ * will be disabled.
+ */
 void st_audio_setup(void)
 {
-
-  /* Init SDL Audio silently even if --disable-sound : */
-
+  /* Init SDL Audio silently even if --disable-sound */
   if (audio_device)
+  {
+    if (SDL_Init(SDL_INIT_AUDIO) < 0)
     {
-      if (SDL_Init(SDL_INIT_AUDIO) < 0)
-        {
-          /* only print out message if sound or music
-             was not disabled at command-line
-           */
-          if (use_sound || use_music)
-            {
-              fprintf(stderr,
-                      "\nWarning: I could not initialize audio!\n"
-                      "The Simple DirectMedia error that occured was:\n"
-                      "%s\n\n", SDL_GetError());
-            }
-          /* keep the programming logic the same :-)
-             because in this case, use_sound & use_music' values are ignored
-             when there's no available audio device
-          */
-          use_sound = false;
-          use_music = false;
-          audio_device = false;
-        }
+      /* only print out message if sound or music
+         was not disabled at command-line
+       */
+      if (use_sound || use_music)
+      {
+        std::string error_msg = "\nWarning: Could not initialize audio!\n"
+                                "The Simple DirectMedia error that occurred was:\n";
+        error_msg += SDL_GetError();
+        fprintf(stderr, "%s\n\n", error_msg.c_str());
+      }
+      /* keep the programming logic the same :-)
+         because in this case, use_sound & use_music' values are ignored
+         when there's no available audio device
+      */
+      use_sound = false;
+      use_music = false;
+      audio_device = false;
     }
+  }
 
-
-  /* Open sound silently regarless the value of "use_sound": */
-
+  /* Open sound silently regardless of the value of "use_sound" */
   if (audio_device)
+  {
+    if (open_audio(44100, AUDIO_S16, 2, 2048) < 0)
     {
-      if (open_audio(44100, AUDIO_S16, 2, 2048) < 0)
-        {
-          /* only print out message if sound or music
-             was not disabled at command-line
-           */
-          if (use_sound || use_music)
-            {
-              fprintf(stderr,
-                      "\nWarning: I could not set up audio for 44100 Hz "
-                      "16-bit stereo.\n"
-                      "The Simple DirectMedia error that occured was:\n"
-                      "%s\n\n", SDL_GetError());
-            }
-          use_sound = false;
-          use_music = false;
-          audio_device = false;
-        }
+      /* only print out message if sound or music
+         was not disabled at command-line
+       */
+      if (use_sound || use_music)
+      {
+        std::string error_msg = "\nWarning: Could not set up audio for 44100 Hz "
+                                "16-bit stereo.\n"
+                                "The Simple DirectMedia error that occurred was:\n";
+        error_msg += SDL_GetError();
+        fprintf(stderr, "%s\n\n", error_msg.c_str());
+      }
+      use_sound = false;
+      use_music = false;
+      audio_device = false;
     }
-
+  }
 }
 
-
-/* --- SHUTDOWN --- */
-
+/**
+ * Performs a graceful shutdown of the application, ensuring all
+ * resources are freed, SDL subsystems are quit, and game configuration
+ * is saved before returning control to the system.
+ */
 void st_shutdown(void)
 {
   // Close the audio system and free resources
@@ -1065,8 +983,14 @@ void st_shutdown(void)
 #endif
 }
 
-/* --- ABORT! --- */
-
+/**
+ * Aborts the program with an error message, performing a graceful shutdown
+ * before terminating the application. This function is used to handle critical
+ * errors and ensures that resources are cleaned up before the process ends.
+ *
+ * @param reason A brief description of why the program is aborting.
+ * @param details Additional details about the error.
+ */
 void st_abort(const std::string& reason, const std::string& details)
 {
   // Construct the error message
@@ -1087,17 +1011,25 @@ void st_abort(const std::string& reason, const std::string& details)
   abort();  // This ensures the process terminates if shutdown doesn't fully exit
 }
 
+/**
+ * Handles Config file creation and loading
+ */
 void load_config_file()
 {
   loadconfig();  // Load the config file and if none exist create one
 }
 
 #ifndef _WII_ /* Wii Homebrew Apps don't use a window manager nor take arguments */
-void seticon(void) /* Set Icon (private) */
+/**
+ * Sets the window icon for non-Wii builds. This function attempts
+ * to load the "supertux.png" file as the window icon and will fail
+ * gracefully if the icon cannot be loaded.
+ */
+void seticon(void)
 {
   /* Attempt to load icon into a surface: */
-  SDL_Surface *icon = IMG_Load("supertux.png");
-  if (icon == NULL)
+  SDL_Surface* icon = IMG_Load("supertux.png");
+  if (icon == nullptr)
   {
     fprintf(stderr,
             "\nWarning: Could not load the icon image: supertux.png\n"
@@ -1107,112 +1039,115 @@ void seticon(void) /* Set Icon (private) */
     return;
   }
 
-  SDL_WM_SetIcon(icon, NULL); /* Set icon: */
-  SDL_FreeSurface(icon);      /* Free icon surface & mask: */
+  SDL_WM_SetIcon(icon, nullptr); /* Set icon */
+  SDL_FreeSurface(icon);         /* Free icon surface & mask */
 }
 
-/* Parse command-line arguments: */
-void parseargs(int argc, char * argv[])
+/**
+ * Parses the command-line arguments to set various options for the game.
+ * Arguments include options for fullscreen, joystick, data directory,
+ * showing FPS, and enabling debug mode.
+ * @param argc The number of arguments.
+ * @param argv The array of argument strings.
+ */
+void parseargs(int argc, char* argv[])
 {
-  int i;
-
-  /* Parse arguments: */
-  for (i = 1; i < argc; i++)
+  /* Parse arguments */
+  for (int i = 1; i < argc; ++i)
   {
-    if (strcmp(argv[i], "--fullscreen") == 0 ||
-        strcmp(argv[i], "-f") == 0)
+    if (strcmp(argv[i], "--fullscreen") == 0 || strcmp(argv[i], "-f") == 0)
     {
-      /* Use full screen: */
+      /* Use full screen */
       use_fullscreen = true;
     }
-    else if (strcmp(argv[i], "--window") == 0 ||
-             strcmp(argv[i], "-w") == 0)
+    else if (strcmp(argv[i], "--window") == 0 || strcmp(argv[i], "-w") == 0)
     {
-      /* Use window mode: */
+      /* Use window mode */
       use_fullscreen = false;
     }
     else if (strcmp(argv[i], "--joystick") == 0 || strcmp(argv[i], "-j") == 0)
     {
-      assert(i + 1 < argc);
-
-      // Fix: Avoid `atoi`, use `strtol` with error checking
-      char *endptr;
-      joystick_num = strtol(argv[++i], &endptr, 10);
-      if (*endptr != '\0')
+      if (i + 1 < argc)
       {
-        fprintf(stderr, "Invalid joystick number: %s\n", argv[i]);
-        exit(1);
+        char* endptr;
+        joystick_num = strtol(argv[++i], &endptr, 10);
+        if (*endptr != '\0')
+        {
+          std::string error_msg = "Invalid joystick number: " + std::string(argv[i]);
+          exit(1);
+        }
       }
     }
     else if (strcmp(argv[i], "--joymap") == 0)
     {
-      assert(i + 1 < argc);
-
-      // Fix: Added field width specifiers to `sscanf` to avoid overflow
-      if (sscanf(argv[++i], "%4d:%4d:%4d:%4d:%4d",
-                 &joystick_keymap.x_axis,
-                 &joystick_keymap.y_axis,
-                 &joystick_keymap.a_button,
-                 &joystick_keymap.b_button,
-                 &joystick_keymap.start_button) != 5)
+      if (i + 1 < argc)
       {
-        puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
-      }
-      else
-      {
-        std::cout << "Using new joymap:\n"
-                  << "  X-Axis:       " << joystick_keymap.x_axis << "\n"
-                  << "  Y-Axis:       " << joystick_keymap.y_axis << "\n"
-                  << "  A-Button:     " << joystick_keymap.a_button << "\n"
-                  << "  B-Button:     " << joystick_keymap.b_button << "\n"
-                  << "  Start-Button: " << joystick_keymap.start_button << std::endl;
+        if (sscanf(argv[++i], "%4d:%4d:%4d:%4d:%4d",
+                   &joystick_keymap.x_axis,
+                   &joystick_keymap.y_axis,
+                   &joystick_keymap.a_button,
+                   &joystick_keymap.b_button,
+                   &joystick_keymap.start_button) != 5)
+        {
+          puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
+        }
+        else
+        {
+          printf("Using new joymap: X=%d, Y=%d, A=%d, B=%d, START=%d\n",
+                 joystick_keymap.x_axis,
+                 joystick_keymap.y_axis,
+                 joystick_keymap.a_button,
+                 joystick_keymap.b_button,
+                 joystick_keymap.start_button);
+        }
       }
     }
-    else if (strcmp(argv[i], "--datadir") == 0 ||
-             strcmp(argv[i], "-d") == 0 )
+    else if (strcmp(argv[i], "--datadir") == 0 || strcmp(argv[i], "-d") == 0)
     {
-      assert(i + 1 < argc);
-      datadir = argv[++i];
+      if (i + 1 < argc)
+      {
+        datadir = argv[++i];
+      }
     }
     else if (strcmp(argv[i], "--show-fps") == 0)
     {
-      /* Show FPS: */
+      /* Show FPS */
       show_fps = true;
     }
-    else if (strcmp(argv[i], "--opengl") == 0 ||
-             strcmp(argv[i], "-gl") == 0)
+    else if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0)
     {
 #ifndef NOOPENGL
-      /* Use OpenGL: */
+      /* Use OpenGL */
       use_gl = true;
 #endif
     }
     else if (strcmp(argv[i], "--sdl") == 0)
     {
+      /* Use SDL (non-OpenGL) */
       use_gl = false;
     }
     else if (strcmp(argv[i], "--usage") == 0)
     {
-      /* Show usage: */
+      /* Show usage */
       usage(argv[0], 0);
     }
     else if (strcmp(argv[i], "--version") == 0)
     {
-      /* Show version: */
+      /* Show version */
       printf("SuperTux " VERSION "\n");
       exit(0);
     }
     else if (strcmp(argv[i], "--disable-sound") == 0)
     {
       /* Disable the compiled-in sound feature */
-      printf("Sounds disabled \n");
+      printf("Sounds disabled\n");
       use_sound = false;
       audio_device = false;
     }
     else if (strcmp(argv[i], "--disable-music") == 0)
     {
       /* Disable the compiled-in music feature */
-      printf("Music disabled \n");
+      printf("Music disabled\n");
       use_music = false;
     }
     else if (strcmp(argv[i], "--debug-mode") == 0)
@@ -1222,7 +1157,7 @@ void parseargs(int argc, char * argv[])
     }
     else if (strcmp(argv[i], "--help") == 0)
     {
-      /* Show help: */
+      /* Show help */
       puts("SuperTux Wii" VERSION "\n"
            "  Please see the file \"README.txt\" for more details.\n");
       printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
@@ -1263,42 +1198,44 @@ void parseargs(int argc, char * argv[])
   }
 }
 
-/* Display usage: */
-void usage(char *prog, int ret)
+/**
+ * Displays the usage message for command-line arguments and exits.
+ * @param prog The name of the program.
+ * @param ret  The exit code (0 for success, non-zero for error).
+ */
+void usage(char* prog, int ret)
 {
-  FILE *fi;
-
   // Determine which stream to write to
-  if (ret == 0)
-  {
-    fi = stdout;
-  }
-  else
-  {
-    fi = stderr;
-  }
+  FILE* fi = (ret == 0) ? stdout : stderr;
 
   // Display the usage message
   fprintf(fi, "Usage: %s [--fullscreen] [--opengl] [--disable-sound] [--disable-music] [--debug-mode] | [--usage | --help | --version] FILENAME\n", prog);
 
-  // Quit!
-  exit(ret);
+  if (ret != 0)
+  {
+    fprintf(stderr, "Incorrect command-line arguments.\n");
+    exit(ret);
+  }
 }
 #endif /* #ifndef _WII_ */
 
-
-void print_status(const char *st)
+/**
+ * Prints an error message to the console or the Wii framebuffer.
+ * This function is used to display errors to the user when running on the Wii.
+ * @param st The error message to be displayed.
+ */
+void print_status(const char* st)
 {
 #ifdef _WII_ // Check for Wii-specific compilation
 
-  static void *xfb = NULL;
-  static GXRModeObj *rmode = NULL;
+  static void* xfb = nullptr;
+  static GXRModeObj* rmode = nullptr;
 
   // Initialise the video system
   VIDEO_Init();
 
   // Obtain the preferred video mode from the system
-  rmode = VIDEO_GetPreferredMode(NULL);
+  rmode = VIDEO_GetPreferredMode(nullptr);
 
   // Allocate memory for the display in the uncached region
   xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
@@ -1325,8 +1262,7 @@ void print_status(const char *st)
     VIDEO_WaitVSync();
   }
 #endif
-  printf("\n\n");
-  printf("Error!\n %s\n", st);
+  printf("\n\nError!\n%s\n", st);
 }
 
 // EOF

@@ -26,9 +26,9 @@
 #include "player.h"
 
 #ifdef WIN32
-const char* config_filename = "/st_config.dat";
+const char* config_filename = "st_config.dat";
 #else
-const char* config_filename = "/config";
+const char* config_filename = "config";
 #endif
 
 /**
