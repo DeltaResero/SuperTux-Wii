@@ -62,9 +62,13 @@ const char* string_list_active(string_list_type* pstring_list)
  */
 void string_list_add_item(string_list_type* pstring_list, const char* str)
 {
+  size_t max_length = 256;  // Define a maximum length for safety
+  size_t str_len = strnlen(str, max_length);
+
   // Allocate memory for the new string
-  char* pnew_string = new char[strlen(str) + 1];
-  std::strcpy(pnew_string, str);
+  char* pnew_string = new char[str_len + 1];
+  std::strncpy(pnew_string, str, str_len);
+  pnew_string[str_len] = '\0';  // Ensure null termination
 
   // Increase the number of items
   ++pstring_list->num_items;
