@@ -764,303 +764,334 @@ WorldMap::path_ok(Direction direction, Point old_pos, Point* new_pos)
     }
 }
 
-void
-WorldMap::update(float delta)
+/**
+ * Updates the world map and manages level interactions.
+ * @param delta Time delta for frame update.
+ */
+void WorldMap::update(float delta)
 {
   if (enter_level && !tux->is_moving())
+  {
+    Level* level = at_level();
+    if (level && !level->name.empty())
     {
-      Level* level = at_level();
-      if (level && !level->name.empty())
+      if (level->x == tux->get_tile_pos().x && level->y == tux->get_tile_pos().y)
+      {
+#ifdef DEBUG
+        std::cout << "Enter the current level: " << level->name << std::endl;
+#endif
+        deleteSprites();
+        tux->deleteSprites();
+
+        GameSession* session = new GameSession(datadir + "/levels/" + level->name, 1, ST_GL_LOAD_LEVEL_FILE);
+        loadsounds();
+
+        GameSession::ExitStatus result = session->run();
+        bool coffee = session->get_world()->get_tux()->got_coffee;
+        bool big = session->get_world()->get_tux()->size == BIG;
+        delete session;
+        session = 0;
+
+        switch (result)
         {
-          if (level->x == tux->get_tile_pos().x &&
-              level->y == tux->get_tile_pos().y)
+          case GameSession::ES_LEVEL_FINISHED:
+          {
+            bool old_level_state = level->solved;
+            level->solved = true;
+
+            if (coffee)
             {
-#ifdef DEBUG
-              std::cout << "Enter the current level: " << level->name << std::endl;;
-#endif
-              deleteSprites();
-              tux->deleteSprites();
-
-              GameSession* session = new GameSession(datadir +  "/levels/" + level->name,
-                                                     1, ST_GL_LOAD_LEVEL_FILE);
-
-              loadsounds();
-
-              GameSession::ExitStatus result = session->run();
-              bool coffee = session->get_world()->get_tux()->got_coffee;
-              bool big = session->get_world()->get_tux()->size == BIG;
-              delete session;
-              session = 0;
-
-              switch (result)
-                {
-                case GameSession::ES_LEVEL_FINISHED:
-                  {
-                    bool old_level_state = level->solved;
-                    level->solved = true;
-
-                    if (coffee)
-                      player_status.bonus = PlayerStatus::FLOWER_BONUS;
-                    else if (big)
-                      player_status.bonus = PlayerStatus::GROWUP_BONUS;
-                    else
-                      player_status.bonus = PlayerStatus::NO_BONUS;
-
-                    if (old_level_state != level->solved && level->auto_path)
-                      { // Try to detect the next direction to which we should walk
-                        // FIXME: Mostly a hack
-                        Direction dir = D_NONE;
-
-                        Tile* tile = at(tux->get_tile_pos());
-
-                        if (tile->north && tux->back_direction != D_NORTH)
-                          dir = D_NORTH;
-                        else if (tile->south && tux->back_direction != D_SOUTH)
-                          dir = D_SOUTH;
-                        else if (tile->east && tux->back_direction != D_EAST)
-                          dir = D_EAST;
-                        else if (tile->west && tux->back_direction != D_WEST)
-                          dir = D_WEST;
-
-                        if (dir != D_NONE)
-                          {
-                            tux->set_direction(dir);
-                            //tux->update(delta);
-                          }
-#ifdef DEBUG
-                        std::cout << "Walk to dir: " << dir << std::endl;
-#endif
-                      }
-
-                    if (!level->extro_filename.empty())
-                      {
-                        unloadsounds();
-                        MusicRef theme =
-                          music_manager->load_music(datadir + "/music/theme.mod");
-                        MusicRef credits = music_manager->load_music(datadir + "/music/credits.ogg");
-                        music_manager->play_music(theme);
-
-                        // Display final credits and go back to the main menu
-                        display_text_file(level->extro_filename,
-                                          "/images/background/extro.jpg", SCROLL_SPEED_MESSAGE);
-                        music_manager->play_music(credits,0);
-                        display_text_file("CREDITS",
-                                          "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
-                        music_manager->play_music(theme);
-                        quit = true;
-                      }
-                  }
-
-                  break;
-                case GameSession::ES_LEVEL_ABORT:
-                  // Reseting the player_status might be a worthy
-                  // consideration, but I don't think we need it
-                  // 'cause only the bad players will use it to
-                  // 'cheat' a few items and that isn't necesarry a
-                  // bad thing (ie. better they continue that way,
-                  // then stop playing the game all together since it
-                  // is to hard)
-                  break;
-                case GameSession::ES_GAME_OVER:
-                  /* draw an end screen */
-                  /* in the future, this should make a dialog a la SuperMario, asking
-                  if the player wants to restart the world map with no score and from
-                  level 1 */
-                  char str[80];
-
-                  drawgradient(Color (0, 255, 0), Color (255, 0, 255));
-
-                  blue_text->drawf("GAMEOVER", 0, 200, A_HMIDDLE, A_TOP, 1);
-
-                  sprintf(str, "SCORE: %d", player_status.score);
-                  gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
-
-                  sprintf(str, "COINS: %d", player_status.distros);
-                  gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
-
-                  flipscreen();
-
-                  SDL_Event event;
-                  wait_for_event(event,2000,5000,true);
-
-                  quit = true;
-                  player_status.reset();
-                  break;
-                case GameSession::ES_NONE:
-                  // Should never be reached
-                  break;
-                }
-
-              unloadsounds();
-              loadSprites();
-              tux->loadSprites();
-
-              music_manager->play_music(song);
-              Menu::set_current(0);
-              if (!savegame_file.empty())
-                savegame(savegame_file);
-              return;
+              player_status.bonus = PlayerStatus::FLOWER_BONUS;
             }
+            else if (big)
+            {
+              player_status.bonus = PlayerStatus::GROWUP_BONUS;
+            }
+            else
+            {
+              player_status.bonus = PlayerStatus::NO_BONUS;
+            }
+
+            if (old_level_state != level->solved && level->auto_path)
+            { // Try to detect the next direction to which we should walk
+              // FIXME: Mostly a hack
+              Direction dir = D_NONE;
+              Tile* tile = at(tux->get_tile_pos());
+
+              if (tile->north && tux->back_direction != D_NORTH)
+              {
+                dir = D_NORTH;
+              }
+              else if (tile->south && tux->back_direction != D_SOUTH)
+              {
+                dir = D_SOUTH;
+              }
+              else if (tile->east && tux->back_direction != D_EAST)
+              {
+                dir = D_EAST;
+              }
+              else if (tile->west && tux->back_direction != D_WEST)
+              {
+                dir = D_WEST;
+              }
+
+              if (dir != D_NONE)
+              {
+                tux->set_direction(dir);
+                //tux->update(delta);
+              }
+#ifdef DEBUG
+              std::cout << "Walk to dir: " << dir << std::endl;
+#endif
+            }
+
+            if (!level->extro_filename.empty())
+            {
+              unloadsounds();
+              MusicRef theme = music_manager->load_music(datadir + "/music/theme.mod");
+              MusicRef credits = music_manager->load_music(datadir + "/music/credits.ogg");
+              music_manager->play_music(theme);
+
+              // Display final credits and go back to the main menu
+              display_text_file(level->extro_filename, "/images/background/extro.jpg", SCROLL_SPEED_MESSAGE);
+              music_manager->play_music(credits, 0);
+              display_text_file("CREDITS", "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
+              music_manager->play_music(theme);
+              quit = true;
+            }
+          }
+          break;
+
+          case GameSession::ES_LEVEL_ABORT:
+            // Reseting the player_status might be a worthy
+            // consideration, but I don't think we need it
+            // 'cause only the bad players will use it to
+            // 'cheat' a few items and that isn't necesarry a
+            // bad thing (ie. better they continue that way,
+            // then stop playing the game all together since it
+            // is to hard)
+            break;
+
+          case GameSession::ES_GAME_OVER:
+          {
+           /* draw an end screen
+            * In the future, this should make a dialog a la SuperMario, asking if the
+            * player wants to restart the world map with no score and from level 1
+            */
+            char str[80];
+            drawgradient(Color(0, 255, 0), Color(255, 0, 255));
+
+            blue_text->drawf("GAMEOVER", 0, 200, A_HMIDDLE, A_TOP, 1);
+
+            snprintf(str, sizeof(str), "SCORE: %d", player_status.score);
+            gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
+
+            snprintf(str, sizeof(str), "COINS: %d", player_status.distros);
+            gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
+
+            flipscreen();
+
+            SDL_Event event;
+            wait_for_event(event, 2000, 5000, true);
+
+            quit = true;
+            player_status.reset();
+          }
+          break;
+
+          case GameSession::ES_NONE:
+            break;
         }
-      else if (level && level->teleport_dest_x != -1 && level->teleport_dest_y != -1)
+
+        unloadsounds();
+        loadSprites();
+        tux->loadSprites();
+        music_manager->play_music(song);
+        Menu::set_current(0);
+        if (!savegame_file.empty())
         {
-          if (level->x == tux->get_tile_pos().x && level->y == tux->get_tile_pos().y)
-                {
-                  loadsounds();  // FIXME: only doing it here because world bonus map warp sound
-                  play_sound(sounds[SND_TELEPORT], SOUND_CENTER_SPEAKER);
-                  tux->back_direction = D_NONE;
-                  tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
-                  SDL_Delay(800); // Delay for visual effect & sound completion before unloading
-                  unloadsounds();  // FIXME: ideally should load/unload when loading world maps
-                }
+          savegame(savegame_file);
         }
-      else
-        {
-          std::cout << "Nothing to enter at: "
-                    << tux->get_tile_pos().x << ", " << tux->get_tile_pos().y << std::endl;
-        }
+        return;
+      }
     }
-  else
+    else if (level && level->teleport_dest_x != -1 && level->teleport_dest_y != -1)
     {
-      tux->update(delta);
-      tux->set_direction(input_direction);
+      if (level->x == tux->get_tile_pos().x && level->y == tux->get_tile_pos().y)
+      {
+        loadsounds();  // FIXME: only doing it here because world bonus map warp sound
+        play_sound(sounds[SND_TELEPORT], SOUND_CENTER_SPEAKER);
+        tux->back_direction = D_NONE;
+        tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
+        SDL_Delay(800);  // Delay for visual effect & sound completion before unloading
+        unloadsounds();  // FIXME: ideally should load/unload when loading world maps
+      }
     }
+    else
+    {
+      std::cout << "Nothing to enter at: " << tux->get_tile_pos().x << ", " << tux->get_tile_pos().y << std::endl;
+    }
+  }
+  else
+  {
+    tux->update(delta);
+    tux->set_direction(input_direction);
+  }
 
   Menu* menu = Menu::current();
-  if(menu)
-    {
-      menu->action();
+  if (menu)
+  {
+    menu->action();
 
-      if(menu == worldmap_menu)
-        {
-          switch (worldmap_menu->check())
-            {
-            case MNID_RETURNWORLDMAP: // Return to game
-              break;
-            case MNID_QUITWORLDMAP: // Quit Worldmap
-              quit = true;
-              break;
-            }
-        }
-      else if(menu == options_menu)
-        {
-          process_options_menu();
-        }
+    if (menu == worldmap_menu)
+    {
+      switch (worldmap_menu->check())
+      {
+        case MNID_RETURNWORLDMAP:  // Return to game
+          break;
+
+        case MNID_QUITWORLDMAP:  // Quit Worldmap
+          quit = true;
+          break;
+      }
     }
+    else if (menu == options_menu)
+    {
+      process_options_menu();
+    }
+  }
 }
 
-Tile*
-WorldMap::at(Point p)
+/**
+ * Returns the Tile at the given position.
+ * @param p The point to get the tile at.
+ * @return The Tile at the given point.
+ */
+Tile* WorldMap::at(Point p)
 {
-  assert(p.x >= 0
-         && p.x < width
-         && p.y >= 0
-         && p.y < height);
-
+  assert(p.x >= 0 && p.x < width && p.y >= 0 && p.y < height);
   return tile_manager->get(tilemap[width * p.y + p.x]);
 }
 
-WorldMap::Level*
-WorldMap::at_level()
+/**
+ * Returns the Level at the current position.
+ * @return The Level object at the current Tux position or null if no level is present.
+ */
+WorldMap::Level* WorldMap::at_level()
 {
-  for(Levels::iterator i = levels.begin(); i != levels.end(); ++i)
+  for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
+  {
+    if (i->x == tux->get_tile_pos().x && i->y == tux->get_tile_pos().y)
     {
-      if (i->x == tux->get_tile_pos().x &&
-          i->y == tux->get_tile_pos().y)
-        return &*i;
+      return &*i;
     }
+  }
 
   return 0;
 }
 
-
-void
-WorldMap::draw(const Point& offset)
+/**
+ * Draws the world map at the specified offset.
+ * @param offset The point used to offset drawing on the screen.
+ */
+void WorldMap::draw(const Point& offset)
 {
-  for(int y = 0; y < height; ++y)
-    for(int x = 0; x < width; ++x)
-      {
-        Tile* tile = at(Point(x, y));
-        tile->sprite->draw(x*32 + offset.x,
-                           y*32 + offset.y);
-      }
-
-  for(Levels::iterator i = levels.begin(); i != levels.end(); ++i)
+  for (int y = 0; y < height; ++y)
+  {
+    for (int x = 0; x < width; ++x)
     {
-      if(i->name.empty()) {
-      	if ((i->teleport_dest_x != -1) && !i->invisible_teleporter) {
-				leveldot_teleporter->draw(i->x*32 + offset.x,
-                             i->y*32 + offset.y);
-			}
-			else continue;
-		}
-
-      else if (i->solved)
-        leveldot_green->draw(i->x*32 + offset.x,
-                             i->y*32 + offset.y);
-      else
-        leveldot_red->draw(i->x*32 + offset.x,
-                           i->y*32 + offset.y);
+      Tile* tile = at(Point(x, y));
+      tile->sprite->draw(x * 32 + offset.x, y * 32 + offset.y);
     }
+  }
+
+  for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
+  {
+    if (i->name.empty())
+    {
+      if ((i->teleport_dest_x != -1) && !i->invisible_teleporter)
+      {
+        leveldot_teleporter->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+      }
+    }
+    else if (i->solved)
+    {
+      leveldot_green->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+    }
+    else
+    {
+      leveldot_red->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+    }
+  }
 
   tux->draw(offset);
   draw_status();
 }
 
-void
-WorldMap::draw_status()
+/**
+ * Draws the player's current score, coins, and lives status.
+ */
+void WorldMap::draw_status()
 {
   char str[80];
-  sprintf(str, "%d", player_status.score);
+
+  snprintf(str, sizeof(str), "%d", player_status.score);
   white_text->draw("SCORE", 20, offset_y);
   gold_text->draw(str, 116, offset_y);
 
-  sprintf(str, "%d", player_status.distros);
-  white_text->draw_align("COINS", 320-64, offset_y,  A_LEFT, A_TOP);
-  gold_text->draw_align(str, 320+64, offset_y, A_RIGHT, A_TOP);
+  snprintf(str, sizeof(str), "%d", player_status.distros);
+  white_text->draw_align("COINS", 320 - 64, offset_y, A_LEFT, A_TOP);
+  gold_text->draw_align(str, 320 + 64, offset_y, A_RIGHT, A_TOP);
 
   white_text->draw("LIVES", 460, offset_y);
   if (player_status.lives >= 5)
-    {
-      sprintf(str, "%dx", player_status.lives);
-      gold_text->draw_align(str, 597, offset_y, A_RIGHT, A_TOP);
-      tux_life->draw(545+(18*3), offset_y);
-    }
+  {
+    snprintf(str, sizeof(str), "%dx", player_status.lives);
+    gold_text->draw_align(str, 597, offset_y, A_RIGHT, A_TOP);
+    tux_life->draw(545 + (18 * 3), offset_y);
+  }
   else
+  {
+    for (int i = 0; i < player_status.lives; ++i)
     {
-      for(int i= 0; i < player_status.lives; ++i)
-        tux_life->draw(545+(18*i),offset_y);
+      tux_life->draw(545 + (18 * i), offset_y);
     }
+  }
 
   if (!tux->is_moving())
+  {
+    for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
     {
-      for(Levels::iterator i = levels.begin(); i != levels.end(); ++i)
+      if (i->x == tux->get_tile_pos().x && i->y == tux->get_tile_pos().y)
+      {
+        if (!i->name.empty())
         {
-          if (i->x == tux->get_tile_pos().x &&
-              i->y == tux->get_tile_pos().y)
-            {
-              if(!i->name.empty())
-                {
-              white_text->draw_align(i->title.c_str(), screen->w/2, screen->h - offset_y,  A_HMIDDLE, A_BOTTOM);
-                }
-				  else if (i->teleport_dest_x != -1) {
-				  	if(!i->teleport_message.empty())
-               	 gold_text->draw_align(i->teleport_message.c_str(), screen->w/2, screen->h - offset_y,  A_HMIDDLE, A_BOTTOM);
-				  }
-
-              /* Display a message in the map, if any as been selected */
-              if(!i->display_map_message.empty() && !i->passive_message)
-                gold_text->draw_align(i->display_map_message.c_str(),
-                     screen->w/2, screen->h - 30,A_HMIDDLE, A_BOTTOM);
-              break;
-            }
+          white_text->draw_align(i->title.c_str(), screen->w / 2, screen->h - offset_y, A_HMIDDLE, A_BOTTOM);
         }
+        else if (i->teleport_dest_x != -1)
+        {
+          if (!i->teleport_message.empty())
+          {
+            gold_text->draw_align(i->teleport_message.c_str(), screen->w / 2, screen->h - offset_y, A_HMIDDLE, A_BOTTOM);
+          }
+        }
+
+        /* Display a message in the map, if any as been selected */
+        if (!i->display_map_message.empty() && !i->passive_message)
+        {
+          gold_text->draw_align(i->display_map_message.c_str(), screen->w / 2, screen->h - 30, A_HMIDDLE, A_BOTTOM);
+        }
+
+        break;
+      }
     }
+  }
 
   /* Display a passive message in the map, if needed */
-  if(passive_message_timer.check())
-    gold_text->draw_align(passive_message.c_str(),
-                          screen->w/2, screen->h - 30,A_HMIDDLE, A_BOTTOM);
+  if (passive_message_timer.check())
+  {
+    gold_text->draw_align(passive_message.c_str(), screen->w / 2, screen->h - 30, A_HMIDDLE, A_BOTTOM);
+  }
 }
 
 void
