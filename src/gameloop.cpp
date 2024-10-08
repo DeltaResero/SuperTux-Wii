@@ -804,16 +804,14 @@ GameSession::ExitStatus GameSession::run()
     last_update_time = update_time;
     update_time = st_get_ticks();
 
+#ifndef _WII_  // Wii runs too slow to need this
     /* Pause till next frame */
-    if (end_sequence && last_update_time >= update_time - 12)
+    if(last_update_time >= update_time - 12)
     {
-#ifdef _WII_
-      // No delay for Wii
-#else
-      SDL_Delay(10); // FIXME: Tux spams micro-jumps without it after the end goal
-#endif
+      SDL_Delay(5);  // FIXME: Throttle hack as without it many things subtly break at higher framerates (default: 10; lowered to 5 for testing)
       update_time = st_get_ticks();
     }
+#endif
 
     /* Handle time: */
     if (!time_left.check() && world->get_tux()->dying == DYING_NOT && !end_sequence)
