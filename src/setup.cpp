@@ -153,6 +153,11 @@ FILE * opendata(const char * rel_filename, const char * mode)
  * This function handles the logic for scanning a directory (or subdirectory).
  * @param base_path Base path to the directory.
  * @param rel_path Relative path to the directory.
+ * @param expected_file The expected file to be found in the directory (optional).
+ * @param is_subdir Flag indicating if the entry is a subdirectory.
+ * @param glob Optional pattern to match files.
+ * @param exception_str Optional substring that if found, excludes entries.
+ * @param sdirs List to store the results (files or directories).
  */
 static void process_directory(const std::string &base_path, const std::string &rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs)
 {
@@ -215,6 +220,7 @@ static void process_directory(const std::string &base_path, const std::string &r
 /**
  * Function to get subdirectories within a relative path.
  * @param rel_path Relative path to the directory.
+ * @param expected_file The expected file to be found in the subdirectories (optional).
  * @return List of subdirectories.
  */
 string_list_type dsubdirs(const char *rel_path, const char *expected_file)
@@ -231,6 +237,8 @@ string_list_type dsubdirs(const char *rel_path, const char *expected_file)
 /**
  * Gets files within a relative path.
  * @param rel_path Relative path to the directory.
+ * @param glob Optional pattern to match files.
+ * @param exception_str Optional substring that if found, excludes entries.
  * @return List of files.
  */
 string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str)
@@ -642,8 +650,8 @@ void process_options_menu(void)
 }
 
 /**
- * This function setting up the visual and input components
- * used throughout the game's menus and gameplay.
+ * Set up the visual and input components used throughout the menus and gameplay.
+ * This includes loading images, setting up the mouse cursor, and seeding the random number generator.
  */
 void st_general_setup(void)
 {
