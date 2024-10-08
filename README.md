@@ -99,8 +99,6 @@ For configure help:
 
 5. Launch SuperTux from the Homebrew Channel. The game will create a config file and save folder on the first run.
 
-
-
 &nbsp;
 
 ### Setup Guide for devkitPro PowerPC Build System
