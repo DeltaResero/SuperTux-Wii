@@ -85,7 +85,7 @@ if !ENABLE_WII
 endif
 
 # List all extra files for distribution
-EXTRA_DIST = AUTHORS README LICENSE INSTALL NEWS autogen.sh autogen-clean.sh configure.ac \
+EXTRA_DIST = AUTHORS README LICENSE INSTALL autogen.sh autogen-clean.sh configure.ac \
              extras/supertux.desktop extras/supertux.png \
              mk/autoconf/acx_pthread.m4 \
              mk/autoconf/ax_check_gl.m4 \
