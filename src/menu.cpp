@@ -36,6 +36,7 @@
 #include "sound.h"
 #include "scene.h"
 #include "timer.h"
+#include "utils.h"
 
 #define FLICK_CURSOR_TIME 500
 
@@ -185,8 +186,7 @@ MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggl
   pnew_item->text = (char*)malloc(len + 1);  // Allocate space for null-terminator
   if (pnew_item->text != nullptr)
   {
-    memcpy(pnew_item->text, text_, len);
-    pnew_item->text[len] = '\0';  // Manually null-terminate
+    strlcpy(pnew_item->text, text_, len + 1);  // Use strlcpy instead of memcpy for safety
   }
   else
   {
@@ -264,8 +264,7 @@ void MenuItem::change_text(const char* text_)
     text = (char*)malloc(len + 1);  // Allocate space for null-terminator
     if (text != nullptr)
     {
-      memcpy(text, text_, len);
-      text[len] = '\0';  // Manually null-terminate
+      strlcpy(text, text_, len + 1);  // Use strlcpy for safe string copy
     }
     else
     {
@@ -292,8 +291,7 @@ void MenuItem::change_input(const char* text_)
     input = (char*)malloc(len + 1);  // Allocate space for null-terminator
     if (input != nullptr)
     {
-      memcpy(input, text_, len);
-      input[len] = '\0';  // Manually null-terminate
+      strlcpy(input, text_, len + 1);  // Use strlcpy for safe string copy
     }
     else
     {
