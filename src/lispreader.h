@@ -67,8 +67,9 @@ typedef struct
     FILE *file;  // File stream
     struct
     {
-      char *buf;
-      int pos;
+      char *buf;  // Buffer for the string
+      int pos;    // Current position in the buffer
+      int len;    // Length of the string buffer
     } string;  // String stream
 
     struct

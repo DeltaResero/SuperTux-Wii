@@ -22,10 +22,11 @@
 
 #include <iostream>
 #include <string>
-#include <assert.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cassert>
+#include <cctype>
+#include <cstdlib>
+#include <cerrno>
+#include <cstring>
 #include "setup.h"
 #include "lispreader.h"
 
@@ -89,11 +90,18 @@ static int _next_char(lisp_stream_t *stream)
 
     case LISP_STREAM_STRING:
     {
+      // Check buffer boundaries before accessing the string
+      if (stream->v.string.pos >= stream->v.string.len)
+      {
+        return EOF;  // Return EOF if the position exceeds the buffer length
+      }
+
       char c = stream->v.string.buf[stream->v.string.pos];
       if (c == 0)
       {
         return EOF;
       }
+
       ++stream->v.string.pos;
       return c;
     }
@@ -583,10 +591,30 @@ lisp_object_t* lisp_read(lisp_stream_t *in)
       return lisp_make_string(token_string);
 
     case TOKEN_INTEGER:
-      return lisp_make_integer(atoi(token_string));
+    {
+      // Convert string to long with error checking
+      char* endptr;
+      errno = 0;
+      long int_val = strtol(token_string, &endptr, 10);
+      if (errno != 0 || *endptr != '\0' || int_val < INT_MIN || int_val > INT_MAX)
+      {
+        return &error_object;  // Handle conversion error
+      }
+      return lisp_make_integer((int)int_val);
+    }
 
     case TOKEN_REAL:
-      return lisp_make_real((float)atof(token_string));
+    {
+      // Convert string to float with error checking
+      char* endptr;
+      errno = 0;
+      float real_val = strtof(token_string, &endptr);
+      if (errno != 0 || *endptr != '\0')
+      {
+        return &error_object;  // Handle conversion error
+      }
+      return lisp_make_real(real_val);
+    }
 
     case TOKEN_DOT:
       return &dot_marker;
@@ -1131,13 +1159,17 @@ lisp_object_t* lisp_cxr(lisp_object_t *obj, const char *x)
 {
   int i;
 
-  // Validate string before using strlen.
-  if (x == NULL)
+  // Validate string before using strnlen.
+  if (x == nullptr)
   {
-    return NULL;
+    return nullptr;
   }
 
-  for (i = strlen(x) - 1; i >= 0; --i)
+  // Use a defined maximum length (1025) to align with MAX_TOKEN_LENGTH
+  size_t x_len = strnlen(x, 1025);
+
+  // Traverse the string backwards from the last valid character.
+  for (i = x_len - 1; i >= 0; --i)
   {
     if (x[i] == 'a')
     {
@@ -1713,14 +1745,15 @@ lisp_object_t* lisp_read_from_gzfile(const char* filename)
  */
 bool has_suffix(const char* data, const char* suffix)
 {
-  // Validate input before calling strlen
-  if (data == NULL || suffix == NULL)
+  // Validate input before calling strnlen
+  if (data == nullptr || suffix == nullptr)
   {
     return false;
   }
 
-  int suffix_len = strlen(suffix);
-  int data_len = strlen(data);
+  // Use a defined maximum length (1025) to align with MAX_TOKEN_LENGTH
+  size_t suffix_len = strnlen(suffix, 1025);
+  size_t data_len = strnlen(data, 1025);
 
   if (data_len < suffix_len)
   {
@@ -1728,7 +1761,7 @@ bool has_suffix(const char* data, const char* suffix)
   }
 
   const char* data_suffix = (data + data_len - suffix_len);
-  return (strcmp(data_suffix, suffix) == 0);
+  return (strncmp(data_suffix, suffix, suffix_len) == 0);
 }
 
 /**
