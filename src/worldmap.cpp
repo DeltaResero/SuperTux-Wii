@@ -547,7 +547,6 @@ WorldMap::~WorldMap()
  */
 void WorldMap::loadSprites()
 {
-  level_sprite = new Surface(datadir + "/images/worldmap/levelmarker.png", USE_ALPHA);
   leveldot_green = new Surface(datadir + "/images/worldmap/leveldot_green.png", USE_ALPHA);
   leveldot_red = new Surface(datadir + "/images/worldmap/leveldot_red.png", USE_ALPHA);
   leveldot_teleporter = new Surface(datadir + "/images/worldmap/teleporter.png", USE_ALPHA);
@@ -558,10 +557,6 @@ void WorldMap::loadSprites()
  */
 void WorldMap::deleteSprites()
 {
-  if (level_sprite)
-  {
-    delete level_sprite;
-  }
   if (leveldot_green)
   {
     delete leveldot_green;
@@ -574,7 +569,6 @@ void WorldMap::deleteSprites()
   {
     delete leveldot_teleporter;
   }
-  level_sprite = 0;
   leveldot_green = 0;
   leveldot_red = 0;
   leveldot_teleporter = 0;

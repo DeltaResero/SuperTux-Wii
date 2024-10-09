@@ -677,8 +677,6 @@ void st_general_setup(void)
   checkbox = new Surface(datadir + "/images/status/checkbox.png", USE_ALPHA);
   checkbox_checked = new Surface(datadir + "/images/status/checkbox-checked.png", USE_ALPHA);
   back = new Surface(datadir + "/images/status/back.png", USE_ALPHA);
-  // arrow_left = new Surface(datadir + "/images/icons/left.png", USE_ALPHA);
-  // arrow_right = new Surface(datadir + "/images/icons/right.png", USE_ALPHA);
 
   /* Load the mouse-cursor */
   mouse_cursor = new MouseCursor(datadir + "/images/status/mousecursor.png", 1);
@@ -705,8 +703,6 @@ void st_general_free(void)
   delete checkbox;
   delete checkbox_checked;
   delete back;
-  // delete arrow_left;
-  // delete arrow_right;
 
   /* Free mouse-cursor */
   delete mouse_cursor;

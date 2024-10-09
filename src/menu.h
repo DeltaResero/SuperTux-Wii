@@ -190,8 +190,6 @@ public:
 extern Surface* checkbox;
 extern Surface* checkbox_checked;
 extern Surface* back;
-//extern Surface* arrow_left;
-//extern Surface* arrow_right;
 
 extern Menu* contrib_menu;
 extern Menu* contrib_subset_menu;

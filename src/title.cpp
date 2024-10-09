@@ -57,8 +57,6 @@ namespace fs = std::filesystem;  // Alias for ease of use
 static Surface* bkg_title;  // Background image for the title screen
 static Surface* logo;       // Logo image for the title screen
 
-//static Surface* img_choose_subset;  // Uncomment if needed later
-
 static bool walking;        // Indicates if the character is walking in the demo
 static Timer random_timer;  // Timer for controlling random events in the demo
 
@@ -372,7 +370,6 @@ void title(void)
   // Load and draw the title screen background and logo
   bkg_title = new Surface(datadir + "/images/title/background.jpg", IGNORE_ALPHA);
   logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
-  //img_choose_subset = new Surface(datadir + "/images/status/choose-level-subset.png", USE_ALPHA);
 
   // After title screen elements are loaded, delete the loading surface
   delete loading_surf;
@@ -564,7 +561,6 @@ void title(void)
   string_list_free(&worldmap_list);
   delete bkg_title;
   delete logo;
-  //delete img_choose_subset;
 }
 
 // EOF

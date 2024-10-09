@@ -56,12 +56,8 @@ if !ENABLE_WII
     $(wildcard data/supertux.strf) \
     $(wildcard data/*.txt) \
     $(wildcard data/CREDITS) \
-    $(wildcard data/images/*.png) \
-    $(wildcard data/images/*.xpm) \
     $(wildcard data/images/background/*.png) \
     $(wildcard data/images/background/*.jpg) \
-    $(wildcard data/images/icons/*.png) \
-    $(wildcard data/images/icons/*.xpm) \
     $(wildcard data/images/shared/*.png) \
     $(wildcard data/images/status/*.png) \
     $(wildcard data/images/worldmap/*.png) \
