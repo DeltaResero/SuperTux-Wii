@@ -52,6 +52,8 @@ static lisp_object_t error_object = { LISP_TYPE_PARSE_ERROR , {{0, 0}} };
 static lisp_object_t close_paren_marker = { LISP_TYPE_PARSE_ERROR , {{0, 0}} };
 static lisp_object_t dot_marker = { LISP_TYPE_PARSE_ERROR , {{0, 0}} };
 
+static int _match_pattern (lisp_object_t *pattern, lisp_object_t *obj, lisp_object_t **vars);
+
 /**
  * Clears the current token.
  */
