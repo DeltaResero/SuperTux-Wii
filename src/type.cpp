@@ -65,7 +65,7 @@ void string_list_add_item(string_list_type* pstring_list, const char* str)
   size_t max_length = 256;  // Define a maximum length for safety
   size_t str_len = strnlen(str, max_length);
 
-  // Allocate memory for the new string
+  // Allocate memory for the new string, ensuring null termination
   char* pnew_string = new char[str_len + 1];
   std::strncpy(pnew_string, str, str_len);
   pnew_string[str_len] = '\0';  // Ensure null termination
@@ -123,7 +123,7 @@ int string_list_find(string_list_type* pstring_list, const char* str)
 
 /**
  * Sorts the strings in the list alphabetically.
- * Uses a simple bubble sort algorithm to sort the strings in ascending order.
+ * Uses std::sort to sort the strings in ascending order.
  * @param pstring_list Pointer to the string list.
  */
 void string_list_sort(string_list_type* pstring_list)
