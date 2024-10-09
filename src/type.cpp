@@ -72,14 +72,18 @@ void string_list_add_item(string_list_type* pstring_list, const char* str)
   // Use strlcpy for safe string copy
   strlcpy(pnew_string, str, str_len + 1);
 
-  // Increase the number of items
-  ++pstring_list->num_items;
-
-  // Reallocate the item array to hold the new string
-  pstring_list->item = (char**) std::realloc(pstring_list->item, sizeof(char*) * pstring_list->num_items);
+  // Pre-allocate memory in chunks of 10 to reduce reallocations
+  static const int chunk_size = 10;
+  if (pstring_list->num_items % chunk_size == 0)
+  {
+    pstring_list->item = (char**) std::realloc(pstring_list->item, sizeof(char*) * (pstring_list->num_items + chunk_size));
+  }
 
   // Add the new string to the end of the list
-  pstring_list->item[pstring_list->num_items - 1] = pnew_string;
+  pstring_list->item[pstring_list->num_items] = pnew_string;
+
+  // Increase the number of items
+  ++pstring_list->num_items;
 
   // If no item is active, set the new item as active
   if (pstring_list->active_item == -1)
@@ -142,7 +146,7 @@ void string_list_sort(string_list_type* pstring_list)
  */
 void string_list_free(string_list_type* pstring_list)
 {
-  if (pstring_list != nullptr)
+  if (pstring_list != nullptr && pstring_list->item != nullptr)
   {
     // Free each string
     for (int i = 0; i < pstring_list->num_items; ++i)
