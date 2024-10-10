@@ -19,8 +19,8 @@
 //  02111-1307, USA.
 
 #include "utils.h"
+#include <cstring> // For memcpy, memchr
 
-// Define the strlcpy function in utils.cpp
 size_t strlcpy(char* dst, const char* src, size_t size)
 {
   if (dst == nullptr || src == nullptr)
@@ -28,11 +28,13 @@ size_t strlcpy(char* dst, const char* src, size_t size)
     return 0; // Invalid pointers
   }
 
-  size_t src_len = std::strlen(src);
+  // Use memchr to find the null-terminator within the given size limit
+  const char* null_terminator = static_cast<const char*>(std::memchr(src, '\0', size));
+  size_t src_len = null_terminator ? (null_terminator - src) : size - 1;  // If no null-terminator, copy up to size - 1
 
   if (size > 0)
   {
-    // Ensure we don't copy more than the destination size - 1 to leave space for null terminator
+    // Copy the appropriate amount, leaving room for the null-terminator
     size_t copy_len = (src_len >= size) ? size - 1 : src_len;
 
     // Perform the copy
@@ -42,7 +44,7 @@ size_t strlcpy(char* dst, const char* src, size_t size)
     dst[copy_len] = '\0';
   }
 
-  // Return the total length of the source string (not truncated)
+  // Return the total length of the source string (or the truncated size if no null-terminator was found)
   return src_len;
 }
 
