@@ -18,120 +18,164 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+#include <SDL_mixer.h>
 #include "defines.h"
 #include "globals.h"
 #include "sound.h"
 #include "setup.h"
 
-/*global variable*/
+/* Global variables */
 bool use_sound = true;    /* handle sound on/off menu and command-line option */
 bool use_music = true;    /* handle music on/off menu and command-line option */
 bool audio_device = true; /* != 0: available and initialized */
 
-const char * soundfilenames[NUM_SOUNDS] = {
-                                       "/sounds/jump.wav",
-                                       "/sounds/bigjump.wav",
-                                       "/sounds/skid.wav",
-                                       "/sounds/distro.wav",
-                                       "/sounds/herring.wav",
-                                       "/sounds/brick.wav",
-                                       "/sounds/hurt.wav",
-                                       "/sounds/squish.wav",
-                                       "/sounds/fall.wav",
-                                       "/sounds/ricochet.wav",
-                                       "/sounds/upgrade.wav",
-                                       "/sounds/excellent.wav",
-                                       "/sounds/coffee.wav",
-                                       "/sounds/shoot.wav",
-                                       "/sounds/lifeup.wav",
-                                       "/sounds/stomp.wav",
-                                       "/sounds/kick.wav",
-                                       "/sounds/explode.wav",
-                                       "/sounds/warp.wav"
-                                    };
 
+/* Memory usage for SDL_mixer channel allocations is roughly 256 bytes per channel
+ * - 4 channels: ~1 KB || 8 channels: ~2 KB || 16 channels: ~4 KB || 32 channels: ~8 KB */
+const int TOTAL_CHANNELS = 32;   // Fixed number of channels for sound effects
 
-#include <SDL_mixer.h>
+const char * soundfilenames[NUM_SOUNDS] =
+{
+  "/sounds/jump.wav",
+  "/sounds/bigjump.wav",
+  "/sounds/skid.wav",
+  "/sounds/distro.wav",
+  "/sounds/herring.wav",
+  "/sounds/brick.wav",
+  "/sounds/hurt.wav",
+  "/sounds/squish.wav",
+  "/sounds/fall.wav",
+  "/sounds/ricochet.wav",
+  "/sounds/upgrade.wav",
+  "/sounds/excellent.wav",
+  "/sounds/coffee.wav",
+  "/sounds/shoot.wav",
+  "/sounds/lifeup.wav",
+  "/sounds/stomp.wav",
+  "/sounds/kick.wav",
+  "/sounds/explode.wav",
+  "/sounds/warp.wav"
+};
 
 Mix_Chunk * sounds[NUM_SOUNDS];
 
-/* --- OPEN THE AUDIO DEVICE --- */
-
-int open_audio (int frequency, Uint16 format, int channels, int chunksize)
+/**
+ * Open the audio device and allocate a fixed number of channels.
+ * @param frequency Frequency to be set for audio.
+ * @param format Format of the audio (e.g., AUDIO_S16SYS).
+ * @param channels Number of channels (1 for mono, 2 for stereo).
+ * @param chunksize Size of each audio chunk.
+ * @return 0 if success, negative values for errors.
+ */
+int open_audio(int frequency, Uint16 format, int channels, int chunksize)
 {
-  if (Mix_OpenAudio( frequency, format, channels, chunksize ) < 0)
+  if (Mix_OpenAudio(frequency, format, channels, chunksize) < 0)
+  {
     return -1;
+  }
 
-  // allocate 16 channels for mixing
-  if (Mix_AllocateChannels(8)  != 8)
+  // Allocate channels for mixing
+  if (Mix_AllocateChannels(TOTAL_CHANNELS) != TOTAL_CHANNELS)
+  {
     return -2;
+  }
 
-  /* reserve some channels and register panning effects */
+  /* Reserve some channels and register panning effects */
   if (Mix_ReserveChannels(SOUND_RESERVED_CHANNELS) != SOUND_RESERVED_CHANNELS)
+  {
     return -3;
+  }
 
-  /* prepare the spanning effects */
-  Mix_SetPanning( SOUND_LEFT_SPEAKER, 230, 24 );
-  Mix_SetPanning( SOUND_RIGHT_SPEAKER, 24, 230 );
+  /* Prepare the spanning effects */
+  Mix_SetPanning(SOUND_LEFT_SPEAKER, 230, 24);
+  Mix_SetPanning(SOUND_RIGHT_SPEAKER, 24, 230);
+
   return 0;
 }
 
-
-/* --- CLOSE THE AUDIO DEVICE --- */
-
-void close_audio( void )
+/**
+ * Close the audio device.
+ */
+void close_audio(void)
 {
-  if (audio_device) {
-    Mix_UnregisterAllEffects( SOUND_LEFT_SPEAKER );
-    Mix_UnregisterAllEffects( SOUND_RIGHT_SPEAKER );
+  if (audio_device)
+  {
+    Mix_UnregisterAllEffects(SOUND_LEFT_SPEAKER);
+    Mix_UnregisterAllEffects(SOUND_RIGHT_SPEAKER);
     Mix_CloseAudio();
   }
 }
 
-
-/* --- LOAD A SOUND --- */
-
+/**
+ * Load a sound file into a Mix_Chunk object.
+ * @param file File path to the sound file.
+ * @return Pointer to the loaded sound chunk, or nullptr if loading failed.
+ */
 Mix_Chunk* load_sound(const std::string& file)
 {
-  if(!audio_device)
-    return 0;
+  if (!audio_device)
+  {
+    return nullptr;
+  }
 
   Mix_Chunk* snd = Mix_LoadWAV(file.c_str());
 
-  if (snd == 0)
+  if (snd == nullptr)
+  {
     st_abort("Can't load", file);
+  }
 
-  return(snd);
+  return snd;
 }
 
-/* --- PLAY A SOUND ON LEFT OR RIGHT OR CENTER SPEAKER --- */
-
-void play_sound(Mix_Chunk * snd, enum Sound_Speaker whichSpeaker)
+/**
+ * Play a sound on the specified speaker and check if all channels are full (debug mode).
+ * @param snd Sound chunk to be played.
+ * @param whichSpeaker Enum specifying left, right, or center speaker.
+ */
+void play_sound(Mix_Chunk* snd, enum Sound_Speaker whichSpeaker)
 {
-  /* this won't call the function if the user has disabled sound
+  /* This won't call the function if the user has disabled sound
    * either via menu or via command-line option
    */
-  if(!audio_device || !use_sound)
+  if (!audio_device || !use_sound)
+  {
     return;
+  }
 
-  Mix_PlayChannel( whichSpeaker, snd, 0);
+#ifdef DEBUG
+  // Check if all channels are full
+  if (Mix_Playing(-1) >= TOTAL_CHANNELS)
+  {
+    printf("Warning: Exceeded available channels! Sound may not play.\n");
+  }
+#endif
 
-  /* prepare for panning effects for next call */
-  switch (whichSpeaker) {
+  Mix_PlayChannel(whichSpeaker, snd, 0);
+
+  /* Prepare for panning effects for next call */
+  switch (whichSpeaker)
+  {
     case SOUND_LEFT_SPEAKER:
-      Mix_SetPanning( SOUND_LEFT_SPEAKER, 230, 24 );
+      Mix_SetPanning(SOUND_LEFT_SPEAKER, 230, 24);
       break;
+
     case SOUND_RIGHT_SPEAKER:
-      Mix_SetPanning( SOUND_RIGHT_SPEAKER, 24, 230 );
+      Mix_SetPanning(SOUND_RIGHT_SPEAKER, 24, 230);
       break;
-    default:  // keep the compiler happy
+
+    default:  // Keep the compiler happy
       break;
   }
 }
 
-void free_chunk(Mix_Chunk *chunk)
+/**
+ * Free a sound chunk from memory.
+ * @param chunk Pointer to the sound chunk to be freed.
+ */
+void free_chunk(Mix_Chunk* chunk)
 {
-  Mix_FreeChunk( chunk );
+  Mix_FreeChunk(chunk);
 }
 
 // EOF
