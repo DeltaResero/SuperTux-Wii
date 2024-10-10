@@ -493,14 +493,16 @@ void title(void)
         {
           int slot = menu->get_active_item_id();
           char str[1024];
-          sprintf(str, "Are you sure you want to delete slot %d?", slot);
+          snprintf(str, sizeof(str), "Are you sure you want to delete slot %d?", slot);
 
           draw_background();
 
           if (confirm_dialog(str))
           {
-            sprintf(str, "%s/slot%d.stsg", st_save_dir, slot);
+            snprintf(str, sizeof(str), "%s/slot%d.stsg", st_save_dir, slot);
+#ifdef DEBUG
             printf("Removing: %s\n", str);
+#endif
             remove(str);
           }
 
@@ -512,7 +514,9 @@ void title(void)
         {
           createDemo();
           loadsounds();
-          //printf("loaded demo, load sounds\n");
+#ifdef DEBUG
+          printf("loaded demo, load sounds\n");
+#endif
           // FIXME: shouldn't be needed if GameSession doesn't relay on global variables
           // reset tux
           scroll_x = 0;
