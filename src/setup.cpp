@@ -945,7 +945,7 @@ void st_audio_setup(void)
   /* Open sound silently regardless of the value of "use_sound" */
   if (audio_device)
   {
-    if (open_audio(44100, AUDIO_S16, 2, 2048) < 0)
+    if (open_audio(44100, AUDIO_S16SYS, 2, 2048) < 0)
     {
       /* only print out message if sound or music
          was not disabled at command-line
