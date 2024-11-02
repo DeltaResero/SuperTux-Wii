@@ -29,10 +29,10 @@ PORTLIBS := $(DEVKITPRO)/portlibs/wii
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		=	-D_WII_ -O3 -Wall $(MACHDEP) $(INCLUDE) @CFLAGS@
+CFLAGS		=	-D_WII_ -O3 -Wall -flto $(MACHDEP) $(INCLUDE) @CFLAGS@
 CXXFLAGS	=	$(CFLAGS) @CXXFLAGS@
 
-LDFLAGS		=	$(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(LIBOGC_LIB) -logc @LDFLAGS@
+LDFLAGS		=	-flto $(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(LIBOGC_LIB) -logc @LDFLAGS@
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
