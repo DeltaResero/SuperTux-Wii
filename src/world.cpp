@@ -168,7 +168,9 @@ World::activate_bad_guys()
        i != level->badguy_data.end();
        ++i)
     {
+#ifdef DEBUG
       printf("add bad guy %d\n", i->kind);
+#endif
       add_bad_guy(i->x, i->y, i->kind, i->stay_on_platform);
     }
 }
