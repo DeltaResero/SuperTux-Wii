@@ -64,6 +64,7 @@ enum MenuItemKind {
   MN_ACTION,
   MN_GOTO,
   MN_TOGGLE,
+  MN_BACKSAVE,
   MN_BACK,
   MN_DEACTIVE,
   MN_TEXTFIELD,
