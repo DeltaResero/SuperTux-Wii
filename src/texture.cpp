@@ -833,9 +833,9 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
   glTexCoord2f(sx / pw, sy / ph);
   glVertex2f(x, y);
   glTexCoord2f((sx + w) / pw, sy / ph);
-  glVertex2f(w + x, y);
+  glVertex2f(x + w + 1.0f, y - 1.0f);            // FIXME: nasty OB1 workaround
   glTexCoord2f((sx + w) / pw, (sy + h) / ph);
-  glVertex2f(w + x, h + y);
+  glVertex2f(x + w + 1.0f, y + h - 1.0f);        // FIXME: nasty OB1 workaround
   glTexCoord2f(sx / pw, (sy + h) / ph);
   glVertex2f(x, h + y);
   glEnd();
