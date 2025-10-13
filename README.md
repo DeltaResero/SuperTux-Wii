@@ -12,7 +12,7 @@
 Ported by: scanff & Arikado
 Updated by: DeltaResero
 Type: Platform game
-Version: 1.4
+Version: 0.1.4-wii-d.2
 Software license: GPLv2
 ```
 
@@ -58,21 +58,28 @@ If you don't have the devkitPPC toolchain set up yet, see the section
 with all the required ported libraries and libogc, run the following to build
 the game:
 
-1. Run `autogen.sh` (uses `Configure` to generate the Wii makefile for
-   building):
+1. Run `autogen.sh` (uses `Configure` to generate the Wii makefile for building)
+   To build with SDL and OpenGL/OpenGX (recommended):
+   ```
+   ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi
+   ```
+   To build with only SDL (not recommended):
    ```
    ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi --disable-opengl
    ```
 
+&nbsp;
+
+   For configure help:
+   ```
+   ./autogen.sh --help
+   ```
+   
 2. Use `make` to cross-compile the game executable:
    ```
    make -f Wii
    ```
 
-For configure help:
-```
-./autogen.sh --help
-```
 
 ### Installing SuperTux on Wii (Homebrew Channel)
 
@@ -121,7 +128,7 @@ wii-sdl_image
 wii-sdl_mixer
 ```
 
-For the incomplete WIP OpenGL/OpenGX backend, the following are also required:
+For the OpenGL/OpenGX backend, the following are also additionally required:
 ```
 wii-freeglut
 wii-glu
@@ -135,6 +142,10 @@ wii-opengx
 Run `autogen.sh`:
 ```
 ./autogen.sh
+```
+For configure help:
+```
+./autogen.sh --help
 ```
 
 Use `make` to compile the game executable:

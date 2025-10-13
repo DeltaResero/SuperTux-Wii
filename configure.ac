@@ -16,7 +16,9 @@ dnl Process this file with autoconf to produce a configure script.
 
 dnl Initialization
 AC_PREREQ([2.72])
-AC_INIT([SuperTux-Wii],[0.1.4d-wii])
+
+dnl Remember to update src/defines.h and hbc/apps/supertux/meta.xml when changing versions
+AC_INIT([SuperTux-Wii],[0.1.4-wii-d.2])
 AC_CONFIG_SRCDIR([src/supertux.cpp])
 AC_CANONICAL_TARGET
 
@@ -65,17 +67,15 @@ if test "x$enable_wii" = "xyes"; then
 
   dnl Check/Handle if OpenGL is set to enable for Wii
   if test "x${enable_opengl}" != "xno"; then
-    dnl Use OpenGX via the already included -lopengx, but implementation is still incomplete
-    AC_MSG_WARN([OpenGL is not currently supported on the Wii platform.])
-    AC_MSG_WARN([It is recommended to reconfigure with --disable-opengl.])
+    dnl Use OpenGX
     enable_opengl="yes"
-    dnl Do not escape the backticks here
     CFLAGS="$CFLAGS \`\$(PREFIX)pkg-config --cflags glut sdl\`"
     LIBS="$LIBS \`\$(PREFIX)pkg-config --libs glut opengl sdl SDL_mixer\` -lGLU -lglut -lopengx"
   else
     dnl Disable OpenGL/OpenGX (mostly) and use Wii SDL 1.2
     enable_opengl="no"
-    dnl Do not escape the backticks here
+    AC_MSG_WARN([OpenGL disabled!])
+    AC_MSG_WARN([Falling back to SDL.])
     CFLAGS="$CFLAGS \`\$(PREFIX)pkg-config --cflags sdl\`"
     CXXFLAGS="$CXXFLAGS -DNOOPENGL"
     LIBS="$LIBS \`\$(PREFIX)pkg-config --libs sdl SDL_mixer\`"

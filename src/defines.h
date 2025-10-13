@@ -24,11 +24,11 @@
 
 /* Version */
 #ifndef VERSION
-  #define VERSION "0.1.4d-wii"
+  #define VERSION "0.1.4-wii-d.2"
 #endif
 
 /* FPS */
-#define FPS (1000 / 25)  // 25 frames per second
+#define FPS (1000 / 25)  // Target: 25 frames/sec (~40 ms frame delay)
 
 /* Directions */
 enum Direction
