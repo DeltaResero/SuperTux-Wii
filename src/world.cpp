@@ -346,7 +346,7 @@ void World::scrolling(float elapsed_time)
     return;
   }
 
-  int tux_pos_x = static_cast<int>(tux.base.x + (tux.base.width / 2));
+  float tux_pos_x = (tux.base.x + (tux.base.width / 2));
 
   if (level->back_scrolling || debug_mode)
   {
@@ -529,7 +529,7 @@ World::add_score(float x, float y, int s)
   player_status.score += s;
 
   FloatingScore* new_floating_score = new FloatingScore();
-  new_floating_score->init(x,y,s);
+  new_floating_score->init(x-scroll_x, y, s);
   floating_scores.push_back(new_floating_score);
 }
 
