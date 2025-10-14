@@ -144,6 +144,8 @@ void World::deactivate_world()
        i != floating_scores.end(); ++i)
     delete *i;
   floating_scores.clear();
+
+  upgrades.clear();
 }
 
 void
