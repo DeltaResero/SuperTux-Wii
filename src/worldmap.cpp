@@ -1223,31 +1223,50 @@ WorldMap::Level* WorldMap::at_level()
  */
 void WorldMap::draw(const Point& offset)
 {
-  for (int y = 0; y < height; ++y)
+  // Determine the range of tiles visible on the screen
+  int x_start = -offset.x / 32;
+  int y_start = -offset.y / 32;
+  int x_end = x_start + (screen->w / 32) + 2;
+  int y_end = y_start + (screen->h / 32) + 2;
+
+  // Clamp the tile range to the map's actual boundaries
+  if (x_start < 0) x_start = 0;
+  if (y_start < 0) y_start = 0;
+  if (x_end > width) x_end = width;
+  if (y_end > height) y_end = height;
+
+
+  // Only draw the visible tiles
+  for (int y = y_start; y < y_end; ++y)
   {
-    for (int x = 0; x < width; ++x)
+    for (int x = x_start; x < x_end; ++x)
     {
       Tile* tile = at(Point(x, y));
       tile->sprite->draw(x * 32 + offset.x, y * 32 + offset.y);
     }
   }
 
+  // Only draw visible level dots
   for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
   {
-    if (i->name.empty())
+    // Only draw dots within the visible tile range
+    if (i->x >= x_start && i->x < x_end && i->y >= y_start && i->y < y_end)
     {
-      if ((i->teleport_dest_x != -1) && !i->invisible_teleporter)
+      if (i->name.empty())
       {
-        leveldot_teleporter->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+        if ((i->teleport_dest_x != -1) && !i->invisible_teleporter)
+        {
+          leveldot_teleporter->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+        }
       }
-    }
-    else if (i->solved)
-    {
-      leveldot_green->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
-    }
-    else
-    {
-      leveldot_red->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+      else if (i->solved)
+      {
+        leveldot_green->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+      }
+      else
+      {
+        leveldot_red->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+      }
     }
   }
 
