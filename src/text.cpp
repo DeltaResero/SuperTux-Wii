@@ -337,7 +337,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
   int length;
   FILE* fi;
   char temp[1024];
-  std::vector<std::string> names;  // Replaced string_list_type with std::vector<std::string>
+  std::vector<std::string> names;
   char filename[1024];
 
   snprintf(filename, sizeof(filename), "%s/%s", datadir.c_str(), file.c_str());
@@ -384,23 +384,33 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
               speed += SPEED_INC;
               speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
               break;
-            case SDLK_SPACE:
-            case SDLK_RETURN:
-              if (speed >= 0)
-                scroll += SCROLL;
-              break;
-            case SDLK_ESCAPE:
-              done = 1;
-              break;
-            default:
-              break;
+              /* case SDLK_SPACE:  // Fast-scroll
+               * case SDLK_RETURN:
+               *   if (speed >= 0)
+               *     scroll += SCROLL;
+               *   break;
+               */
+              case SDLK_ESCAPE:
+                done = 1;
+                break;
+              default:
+                break;
           }
           break;
-        case SDL_QUIT:
-          done = 1;
-          break;
-        default:
-          break;
+
+          case SDL_JOYBUTTONDOWN:
+            if (event.jbutton.button == 6)  // Wii Remote Home Button alternative to SDLK_ESCAPE
+            {
+              done = 1;
+            }
+            break;
+
+          case SDL_QUIT:
+            done = 1;
+            break;
+
+          default:
+            break;
       }
     }
 
@@ -444,10 +454,14 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
 
     // Check if the entire text has scrolled off the screen
     if (screen->h + y - scroll < 0 && 20 + screen->h + y - scroll < 0)
+    {
       done = 1;
+    }
 
     if (scroll < 0)
+    {
       scroll = 0;
+    }
   }
 
   // No need to call string_list_free since std::vector handles memory automatically
