@@ -91,6 +91,7 @@ void loadconfig()
   reader.read_bool("sound", &use_sound);
   reader.read_bool("music", &use_music);
   reader.read_bool("show_fps", &show_fps);
+  reader.read_bool("tv_overscan", &tv_overscan_enabled);
 
   std::string video;
   reader.read_string("video", &video);
@@ -134,6 +135,7 @@ void saveconfig()
     fprintf(config, "\t(sound %s)\n", use_sound ? "#t" : "#f");
     fprintf(config, "\t(music %s)\n", use_music ? "#t" : "#f");
     fprintf(config, "\t(show_fps %s)\n", show_fps ? "#t" : "#f");
+    fprintf(config, "\t(tv_overscan %s)\n", tv_overscan_enabled ? "#t" : "#f");
 
     fprintf(config, "\n\t;; either \"opengl\" or \"sdl\"\n");
     fprintf(config, "\t(video \"%s\")\n", use_gl ? "opengl" : "sdl");

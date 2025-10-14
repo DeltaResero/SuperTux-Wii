@@ -70,9 +70,6 @@
 int selecteddevice;
 
 /* Local function prototypes: */
-
-bool tv_overscan_enabled = false;
-int offset_y = tv_overscan_enabled ? 40 : 0;
 void seticon(void);
 void usage(char * prog, int ret);
 
@@ -1021,6 +1018,7 @@ void st_abort(const std::string& reason, const std::string& details)
 void load_config_file()
 {
   loadconfig();  // Load the config file and if none exist create one
+  offset_y = tv_overscan_enabled ? 40 : 0;
 }
 
 #ifndef _WII_ /* Wii Homebrew Apps don't use a window manager nor take arguments */
