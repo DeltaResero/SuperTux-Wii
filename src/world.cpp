@@ -442,87 +442,157 @@ void World::scrolling(float elapsed_time)
 void
 World::collision_handler()
 {
-  // CO_BULLET & CO_BADGUY check
+  /* --- COLLISION CULLING SETUP --- */
+  // To improve performance, we define an "active" area based on the screen's
+  // current position. Objects outside this area will be culled/skipped from
+  // most collision checks. A 64-pixel buffer is added to each side for safety,
+  // preventing fast-moving objects from tunneling through each other between frames.
+  const float screen_x_start = scroll_x - 64.0f;
+  const float screen_x_end   = scroll_x + screen->w + 64.0f;
+
+
+  /* --- CO_BULLET & CO_BADGUY check --- */
+  // This check is safe to optimize. Player-fired bullets are short-lived
+  // and should only interact with enemies that are currently visible.
   for(unsigned int i = 0; i < bullets.size(); ++i)
-    {
-      for (BadGuys::iterator j = bad_guys.begin(); j != bad_guys.end(); ++j)
-        {
-          if((*j)->dying != DYING_NOT)
-            continue;
+  {
+    // Skip collision checks for this bullet if it is outside the active area.
+    if (bullets[i].base.x + bullets[i].base.width < screen_x_start || bullets[i].base.x > screen_x_end)
+      continue;
 
-          if(rectcollision(bullets[i].base, (*j)->base))
-            {
-              // We have detected a collision and now call the
-              // collision functions of the collided objects.
-              // collide with bad_guy first, since bullet_collision will
-              // delete the bullet
-              (*j)->collision(0, CO_BULLET);
-              bullets[i].collision(CO_BADGUY);
-              break; // bullet is invalid now, so break
-            }
-        }
-    }
-
-  /* CO_BADGUY & CO_BADGUY check */
-  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+    for (BadGuys::iterator j = bad_guys.begin(); j != bad_guys.end(); ++j)
     {
-      if((*i)->dying != DYING_NOT)
+      // Tux can't kill a dying enemy
+      if((*j)->dying != DYING_NOT)
         continue;
 
-      BadGuys::iterator j = i;
-      ++j;
-      for (; j != bad_guys.end(); ++j)
-        {
-          if(j == i || (*j)->dying != DYING_NOT)
-            continue;
+      // Also skip collision checks for any enemy outside the active area.
+      if ((*j)->base.x + (*j)->base.width < screen_x_start || (*j)->base.x > screen_x_end)
+        continue;
 
-          if(rectcollision((*i)->base, (*j)->base))
-            {
-              // We have detected a collision and now call the
-              // collision functions of the collided objects.
-              (*j)->collision(*i, CO_BADGUY);
-              (*i)->collision(*j, CO_BADGUY);
-            }
-        }
+      if(rectcollision(bullets[i].base, (*j)->base))
+      {
+        (*j)->collision(0, CO_BULLET);
+        bullets[i].collision(CO_BADGUY);
+        break;
+      }
     }
+  }
 
+
+  /* --- CO_BADGUY & CO_BADGUY check (Two-Pass Method) --- */
+
+  // --- PASS 1: Special Case for sliding Mr. Ice Block ---
+  // This first pass handles where a sliding ice block can defeat other enemies even when far off-screen
+  // We find every sliding ice block and check it against ALL other non-dying enemies in the entire level
+  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+  {
+    // Find our special case: a Mr. Ice Block that is in its KICK (sliding) state
+    if ((*i)->kind == BAD_MRICEBLOCK && (*i)->mode == BadGuy::KICK)
+    {
+      // Check this sliding block against every other valid enemy in the level
+      for (BadGuys::iterator j = bad_guys.begin(); j != bad_guys.end(); ++j)
+      {
+        // Don't check against itself or already-dying enemies
+        if(i == j || (*j)->dying != DYING_NOT)
+          continue;
+
+        if(rectcollision((*i)->base, (*j)->base))
+        {
+          (*j)->collision(*i, CO_BADGUY);
+          (*i)->collision(*j, CO_BADGUY);
+        }
+      }
+    }
+  }
+
+  // --- PASS 2: Normal Collisions ---
+  // This second pass handles all other enemy-vs-enemy collisions
+  // Heavily optimized by culling pairs of enemies that are both off-screen
+  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+  {
+    // Skip any enemy that is already dying.
+    if((*i)->dying != DYING_NOT)
+      continue;
+
+    // Skip any sliding ice block (already handled in Pass 1)
+    if ((*i)->kind == BAD_MRICEBLOCK && (*i)->mode == BadGuy::KICK)
+      continue;
+
+    // Skip any non-special enemy that is outside the active area
+    if ((*i)->base.x + (*i)->base.width < screen_x_start || (*i)->base.x > screen_x_end)
+      continue;
+
+    BadGuys::iterator j = i;
+    ++j;
+    for (; j != bad_guys.end(); ++j)
+    {
+      // Skip self-check and dying enemies
+      if(j == i || (*j)->dying != DYING_NOT)
+        continue;
+
+      // Also skip sliding ice blocks here to avoid redundant checks from Pass 1
+      if ((*j)->kind == BAD_MRICEBLOCK && (*j)->mode == BadGuy::KICK)
+        continue;
+
+      // Since 'i' is an on-screen, normal enemy, we only need to check it against other enemies also on-screen
+      if ((*j)->base.x + (*j)->base.width < screen_x_start || (*j)->base.x > screen_x_end)
+        continue;
+
+      if(rectcollision((*i)->base, (*j)->base))
+      {
+        (*j)->collision(*i, CO_BADGUY);
+        (*i)->collision(*j, CO_BADGUY);
+      }
+    }
+  }
+
+
+  // Stop all further collision checking if Tux/player is dying.
   if(tux.dying != DYING_NOT) return;
 
-  // CO_BADGUY & CO_PLAYER check
+
+  /* --- CO_BADGUY & CO_PLAYER check --- */
+  // Tux can only physically interact with enemies that are physically near him
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+  {
+    // Ignore dying enemies
+    if((*i)->dying != DYING_NOT)
+      continue;
+
+    // Skip enemies not within a 64-pixel buffer around Tux's bounding box
+    if ((*i)->base.x + (*i)->base.width < tux.base.x - 64.0f || (*i)->base.x > tux.base.x + tux.base.width + 64.0f)
+      continue;
+
+    if(rectcollision_offset((*i)->base, tux.base, 0, 0))
     {
-      if((*i)->dying != DYING_NOT)
-        continue;
-
-      if(rectcollision_offset((*i)->base, tux.base, 0, 0))
-        {
-          // We have detected a collision and now call the collision
-          // functions of the collided objects.
-          if (tux.previous_base.y < tux.base.y &&
-              tux.previous_base.y + tux.previous_base.height
-              < (*i)->base.y + (*i)->base.height/2
-              && !tux.invincible_timer.started())
-            {
-              (*i)->collision(&tux, CO_PLAYER, COLLISION_SQUISH);
-            }
-          else
-            {
-              tux.collision(*i, CO_BADGUY);
-              (*i)->collision(&tux, CO_PLAYER, COLLISION_NORMAL);
-            }
-        }
+      if (tux.previous_base.y < tux.base.y && tux.previous_base.y + tux.previous_base.height <
+        (*i)->base.y + (*i)->base.height/2 && !tux.invincible_timer.started())
+      {
+        (*i)->collision(&tux, CO_PLAYER, COLLISION_SQUISH);
+      }
+      else
+      {
+        tux.collision(*i, CO_BADGUY);
+        (*i)->collision(&tux, CO_PLAYER, COLLISION_NORMAL);
+      }
     }
+  }
 
-  // CO_UPGRADE & CO_PLAYER check
+
+  /* --- CO_UPGRADE & CO_PLAYER check --- */
+  // Upgrades can only be collected by the player, so we only need to check for them near the player
   for(unsigned int i = 0; i < upgrades.size(); ++i)
+  {
+    // Skip any upgrade that is not within a 64-pixel buffer around Tux
+    if (upgrades[i].base.x + upgrades[i].base.width < tux.base.x - 64.0f || upgrades[i].base.x > tux.base.x + tux.base.width + 64.0f)
+      continue;
+
+    if(rectcollision(upgrades[i].base, tux.base))
     {
-      if(rectcollision(upgrades[i].base, tux.base))
-        {
-          // We have detected a collision and now call the collision
-          // functions of the collided objects.
-          upgrades[i].collision(&tux, CO_PLAYER, COLLISION_NORMAL);
-        }
+      upgrades[i].collision(&tux, CO_PLAYER, COLLISION_NORMAL);
     }
+  }
 }
 
 void
