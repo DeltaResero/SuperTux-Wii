@@ -31,6 +31,25 @@
 #define SCROLL      60      // Fixed scroll amount when space/enter is pressed
 #define ITEMS_SPACE 4       // Space between lines of text
 
+#ifndef NOOPENGL
+#include <vector>
+struct CharVertex {
+  float x, y;
+  float tx, ty;
+};
+
+// Helper function to get next power of two (needed for OpenGL texture coordinates)
+inline int power_of_two(int input)
+{
+  int value = 1;
+  while (value < input)
+  {
+    value <<= 1;
+  }
+  return value;
+}
+#endif
+
 /**
  * Constructor for the Text class.
  * Initializes the font surface and applies a shadow effect.
@@ -85,14 +104,154 @@ void Text::draw(const char* text, int x, int y, int shadowsize, int update)
 {
   if (text != nullptr)
   {
-    // Draw the shadow if needed
+#ifndef NOOPENGL
+    if (use_gl)
+    {
+      // Use batched rendering for OpenGL
+      if (shadowsize != 0)
+        draw_chars_batched(shadow_chars, text, x + shadowsize, y + shadowsize, update);
+      draw_chars_batched(chars, text, x, y, update);
+      return;
+    }
+#endif
+
+    // Original SDL path
     if (shadowsize != 0)
       draw_chars(shadow_chars, text, x + shadowsize, y + shadowsize, update);
-
-    // Draw the main text
     draw_chars(chars, text, x, y, update);
   }
 }
+
+#ifndef NOOPENGL
+void Text::draw_chars_batched(Surface* pchars, const char* text, int x, int y, int update)
+{
+  if (!use_gl || pchars == nullptr || text == nullptr)
+  {
+    // Fall back to regular drawing for SDL
+    draw_chars(pchars, text, x, y, update);
+    return;
+  }
+
+  int len = strnlen(text, MAX_TEXT_LEN);
+  if (len == 0) return; // Avoid over read limit string length to MAX_TEXT_LEN
+
+
+  // Instead of a std::vector, we use a fixed-size array on the stack
+  // Avoids heap memory allocation every frame which can be slow and can cause memory fragmentation
+  CharVertex vertices[MAX_TEXT_LEN * 4]; // Fixed-size array on the stack
+  int vertex_count = 0;
+
+  SurfaceImpl* impl = pchars->impl;
+  if (!impl) return;
+
+  SurfaceOpenGL* gl_impl = dynamic_cast<SurfaceOpenGL*>(impl);
+  if (!gl_impl)
+  {
+    // Fallback if the surface isn't an OpenGL one for some reason
+    draw_chars(pchars, text, x, y, update);
+    return;
+  }
+
+  // Calculate texture dimensions
+  float pw = power_of_two(pchars->w);
+  float ph = power_of_two(pchars->h);
+
+  int current_x = x;
+  int current_y = y;
+
+  // Build the array of vertices for all characters in the string
+  for (int i = 0; i < len; ++i)
+  {
+    int offset_x = 0;
+    int offset_y = 0;
+
+    // Determine character position (same logic as original)
+    if (text[i] >= ' ' && text[i] <= '/')
+    {
+      offset_x = (text[i] - ' ') * w;
+      offset_y = 0;
+    }
+    else if (text[i] >= '0' && text[i] <= '?')
+    {
+      offset_x = (text[i] - '0') * w;
+      offset_y = h * 1;
+    }
+    else if (text[i] >= '@' && text[i] <= 'O')
+    {
+      offset_x = (text[i] - '@') * w;
+      offset_y = h * 2;
+    }
+    else if (text[i] >= 'P' && text[i] <= '_')
+    {
+      offset_x = (text[i] - 'P') * w;
+      offset_y = h * 3;
+    }
+    else if (text[i] >= '`' && text[i] <= 'o')
+    {
+      offset_x = (text[i] - '`') * w;
+      offset_y = h * 4;
+    }
+    else if (text[i] >= 'p' && text[i] <= '~')
+    {
+      offset_x = (text[i] - 'p') * w;
+      offset_y = h * 5;
+    }
+    else if (text[i] == '\n')
+    {
+      current_y += h + 2;
+      current_x = x;
+      continue;
+    }
+    else
+    {
+      continue;
+    }
+
+    // Calculate texture coordinates for the character
+    float tx1 = static_cast<float>(offset_x) / pw;
+    float ty1 = static_cast<float>(offset_y) / ph;
+    float tx2 = static_cast<float>(offset_x + w) / pw;
+    float ty2 = static_cast<float>(offset_y + h) / ph;
+
+    // Add quad vertices (two triangles)
+    // Bottom-left
+    vertices[vertex_count++] = {static_cast<float>(current_x), static_cast<float>(current_y + h), tx1, ty2};
+    // Bottom-right
+    vertices[vertex_count++] = {static_cast<float>(current_x + w), static_cast<float>(current_y + h), tx2, ty2};
+    // Top-right
+    vertices[vertex_count++] = {static_cast<float>(current_x + w), static_cast<float>(current_y), tx2, ty1};
+    // Top-left
+    vertices[vertex_count++] = {static_cast<float>(current_x), static_cast<float>(current_y), tx1, ty1};
+
+    current_x += w;
+  }
+
+  // Render all characters in one batch
+  if (vertex_count > 0)
+  {
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4ub(255, 255, 255, 255);
+    glBindTexture(GL_TEXTURE_2D, gl_impl->gl_texture);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    // Interleaved array format: x, y, tx, ty
+    glVertexPointer(2, GL_FLOAT, sizeof(CharVertex), &vertices[0].x);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(CharVertex), &vertices[0].tx);
+
+    // Draw all quads at once
+    glDrawArrays(GL_QUADS, 0, vertex_count);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+  }
+}
+#endif
 
 /**
  * Draw characters on a surface based on their ASCII values.
@@ -366,6 +525,15 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
+
+  #ifndef NOOPENGL
+  // For OpenGL, we can use double buffering more efficiently
+  if (use_gl)
+  {
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+  #endif
+
   while (!done)
   {
     SDL_Event event;
@@ -419,12 +587,39 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     scroll += speed * (ticks - lastticks);
     lastticks = ticks;
 
+    #ifndef NOOPENGL
+    if (use_gl)
+    {
+      // Only clear once per frame for OpenGL
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
+    #endif
+
     // Draw the background and the scrolling text
     surface->draw_bg();
 
     y = 0;
     for (int i = 0; i < length; ++i)
     {
+      // Calculate y position
+      int text_y = screen->h + y - int(scroll);
+
+      // Skip if completely off-screen (with small margin)
+      int text_height = 0;
+      switch (names[i][0])
+      {
+        case ' ': text_height = white_small_text->h; break;
+        case '\t': text_height = white_text->h; break;
+        case '-': text_height = white_big_text->h; break;
+        default: text_height = blue_text->h; break;
+      }
+
+      if (text_y + text_height < -10 || text_y > screen->h + 10)
+      {
+        y += text_height + ITEMS_SPACE;
+        continue; // Skip drawing this line
+      }
+
       switch (names[i][0])  // Access vector elements using 'names[i]'
       {
         case ' ':

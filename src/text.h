@@ -59,6 +59,9 @@ class Text
   ~Text();
 
   void draw(const char* text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
+#ifndef NOOPENGL
+  void draw_chars_batched(Surface* pchars, const char* text, int x, int y, int update = NO_UPDATE);
+#endif
   void draw_chars(Surface* pchars, const char* text, int x, int y, int update = NO_UPDATE);
   void drawf(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
   void draw_align(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
