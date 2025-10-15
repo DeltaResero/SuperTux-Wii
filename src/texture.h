@@ -23,7 +23,8 @@
 #include <SDL.h>
 #include <string>
 #ifndef NOOPENGL
-#include <SDL_opengl.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 
 #include <list>
