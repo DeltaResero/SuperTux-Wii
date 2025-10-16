@@ -20,7 +20,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <iostream>
 #include <string>
 #include <cassert>
 #include <cctype>
@@ -28,6 +27,7 @@
 #include <cerrno>
 #include <cstring>
 #include <climits>
+
 #include "setup.h"
 #include "lispreader.h"
 

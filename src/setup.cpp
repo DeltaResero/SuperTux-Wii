@@ -17,31 +17,26 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include <filesystem>
-#include <fstream>
-#include <cassert>
-#include <cstdio>
-#include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <cerrno>
 #include <limits.h>
 #include <unistd.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <time.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 
 #ifndef NOOPENGL
 #include <GL/gl.h>
-#include <GL/glext.h>
 #endif
 
 #ifdef _WII_
 #include <gccore.h>
 #endif
 
-#include <cctype>
-
-#include "defines.h"
 #include "globals.h"
 #include "setup.h"
 #include "screen.h"
@@ -49,13 +44,22 @@
 #include "menu.h"
 #include "gameloop.h"
 #include "configfile.h"
-#include "scene.h"
 #include "worldmap.h"
 #include "resources.h"
-#include "intro.h"
 #include "title.h"
 #include "music_manager.h"
 #include "player.h"
+#include "SDL_audio.h"
+#include "SDL_error.h"
+#include "SDL_joystick.h"
+#include "SDL_keyboard.h"
+#include "SDL_timer.h"
+#include "SDL_video.h"
+#include "mousecursor.h"
+#include "sound.h"
+#include "text.h"
+#include "timer.h"
+#include "type.h"
 
 #ifdef WIN32
 #define mkdir(dir, mode)    mkdir(dir)

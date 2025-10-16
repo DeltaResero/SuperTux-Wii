@@ -20,9 +20,14 @@
 #ifndef SUPERTUX_SETUP_H
 #define SUPERTUX_SETUP_H
 
+#include <stdio.h>
+#include <string>
+
 #include "menu.h"
 #include "sound.h"
 #include "type.h"
+
+class Menu;
 
 bool faccessible(const char *filename); // Checks if the file is accessible
 bool fcreatedir(const char* relative_dir); // Creates a directory relative to the current working directory
