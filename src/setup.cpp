@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <limits.h>
 #include <unistd.h>
 #include <SDL.h>
 #include <SDL_image.h>

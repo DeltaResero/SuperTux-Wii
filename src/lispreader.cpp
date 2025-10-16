@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#include <climits>
 #include "setup.h"
 #include "lispreader.h"
 
