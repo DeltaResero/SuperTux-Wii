@@ -58,15 +58,15 @@ class Text
   Text(const std::string& file, int kind, int w, int h);
   ~Text();
 
-  void draw(const char* text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
+  void draw(const std::string& text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
 #ifndef NOOPENGL
-  void draw_chars_batched(Surface* pchars, const char* text, int x, int y, int update = NO_UPDATE);
+  void draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
 #endif
-  void draw_chars(Surface* pchars, const char* text, int x, int y, int update = NO_UPDATE);
-  void drawf(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
-  void draw_align(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
-  void erasetext(const char * text, int x, int y, Surface* surf, int update, int shadowsize);
-  void erasecenteredtext(const char * text, int y, Surface* surf, int update, int shadowsize);
+  void draw_chars(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
+  void drawf(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
+  void draw_align(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
+  void erasetext(const std::string& text, int x, int y, Surface* surf, int update, int shadowsize);
+  void erasecenteredtext(const std::string& text, int y, Surface* surf, int update, int shadowsize);
 };
 
 #endif /*SUPERTUX_TEXT_H*/

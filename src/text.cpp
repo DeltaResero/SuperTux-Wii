@@ -25,7 +25,7 @@
 #include "screen.h"
 #include "text.h"
 
-#define MAX_TEXT_LEN 1024  // Define a maximum length for safety
+#define MAX_TEXT_LEN 1024   // Define a maximum length for safety
 #define MAX_VEL     10      // Maximum velocity for scrolling text
 #define SPEED_INC   0.01    // Speed increment for scrolling
 #define SCROLL      60      // Fixed scroll amount when space/enter is pressed
@@ -100,16 +100,21 @@ Text::~Text()
  * @param shadowsize Size of the shadow effect.
  * @param update Whether the screen should be updated.
  */
-void Text::draw(const char* text, int x, int y, int shadowsize, int update)
+void Text::draw(const std::string& text, int x, int y, int shadowsize, int update)
 {
-  if (text != nullptr)
+  if (text.empty())
   {
+    return;
+  }
+
 #ifndef NOOPENGL
     if (use_gl)
     {
       // Use batched rendering for OpenGL
       if (shadowsize != 0)
+      {
         draw_chars_batched(shadow_chars, text, x + shadowsize, y + shadowsize, update);
+      }
       draw_chars_batched(chars, text, x, y, update);
       return;
     }
@@ -117,23 +122,26 @@ void Text::draw(const char* text, int x, int y, int shadowsize, int update)
 
     // Original SDL path
     if (shadowsize != 0)
+    {
       draw_chars(shadow_chars, text, x + shadowsize, y + shadowsize, update);
+    }
     draw_chars(chars, text, x, y, update);
-  }
 }
 
+
 #ifndef NOOPENGL
-void Text::draw_chars_batched(Surface* pchars, const char* text, int x, int y, int update)
+void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update)
 {
-  if (!use_gl || pchars == nullptr || text == nullptr)
+  if (!use_gl || pchars == nullptr || text.empty())
   {
     // Fall back to regular drawing for SDL
     draw_chars(pchars, text, x, y, update);
     return;
   }
 
-  int len = strnlen(text, MAX_TEXT_LEN);
-  if (len == 0) return; // Avoid over read limit string length to MAX_TEXT_LEN
+  size_t len = text.length();
+  if (len > MAX_TEXT_LEN)
+    len = MAX_TEXT_LEN;
 
 
   // Instead of a std::vector, we use a fixed-size array on the stack
@@ -160,7 +168,7 @@ void Text::draw_chars_batched(Surface* pchars, const char* text, int x, int y, i
   int current_y = y;
 
   // Build the array of vertices for all characters in the string
-  for (int i = 0; i < len; ++i)
+  for (size_t i = 0; i < len; ++i)
   {
     int offset_x = 0;
     int offset_y = 0;
@@ -272,13 +280,15 @@ void Text::draw_chars_batched(Surface* pchars, const char* text, int x, int y, i
  * such as GCC 14, which may mishandle these cases. Stick with if-else for reliability
  * and cross-platform compatibility.
  */
-void Text::draw_chars(Surface* pchars, const char* text, int x, int y, int update)
+void Text::draw_chars(Surface* pchars, const std::string& text, int x, int y, int update)
 {
-  // Use strnlen to avoid over-read, limit string length to MAX_TEXT_LEN
-  int len = strnlen(text, MAX_TEXT_LEN);
+  // Limit string length to MAX_TEXT_LEN
+  size_t len = text.length();
+  if (len > MAX_TEXT_LEN)
+    len = MAX_TEXT_LEN;
 
   // Loop through each character in the string
-  for (int i = 0, j = 0; i < len; ++i, ++j)
+  for (size_t i = 0, j = 0; i < len; ++i, ++j)
   {
     int offset_x = 0;  // Horizontal offset on the source surface (spritesheet)
     int offset_y = 0;  // Vertical offset on the source surface (spritesheet)
@@ -341,43 +351,45 @@ void Text::draw_chars(Surface* pchars, const char* text, int x, int y, int updat
  * @param shadowsize Size of the shadow effect.
  * @param update Whether the screen should be updated.
  */
-void Text::draw_align(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
+void Text::draw_align(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
 {
-  if (text != nullptr)
+  if (text.empty())
   {
-    size_t text_len = strnlen(text, MAX_TEXT_LEN);
-
-    // Adjust x and y coordinates based on horizontal alignment
-    switch (halign)
-    {
-      case A_RIGHT:
-        x -= text_len * w;
-        break;
-      case A_HMIDDLE:
-        x -= (text_len * w) / 2;
-        break;
-      case A_LEFT:
-      default:
-        break;
-    }
-
-    // Adjust x and y coordinates based on vertical alignment
-    switch (valign)
-    {
-      case A_BOTTOM:
-        y -= h;
-        break;
-      case A_VMIDDLE:
-        y -= h / 2;
-        break;
-      case A_TOP:
-      default:
-        break;
-    }
-
-    // Draw the text with the adjusted alignment
-    draw(text, x, y, shadowsize, update);
+    return;
   }
+
+  size_t text_len = text.length();
+
+  // Adjust x and y coordinates based on horizontal alignment
+  switch (halign)
+  {
+    case A_RIGHT:
+      x -= text_len * w;
+      break;
+    case A_HMIDDLE:
+      x -= (text_len * w) / 2;
+      break;
+    case A_LEFT:
+    default:
+      break;
+  }
+
+  // Adjust x and y coordinates based on vertical alignment
+  switch (valign)
+  {
+    case A_BOTTOM:
+      y -= h;
+      break;
+    case A_VMIDDLE:
+      y -= h / 2;
+      break;
+    case A_TOP:
+    default:
+      break;
+  }
+
+  // Draw the text with the adjusted alignment
+  draw(text, x, y, shadowsize, update);
 }
 
 /**
@@ -391,27 +403,41 @@ void Text::draw_align(const char* text, int x, int y, TextHAlign halign, TextVAl
  * @param shadowsize Size of the shadow effect.
  * @param update Whether the screen should be updated.
  */
-void Text::drawf(const char* text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
+void Text::drawf(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
 {
-  if (text != nullptr)
+  if (text.empty())
   {
-    size_t text_len = strnlen(text, MAX_TEXT_LEN);
-
-    // Adjust for horizontal alignment and screen dimensions
-    if (halign == A_RIGHT)  // Right-align text
-      x += screen->w - (text_len * w);
-    else if (halign == A_HMIDDLE)  // Center-align text horizontally
-      x += screen->w / 2 - (text_len * w) / 2;
-
-    // Adjust for vertical alignment and screen dimensions
-    if (valign == A_BOTTOM)  // Bottom-align text
-      y += screen->h - h;
-    else if (valign == A_VMIDDLE)  // Center-align text vertically
-      y += screen->h / 2 - h / 2;
-
-    // Draw the text at the calculated position
-    draw(text, x, y, shadowsize, update);
+    return;
   }
+
+  size_t text_len = text.length();
+
+  // Adjust for horizontal alignment and screen dimensions
+  if (halign == A_RIGHT)
+  {
+    // Right-align text
+    x += screen->w - (text_len * w);
+  }
+  else if (halign == A_HMIDDLE)
+  {
+    // Center-align text horizontally
+    x += screen->w / 2 - (text_len * w) / 2;
+  }
+
+  // Adjust for vertical alignment and screen dimensions
+  if (valign == A_BOTTOM)
+  {
+    // Bottom-align text
+    y += screen->h - h;
+  }
+  else if (valign == A_VMIDDLE)
+  {
+    // Center-align text vertically
+    y += screen->h / 2 - h / 2;
+  }
+
+  // Draw the text at the calculated position
+  draw(text, x, y, shadowsize, update);
 }
 
 /**
@@ -424,11 +450,11 @@ void Text::drawf(const char* text, int x, int y, TextHAlign halign, TextVAlign v
  * @param update Whether the screen should be updated.
  * @param shadowsize Size of the shadow effect.
  */
-void Text::erasetext(const char* text, int x, int y, Surface* ptexture, int update, int shadowsize)
+void Text::erasetext(const std::string& text, int x, int y, Surface* ptexture, int update, int shadowsize)
 {
   // Erase text by drawing the background texture over it
   SDL_Rect dest;
-  size_t text_len = strnlen(text, MAX_TEXT_LEN);
+  size_t text_len = text.length();
 
   dest.x = x;
   dest.y = y;
@@ -455,10 +481,10 @@ void Text::erasetext(const char* text, int x, int y, Surface* ptexture, int upda
  * @param update Whether the screen should be updated.
  * @param shadowsize Size of the shadow effect.
  */
-void Text::erasecenteredtext(const char* text, int y, Surface* ptexture, int update, int shadowsize)
+void Text::erasecenteredtext(const std::string& text, int y, Surface* ptexture, int update, int shadowsize)
 {
   // Erase text centered horizontally on the screen
-  size_t text_len = strnlen(text, MAX_TEXT_LEN);
+  size_t text_len = text.length();
   erasetext(text, screen->w / 2 - (text_len * 8), y, ptexture, update, shadowsize);
 }
 
