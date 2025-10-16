@@ -327,7 +327,7 @@ void Text::draw_chars(Surface* pchars, const std::string& text, int x, int y, in
     else if (text[i] == '\n')  // Handle new line character
     {
       y += h + 2;  // Move down to the next line
-      j = 0;  // Reset column position for the next line
+      j = (size_t)-1;  // Reset column position for the next line
       continue;  // Skip to the next character without drawing
     }
     else
