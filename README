@@ -49,7 +49,7 @@ DOCUMENTATION
                   of SuperTux.
     LICENSE     - The GNU Public License, which "SuperTux" is liscensed
                   under.
-    INSTALL     - Instructions on requirements, compiling and installing.
+    README.md   - Instructions on requirements, compiling and installing.
     README      - (This file.)  Game story, usage, rules and controls.
 
 

@@ -153,7 +153,7 @@ Use `make` to compile the game executable:
 make -C build
 ```
 
-Note: Installation is untested and not supported nor recommended unsupport standard builds.
+Note: Installation is untested and not supported nor recommended for unsupported standard builds.
 To test-run, copy the `data` folder to a safe place, then add the `build/supertux` executable
 and `extras/supertux.png` image alongside it. A template `.desktop` entry file has been
 included in the `extras` directory as `supertux.desktop`.
