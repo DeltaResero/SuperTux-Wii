@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <string>
 
 #include "configfile.h"
 #include "defines.h"
@@ -37,10 +38,10 @@
 #include "sound.h"
 #include "scene.h"
 #include "timer.h"
-#include "utils.h"
 
 #define FLICK_CURSOR_TIME 500
 
+#pragma region Globals
 Surface* checkbox;
 Surface* checkbox_checked;
 Surface* back;
@@ -58,7 +59,9 @@ Menu* contrib_subset_menu   = 0;
 
 std::vector<Menu*> Menu::last_menus;
 Menu* Menu::current_ = 0;
+#pragma endregion
 
+#pragma region DialogAndMenuNavigation
 /**
  * Displays a confirmation dialog with Yes/No options.
  * @param text The text to display in the dialog.
@@ -163,150 +166,31 @@ void Menu::set_current(Menu* menu)
 
   current_ = menu;
 }
+#pragma endregion  // DialogAndMenuNavigation
 
-/**
- * Creates a new menu item.
- * @param kind_ The type of menu item (e.g., toggle, action, etc.).
- * @param text_ The text to display for the item.
- * @param init_toggle_ Initial toggle state for toggle items.
- * @param target_menu_ Pointer to the menu to switch to when the item is selected.
- * @param id Unique ID for the menu item.
- * @param int_p_ Pointer to an integer (used for control fields).
- * @return Returns a pointer to the newly created menu item.
- */
-MenuItem* MenuItem::create(MenuItemKind kind_, const char* text_, int init_toggle_, Menu* target_menu_, int id, int* int_p_)
+MenuItem::MenuItem() :
+kind(MN_DEACTIVE),
+toggled(false),
+int_p(nullptr),
+id(-1),
+list_active_item(0),
+target_menu(nullptr),
+input_flickering(false)
 {
-  MenuItem* pnew_item = new MenuItem;
-
-  pnew_item->kind = kind_;
-
-  // Allocate memory and copy string manually, ensuring null-termination
-  size_t len = strnlen(text_, 63);  // Limit to 63 characters
-  pnew_item->text = (char*)malloc(len + 1);  // Allocate space for null-terminator
-  if (pnew_item->text != nullptr)
-  {
-    strlcpy(pnew_item->text, text_, len + 1);  // Use strlcpy instead of memcpy for safety
-  }
-  else
-  {
-#ifdef DEBUG
-    fprintf(stderr, "Memory allocation failed for pnew_item->text\n");
-#endif
-    pnew_item->text = nullptr;  // Ensure safe fallback
-  }
-
-  if (kind_ == MN_TOGGLE)
-  {
-    pnew_item->toggled = init_toggle_;
-  }
-  else
-  {
-    pnew_item->toggled = false;
-  }
-
-  pnew_item->target_menu = target_menu_;
-  pnew_item->input = (char*)malloc(sizeof(char));
-  if (pnew_item->input != nullptr)
-  {
-    pnew_item->input[0] = '\0';
-  }
-  else
-  {
-#ifdef DEBUG
-    fprintf(stderr, "Memory allocation failed for pnew_item->input\n");
-#endif
-    pnew_item->input = nullptr;
-  }
-
-  if (kind_ == MN_STRINGSELECT)
-  {
-    pnew_item->list = (string_list_type*)malloc(sizeof(string_list_type));
-    if (pnew_item->list != nullptr)
-    {
-      string_list_init(pnew_item->list);
-    }
-    else
-    {
-#ifdef DEBUG
-      fprintf(stderr, "Memory allocation failed for pnew_item->list\n");
-#endif
-      pnew_item->list = nullptr;
-    }
-  }
-  else
-  {
-    pnew_item->list = nullptr;
-  }
-
-  pnew_item->id = id;
-  pnew_item->int_p = int_p_;
-
-  pnew_item->input_flickering = false;
-  pnew_item->input_flickering_timer.init(true);
-  pnew_item->input_flickering_timer.start(FLICK_CURSOR_TIME);
-
-  return pnew_item;
+  input_flickering_timer.init(true);
+  input_flickering_timer.start(FLICK_CURSOR_TIME);
 }
 
-/**
- * Changes the text of a menu item.
- * @param text_ The new text to set for the item.
- */
-void MenuItem::change_text(const char* text_)
+void MenuItem::change_text(const std::string& text_)
 {
-  if (text_)
-  {
-    free(text);
-
-    // Allocate memory and copy string manually, ensuring null-termination
-    size_t len = strnlen(text_, 63);  // Limit to 63 characters
-    text = (char*)malloc(len + 1);  // Allocate space for null-terminator
-    if (text != nullptr)
-    {
-      strlcpy(text, text_, len + 1);  // Use strlcpy for safe string copy
-    }
-    else
-    {
-#ifdef DEBUG
-      fprintf(stderr, "Memory allocation failed for text\n");
-#endif
-      text = nullptr;
-    }
-  }
+  text = text_;
 }
 
-/**
- * Changes the input text of a menu item (e.g., text fields).
- * @param text_ The new input text to set for the item.
- */
-void MenuItem::change_input(const char* text_)
+void MenuItem::change_input(const std::string& text_)
 {
-  if (text_)
-  {
-    free(input);
-
-    // Allocate memory and copy string manually, ensuring null-termination
-    size_t len = strnlen(text_, 63);  // Limit to 63 characters
-    input = (char*)malloc(len + 1);  // Allocate space for null-terminator
-    if (input != nullptr)
-    {
-      strlcpy(input, text_, len + 1);  // Use strlcpy for safe string copy
-    }
-    else
-    {
-#ifdef DEBUG
-      fprintf(stderr, "Memory allocation failed for input\n");
-#endif
-      input = nullptr;
-    }
-  }
+  input = text_;
 }
 
-/**
- * Retrieves the input text with a flickering cursor symbol if the item is active.
- * @param active_item Boolean indicating if the item is the active item.
- * @return Returns the input text with an underscore (or space) appended.
- */
 std::string MenuItem::get_input_with_symbol(bool active_item)
 {
   if (!active_item)
@@ -322,71 +206,35 @@ std::string MenuItem::get_input_with_symbol(bool active_item)
     }
   }
 
-  char str[1024];
-
   if (input_flickering)
   {
-    snprintf(str, sizeof(str), "%s_", input);
+    return input + "_";
   }
   else
   {
-    snprintf(str, sizeof(str), "%s ", input);
+    return input + " ";
   }
-
-  return std::string(str);
 }
 
-/**
- * Sets the input text for a control field based on the associated key.
- * @param item Pointer to the menu item representing the control field.
- */
 void Menu::get_controlfield_key_into_input(MenuItem* item)
 {
   switch (*item->int_p)
   {
-    case SDLK_UP:
-      item->change_input("Up cursor");
-      break;
-    case SDLK_DOWN:
-      item->change_input("Down cursor");
-      break;
-    case SDLK_LEFT:
-      item->change_input("Left cursor");
-      break;
-    case SDLK_RIGHT:
-      item->change_input("Right cursor");
-      break;
-    case SDLK_RETURN:
-      item->change_input("Return");
-      break;
-    case SDLK_SPACE:
-      item->change_input("Space");
-      break;
-    case SDLK_RSHIFT:
-      item->change_input("Right Shift");
-      break;
-    case SDLK_LSHIFT:
-      item->change_input("Left Shift");
-      break;
-    case SDLK_RCTRL:
-      item->change_input("Right Control");
-      break;
-    case SDLK_LCTRL:
-      item->change_input("Left Control");
-      break;
-    case SDLK_RALT:
-      item->change_input("Right Alt");
-      break;
-    case SDLK_LALT:
-      item->change_input("Left Alt");
-      break;
+    case SDLK_UP:       item->change_input("Up cursor"); break;
+    case SDLK_DOWN:     item->change_input("Down cursor"); break;
+    case SDLK_LEFT:     item->change_input("Left cursor"); break;
+    case SDLK_RIGHT:    item->change_input("Right cursor"); break;
+    case SDLK_RETURN:   item->change_input("Return"); break;
+    case SDLK_SPACE:    item->change_input("Space"); break;
+    case SDLK_RSHIFT:   item->change_input("Right Shift"); break;
+    case SDLK_LSHIFT:   item->change_input("Left Shift"); break;
+    case SDLK_RCTRL:    item->change_input("Right Control"); break;
+    case SDLK_LCTRL:    item->change_input("Left Control"); break;
+    case SDLK_RALT:     item->change_input("Right Alt"); break;
+    case SDLK_LALT:     item->change_input("Left Alt"); break;
     default:
-    {
-      char tmp[64];
-      snprintf(tmp, 64, "%d", *item->int_p);
-      item->change_input(tmp);
-    }
-    break;
+      item->change_input(std::to_string(*item->int_p));
+      break;
   }
 }
 
@@ -396,15 +244,7 @@ void Menu::get_controlfield_key_into_input(MenuItem* item)
  */
 Menu::~Menu()
 {
-  if (item.size() != 0)
-  {
-    for (unsigned int i = 0; i < item.size(); ++i)
-    {
-      free(item[i].text);
-      free(item[i].input);
-      string_list_free(item[i].list);
-    }
-  }
+  // No more manual freeing! std::vector<MenuItem> and std::string handle everything
 }
 
 /**
@@ -416,7 +256,6 @@ Menu::Menu()
   menuaction = MENU_ACTION_NONE;
   delete_character = 0;
   mn_input_char = '\0';
-
   pos_x = screen->w / 2;
   pos_y = screen->h / 2;
   arrange_left = 0;
@@ -446,19 +285,25 @@ void Menu::set_pos(int x, int y, float rw, float rh)
  * @param id Unique ID for the menu item.
  * @param int_p Pointer to an integer (used for control fields).
  */
-void Menu::additem(MenuItemKind kind_, const std::string& text_, int toggle_, Menu* menu_, int id, int* int_p)
+void Menu::additem(MenuItemKind kind, const std::string& text, int toggle, Menu* menu, int id, int* int_p)
 {
-  additem(MenuItem::create(kind_, text_.c_str(), toggle_, menu_, id, int_p));
+  MenuItem new_item;
+  new_item.kind = kind;
+  new_item.text = text;
+  new_item.toggled = (kind == MN_TOGGLE) ? (bool)toggle : false;
+  new_item.target_menu = menu;
+  new_item.id = id;
+  new_item.int_p = int_p;
+  item.push_back(new_item);
 }
 
 /**
  * Adds a pre-existing menu item to the menu.
  * @param pmenu_item Pointer to the menu item to add.
  */
-void Menu::additem(MenuItem* pmenu_item)
+void Menu::additem(const MenuItem& pmenu_item)
 {
-  item.push_back(*pmenu_item);
-  delete pmenu_item;
+  item.push_back(pmenu_item);
 }
 
 /**
@@ -475,166 +320,105 @@ void Menu::clear()
  */
 void Menu::action()
 {
-  hit_item = -1;
-  if (item.size() != 0)
+  if (item.empty())
   {
-    switch (menuaction)
-    {
-      case MENU_ACTION_UP:
-        if (active_item > 0)
-        {
-          --active_item;
-        }
-        else
-        {
-          active_item = int(item.size()) - 1;
-        }
-        break;
+    hit_item = -1;
+    return;
+  }
 
-      case MENU_ACTION_DOWN:
-        if (active_item < int(item.size()) - 1)
-        {
-          ++active_item;
-        }
-        else
-        {
-          active_item = 0;
-        }
-        break;
+  hit_item = -1;
 
-      case MENU_ACTION_LEFT:
-        if (item[active_item].kind == MN_STRINGSELECT && item[active_item].list->num_items != 0)
-        {
-          if (item[active_item].list->active_item > 0)
-          {
-            --item[active_item].list->active_item;
-          }
-          else
-          {
-            item[active_item].list->active_item = item[active_item].list->num_items - 1;
-          }
-        }
-        break;
+  switch (menuaction)
+  {
+    case MENU_ACTION_UP:
+      active_item = (active_item > 0) ? active_item - 1 : item.size() - 1;
+      break;
 
-      case MENU_ACTION_RIGHT:
-        if (item[active_item].kind == MN_STRINGSELECT && item[active_item].list->num_items != 0)
-        {
-          if (item[active_item].list->active_item < item[active_item].list->num_items - 1)
-          {
-            ++item[active_item].list->active_item;
-          }
-          else
-          {
-            item[active_item].list->active_item = 0;
-          }
-        }
-        break;
+    case MENU_ACTION_DOWN:
+      active_item = (active_item < static_cast<int>(item.size()) - 1) ? active_item + 1 : 0;
+      break;
 
-      case MENU_ACTION_HIT:
+    case MENU_ACTION_LEFT:
+      if (item[active_item].kind == MN_STRINGSELECT && !item[active_item].list.empty())
       {
-        hit_item = active_item;
-        switch (item[active_item].kind)
-        {
-          case MN_GOTO:
-            if (item[active_item].target_menu != NULL)
-            {
-              Menu::push_current(item[active_item].target_menu);
-            }
-            else
-            {
-              puts("NULL");
-            }
-            break;
-
-          case MN_TOGGLE:
-            item[active_item].toggled = !item[active_item].toggled;
-            break;
-
-          case MN_ACTION:
-            Menu::set_current(0);
-            item[active_item].toggled = true;
-            break;
-
-          case MN_TEXTFIELD:
-          case MN_NUMFIELD:
-            menuaction = MENU_ACTION_DOWN;
-            action();
-            break;
-
-        case MN_BACKSAVE:
-          saveconfig();
-          case MN_BACK:
-            Menu::pop_current();
-            break;
-
-          default:
-            break;
-        }
+        int& current = item[active_item].list_active_item;
+        current = (current > 0) ? current - 1 : item[active_item].list.size() - 1;
       }
       break;
 
-      case MENU_ACTION_REMOVE:
-        if (item[active_item].kind == MN_TEXTFIELD || item[active_item].kind == MN_NUMFIELD)
-        {
-          if (item[active_item].input != NULL)
-          {
-            int i = strnlen(item[active_item].input, 1024);  // Safely get string length
+    case MENU_ACTION_RIGHT:
+      if (item[active_item].kind == MN_STRINGSELECT && !item[active_item].list.empty())
+      {
+        int& current = item[active_item].list_active_item;
+        current = (current < static_cast<int>(item[active_item].list.size()) - 1) ? current + 1 : 0;
+      }
+      break;
 
-            while (delete_character > 0)  // remove characters
+    case MENU_ACTION_HIT:
+      hit_item = active_item;
+      switch (item[active_item].kind)
+      {
+        case MN_GOTO:
+          if (item[active_item].target_menu != nullptr)
+            Menu::push_current(item[active_item].target_menu);
+        break;
+        case MN_TOGGLE:
+          item[active_item].toggled = !item[active_item].toggled;
+          break;
+        case MN_ACTION:
+          Menu::set_current(nullptr);
+          item[active_item].toggled = true;
+          break;
+        case MN_TEXTFIELD:
+        case MN_NUMFIELD:
+          menuaction = MENU_ACTION_DOWN;
+          action();
+          break;
+        case MN_BACKSAVE:
+          saveconfig();
+          // Fall through
+        case MN_BACK:
+          Menu::pop_current();
+          break;
+        default:
+          break;
+      }
+      break;
+
+        case MENU_ACTION_REMOVE:
+          if (item[active_item].kind == MN_TEXTFIELD || item[active_item].kind == MN_NUMFIELD)
+          {
+            if (!item[active_item].input.empty())
             {
-              item[active_item].input[i - 1] = '\0';
-              delete_character--;
+              item[active_item].input.pop_back();
             }
           }
-        }
-        break;
+          break;
 
-      case MENU_ACTION_INPUT:
-        if (item[active_item].kind == MN_TEXTFIELD || (item[active_item].kind == MN_NUMFIELD && mn_input_char >= '0' && mn_input_char <= '9'))
-        {
-          if (item[active_item].input != NULL)
+        case MENU_ACTION_INPUT:
+          if (item[active_item].kind == MN_TEXTFIELD || (item[active_item].kind == MN_NUMFIELD && mn_input_char >= '0' && mn_input_char <= '9'))
           {
-            int i = strnlen(item[active_item].input, 1024);  // Safely get string length
-            item[active_item].input = (char*)realloc(item[active_item].input, sizeof(char) * (i + 2));
-            item[active_item].input[i] = mn_input_char;
-            item[active_item].input[i + 1] = '\0';
+            item[active_item].input += mn_input_char;
           }
-          else
-          {
-            item[active_item].input = (char*)malloc(2 * sizeof(char));
-            item[active_item].input[0] = mn_input_char;
-            item[active_item].input[1] = '\0';
-          }
-        }
-        break;
+          break;
 
-      case MENU_ACTION_NONE:
-        break;
-    }
+        case MENU_ACTION_NONE:
+          break;
   }
 
-  if (item[active_item].kind == MN_DEACTIVE ||
-      item[active_item].kind == MN_LABEL ||
-      item[active_item].kind == MN_HL)
+  if (item[active_item].kind == MN_DEACTIVE || item[active_item].kind == MN_LABEL || item[active_item].kind == MN_HL)
   {
-    // Skip the horizontal line item
     if (menuaction != MENU_ACTION_UP && menuaction != MENU_ACTION_DOWN)
-    {
       menuaction = MENU_ACTION_DOWN;
-    }
 
     if (item.size() > 1)
-    {
       action();
-    }
   }
 
   menuaction = MENU_ACTION_NONE;
 
-  if (active_item >= int(item.size()))
-  {
-    active_item = int(item.size()) - 1;
-  }
+  if (active_item >= static_cast<int>(item.size()))
+    active_item = item.size() - 1;
 }
 
 /**
@@ -662,72 +446,54 @@ int Menu::check()
 void Menu::draw_item(int index, int menu_width, int menu_height)
 {
   MenuItem& pitem = item[index];
-
-  int font_width  = 16;
+  int font_width = 16;
   int effect_offset = 0;
-  {
-    int effect_time = 0;
-
-    if (effect.check())
-    {
-      effect_time = effect.get_left() / 4;
-    }
-
+  if (effect.check()) {
+    int effect_time = effect.get_left() / 4;
     effect_offset = (index % 2) ? effect_time : -effect_time;
   }
+  int x_pos = pos_x;
+  int y_pos = pos_y + 24 * index - menu_height / 2 + 12 + effect_offset;
+  int shadow_size = (index == active_item) ? 3 : 2;
+  Text* text_font = (index == active_item) ? blue_text : white_text;
 
-  int x_pos       = pos_x;
-  int y_pos       = pos_y + 24 * index - menu_height / 2 + 12 + effect_offset;
-  int shadow_size = 2;
+  int text_width = pitem.text.length() * font_width;
+  int input_width = (pitem.input.length() + 1) * font_width;
 
-  // Fix: Use strnlen to safely calculate text widths
-  int text_width  = strnlen(pitem.text, 1024) * font_width;  // Limit to 1024 characters
-  int input_width = (strnlen(pitem.input, 1024) + 1) * font_width;  // Limit to 1024 characters
-  int list_width  = strnlen(string_list_active(pitem.list), 1024) * font_width;  // Limit to 1024 characters
-  Text* text_font = white_text;
-
-  if (arrange_left)
-  {
-    x_pos += 24 - menu_width / 2 + (text_width + input_width + list_width) / 2;
+  std::string active_list_item;
+  if (pitem.kind == MN_STRINGSELECT && !pitem.list.empty()) {
+    active_list_item = pitem.list[pitem.list_active_item];
   }
+  int list_width = active_list_item.length() * font_width;
 
-  if (index == active_item)
-  {
-    shadow_size = 3;
-    text_font = blue_text;
+  if (arrange_left) {
+    x_pos += 24 - menu_width / 2 + (text_width + input_width + list_width) / 2;
   }
 
   switch (pitem.kind)
   {
     case MN_DEACTIVE:
-    {
-      black_text->draw_align(pitem.text, x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
+      black_text->draw_align(pitem.text.c_str(), x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
       break;
-    }
-
     case MN_HL:
     {
       int x = pos_x - menu_width / 2;
       int y = y_pos - 12 - effect_offset;
-      /* Draw a horizontal line with a little 3D effect */
       fillrect(x, y + 6, menu_width, 4, 150, 200, 255, 225);
       fillrect(x, y + 6, menu_width, 2, 255, 255, 255, 255);
       break;
     }
-
     case MN_LABEL:
     {
-      white_big_text->draw_align(pitem.text, x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
+      white_big_text->draw_align(pitem.text.c_str(), x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
       break;
     }
-
     case MN_TEXTFIELD:
     case MN_NUMFIELD:
     case MN_CONTROLFIELD:
     {
       int input_pos = input_width / 2;
-      int text_pos  = (text_width + font_width) / 2;
-
+      int text_pos = (text_width + font_width) / 2;
       fillrect(x_pos - input_pos + text_pos - 1, y_pos - 10, input_width + font_width + 2, 20, 255, 255, 255, 255);
       fillrect(x_pos - input_pos + text_pos, y_pos - 9, input_width + font_width, 18, 0, 0, 0, 128);
 
@@ -735,70 +501,41 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
       {
         get_controlfield_key_into_input(&pitem);
       }
-
-      if (pitem.kind == MN_TEXTFIELD || pitem.kind == MN_NUMFIELD)
-      {
-        if (active_item == index)
-        {
-          gold_text->draw_align((pitem.get_input_with_symbol(true)).c_str(), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
-        }
-        else
-        {
-          gold_text->draw_align((pitem.get_input_with_symbol(false)).c_str(), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
-        }
-      }
-      else
-      {
-        gold_text->draw_align(pitem.input, x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
-      }
-
-      text_font->draw_align(pitem.text, x_pos - (input_width + font_width) / 2, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
+      std::string display_input = (pitem.kind == MN_TEXTFIELD || pitem.kind == MN_NUMFIELD) ?
+      pitem.get_input_with_symbol(active_item == index) : pitem.input;
+      gold_text->draw_align(display_input.c_str(), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
+      text_font->draw_align(pitem.text.c_str(), x_pos - (input_width + font_width) / 2, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
       break;
     }
-
     case MN_STRINGSELECT:
     {
       int list_pos_2 = list_width + font_width;
-      int list_pos   = list_width / 2;
-      int text_pos   = (text_width + font_width) / 2;
-
-      /* Draw input background */
-      fillrect(x_pos - list_pos + text_pos - 1, y_pos - 10, list_pos_2 + 2, 20, 255, 255, 255, 255);
-      fillrect(x_pos - list_pos + text_pos, y_pos - 9, list_pos_2, 18, 0, 0, 0, 128);
-
-      gold_text->draw_align(string_list_active(pitem.list), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
-
-      text_font->draw_align(pitem.text, x_pos - list_pos_2 / 2, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
+      int text_pos = (text_width + font_width) / 2;
+      fillrect(x_pos - list_width / 2 + text_pos - 1, y_pos - 10, list_pos_2 + 2, 20, 255, 255, 255, 255);
+      fillrect(x_pos - list_width / 2 + text_pos, y_pos - 9, list_pos_2, 18, 0, 0, 0, 128);
+      gold_text->draw_align(active_list_item.c_str(), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
+      text_font->draw_align(pitem.text.c_str(), x_pos - list_pos_2 / 2, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
       break;
     }
-
     case MN_BACKSAVE:
     case MN_BACK:
     {
-      text_font->draw_align(pitem.text, x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
+      text_font->draw_align(pitem.text.c_str(), x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
       back->draw(x_pos + text_width / 2 + font_width, y_pos - 8);
       break;
     }
-
     case MN_TOGGLE:
     {
-      text_font->draw_align(pitem.text, x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
-
-      if (pitem.toggled)
-      {
-        checkbox_checked->draw(x_pos + (text_width + font_width) / 2, y_pos - 8);
-      }
-      else
-      {
-        checkbox->draw(x_pos + (text_width + font_width) / 2, y_pos - 8);
-      }
+      text_font->draw_align(pitem.text.c_str(), x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
+      (pitem.toggled ? checkbox_checked : checkbox)->draw(x_pos + (text_width + font_width) / 2, y_pos - 8);
       break;
     }
-
     case MN_ACTION:
     case MN_GOTO:
-      text_font->draw_align(pitem.text, x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
+    {
+      text_font->draw_align(pitem.text.c_str(), x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
       break;
+    }
   }
 }
 
@@ -808,24 +545,28 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
  */
 int Menu::get_width() const
 {
-  int menu_width = 0;
-  for (unsigned int i = 0; i < item.size(); ++i)
+  int max_char_width = 0;
+  for (const auto& current_item : item)
   {
-    int w = strnlen(item[i].text, 1024) +
-            (item[i].input ? strnlen(item[i].input, 1024) + 1 : 0) +
-            strnlen(string_list_active(item[i].list), 1024);  // Limit to 1024 characters
+    std::string active_list_item;
+    if (current_item.kind == MN_STRINGSELECT && !current_item.list.empty()) {
+      active_list_item = current_item.list[current_item.list_active_item];
+    }
 
-    if (w > menu_width)
+    int current_char_width = current_item.text.length() +
+    (current_item.input.empty() ? 0 : current_item.input.length() + 1) +
+    active_list_item.length();
+
+    if (current_char_width > max_char_width)
     {
-      menu_width = w;
-      if (item[i].kind == MN_TOGGLE)
+      max_char_width = current_char_width;
+      if (current_item.kind == MN_TOGGLE)
       {
-        menu_width += 2;
+        max_char_width += 2;
       }
     }
   }
-
-  return (menu_width * 16 + 24);
+  return (max_char_width * 16 + 24);
 }
 
 /**
@@ -847,7 +588,7 @@ void Menu::draw()
   int menu_width  = get_width();
 
   /* Draw a transparent background */
-  fillrect(pos_x - menu_width / 2, pos_y - 24 * item.size() / 2 - 10, menu_width, menu_height + 20, 150, 180, 200, 125);
+  fillrect(pos_x - menu_width / 2, pos_y - menu_height / 2 - 10, menu_width, menu_height + 20, 150, 180, 200, 125);
 
   for (unsigned int i = 0; i < item.size(); ++i)
   {
@@ -862,15 +603,14 @@ void Menu::draw()
  */
 MenuItem& Menu::get_item_by_id(int id)
 {
-  for (std::vector<MenuItem>::iterator i = item.begin(); i != item.end(); ++i)
+  for (auto& current_item : item)
   {
-    if (i->id == id)
+    if (current_item.id == id)
     {
-      return *i;
+      return current_item;
     }
   }
-
-  assert(false);
+  assert(!"Menu item with specified ID not found");
   static MenuItem dummyitem;
   return dummyitem;
 }

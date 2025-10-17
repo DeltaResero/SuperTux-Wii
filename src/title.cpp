@@ -67,7 +67,7 @@ static unsigned int update_time;       // Current time for updates
 static std::vector<LevelSubset*> contrib_subsets;  // List of level subsets for the contribution menu
 static std::string current_contrib_subset;         // Currently selected contribution subset
 
-static string_list_type worldmap_list;  // List of available world maps
+static StringList worldmap_list;  // List of available world maps
 
 #ifdef _WII_
   static double fractional_increment = 0.0; // Static variable to manage the fractional increment
@@ -149,38 +149,35 @@ void free_contrib_menu()
 void generate_contrib_menu()
 {
   // Get a list of level subsets from the directory
-  string_list_type level_subsets = dsubdirs("levels", "info");
+  StringList level_subsets = dsubdirs("levels", "info");
 
   // Free any existing menu items and subsets
   free_contrib_menu();
 
   // Add a label and a horizontal line to the menu for visual separation
-  contrib_menu->additem(MN_LABEL, "Bonus Levels", 0, 0);
-  contrib_menu->additem(MN_HL, "", 0, 0);
+  contrib_menu->additem(MN_LABEL, "Bonus Levels", 0, nullptr);
+  contrib_menu->additem(MN_HL, "", 0, nullptr);
 
   // Loop through each level subset and add it to the contribution menu
-  for (int i = 0; i < level_subsets.num_items; ++i)
+  for (size_t i = 0; i < level_subsets.size(); ++i)
   {
     LevelSubset* subset = new LevelSubset();
-    subset->load(level_subsets.item[i]);
-    contrib_menu->additem(MN_GOTO, subset->title.c_str(), i, contrib_subset_menu, i);
+    subset->load(level_subsets[i]);
+    contrib_menu->additem(MN_GOTO, subset->title, 0, contrib_subset_menu, i);
     contrib_subsets.push_back(subset);
   }
 
   // Add world maps to the menu
-  for (int i = 0; i < worldmap_list.num_items; i++)
+  for (size_t i = 0; i < worldmap_list.size(); ++i)
   {
     WorldMapNS::WorldMap worldmap;
-    worldmap.loadmap(worldmap_list.item[i]);
-    contrib_menu->additem(MN_ACTION, worldmap.get_world_title(), 0, 0, i + level_subsets.num_items);
+    worldmap.loadmap(worldmap_list[i]);
+    contrib_menu->additem(MN_ACTION, worldmap.get_world_title(), 0, nullptr, i + level_subsets.size());
   }
 
   // Add a horizontal line and a back option at the end of the menu
-  contrib_menu->additem(MN_HL, "", 0, 0);
-  contrib_menu->additem(MN_BACK, "Back", 0, 0);
-
-  // Free the list of level subsets to avoid memory leaks
-  string_list_free(&level_subsets);
+  contrib_menu->additem(MN_HL, "", 0, nullptr);
+  contrib_menu->additem(MN_BACK, "Back", 0, nullptr);
 }
 
 /**
@@ -201,27 +198,25 @@ void check_contrib_menu()
   {
     // FIXME: This shouln't be busy looping
     // Handle selection of a level subset
-    LevelSubset& subset = * (contrib_subsets[index]);
+    LevelSubset& subset = *(contrib_subsets[index]);
 
     current_contrib_subset = subset.name;
-
     contrib_subset_menu->clear();
-
-    contrib_subset_menu->additem(MN_LABEL, subset.title, 0, 0);
-    contrib_subset_menu->additem(MN_HL, "", 0, 0);
+    contrib_subset_menu->additem(MN_LABEL, subset.title, 0, nullptr);
+    contrib_subset_menu->additem(MN_HL, "", 0, nullptr);
 
     for (int i = 0; i < subset.levels; ++i)
     {
       // Load each level in the subset and add it to the submenu
       Level level;
       level.load(subset.name, i+1);
-      contrib_subset_menu->additem(MN_ACTION, level.name, 0, 0, i+1);
+      contrib_subset_menu->additem(MN_ACTION, level.name, 0, nullptr, i + 1);
     }
 
-    contrib_subset_menu->additem(MN_HL, "", 0, 0);
-    contrib_subset_menu->additem(MN_BACK, "Back", 0, 0);
+    contrib_subset_menu->additem(MN_HL, "", 0, nullptr);
+    contrib_subset_menu->additem(MN_BACK, "Back", 0, nullptr);
   }
-  else if(index < worldmap_list.num_items + (int)contrib_subsets.size())
+  else if (index < static_cast<int>(worldmap_list.size() + contrib_subsets.size()))
   {
     // Handle selection of a world map
     unloadsounds();
@@ -231,13 +226,13 @@ void check_contrib_menu()
     fadeout();
 
     WorldMapNS::WorldMap worldmap;
-    worldmap.loadmap(worldmap_list.item[index - contrib_subsets.size()]);
+    const std::string& worldmap_file = worldmap_list[index - contrib_subsets.size()];
+    worldmap.loadmap(worldmap_file);
 
     // Prepare the save game path using std::filesystem
-    std::string savegame = worldmap_list.item[index - contrib_subsets.size()];
-    savegame = savegame.substr(0, savegame.size()-5);
+    std::string savegame = worldmap_file;
+    savegame = savegame.substr(0, savegame.size() - 5);
     savegame = (fs::path(st_save_dir) / (savegame + ".stsg")).string();
-    std::cout << "SaveGameName: " << savegame << "\n";
     worldmap.loadgame(savegame.c_str());
 
     // Display the loaded world map
@@ -364,30 +359,34 @@ void title(void)
   createDemo();
 
   // Draw loading screen as a placeholder while loading resources
-  loading_surf->draw(160, 30);
-  //updatescreen();
+  if(loading_surf)
+  {
+    loading_surf->draw(160, 30);
+  }
 
   // Load and draw the title screen background and logo
   bkg_title = new Surface(datadir + "/images/title/background.jpg", IGNORE_ALPHA);
   logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
 
   // After title screen elements are loaded, delete the loading surface
-  delete loading_surf;
-  loading_surf = NULL; // Set to NULL to avoid accidental use
+  if(loading_surf)
+  {
+    delete loading_surf;
+    loading_surf = nullptr; // Set to NULL to avoid accidental use
+  }
 
   // Initialize the worldmap list and add items to the menu
-  string_list_init(&worldmap_list);
+  worldmap_list.clear();
+  StringList files = dfiles("levels/worldmaps/", ".stwm", "couldn't list worldmaps");
 
-  string_list_type files = dfiles("levels/worldmaps/", ".stwm", "couldn't list worldmaps");
-  for (int i = 0; i < files.num_items; ++i)
+  for (const std::string& file : files)
   {
-    if (strcmp(files.item[i], "world1.stwm") == 0)
+    if (file == "world1.stwm")
     {
       continue;
     }
-    string_list_add_item(&worldmap_list, files.item[i]);
+    worldmap_list.push_back(file);
   }
-  string_list_free(&files);
 
   // Set the frame counter and start the random timer
   frame = 0;
@@ -562,7 +561,6 @@ void title(void)
   // Free surfaces and resources
   deleteDemo();
   free_contrib_menu();
-  string_list_free(&worldmap_list);
   delete bkg_title;
   delete logo;
 }

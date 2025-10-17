@@ -34,9 +34,8 @@ bool fcreatedir(const char* relative_dir); // Creates a directory relative to th
 bool fwriteable(const char *filename); // Checks if the file is writable
 FILE * opendata(const char * filename, const char * mode); // Opens a data file
 
-string_list_type dsubdirs(const char *rel_path, const char* expected_file); // Retrieves a list of subdirectories with the expected file
-string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str); // Retrieves a list of files matching a pattern
-void free_strings(char **strings, int num); // Frees an array of strings
+StringList dsubdirs(const char* rel_path, const char* expected_file); // Retrieves a list of subdirectories with the expected file
+StringList dfiles(const char* rel_path, const char* glob = nullptr, const char* exception_str = nullptr); // Retrieves a list of files matching a pattern
 
 void st_directory_setup(void); // Sets up the directory structure
 void st_general_setup(void); // General setup function, initializes subsystems

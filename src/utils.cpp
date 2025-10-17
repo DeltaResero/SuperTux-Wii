@@ -26,32 +26,6 @@
 #define M_PI 3.14159265358979323846
 #endif // ...as apparently M_PI isn't part of the official C++ standard and isn't guaranteed to be here
 
-size_t strlcpy(char* dst, const char* src, size_t size)
-{
-  if (dst == nullptr || src == nullptr)
-  {
-    return 0; // Invalid pointers
-  }
-
-  // Use memchr to find the null-terminator within the given size limit
-  const char* null_terminator = static_cast<const char*>(std::memchr(src, '\0', size));
-  size_t src_len = null_terminator ? (null_terminator - src) : size - 1;  // If no null-terminator, copy up to size - 1
-
-  if (size > 0)
-  {
-    // Copy the appropriate amount, leaving room for the null-terminator
-    size_t copy_len = (src_len >= size) ? size - 1 : src_len;
-
-    // Perform the copy
-    std::memcpy(dst, src, copy_len);
-
-    // Always null-terminate
-    dst[copy_len] = '\0';
-  }
-
-  // Return the total length of the source string (or the truncated size if no null-terminator was found)
-  return src_len;
-}
 
 namespace Trig
 {

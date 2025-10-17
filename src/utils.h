@@ -24,8 +24,6 @@
 #include <cmath>   // For M_PI, sin, cos
 #include <cstring> // For memcpy and strlen
 
-// Declare the custom implementation of strlcpy
-size_t strlcpy(char* dst, const char* src, size_t size);
 
 // A namespace for pre-calculated trigonometry tables
 namespace Trig

@@ -22,13 +22,14 @@
 
 #include <SDL.h>
 #include <vector>
+#include <string>
 #include "texture.h"
 #include "timer.h"
 #include "type.h"
 #include "mousecursor.h"
 
 /* IDs for menus */
-
+#pragma region MenuIDs
 enum MainMenuIDs {
   MNID_STARTGAME,
   MNID_CONTRIB,
@@ -56,6 +57,7 @@ enum WorldMapMenuIDs {
   MNID_RETURNWORLDMAP,
   MNID_QUITWORLDMAP
   };
+#pragma endregion
 
 bool confirm_dialog(std::string text);
 
@@ -81,20 +83,23 @@ class MenuItem
 {
 public:
   MenuItemKind kind;
-  int toggled;
-  char *text;
-  char *input;
-  int *int_p;   // used for setting keys (can be used for more stuff...)
-  int id;   // item id
-  string_list_type* list;
+  bool toggled; // Use bool instead of int for clarity
+  std::string text;  // Replaced char* with std::string
+  std::string input; // Replaced char* with std::string
+  int* int_p;   // used for setting keys
+  int id;       // item id
+  StringList list; // Replaced string_list_type* with our modern StringList
+  int list_active_item; // To track the selected item in the list
   Menu* target_menu;
 
-  void change_text (const char *text);
-  void change_input(const char *text);
+  MenuItem(); // Add a constructor for proper initialization
 
-  static MenuItem* create(MenuItemKind kind, const char *text, int init_toggle, Menu* target_menu, int id, int* int_p);
+  void change_text (const std::string& text_);
+  void change_input(const std::string& text_);
 
-  std::string get_input_with_symbol(bool active_item);   // returns the text with an input symbol
+  // No longer a static factory returning a pointer. We will construct objects directly.
+  std::string get_input_with_symbol(bool active_item);
+
 private:
   bool input_flickering;
   Timer input_flickering_timer;
@@ -106,18 +111,7 @@ private:
   static std::vector<Menu*> last_menus;
   static Menu* current_;
 
-  static void push_current(Menu* pmenu);
-  static void pop_current();
-
-public:
-  /** Set the current menu, if pmenu is NULL, hide the current menu */
-  static void set_current(Menu* pmenu);
-
-  /** Return the current active menu or NULL if none is active */
-  static Menu* current() { return current_; }
-
 private:
-  /* Action done on the menu */
   enum MenuAction {
     MENU_ACTION_NONE = -1,
     MENU_ACTION_UP,
@@ -144,39 +138,41 @@ private:
   int delete_character;
   char mn_input_char;
 
+  void draw_item(int index, int menu_width, int menu_height);
+  void get_controlfield_key_into_input(MenuItem* item);
+
 public:
+  // Static functions for menu navigation
+  static void push_current(Menu* pmenu);
+  static void pop_current();
+  static void set_current(Menu* pmenu);
+  static Menu* current() { return current_; }
+
   Timer effect;
   int arrange_left;
   int active_item;
-
   std::vector<MenuItem> item;
 
   Menu();
-  ~Menu();
+  ~Menu(); // Now much simpler, no manual deallocation needed
 
-  void additem(MenuItem* pmenu_item);
-  void additem(MenuItemKind kind, const std::string& text, int init_toggle, Menu* target_menu, int id = -1, int *int_p = NULL);
+  void additem(const MenuItem& pmenu_item);
+  void additem(MenuItemKind kind, const std::string& text, int init_toggle, Menu* target_menu, int id = -1, int *int_p = nullptr);
 
-  void  action ();
+  void action();
 
   /** Remove all entries from the menu */
   void clear();
 
-  /** Return the index of the menu item that was 'hit' (ie. the user
-      clicked on it) in the last event() call */
-  int  check  ();
+  /** Return index of menu item that's 'hit' (ie. the user clicked on it) in the last event() call */
+  int check();
 
   MenuItem& get_item(int index) { return item[index]; }
   MenuItem& get_item_by_id(int id);
-
   int get_active_item_id();
-
   bool isToggled(int id);
 
-  void get_controlfield_key_into_input(MenuItem *item);
-
-  void draw   ();
-  void draw_item(int index, int menu_width, int menu_height);
+  void draw();
   void set_pos(int x, int y, float rw = 0, float rh = 0);
 
   /** translate a SDL_Event into a menu_action */
@@ -184,10 +180,9 @@ public:
 
   int get_width() const;
   int get_height() const;
-
-  bool is_toggled(int id) const;
 };
 
+#pragma region Externs
 extern Surface* checkbox;
 extern Surface* checkbox_checked;
 extern Surface* back;
@@ -202,6 +197,7 @@ extern Menu* options_keys_menu;
 extern Menu* options_joystick_menu;
 extern Menu* load_game_menu;
 extern Menu* save_game_menu;
+#pragma endregion
 
 #endif /*SUPERTUX_MENU_H*/
 

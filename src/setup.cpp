@@ -163,7 +163,9 @@ FILE * opendata(const char * rel_filename, const char * mode)
  * @param exception_str Optional substring that if found, excludes entries.
  * @param sdirs List to store the results (files or directories).
  */
-static void process_directory(const std::string &base_path, const std::string &rel_path, const char *expected_file, bool is_subdir, const char *glob, const char *exception_str, string_list_type *sdirs)
+static void process_directory(const std::string &base_path, const std::string &rel_path,
+                              const char *expected_file, bool is_subdir, const char *glob,
+                              const char *exception_str, StringList &sdirs)
 {
   // Construct the full path
   fs::path path = fs::path(base_path) / rel_path;
@@ -173,50 +175,37 @@ static void process_directory(const std::string &base_path, const std::string &r
   std::cerr << "Accessing directory: " << path << std::endl;
 #endif
 
-  // Check if the path exists
   if (!fs::exists(path))
   {
-    // Suppress error message if the path is optional
-    if (glob != nullptr || exception_str != nullptr) {
-      // Optional contrib path, silently ignore if it doesn't exist
-      return;
-    }
-
-    // Otherwise, log the path does not exist error
-    std::cerr << "Path does not exist: " << path << std::endl;
     return;
   }
 
-  // Iterate through directory entries
-  for (const auto& entry : fs::directory_iterator(path))
+  for (const auto &entry : fs::directory_iterator(path))
   {
-    // Check if entry matches directory or file based on is_subdir flag
-    if ((is_subdir && entry.is_directory()) || (!is_subdir && entry.is_regular_file()))
+    if ((is_subdir && entry.is_directory()) ||
+       (!is_subdir && entry.is_regular_file()))
     {
-
-      // If expected_file is provided, check if it exists in the directory
       if (expected_file != nullptr)
       {
-        fs::path expected_path = entry.path() / expected_file;
-        if (!faccessible(expected_path.c_str()))
+        if (!faccessible((entry.path() / expected_file).c_str()))
         {
           continue;
         }
       }
 
-      // Apply optional filters
-      if (exception_str != nullptr && entry.path().string().find(exception_str) != std::string::npos)
+      if (exception_str != nullptr &&
+        entry.path().string().find(exception_str) != std::string::npos)
       {
         continue;
       }
 
-      if (glob != nullptr && entry.path().string().find(glob) == std::string::npos)
+      if (glob != nullptr &&
+        entry.path().string().find(glob) == std::string::npos)
       {
         continue;
       }
 
-      // Add the item to the list (only filename, not full path)
-      string_list_add_item(sdirs, entry.path().filename().string().c_str());
+      sdirs.push_back(entry.path().filename().string());
     }
   }
 }
@@ -227,14 +216,11 @@ static void process_directory(const std::string &base_path, const std::string &r
  * @param expected_file The expected file to be found in the subdirectories (optional).
  * @return List of subdirectories.
  */
-string_list_type dsubdirs(const char *rel_path, const char *expected_file)
+StringList dsubdirs(const char *rel_path, const char *expected_file)
 {
-  string_list_type sdirs;
-  string_list_init(&sdirs);
-
-  process_directory(st_dir, rel_path, expected_file, true, nullptr, nullptr, &sdirs);
-  process_directory(datadir, rel_path, expected_file, true, nullptr, nullptr, &sdirs);
-
+  StringList sdirs; // Creates an empty vector
+  process_directory(st_dir, rel_path, expected_file, true, nullptr, nullptr, sdirs);
+  process_directory(datadir, rel_path, expected_file, true, nullptr, nullptr, sdirs);
   return sdirs;
 }
 
@@ -245,14 +231,11 @@ string_list_type dsubdirs(const char *rel_path, const char *expected_file)
  * @param exception_str Optional substring that if found, excludes entries.
  * @return List of files.
  */
-string_list_type dfiles(const char *rel_path, const char* glob, const char* exception_str)
+StringList dfiles(const char *rel_path, const char* glob, const char* exception_str)
 {
-  string_list_type sdirs;
-  string_list_init(&sdirs);
-
-  process_directory(st_dir, rel_path, nullptr, false, glob, exception_str, &sdirs);
-  process_directory(datadir, rel_path, nullptr, false, glob, exception_str, &sdirs);
-
+  StringList sdirs; // Creates an empty vector
+  process_directory(st_dir, rel_path, nullptr, false, glob, exception_str, sdirs);
+  process_directory(datadir, rel_path, nullptr, false, glob, exception_str, sdirs);
   return sdirs;
 }
 

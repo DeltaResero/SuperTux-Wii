@@ -111,12 +111,13 @@ void LevelSubset::parse(lisp_object_t* cursor)
  * @param subset Pointer to the name of the subset to load.
  * Searches for and loads the level subset's info file, then parses the content.
  */
-void LevelSubset::load(char* subset)
+void LevelSubset::load(const std::string& subset)
 {
   name = subset;
 
-  // Construct the filename path using std::filesystem for better safety and clarity
+  // Construct the filename path using std::filesystem
   fs::path filename = fs::path(st_dir) / "levels" / subset / "info";
+
   if (!faccessible(filename.string().c_str()))
   {
     filename = fs::path(datadir) / "levels" / subset / "info";
@@ -146,23 +147,23 @@ void LevelSubset::load(char* subset)
     {
       printf("World: Parse Error in file %s\n", filename.string().c_str());
     }
-
-    lisp_object_t* cur = lisp_car(root_obj);
-
-    if (!lisp_symbol_p(cur))
+    else
     {
-      printf("World: Read error in %s\n", filename.string().c_str());
-    }
-
-    if (strcmp(lisp_symbol(cur), "supertux-level-subset") == 0)
-    {
-      parse(lisp_cdr(root_obj));
+      lisp_object_t* cur = lisp_car(root_obj);
+      if (!lisp_symbol_p(cur))
+      {
+        printf("World: Read error in %s\n", filename.string().c_str());
+      }
+      else if (strcmp(lisp_symbol(cur), "supertux-level-subset") == 0)
+      {
+        parse(lisp_cdr(root_obj));
+      }
     }
 
     lisp_free(root_obj);
     fclose(fi);
 
-    fs::path image_file = filename.string() + ".png";
+    fs::path image_file = filename.parent_path() / (filename.stem().string() + ".png");
     if (faccessible(image_file.string().c_str()))
     {
       delete image;
@@ -170,28 +171,27 @@ void LevelSubset::load(char* subset)
     }
     else
     {
-      filename = fs::path(datadir) / "images/status/level-subset-info.png";
+      fs::path default_image = fs::path(datadir) / "images/status/level-subset-info.png";
       delete image;
-      image = new Surface(filename.string().c_str(), IGNORE_ALPHA);
+      image = new Surface(default_image.string().c_str(), IGNORE_ALPHA);
     }
   }
 
   int i;  // Declare `i` outside the loop for later use
-
-  for (i = 1; i != -1; ++i)
+  for (i = 1; ; ++i)
   {
     // Get the number of levels in this subset
-    filename = fs::path(st_dir) / "levels" / subset / ("level" + to_string(i) + ".stl");
-    if (!faccessible(filename.string().c_str()))
+    fs::path level_filename = fs::path(st_dir) / "levels" / subset / ("level" + to_string(i) + ".stl");
+    if (!faccessible(level_filename.string().c_str()))
     {
-      filename = fs::path(datadir) / "levels" / subset / ("level" + to_string(i) + ".stl");
-      if (!faccessible(filename.string().c_str()))
+      level_filename = fs::path(datadir) / "levels" / subset / ("level" + to_string(i) + ".stl");
+      if (!faccessible(level_filename.string().c_str()))
       {
-        break;
+        break; // No more levels found
       }
     }
   }
-  levels = --i;
+  levels = i - 1;
 }
 
 /**

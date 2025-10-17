@@ -22,6 +22,7 @@
 #define SUPERTUX_TYPE_H
 
 #include <string>
+#include <vector>
 #include "SDL.h"
 #include "scene.h"
 
@@ -77,13 +78,7 @@ struct string_list_type
   char **item;
 };
 
-void  string_list_init(string_list_type* pstring_list);
-const char* string_list_active(string_list_type* pstring_list);
-void  string_list_copy(string_list_type* pstring_list, string_list_type pstring_list_orig);
-int   string_list_find(string_list_type* pstring_list, const char* str);
-void  string_list_sort(string_list_type* pstring_list);
-void  string_list_add_item(string_list_type* pstring_list, const char* str);
-void  string_list_free(string_list_type* pstring_list);
+using StringList = std::vector<std::string>;
 
 #endif /*SUPERTUX_TYPE_H*/
 

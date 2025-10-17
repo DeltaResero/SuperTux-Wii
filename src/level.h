@@ -38,7 +38,7 @@ class LevelSubset
     ~LevelSubset();
 
     static void create(const std::string& subset_name);
-    void load(char *subset);
+    void load(const std::string& subset);
     void save();
 
     std::string name;        /**< The name of the subset */
