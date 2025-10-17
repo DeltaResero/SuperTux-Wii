@@ -175,38 +175,45 @@ static void process_directory(const std::string &base_path, const std::string &r
   std::cerr << "Accessing directory: " << path << std::endl;
 #endif
 
-  if (!fs::exists(path))
+  try
   {
-    return;
-  }
-
-  for (const auto &entry : fs::directory_iterator(path))
-  {
-    if ((is_subdir && entry.is_directory()) ||
-       (!is_subdir && entry.is_regular_file()))
+    if (!fs::exists(path) || !fs::is_directory(path))
     {
-      if (expected_file != nullptr)
+      return;
+    }
+
+    for (const auto &entry : fs::directory_iterator(path))
+    {
+      // Check if entry matches directory or file based on is_subdir flag
+      if ((is_subdir && entry.is_directory()) || (!is_subdir && entry.is_regular_file()))
       {
-        if (!faccessible((entry.path() / expected_file).c_str()))
+        // Cache the path string to avoid multiple conversions and allocations in the loop
+        const std::string path_str = entry.path().string();
+
+        if (expected_file != nullptr)
+        {
+          if (!faccessible((entry.path() / expected_file).c_str()))
+          {
+            continue;
+          }
+        }
+
+        if (exception_str != nullptr && path_str.find(exception_str) != std::string::npos)
         {
           continue;
         }
-      }
 
-      if (exception_str != nullptr &&
-        entry.path().string().find(exception_str) != std::string::npos)
-      {
-        continue;
-      }
+        if (glob != nullptr && path_str.find(glob) == std::string::npos)
+        {
+          continue;
+        }
 
-      if (glob != nullptr &&
-        entry.path().string().find(glob) == std::string::npos)
-      {
-        continue;
+        sdirs.push_back(entry.path().filename().string());
       }
-
-      sdirs.push_back(entry.path().filename().string());
     }
+  } catch (const fs::filesystem_error& e)
+  {
+    // Silently ignore errors, as directories might not be readable.
   }
 }
 
