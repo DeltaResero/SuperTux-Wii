@@ -23,6 +23,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <string>
+#include <unordered_map>
 
 #include "globals.h"
 #include "defines.h"
@@ -76,30 +78,34 @@ Sprite* img_snowball_squished_right;
  */
 BadGuyKind badguykind_from_string(const std::string& str)
 {
-  if (str == "money" || str == "jumpy") // was money in old maps
-    return BAD_JUMPY;
-  else if (str == "laptop" || str == "mriceblock") // was laptop in old maps
-    return BAD_MRICEBLOCK;
-  else if (str == "mrbomb")
-    return BAD_MRBOMB;
-  else if (str == "stalactite")
-    return BAD_STALACTITE;
-  else if (str == "flame")
-    return BAD_FLAME;
-  else if (str == "fish")
-    return BAD_FISH;
-  else if (str == "bouncingsnowball")
-    return BAD_BOUNCINGSNOWBALL;
-  else if (str == "flyingsnowball")
-    return BAD_FLYINGSNOWBALL;
-  else if (str == "spiky")
-    return BAD_SPIKY;
-  else if (str == "snowball" || str == "bsod") // was bsod in old maps
-    return BAD_SNOWBALL;
+  // Create a static map that is initialized only once on the first call
+  static const std::unordered_map<std::string, BadGuyKind> kind_map = {
+    {"money", BAD_JUMPY},                        // was money in old maps
+    {"jumpy", BAD_JUMPY},
+    {"laptop", BAD_MRICEBLOCK},                  // was laptop in old maps
+    {"mriceblock", BAD_MRICEBLOCK},
+    {"mrbomb", BAD_MRBOMB},
+    {"stalactite", BAD_STALACTITE},
+    {"flame", BAD_FLAME},
+    {"fish", BAD_FISH},
+    {"bouncingsnowball", BAD_BOUNCINGSNOWBALL},
+    {"flyingsnowball", BAD_FLYINGSNOWBALL},
+    {"spiky", BAD_SPIKY},
+    {"snowball", BAD_SNOWBALL},
+    {"bsod", BAD_SNOWBALL}                       // was bsod in old maps
+  };
+
+  // Use the map to find the kind
+  auto it = kind_map.find(str);
+  if (it != kind_map.end())
+  {
+    return it->second;
+  }
   else
   {
+    // Handle unknown bad guy types.
     std::cerr << "Couldn't convert badguy: '" << str << "'" << std::endl;
-    return BAD_SNOWBALL;
+    return BAD_SNOWBALL; // Default fallback
   }
 }
 
