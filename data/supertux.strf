@@ -32,8 +32,7 @@
          (fps 15.0)
          (x-hotspot 5)
          (y-hotspot 9)
-         (images "shared/smalltux-left-6.png"
-                 ))
+         (images "shared/smalltux-left-6.png"))
 
  (sprite (name "smalltux-stand-right")
          (fps 15.0)
@@ -46,8 +45,7 @@
          (fps 15.0)
          (x-hotspot 5)
          (y-hotspot 7)
-         (images "shared/smalltux-jump-left.png"
-                 ))
+         (images "shared/smalltux-jump-left.png"))
 
  (sprite (name "smalltux-jump-right")
          (fps 15.0)
@@ -97,8 +95,7 @@
          (y-hotspot 15)
          (images "shared/smalltux-star-0.png"
                  "shared/smalltux-star-1.png"
-                 "shared/smalltux-star-2.png"
-                 ))
+                 "shared/smalltux-star-2.png"))
 
  ;; Large Tux Walk
  (sprite (name "largetux-walk-left")
@@ -185,8 +182,7 @@
          (y-hotspot 8)
          (images "shared/largetux-star-0.png"
                  "shared/largetux-star-1.png"
-                 "shared/largetux-star-2.png"
-                 ))
+                 "shared/largetux-star-2.png"))
 
  ;; Firetux
  (sprite (name "firetux-walk-left")
@@ -304,12 +300,6 @@
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-flat-right.png"))
-
-                                        ; (sprite (name "mriceblock-falling-left")
-                                        ;         (images "shared/mriceblock-falling-left.png"))
-
-                                        ; (sprite (name "mriceblock-falling-right")
-                                        ;         (images "shared/mriceblock-falling-right.png"))
 
  (sprite (name "snowball-squished-left")
          (x-hotspot 1)
