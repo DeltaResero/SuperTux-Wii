@@ -124,9 +124,6 @@ public:
   void apply_bonuses();
 };
 
-/** FIXME: Workaround for the leveleditor mainly */
-extern World global_world;
-
 #endif /*SUPERTUX_WORLD_H*/
 
 // EOF

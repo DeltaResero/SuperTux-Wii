@@ -50,11 +50,6 @@ Tile::~Tile()
   {
     delete image;
   }
-
-  for (Surface* editor_image : editor_images)
-  {
-    delete editor_image;
-  }
 }
 
 /**
@@ -112,6 +107,7 @@ void TileManager::load_tileset(std::string filename)
   {
     lisp_object_t* cur = lisp_cdr(root_obj);
     int tileset_id = 0;
+    std::string base_path = datadir + "/images/tilesets/";
 
     while (!lisp_nil_p(cur))
     {
@@ -136,11 +132,11 @@ void TileManager::load_tileset(std::string filename)
 
         // Parse the tile properties from the file
         LispReader reader(lisp_cdr(element));
-        #ifndef DDEBUG
+#ifndef DDEBUG
         void(reader.read_int("id", &tile->id));
-        #else
+#else
         assert(reader.read_int("id", &tile->id));
-        #endif
+#endif
 
         reader.read_bool("solid", &tile->solid);
         reader.read_bool("brick", &tile->brick);
@@ -153,30 +149,15 @@ void TileManager::load_tileset(std::string filename)
         reader.read_int("anim-speed", &tile->anim_speed);
         reader.read_int("next-tile", &tile->next_tile);
         reader.read_string_vector("images", &tile->filenames);
-        reader.read_string_vector("editor-images", &tile->editor_filenames);
 
         // Load images and associate them with the tile
         tile->images.reserve(tile->filenames.size());
 
         for (const std::string& filename : tile->filenames)
         {
-          Surface* cur_image = nullptr;  // Initialize the pointer to nullptr
+          Surface* cur_image = nullptr;
           tile->images.push_back(cur_image);
-          tile->images.back() = new Surface(
-            datadir + "/images/tilesets/" + filename, USE_ALPHA
-          );
-        }
-
-        // Load editor images
-        tile->editor_images.reserve(tile->editor_filenames.size());
-
-        for (const std::string& filename : tile->editor_filenames)
-        {
-          Surface* cur_image = nullptr;  // Initialize the pointer to nullptr
-          tile->editor_images.push_back(cur_image);
-          tile->editor_images.back() = new Surface(
-            datadir + "/images/tilesets/" + filename, USE_ALPHA
-          );
+          tile->images.back() = new Surface(base_path + filename, USE_ALPHA);
         }
 
         // Ensure the tiles vector is large enough

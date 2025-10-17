@@ -1,4 +1,3 @@
-
 - An introduction for SuperTux -
 http://super-tux.sf.net/
 
@@ -47,10 +46,13 @@ DOCUMENTATION
 
     AUTHORS     - Credits for people that contributed to the creation
                   of SuperTux.
+
     LICENSE     - The GNU Public License, which "SuperTux" is liscensed
                   under.
-    README.md   - Instructions on requirements, compiling and installing.
+
     README      - (This file.)  Game story, usage, rules and controls.
+
+    README.md   - Instructions on requirements, compiling and installing.
 
 
 RUNNING THE GAME
@@ -91,12 +93,6 @@ PLAYING THE GAME
 
   In the worldmap, the arrow keys are used to navigate and Enter enters the
   current level.
-
-  The leveleditor is controled via the mouse, but there are shortcuts that
-  may make your life easier. To see the shortcuts for the buttons, just
-  do a Right-click on them. If you are interested in creating SuperTux
-  levels, we advise you to read LEVELDESIGN to learn more about the editor
-  and creating new levels.
 
 
 SCREEN LAYOUT

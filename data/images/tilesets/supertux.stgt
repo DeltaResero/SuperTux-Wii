@@ -318,7 +318,6 @@
        (images "bonus2-1.png" "bonus2-2.png" "bonus2-3.png" "bonus2-4.png" "bonus2-5.png" "bonus2-4.png"
                "bonus2-3.png" "bonus2-2.png" "bonus2-1.png" "bonus2-1.png" "bonus2-1.png")
        (anim-speed 50)
-       (editor-images "bonus-flower.png")
        (solid #t)
        (fullbox #t)
        (data 2)
@@ -327,7 +326,6 @@
        (images "bonus2-1.png" "bonus2-2.png" "bonus2-3.png" "bonus2-4.png" "bonus2-5.png" "bonus2-4.png"
                "bonus2-3.png" "bonus2-2.png" "bonus2-1.png" "bonus2-1.png" "bonus2-1.png")
        (anim-speed 50)
-       (editor-images "bonus-herring.png")
        (solid #t)
        (fullbox #t)
        (data 3)
@@ -369,7 +367,6 @@
        (solid #f))
 
  (tile (id 112)
-       (editor-images "bonus-invisible.png")
        (anim-speed 50)
        (solid #t)
        (fullbox #t)
@@ -429,7 +426,6 @@
        (images "bonus2-1.png" "bonus2-2.png" "bonus2-3.png" "bonus2-4.png" "bonus2-5.png" "bonus2-4.png"
                "bonus2-3.png" "bonus2-2.png" "bonus2-1.png" "bonus2-1.png" "bonus2-1.png")
        (anim-speed 50)
-       (editor-images "bonus-1up.png")
        (solid #t)
        (fullbox #t)
        (data 4)
@@ -472,12 +468,10 @@
        (images)
        (goal #t)
        (data 1)
-       (editor-images "finalgoal.png"))
 (tile (id 133)
        (images)
        (goal #t)
        (data 0)
-       (editor-images "endseq.png"))
 (tile (id 134)
       (solid #f)
       (images "nolok1.png"))
