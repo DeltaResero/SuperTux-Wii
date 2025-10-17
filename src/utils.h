@@ -21,10 +21,36 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cmath>   // For M_PI, sin, cos
 #include <cstring> // For memcpy and strlen
 
 // Declare the custom implementation of strlcpy
 size_t strlcpy(char* dst, const char* src, size_t size);
+
+// A namespace for pre-calculated trigonometry tables
+namespace Trig
+{
+  constexpr int ANGLE_COUNT = 256; // Number of steps in the circle (must be a power of 2)
+
+  // Declare the tables to be defined in utils.cpp
+  extern float sin_table[ANGLE_COUNT];
+  extern float cos_table[ANGLE_COUNT];
+
+  // Function to fill the tables with values
+  void initialize();
+
+  // Fast inline lookup functions
+  inline float fast_sin(int angle_index)
+  {
+    // Use a bitwise AND for a fast modulo operation (works as ANGLE_COUNT is a power of 2)
+    return sin_table[angle_index & (ANGLE_COUNT - 1)];
+  }
+
+  inline float fast_cos(int angle_index)
+  {
+    return cos_table[angle_index & (ANGLE_COUNT - 1)];
+  }
+} // namespace Trig
 
 #endif // UTILS_H
 

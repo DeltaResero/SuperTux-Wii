@@ -20,6 +20,11 @@
 
 #include "utils.h"
 #include <cstring> // For memcpy, memchr
+#include <cmath>   // For M_PI, sin, cos
+
+#ifndef M_PI // Define M_PI if it's not pulled in from <cmath>...
+#define M_PI 3.14159265358979323846
+#endif // ...as apparently M_PI isn't part of the official C++ standard and isn't guaranteed to be here
 
 size_t strlcpy(char* dst, const char* src, size_t size)
 {
@@ -47,5 +52,24 @@ size_t strlcpy(char* dst, const char* src, size_t size)
   // Return the total length of the source string (or the truncated size if no null-terminator was found)
   return src_len;
 }
+
+namespace Trig
+{
+  // Define the actual storage for the tables
+  float sin_table[ANGLE_COUNT];
+  float cos_table[ANGLE_COUNT];
+
+  // Fills the tables with pre-calculated values
+  void initialize()
+  {
+    for (int i = 0; i < ANGLE_COUNT; ++i)
+    {
+      // Calculate the angle in radians for the current index
+      float angle = (2.0f * M_PI * static_cast<float>(i)) / ANGLE_COUNT;
+      sin_table[i] = std::sin(angle);
+      cos_table[i] = std::cos(angle);
+    }
+  }
+} // namespace Trig
 
 // EOF

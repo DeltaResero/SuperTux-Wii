@@ -34,6 +34,7 @@
 #include "world.h"
 #include "tile.h"
 #include "resources.h"
+#include "utils.h"
 #include "sprite_manager.h"
 
 // Define bad guy sprites globally
@@ -201,7 +202,7 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
   }
   else if (kind == BAD_FLAME)
   {
-    base.ym = 0; // We misuse base.ym as angle for the flame
+    base.ym = 0; // Treat ym as an integer angle index, start at 0
     physic.enable_gravity(false);
     set_sprite(img_flame, img_flame);
   }
@@ -610,11 +611,24 @@ void BadGuy::action_stalactite(double frame_ratio)
 void BadGuy::action_flame(double frame_ratio)
 {
   static const float radius = 100;
-  static const float speed = 0.02f;
-  base.x = old_base.x + std::cos(base.ym) * radius;
-  base.y = old_base.y + std::sin(base.ym) * radius;
+  // Adjust speed to work with our integer angle indices (0.82 gives nearly the same original speed)
+  static const float speed = 0.82f;
 
-  base.ym = std::fmod(base.ym + frame_ratio * speed, 2 * M_PI);
+  // Get the current angle as an integer index
+  int current_angle = static_cast<int>(base.ym);
+
+  // Use the fast lookup functions instead of std::cos and std::sin
+  base.x = old_base.x + Trig::fast_cos(current_angle) * radius;
+  base.y = old_base.y + Trig::fast_sin(current_angle) * radius;
+
+  // Increment the angle index
+  base.ym += frame_ratio * speed;
+
+  // Wrap the angle back to 0 if it completes a circle
+  if (base.ym >= Trig::ANGLE_COUNT)
+  {
+    base.ym -= Trig::ANGLE_COUNT;
+  }
 }
 
 /**

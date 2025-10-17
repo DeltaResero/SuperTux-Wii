@@ -60,6 +60,7 @@
 #include "text.h"
 #include "timer.h"
 #include "type.h"
+#include "utils.h"
 
 #ifdef WIN32
 #define mkdir(dir, mode)    mkdir(dir)
@@ -658,6 +659,9 @@ void process_options_menu(void)
  */
 void st_general_setup(void)
 {
+  /* Initialize trigonometry lookup tables: */
+  Trig::initialize();
+
   /* Seed random number generator: */
   srand(SDL_GetTicks());
 
