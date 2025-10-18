@@ -197,13 +197,14 @@ void Physic::apply(float frame_ratio, float &x, float &y)
   }
 
   // Update the object's position based on its current velocity and acceleration.
-  // This uses a basic Euler integration method.
-  x += vx * frame_ratio + ax * frame_ratio * frame_ratio;
-  y += vy * frame_ratio + (ay + grav) * frame_ratio * frame_ratio;
-
-  // Update the object's velocity for the next frame.
+  // This uses a semi-implicit Euler integration method
   vx += ax * frame_ratio;
   vy += (ay + grav) * frame_ratio;
+
+  // Update position using the *newly calculated* velocity
+  // This is more stable than using the velocity from the previous frame
+  x += vx * frame_ratio;
+  y += vy * frame_ratio;
 }
 
 // EOF
