@@ -27,49 +27,46 @@
 class Physic
 {
 public:
-    Physic();
-    ~Physic();
+  Physic();
+  ~Physic();
 
-    /** resets all velocities and accelerations to 0 */
-    void reset();
+  /** resets all velocities and accelerations to 0 */
+  void reset();
 
-    /** sets velocity to a fixed value */
-    void set_velocity(float vx, float vy);
+  /** sets velocity to a fixed value */
+  void set_velocity(float vx, float vy);
 
-    void set_velocity_x(float vx);
-    void set_velocity_y(float vy);
+  void set_velocity_x(float vx);
+  void set_velocity_y(float vy);
 
-    /** velocities invertion */
-    void inverse_velocity_x();
-    void inverse_velocity_y();
+  /** velocities invertion */
+  void inverse_velocity_x();
+  void inverse_velocity_y();
 
-    float get_velocity_x();
-    float get_velocity_y();
+  float get_velocity_x();
+  float get_velocity_y();
 
-    /** sets acceleration applied to the object. (Note that gravity is
-     * eventually added to the vertical acceleration)
-     */
-    void set_acceleration(float ax, float ay);
+  /** sets acceleration applied to the object. (Note that gravity is
+    * eventually added to the vertical acceleration)
+    */
+  void set_acceleration(float ax, float ay);
 
-    void set_acceleration_x(float ax);
-    void set_acceleration_y(float ay);
+  void set_acceleration_x(float ax);
+  void set_acceleration_y(float ay);
 
-    float get_acceleration_x();
-    float get_acceleration_y();
+  float get_acceleration_x();
+  float get_acceleration_y();
 
-    /** enables or disables handling of gravity */
-    void enable_gravity(bool gravity_enabled);
+  /** enables or disables handling of gravity */
+  void enable_gravity(bool gravity_enabled);
 
-    /** applies the physical simulation to given x and y coordinates */
-    void apply(float frame_ratio, float &x, float &y); 
+  /** applies the physical simulation to given x and y coordinates */
+  void apply(float frame_ratio, float &x, float &y);
 
 private:
-    // horizontal and vertical acceleration
-    float ax, ay;
-    // horizontal and vertical velocity
-    float vx, vy;
-    // should we respect gravity in out calculations?
-    bool gravity_enabled;
+  float ax, ay;          // horizontal and vertical acceleration
+  float vx, vy;          // horizontal and vertical velocity
+  bool gravity_enabled;  // should we respect gravity in out calculations?
 };
 
 #endif /*SUPERTUX_PHYSIC_H*/

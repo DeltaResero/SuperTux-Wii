@@ -21,6 +21,7 @@
 #define SUPERTUX_PLAYER_H
 
 #include <SDL.h>
+#include <vector>
 #include "type.h"
 #include "timer.h"
 #include "texture.h"
@@ -28,24 +29,18 @@
 #include "sound.h"
 #include "physic.h"
 
-/* Times: */
-
+// Gameplay timing constants
 #define TUX_SAFE_TIME 1800
 #define TUX_INVINCIBLE_TIME 10000
 #define TUX_INVINCIBLE_TIME_WARNING 2000
-#define TIME_WARNING 20000     /* When to alert player they're low on time! */
+#define TIME_WARNING 20000
 
-/* One-ups... */
-
+// Gameplay score and item constants
 #define DISTROS_LIFEUP 100
-
-/* Scores: */
-
 #define SCORE_BRICK 5
 #define SCORE_DISTRO 25
 
-#include <vector>
-
+// Structure to hold the key mappings for player actions
 struct PlayerKeymap
 {
 public:
@@ -60,6 +55,7 @@ public:
 
 extern PlayerKeymap keymap;
 
+// Structure to hold the current input state of the player
 struct player_input_type
 {
   int right;
@@ -71,17 +67,20 @@ struct player_input_type
   int old_fire;
 };
 
+// Initializes the player input struct.
 void player_input_init(player_input_type* pplayer_input);
 
+// Forward declarations for classes
 class Sprite;
 class BadGuy;
 
+// External declarations for globally used player sprites
 extern Surface* tux_life;
-
 extern Sprite* smalltux_gameover;
 extern Sprite* smalltux_star;
 extern Sprite* largetux_star;
 
+// A collection of sprites for a specific player state
 struct PlayerSprite
 {
   Sprite* stand_left;
@@ -107,57 +106,58 @@ extern PlayerSprite firetux;
 class Player : public GameObject
 {
 public:
+  // Defines how the player is hurt
   enum HurtMode { KILL, SHRINK };
 
-  player_input_type  input;
-  bool got_coffee;
-  int size;
-  bool duck;
-  bool holding_something;
-  DyingType dying;
+  // Public member variables for player state
+  player_input_type input;                  // Current input state from keyboard/joystick
+  bool got_coffee;                          // True if player has the fire flower power-up
+  int size;                                 // Player's size (SMALL or BIG)
+  bool duck;                                // True if player is currently ducking
+  bool holding_something;                   // True if player is carrying an object (like Mr. Ice Block)
+  DyingType dying;                          // The player's current dying state
+  Direction dir;                            // The direction the player is facing
+  Direction old_dir;                        // The direction the player was facing last frame
+  bool jumping;                             // True if the jump key is currently held down during a jump
+  bool can_jump;                            // True if the player is able to initiate a new jump
+  int frame_;                               // Sub-frame for animation sequences
+  int frame_main;                           // Main frame for animation sequences
+  base_type previous_base;                  // Position at the start of the current frame (for collision)
 
-  Direction dir;
-  Direction old_dir;
-
-  bool jumping;
-  bool can_jump;
-  int frame_;
-  int frame_main;
-
-  base_type  previous_base;
+  // Timers for various player states.
   Timer invincible_timer;
   Timer skidding_timer;
   Timer safe_timer;
   Timer frame_timer;
   Timer kick_timer;
+
+  // The physics component for this player.
   Physic physic;
 
 public:
-  void init();
-  int  key_event(SDLKey key, int state);
-  void level_begin();
-  void action(double frame_ratio);
-  void handle_input();
-  void grabdistros();
-  void draw();
-  void collision(void* p_c_object, int c_object);
-  void kill(HurtMode mode);
-  void is_dying();
-  bool is_dead();
-  void player_remove_powerups();
-  void check_bounds(bool back_scrolling, bool hor_autoscroll);
-  bool on_ground();
-  bool under_solid();
-  void grow();
-
-  void jump_of_badguy(BadGuy* badguy);
-
-  std::string type() { return "Player";};
+  void init();                              // Initializes player state for a new level
+  int key_event(SDLKey key, int state);     // Processes a keyboard event
+  void level_begin();                       // Resets player state for a level loop (e.g., in menu demo)
+  void action(double frame_ratio);          // Main update function, called once per frame
+  void handle_input();                      // Main input handler, dispatches to sub-handlers
+  void grabdistros();                       // Checks for and collects distros (coins)
+  void draw();                              // Draws the player sprite
+  void collision(void* p_c_object, int c_object); // Handles collisions with other objects
+  void kill(HurtMode mode);                 // Kills or shrinks the player
+  void is_dying();                          // Resets the player's dying state
+  bool is_dead();                           // Checks if the player is considered dead (off-screen)
+  void player_remove_powerups();            // Removes all power-ups from the player
+  void check_bounds(bool back_scrolling, bool hor_autoscroll); // Enforces level boundaries
+  bool on_ground();                         // Checks if the player is on the ground
+  bool under_solid();                       // Checks if the player is under a solid block
+  void grow();                              // Makes the player grow to BIG state
+  void jump_of_badguy(BadGuy* badguy);      // Bounces the player off a badguy
+  std::string type() { return "Player"; };  // Returns the object type as a string
 
 private:
-  void handle_horizontal_input();
-  void handle_vertical_input();
-  void remove_powerups();
+  void handle_horizontal_input();           // Handles left/right input.
+  void handle_vertical_input();             // Handles jump/duck input.
+  void remove_powerups();                   // Internal implementation for removing powerups.
 };
 
 #endif /*SUPERTUX_PLAYER_H*/
