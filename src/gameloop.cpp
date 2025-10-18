@@ -658,6 +658,9 @@ void GameSession::action(double frame_ratio)
  */
 void GameSession::draw()
 {
+  // This enforces the "Clear, Draw, Flip" pattern and prevents flashes of un-drawn buffers
+  clearscreen(0, 0, 0);
+
   world->draw();
   drawstatus();
 
