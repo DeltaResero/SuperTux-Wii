@@ -41,6 +41,7 @@ if !ENABLE_WII
     src/timer.cpp src/timer.h \
     src/title.cpp src/title.h \
     src/type.cpp src/type.h \
+    src/utils.cpp src/utils.h \
     src/world.cpp src/world.h \
     src/worldmap.cpp src/worldmap.h \
     src/mousecursor.cpp src/mousecursor.h \
