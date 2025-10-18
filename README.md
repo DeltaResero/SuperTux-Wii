@@ -29,7 +29,7 @@ This is a continuation fork of the original Wii port by scanff and Arikado, avai
 [Google Code archive](https://code.google.com/archive/p/supertux-wii), of SuperTux Classic
 (Milestone 1). It is designed for use through the
 [Homebrew Channel](http://wiibrew.org/wiki/Homebrew_Channel) using
-[SDL Wii](https://wiibrew.org/wiki/SDL_Wii). More information can be found on the
+[SDL Wii](https://wiibrew.org/wiki/SDL_Wii) or [OpenGL (via OpenGX)](https://github.com/devkitPro/opengx). More information can be found on the
 Wiki at [SuperTux Wii on WiiBrew](http://wiibrew.org/wiki/SuperTux_Wii).
 
 The [original SuperTux](https://code.google.com/p/supertux) repository has been migrated from
@@ -74,12 +74,11 @@ the game:
    ```
    ./autogen.sh --help
    ```
-   
+
 2. Use `make` to cross-compile the game executable:
    ```
    make -f Wii
    ```
-
 
 ### Installing SuperTux on Wii (Homebrew Channel)
 
