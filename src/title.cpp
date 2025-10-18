@@ -28,6 +28,8 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <filesystem>
+#include <set>
+#include <algorithm>
 
 #ifndef WIN32
 #include <sys/types.h>
@@ -149,7 +151,23 @@ void free_contrib_menu()
 void generate_contrib_menu()
 {
   // Get a list of level subsets from the directory
-  StringList level_subsets = dsubdirs("levels", "info");
+  StringList all_level_subsets = dsubdirs("levels", "info");
+
+  // Use a set to find unique subset names respecting user override
+  std::set<std::string> unique_names;
+  StringList final_subsets;
+
+  for (const std::string& subset_name : all_level_subsets)
+  {
+    // try_emplace only returns true if the insertion actually happened
+    if (unique_names.insert(subset_name).second)
+    {
+      final_subsets.push_back(subset_name);
+    }
+  }
+
+  // Sort the 'final' list alphabetically
+  std::sort(final_subsets.begin(), final_subsets.end());
 
   // Free any existing menu items and subsets
   free_contrib_menu();
@@ -158,11 +176,11 @@ void generate_contrib_menu()
   contrib_menu->additem(MN_LABEL, "Bonus Levels", 0, nullptr);
   contrib_menu->additem(MN_HL, "", 0, nullptr);
 
-  // Loop through each level subset and add it to the contribution menu
-  for (size_t i = 0; i < level_subsets.size(); ++i)
+  // Loop through the 'final' unique sorted list of level subset(s) and add them to the contribution menu
+  for (size_t i = 0; i < final_subsets.size(); ++i)
   {
     LevelSubset* subset = new LevelSubset();
-    subset->load(level_subsets[i]);
+    subset->load(final_subsets[i]);
     contrib_menu->additem(MN_GOTO, subset->title, 0, contrib_subset_menu, i);
     contrib_subsets.push_back(subset);
   }
@@ -172,7 +190,7 @@ void generate_contrib_menu()
   {
     WorldMapNS::WorldMap worldmap;
     worldmap.loadmap(worldmap_list[i]);
-    contrib_menu->additem(MN_ACTION, worldmap.get_world_title(), 0, nullptr, i + level_subsets.size());
+    contrib_menu->additem(MN_ACTION, worldmap.get_world_title(), 0, nullptr, i + final_subsets.size());
   }
 
   // Add a horizontal line and a back option at the end of the menu
@@ -377,16 +395,23 @@ void title(void)
 
   // Initialize the worldmap list and add items to the menu
   worldmap_list.clear();
-  StringList files = dfiles("levels/worldmaps/", ".stwm", "couldn't list worldmaps");
 
-  for (const std::string& file : files)
+  StringList all_worldmaps = dfiles("levels/worldmaps/", ".stwm", "couldn't list worldmaps");
+  std::set<std::string> unique_maps;
+
+  for (const std::string& file : all_worldmaps)
   {
     if (file == "world1.stwm")
     {
-      continue;
+      continue; // Skip main worldmap
     }
-    worldmap_list.push_back(file);
+    // If the map name is new, add it to our final list.
+    if (unique_maps.insert(file).second)
+    {
+      worldmap_list.push_back(file);
+    }
   }
+  std::sort(worldmap_list.begin(), worldmap_list.end());
 
   // Set the frame counter and start the random timer
   frame = 0;
