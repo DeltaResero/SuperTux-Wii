@@ -177,14 +177,21 @@ void LevelSubset::load(const std::string& subset)
     }
   }
 
+  // Cache the base paths to avoid recreating them in the loop
+  fs::path level_dir_st = fs::path(st_dir) / "levels" / subset;
+  fs::path level_dir_data = fs::path(datadir) / "levels" / subset;
+
   int i;  // Declare `i` outside the loop for later use
   for (i = 1; ; ++i)
   {
+    // Construct only the changing part of the filename
+    std::string level_name = "level" + to_string(i) + ".stl";
+
     // Get the number of levels in this subset
-    fs::path level_filename = fs::path(st_dir) / "levels" / subset / ("level" + to_string(i) + ".stl");
+    fs::path level_filename = level_dir_st / level_name;
     if (!faccessible(level_filename.string().c_str()))
     {
-      level_filename = fs::path(datadir) / "levels" / subset / ("level" + to_string(i) + ".stl");
+      level_filename = level_dir_data / level_name;
       if (!faccessible(level_filename.string().c_str()))
       {
         break; // No more levels found
