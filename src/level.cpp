@@ -807,6 +807,10 @@ void Level::cleanup()
  */
 void Level::load_gfx()
 {
+  // Always delete the existing background to prevent memory leaks.
+  delete img_bkgd;
+  img_bkgd = nullptr;
+
   if (!bkgd_image.empty())
   {
     fs::path fname = fs::path(st_dir) / "background" / bkgd_image;
@@ -814,15 +818,7 @@ void Level::load_gfx()
     {
       fname = fs::path(datadir) / "images/background" / bkgd_image;
     }
-    if (!img_bkgd)
-    {
-      img_bkgd = new Surface(fname.string().c_str(), IGNORE_ALPHA);
-    }
-  }
-  else
-  {
-    delete img_bkgd;
-    img_bkgd = nullptr;
+    img_bkgd = new Surface(fname.string().c_str(), IGNORE_ALPHA);
   }
 }
 
