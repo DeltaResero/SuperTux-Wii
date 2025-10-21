@@ -82,8 +82,10 @@ void BrokenBrick::init(Tile* tile_, float x, float y, float xm, float ym)
   base.xm = xm;
   base.ym = ym;
 
-  random_offset_x = rand() % 16;  // Cache random value for x offset
-  random_offset_y = rand() % 16;  // Cache random value for y offset
+  // Cache random values for texture offsets
+  // Use a bitwise AND with 15 which is a faster equivalent of modulo 16.
+  random_offset_x = rand() & 15;
+  random_offset_y = rand() & 15;
 
   timer.init(true);
   timer.start(200);
