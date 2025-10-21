@@ -206,6 +206,9 @@ public:
   Timer passive_message_timer;
   std::string passive_message;
 
+  /** A lightweight function to get a worldmap's title without a full load */
+  static std::string get_world_title_fast(const std::string& mapfile_path);
+
 private:
   typedef std::vector<Level> Levels;
   Levels levels;

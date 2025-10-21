@@ -66,7 +66,19 @@ static int frame;                      // Frame counter for animations
 static unsigned int last_update_time;  // Time of the last update
 static unsigned int update_time;       // Current time for updates
 
-static std::vector<LevelSubset*> contrib_subsets;  // List of level subsets for the contribution menu
+/**
+ * @brief A structure to cache information about bonus content.
+ * This prevents repeated, slow file I/O when generating the bonus menu.
+ * The cache is populated only once when the title screen loads.
+ */
+struct BonusContentItem
+{
+  std::string title;      // The human-readable name for the menu.
+  std::string path;       // The directory name (for subsets) or filename (for worldmaps).
+  bool is_worldmap;       // A flag to distinguish between level packs and worldmaps.
+};
+static std::vector<BonusContentItem> cached_bonus_content; // The global cache.
+
 static std::string current_contrib_subset;         // Currently selected contribution subset
 
 static StringList worldmap_list;  // List of available world maps
@@ -127,96 +139,129 @@ void createDemo()
 }
 
 /**
- * Frees the memory allocated for the contribution menu and its subsets.
- * Clears both the list of subsets and the menu items to ensure no memory leaks occur.
+ * Frees memory allocated for the contrib menu clearing bonus content cache and the menu items themselves
  */
 void free_contrib_menu()
 {
-  // Iterate through all level subsets and delete each one
-  for (std::vector<LevelSubset*>::iterator i = contrib_subsets.begin(); i != contrib_subsets.end(); ++i)
-  {
-    delete *i;
-  }
-
-  // Clear the vectors and menu items
-  contrib_subsets.clear();
+  cached_bonus_content.clear();
   contrib_menu->clear();
 }
 
 /**
- * Generates the contribution menu by populating it with level subsets and world maps.
- * This function first clears any existing items in the menu, then scans for level subsets
- * and adds them to the menu. World maps are also added to the menu.
+ * Scans for all bonus content (level packs and worldmaps) and builds the
+ * contribution menu. This function is designed to be called only ONCE at
+ * startup to prevent lag when accessing the menu. It caches all discovered
+ * content for instantaneous menu display later.
  */
 void generate_contrib_menu()
 {
-  // Get a list of level subsets from the directory
+  // Scan for Level Subsets (this is only called once at startup)
+  // Gets a list of subdirectories in 'levels/' that contain an 'info' file.
   StringList all_level_subsets = dsubdirs("levels", "info");
 
-  // Use a set to find unique subset names respecting user override
+  // Use a set to ensure we only process each unique subset name once
   std::set<std::string> unique_names;
-  StringList final_subsets;
-
   for (const std::string& subset_name : all_level_subsets)
   {
-    // try_emplace only returns true if the insertion actually happened
     if (unique_names.insert(subset_name).second)
     {
-      final_subsets.push_back(subset_name);
+      // This is a new, unique subset. Load its info to get the title.
+      // This is still a slow operation, but we now only do it once per
+      // subset at the beginning of the game, not every time the menu opens.
+      LevelSubset subset;
+      subset.load(subset_name);
+      cached_bonus_content.push_back({subset.title, subset_name, false});
     }
   }
 
-  // Sort the 'final' list alphabetically
-  std::sort(final_subsets.begin(), final_subsets.end());
+  // Scan for World Maps (The Fast Way)
+  // The 'worldmap_list' is already populated at startup (we loop through it)
+  for (const std::string& map_filename : worldmap_list)
+  {
+    // Get the full path to the worldmap file.
+    std::string full_path = datadir + "/levels/worldmaps/" + map_filename;
 
-  // Free any existing menu items and subsets
-  free_contrib_menu();
+    // Use our new, fast "peek" function to get the title without parsing the whole file.
+    std::string title = WorldMapNS::WorldMap::get_world_title_fast(full_path);
+    cached_bonus_content.push_back({title, map_filename, true});
+  }
 
-  // Add a label and a horizontal line to the menu for visual separation
+  // Sort the combined list alphabetically by title
+  std::sort(cached_bonus_content.begin(), cached_bonus_content.end(),
+            [](const BonusContentItem& a, const BonusContentItem& b)
+            {
+              return a.title < b.title;
+            });
+
+  // Build the final menu from our fast in-memory cache
+  contrib_menu->clear();
   contrib_menu->additem(MN_LABEL, "Bonus Levels", 0, nullptr);
   contrib_menu->additem(MN_HL, "", 0, nullptr);
 
-  // Loop through the 'final' unique sorted list of level subset(s) and add them to the contribution menu
-  for (size_t i = 0; i < final_subsets.size(); ++i)
+  for (size_t i = 0; i < cached_bonus_content.size(); ++i)
   {
-    LevelSubset* subset = new LevelSubset();
-    subset->load(final_subsets[i]);
-    contrib_menu->additem(MN_GOTO, subset->title, 0, contrib_subset_menu, i);
-    contrib_subsets.push_back(subset);
+    const auto& item = cached_bonus_content[i];
+    if (item.is_worldmap)
+    {
+      // Worldmaps are a direct action.
+      contrib_menu->additem(MN_ACTION, item.title, 0, nullptr, i);
+    }
+    else
+    {
+      // Level Subsets go to a submenu.
+      contrib_menu->additem(MN_GOTO, item.title, 0, contrib_subset_menu, i);
+    }
   }
 
-  // Add world maps to the menu
-  for (size_t i = 0; i < worldmap_list.size(); ++i)
-  {
-    WorldMapNS::WorldMap worldmap;
-    worldmap.loadmap(worldmap_list[i]);
-    contrib_menu->additem(MN_ACTION, worldmap.get_world_title(), 0, nullptr, i + final_subsets.size());
-  }
-
-  // Add a horizontal line and a back option at the end of the menu
   contrib_menu->additem(MN_HL, "", 0, nullptr);
   contrib_menu->additem(MN_BACK, "Back", 0, nullptr);
 }
 
 /**
- * Checks the currently selected item in the contribution menu and performs the corresponding action.
- * This function handles loading levels or world maps based on the menu selection. If a subset is selected,
- * it loads the corresponding levels into a submenu. If a world map is selected, it loads and displays the world map.
+ * Checks the currently selected item in the contribution menu and performs the
+ * corresponding action using the pre-built cache of bonus content.
  */
 void check_contrib_menu()
 {
   int index = contrib_menu->check();
 
-  if (index == -1)
+  // Ensure the index is valid and within the bounds of our cache
+  if (index == -1 || index >= (int)cached_bonus_content.size())
   {
     return;
   }
 
-  if (index < (int)contrib_subsets.size())
+  // Get the selected item directly from the cache (no file access needed here)
+  const BonusContentItem& item = cached_bonus_content[index];
+
+  if (item.is_worldmap)
   {
-    // FIXME: This shouln't be busy looping
-    // Handle selection of a level subset
-    LevelSubset& subset = *(contrib_subsets[index]);
+    // Handle selection of a world map
+    unloadsounds();
+    deleteDemo();
+    fadeout();
+
+    WorldMapNS::WorldMap worldmap;
+    worldmap.loadmap(item.path); // 'item.path' is the filename, e.g., "bonusisland1.stwm"
+
+    // Prepare the save game path.\
+    std::string savegame = item.path;
+    savegame = savegame.substr(0, savegame.size() - 5);
+    savegame = (fs::path(st_save_dir) / (savegame + ".stsg")).string();
+    worldmap.loadgame(savegame.c_str());
+
+    worldmap.display();
+
+    // Restore the title screen state.
+    createDemo();
+    loadsounds();
+    Menu::set_current(main_menu);
+  }
+  else
+  {
+    // Handle selection of a level subset (a folder of levels).
+    LevelSubset subset;
+    subset.load(item.path); // Load subset info to get the level count.
 
     current_contrib_subset = subset.name;
     contrib_subset_menu->clear();
@@ -225,41 +270,14 @@ void check_contrib_menu()
 
     for (int i = 0; i < subset.levels; ++i)
     {
-      // Load each level in the subset and add it to the submenu
+      // This is still slow as it loads the full level just for the name.
       Level level;
-      level.load(subset.name, i+1);
+      level.load(subset.name, i + 1);
       contrib_subset_menu->additem(MN_ACTION, level.name, 0, nullptr, i + 1);
     }
 
     contrib_subset_menu->additem(MN_HL, "", 0, nullptr);
     contrib_subset_menu->additem(MN_BACK, "Back", 0, nullptr);
-  }
-  else if (index < static_cast<int>(worldmap_list.size() + contrib_subsets.size()))
-  {
-    // Handle selection of a world map
-    unloadsounds();
-    deleteDemo();
-
-    // Perform a fade-out effect before loading the world map
-    fadeout();
-
-    WorldMapNS::WorldMap worldmap;
-    const std::string& worldmap_file = worldmap_list[index - contrib_subsets.size()];
-    worldmap.loadmap(worldmap_file);
-
-    // Prepare the save game path using std::filesystem
-    std::string savegame = worldmap_file;
-    savegame = savegame.substr(0, savegame.size() - 5);
-    savegame = (fs::path(st_save_dir) / (savegame + ".stsg")).string();
-    worldmap.loadgame(savegame.c_str());
-
-    // Display the loaded world map
-    worldmap.display();
-
-    // Recreate the demo session and reload sounds
-    createDemo();
-    loadsounds();
-    Menu::set_current(main_menu);
   }
 }
 
@@ -393,12 +411,11 @@ void title(void)
     loading_surf = nullptr; // Set to NULL to avoid accidental use
   }
 
-  // Initialize the worldmap list and add items to the menu
+  // Scan and cache all bonus content ONCE at startup
+  // Initialize the worldmap list.
   worldmap_list.clear();
-
   StringList all_worldmaps = dfiles("levels/worldmaps/", ".stwm", "couldn't list worldmaps");
   std::set<std::string> unique_maps;
-
   for (const std::string& file : all_worldmaps)
   {
     if (file == "world1.stwm")
@@ -412,6 +429,9 @@ void title(void)
     }
   }
   std::sort(worldmap_list.begin(), worldmap_list.end());
+
+  // Scan everything and build the menu
+  generate_contrib_menu();
 
   // Set the frame counter and start the random timer
   frame = 0;
@@ -490,8 +510,8 @@ void title(void)
             update_load_save_game_menu(load_game_menu);
             break;
           case MNID_CONTRIB:
-            // Open the contribution menu
-            generate_contrib_menu();
+            // The menu is pre-generated, so we do nothing here on hover/click.
+            // The menu system will automatically handle the GOTO action.
             break;
           case MNID_CREDITS:
             menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
@@ -579,7 +599,7 @@ void title(void)
     /* FIXME: Default delay is 25 which should work as normal for non-Wii provided the machine
      * is modern enough to actually handle this delay properly
      */
-      SDL_Delay(25);
+    SDL_Delay(25);
 #endif
   }
 
