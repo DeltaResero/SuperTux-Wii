@@ -86,9 +86,9 @@ class Level
   std::string song_title;                 /**< The title of the level's song */
   std::string bkgd_image;                 /**< The background image name */
   std::string particle_system;            /**< The particle system used in the level */
-  std::vector<unsigned int> bg_tiles[15]; /**< Tiles in the background */
-  std::vector<unsigned int> ia_tiles[15]; /**< Tiles which can interact in the game (solids, etc.) */
-  std::vector<unsigned int> fg_tiles[15]; /**< Tiles in the foreground */
+  std::vector<unsigned int> bg_tiles;     /**< Tiles in the background */
+  std::vector<unsigned int> ia_tiles;     /**< Tiles which can interact in the game (solids, etc.) */
+  std::vector<unsigned int> fg_tiles;     /**< Tiles in the foreground */
   int time_left;                          /**< The time left in the level */
   Color bkgd_top;
   Color bkgd_bottom;

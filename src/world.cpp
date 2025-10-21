@@ -194,89 +194,118 @@ World::activate_particle_systems()
     }
 }
 
-void
-World::draw()
+void World::draw()
 {
   int y,x;
 
   /* Draw the real background */
   if(level->img_bkgd)
-    {
-      int s = (int)((float)scroll_x * ((float)level->bkgd_speed/100.0f)) % screen->w;
-      level->img_bkgd->draw_part(s, 0,0,0,level->img_bkgd->w - s, level->img_bkgd->h);
-      level->img_bkgd->draw_part(0, 0,screen->w - s ,0,s,level->img_bkgd->h);
-    }
+  {
+    int s = (int)((float)scroll_x * ((float)level->bkgd_speed/100.0f)) % screen->w;
+    level->img_bkgd->draw_part(s, 0,0,0,level->img_bkgd->w - s, level->img_bkgd->h);
+    level->img_bkgd->draw_part(0, 0,screen->w - s ,0,s,level->img_bkgd->h);
+  }
   else
-    {
-      drawgradient(level->bkgd_top, level->bkgd_bottom);
-    }
+  {
+    drawgradient(level->bkgd_top, level->bkgd_bottom);
+  }
 
   /* Draw particle systems (background) */
   std::vector<ParticleSystem*>::iterator p;
   for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
-    {
-      (*p)->draw(scroll_x, 0, 0);
-    }
+  {
+    (*p)->draw(scroll_x, 0, 0);
+  }
+
+  int tile_scroll_x = static_cast<int>(scroll_x) >> 5; // Divide by 32
+  float sub_tile_scroll_x = fmodf(scroll_x, 32.0f);
+  int current_width = level->width;
 
   /* Draw background: */
   for (y = 0; y < 15; ++y)
+  {
+    for (x = 0; x < 21; ++x)
     {
-      for (x = 0; x < 21; ++x)
-        {
-          Tile::draw(32*x - fmodf(scroll_x, 32), y * 32,
-                     level->bg_tiles[(int)y][(int)x + (int)(scroll_x / 32)]);
-        }
+      int tile_x = x + tile_scroll_x;
+      if (tile_x < current_width)
+      {
+        Tile::draw(32 * x - sub_tile_scroll_x, y * 32,
+                   level->bg_tiles[y * current_width + tile_x]);
+      }
     }
+  }
 
   /* Draw interactive tiles: */
   for (y = 0; y < 15; ++y)
+  {
+    for (x = 0; x < 21; ++x)
     {
-      for (x = 0; x < 21; ++x)
-        {
-          Tile::draw(32*x - fmodf(scroll_x, 32), y * 32,
-                     level->ia_tiles[(int)y][(int)x + (int)(scroll_x / 32)]);
-        }
+      int tile_x = x + tile_scroll_x;
+      if (tile_x < current_width)
+      {
+        Tile::draw(32 * x - sub_tile_scroll_x, y * 32,
+                   level->ia_tiles[y * current_width + tile_x]);
+      }
     }
+  }
 
   /* (Bouncy bricks): */
   for (unsigned int i = 0; i < bouncy_bricks.size(); ++i)
+  {
     bouncy_bricks[i]->draw();
+  }
 
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+  {
     (*i)->draw();
+  }
 
   tux.draw();
 
   for (unsigned int i = 0; i < bullets.size(); ++i)
+  {
     bullets[i].draw();
+  }
 
   for (unsigned int i = 0; i < floating_scores.size(); ++i)
+  {
     floating_scores[i]->draw();
+  }
 
   for (unsigned int i = 0; i < upgrades.size(); ++i)
+  {
     upgrades[i].draw();
+  }
 
   for (unsigned int i = 0; i < bouncy_distros.size(); ++i)
+  {
     bouncy_distros[i]->draw();
+  }
 
   for (unsigned int i = 0; i < broken_bricks.size(); ++i)
+  {
     broken_bricks[i]->draw();
+  }
 
   /* Draw foreground: */
   for (y = 0; y < 15; ++y)
+  {
+    for (x = 0; x < 21; ++x)
     {
-      for (x = 0; x < 21; ++x)
-        {
-          Tile::draw(32*x - fmodf(scroll_x, 32), y * 32,
-                     level->fg_tiles[(int)y][(int)x + (int)(scroll_x / 32)]);
-        }
+      int tile_x = x + tile_scroll_x;
+      if (tile_x < current_width)
+      {
+        Tile::draw(32 * x - sub_tile_scroll_x, y * 32,
+                   level->fg_tiles[y * current_width + tile_x]);
+      }
     }
+  }
 
   /* Draw particle systems (foreground) */
   for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
-    {
-      (*p)->draw(scroll_x, 0, 1);
-    }
+  {
+    (*p)->draw(scroll_x, 0, 1);
+  }
 }
 
 void
@@ -664,7 +693,7 @@ World::add_bullet(float x, float y, float xm, Direction dir)
   Bullet new_bullet;
   new_bullet.init(x,y,xm,dir);
   bullets.push_back(new_bullet);
-  
+
   play_sound(sounds[SND_SHOOT], SOUND_CENTER_SPEAKER);
 }
 

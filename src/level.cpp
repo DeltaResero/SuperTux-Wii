@@ -313,30 +313,10 @@ void Level::init_defaults()
   bkgd_bottom.green = 255;
   bkgd_bottom.blue = 255;
 
-  for (int i = 0; i < 15; ++i)
-  {
-    ia_tiles[i].resize(width + 1, 0);
-    ia_tiles[i][width] = '\0';
-
-    for (int y = 0; y < width; ++y)
-    {
-      ia_tiles[i][y] = 0;
-    }
-
-    bg_tiles[i].resize(width + 1, 0);
-    bg_tiles[i][width] = '\0';
-    for (int y = 0; y < width; ++y)
-    {
-      bg_tiles[i][y] = 0;
-    }
-
-    fg_tiles[i].resize(width + 1, 0);
-    fg_tiles[i][width] = '\0';
-    for (int y = 0; y < width; ++y)
-    {
-      fg_tiles[i][y] = 0;
-    }
-  }
+  const int total_tiles = width * 15;
+  ia_tiles.assign(total_tiles, 0);
+  bg_tiles.assign(total_tiles, 0);
+  fg_tiles.assign(total_tiles, 0);
 }
 
 /**
@@ -393,6 +373,12 @@ int Level::load(const std::string& filename)
     {
       st_abort("No width specified for level.", "");
     }
+
+    // Reserve memory now that we know the width, preventing reallocations
+    const int total_tiles = width * 15;
+    ia_tm.reserve(total_tiles);
+    bg_tm.reserve(total_tiles);
+    fg_tm.reserve(total_tiles);
     if (!reader.read_int("start_pos_x", &start_pos_x)) start_pos_x = 100;
     if (!reader.read_int("start_pos_y", &start_pos_y)) start_pos_y = 170;
     time_left = 500;
@@ -556,27 +542,23 @@ int Level::load(const std::string& filename)
     }
   }
 
-  for (int i = 0; i < 15; ++i)
-  {
-    ia_tiles[i].resize(width + 1, 0);
-    bg_tiles[i].resize(width + 1, 0);
-    fg_tiles[i].resize(width + 1, 0);
-  }
+  // Set the final size for our member vectors
+  const int total_tiles = width * 15;
+  ia_tiles.resize(total_tiles);
+  bg_tiles.resize(total_tiles);
+  fg_tiles.resize(total_tiles);
 
   // Place interactive tiles
   int i = 0;
   int j = 0;
-  for (auto& tile : ia_tm)
+  for (const auto& tile : ia_tm)
   {
-    if (j >= 15)
-    {
-      std::cerr << "Warning: Level higher than 15 interactive tiles."
-                   "Ignoring by cutting tiles.\n"
-                   "The level might not be finishable anymore!\n";
+    if (j >= 15) {
+      std::cerr << "Warning: Level higher than 15 interactive tiles. Ignoring.\n";
       break;
     }
 
-    ia_tiles[j][i] = tile;
+    ia_tiles[j * width + i] = tile;
 
     switch (tile)
     {
@@ -623,7 +605,7 @@ int Level::load(const std::string& filename)
       break;
     }
 
-    bg_tiles[j][i] = tile;
+    bg_tiles[j * width + i] = tile;
     ++i;
     if (i >= width)
     {
@@ -643,7 +625,7 @@ int Level::load(const std::string& filename)
       break;
     }
 
-    fg_tiles[j][i] = tile;
+    fg_tiles[j * width + i] = tile;
     ++i;
     if (i >= width)
     {
@@ -664,7 +646,10 @@ void Level::reload_bricks_and_coins()
 {
   for (auto& tile_info : original_tiles)
   {
-    ia_tiles[tile_info.y][tile_info.x] = tile_info.tile;
+    if (tile_info.y >= 0 && tile_info.y < 15 && tile_info.x >= 0 && tile_info.x < width)
+    {
+      ia_tiles[tile_info.y * width + tile_info.x] = tile_info.tile;
+    }
   }
 }
 
@@ -694,7 +679,6 @@ void Level::save(const std::string& subset, int level)
   // Write header:
   fprintf(fi, ";SuperTux-Level\n");
   fprintf(fi, "(supertux-level\n");
-
   fprintf(fi, "  (version %d)\n", 1);
   fprintf(fi, "  (name \"%s\")\n", name.c_str());
   fprintf(fi, "  (author \"%s\")\n", author.c_str());
@@ -710,6 +694,7 @@ void Level::save(const std::string& subset, int level)
   fprintf(fi, "  (bkgd_blue_bottom %d)\n", bkgd_bottom.blue);
   fprintf(fi, "  (time %d)\n", time_left);
   fprintf(fi, "  (width %d)\n", width);
+
   if (back_scrolling)
   {
     fprintf(fi, "  (back_scrolling #t)\n");
@@ -718,40 +703,38 @@ void Level::save(const std::string& subset, int level)
   {
     fprintf(fi, "  (back_scrolling #f)\n");
   }
+
   fprintf(fi, "  (hor_autoscroll_speed %2.1f)\n", hor_autoscroll_speed);
   fprintf(fi, "  (gravity %2.1f)\n", gravity);
+
   fprintf(fi, "  (background-tm ");
-
   for (int y = 0; y < 15; ++y)
   {
-    for (int i = 0; i < width; ++i)
+    for (int x = 0; x < width; ++x)
     {
-      fprintf(fi, " %d ", bg_tiles[y][i]);
+      fprintf(fi, " %d ", bg_tiles[y * width + x]);
     }
   }
-
   fprintf(fi, ")\n");
+
   fprintf(fi, "  (interactive-tm ");
-
   for (int y = 0; y < 15; ++y)
   {
-    for (int i = 0; i < width; ++i)
+    for (int x = 0; x < width; ++x)
     {
-      fprintf(fi, " %d ", ia_tiles[y][i]);
+      fprintf(fi, " %d ", ia_tiles[y * width + x]);
     }
   }
-
   fprintf(fi, ")\n");
-  fprintf(fi, "  (foreground-tm ");
 
+  fprintf(fi, "  (foreground-tm ");
   for (int y = 0; y < 15; ++y)
   {
-    for (int i = 0; i < width; ++i)
+    for (int x = 0; x < width; ++x)
     {
-      fprintf(fi, " %d ", fg_tiles[y][i]);
+      fprintf(fi, " %d ", fg_tiles[y * width + x]);
     }
   }
-
   fprintf(fi, ")\n");
 
   fprintf(fi, "(reset-points\n");
@@ -773,9 +756,7 @@ void Level::save(const std::string& subset, int level)
   }
 
   fprintf(fi, ")\n");
-
   fprintf(fi, ")\n");
-
   fclose(fi);
 }
 
@@ -785,12 +766,9 @@ void Level::save(const std::string& subset, int level)
  */
 void Level::cleanup()
 {
-  for (int i = 0; i < 15; ++i)
-  {
-    bg_tiles[i].clear();
-    ia_tiles[i].clear();
-    fg_tiles[i].clear();
-  }
+  bg_tiles.clear();
+  ia_tiles.clear();
+  fg_tiles.clear();
 
   original_tiles.clear();
   reset_points.clear();
@@ -851,13 +829,28 @@ void Level::change_size(int new_width)
   {
     new_width = 21;
   }
-
-  for (int y = 0; y < 15; ++y)
+  if (new_width == width)
   {
-    ia_tiles[y].resize(new_width, 0);
-    bg_tiles[y].resize(new_width, 0);
-    fg_tiles[y].resize(new_width, 0);
+    return;
   }
+
+  std::vector<unsigned int> new_ia_tiles(new_width * 15, 0);
+  std::vector<unsigned int> new_bg_tiles(new_width * 15, 0);
+  std::vector<unsigned int> new_fg_tiles(new_width * 15, 0);
+
+  int min_width = (new_width < width) ? new_width : width;
+
+  for (int y = 0; y < 15; ++y) {
+    for (int x = 0; x < min_width; ++x) {
+      new_ia_tiles[y * new_width + x] = ia_tiles[y * width + x];
+      new_bg_tiles[y * new_width + x] = bg_tiles[y * width + x];
+      new_fg_tiles[y * new_width + x] = fg_tiles[y * width + x];
+    }
+  }
+
+  ia_tiles.swap(new_ia_tiles);
+  bg_tiles.swap(new_bg_tiles);
+  fg_tiles.swap(new_fg_tiles);
 
   width = new_width;
 }
@@ -871,21 +864,22 @@ void Level::change_size(int new_width)
  */
 void Level::change(float x, float y, int tm, unsigned int c)
 {
-  int yy = static_cast<int>(y) / 32;
-  int xx = static_cast<int>(x) / 32;
+  int yy = static_cast<int>(y) >> 5;  // Divide by 32
+  int xx = static_cast<int>(x) >> 5;  // Divide by 32
 
-  if (yy >= 0 && yy < 15 && xx >= 0 && xx <= width)
+  if (yy >= 0 && yy < 15 && xx >= 0 && xx < width)
   {
+    int index = yy * width + xx;
     switch (tm)
     {
       case TM_BG:
-        bg_tiles[yy][xx] = c;
+        bg_tiles[index] = c;
         break;
       case TM_IA:
-        ia_tiles[yy][xx] = c;
+        ia_tiles[index] = c;
         break;
       case TM_FG:
-        fg_tiles[yy][xx] = c;
+        fg_tiles[index] = c;
         break;
     }
   }
@@ -949,17 +943,15 @@ MusicRef Level::get_level_music_fast() const
  */
 unsigned int Level::gettileid(float x, float y) const
 {
-  int xx = static_cast<int>(x) / 32;
-  int yy = static_cast<int>(y) / 32;
+  int xx = static_cast<int>(x) >> 5; // Divide by 32
+  int yy = static_cast<int>(y) >> 5; // Divide by 32
 
-  if (yy >= 0 && yy < 15 && xx >= 0 && xx <= width)
+  if (yy >= 0 && yy < 15 && xx >= 0 && xx < width)
   {
-    return ia_tiles[yy][xx];
+    return ia_tiles[yy * width + xx];
   }
-  else
-  {
-    return 0;
-  }
+
+  return 0;
 }
 
 /**
@@ -970,12 +962,11 @@ unsigned int Level::gettileid(float x, float y) const
  */
 unsigned int Level::get_tile_at(int x, int y) const
 {
-  if (x < 0 || x > width || y < 0 || y > 14)
+  if (x < 0 || x >= width || y < 0 || y > 14)
   {
     return 0;
   }
-
-  return ia_tiles[y][x];
+  return ia_tiles[y * width + x];
 }
 
 // EOF
