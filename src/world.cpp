@@ -78,8 +78,7 @@ World::World(const std::string& subset, int level_nr)
   scrolling_timer.init(true);
 }
 
-void
-World::apply_bonuses()
+void World::apply_bonuses()
 {
   // Apply bonuses from former levels
   switch (player_status.bonus)
@@ -148,8 +147,7 @@ void World::deactivate_world()
   upgrades.clear();
 }
 
-void
-World::set_defaults()
+void World::set_defaults()
 {
   // Set defaults:
   scroll_x = 0;
@@ -163,8 +161,7 @@ World::set_defaults()
   currentmusic = LEVEL_MUSIC;
 }
 
-void
-World::activate_bad_guys()
+void World::activate_bad_guys()
 {
   for (std::vector<BadGuyData>::iterator i = level->badguy_data.begin();
        i != level->badguy_data.end();
@@ -177,8 +174,7 @@ World::activate_bad_guys()
     }
 }
 
-void
-World::activate_particle_systems()
+void World::activate_particle_systems()
 {
   if (level->particle_system == "clouds")
     {
@@ -308,8 +304,7 @@ void World::draw()
   }
 }
 
-void
-World::action(float elapsed_time)
+void World::action(float elapsed_time)
 {
   tux.action(elapsed_time);
   tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
@@ -468,8 +463,7 @@ void World::scrolling(float elapsed_time)
     scroll_x = level->width * 32 - screen->w;
 }
 
-void
-World::collision_handler()
+void World::collision_handler()
 {
   /* --- COLLISION CULLING SETUP --- */
   // To improve performance, we define an "active" area based on the screen's
@@ -624,8 +618,7 @@ World::collision_handler()
   }
 }
 
-void
-World::add_score(float x, float y, int s)
+void World::add_score(float x, float y, int s)
 {
   player_status.score += s;
 
@@ -634,16 +627,14 @@ World::add_score(float x, float y, int s)
   floating_scores.push_back(new_floating_score);
 }
 
-void
-World::add_bouncy_distro(float x, float y)
+void World::add_bouncy_distro(float x, float y)
 {
   BouncyDistro* new_bouncy_distro = new BouncyDistro();
   new_bouncy_distro->init(x,y);
   bouncy_distros.push_back(new_bouncy_distro);
 }
 
-void
-World::add_broken_brick(Tile* tile, float x, float y)
+void World::add_broken_brick(Tile* tile, float x, float y)
 {
   add_broken_brick_piece(tile, x, y, -1, -4);
   add_broken_brick_piece(tile, x, y + 16, -1.5, -3);
@@ -652,16 +643,14 @@ World::add_broken_brick(Tile* tile, float x, float y)
   add_broken_brick_piece(tile, x + 16, y + 16, 1.5, -3);
 }
 
-void
-World::add_broken_brick_piece(Tile* tile, float x, float y, float xm, float ym)
+void World::add_broken_brick_piece(Tile* tile, float x, float y, float xm, float ym)
 {
   BrokenBrick* new_broken_brick = new BrokenBrick();
   new_broken_brick->init(tile, x, y, xm, ym);
   broken_bricks.push_back(new_broken_brick);
 }
 
-void
-World::add_bouncy_brick(float x, float y)
+void World::add_bouncy_brick(float x, float y)
 {
   BouncyBrick* new_bouncy_brick = new BouncyBrick();
   new_bouncy_brick->init(x,y);
@@ -676,16 +665,14 @@ World::add_bad_guy(float x, float y, BadGuyKind kind, bool stay_on_platform)
   return badguy;
 }
 
-void
-World::add_upgrade(float x, float y, Direction dir, UpgradeKind kind)
+void World::add_upgrade(float x, float y, Direction dir, UpgradeKind kind)
 {
   Upgrade new_upgrade;
   new_upgrade.init(x,y,dir,kind);
   upgrades.push_back(new_upgrade);
 }
 
-void
-World::add_bullet(float x, float y, float xm, Direction dir)
+void World::add_bullet(float x, float y, float xm, Direction dir)
 {
   if(bullets.size() > MAX_BULLETS-1)
     return;
@@ -697,8 +684,7 @@ World::add_bullet(float x, float y, float xm, Direction dir)
   play_sound(sounds[SND_SHOOT], SOUND_CENTER_SPEAKER);
 }
 
-void
-World::play_music(int musictype)
+void World::play_music(int musictype)
 {
   currentmusic = musictype;
   switch(currentmusic) {
@@ -717,15 +703,13 @@ World::play_music(int musictype)
   }
 }
 
-int
-World::get_music_type()
+int World::get_music_type()
 {
   return currentmusic;
 }
 
 /* Break a brick: */
-void
-World::trybreakbrick(float x, float y, bool small, Direction col_side)
+void World::trybreakbrick(float x, float y, bool small, Direction col_side)
 {
   Level* plevel = get_level();
 
@@ -779,8 +763,7 @@ World::trybreakbrick(float x, float y, bool small, Direction col_side)
 }
 
 /* Empty a box: */
-void
-World::tryemptybox(float x, float y, Direction col_side)
+void World::tryemptybox(float x, float y, Direction col_side)
 {
   Tile* tile = gettile(x,y);
   if (!tile->fullbox)
@@ -827,8 +810,7 @@ World::tryemptybox(float x, float y, Direction col_side)
 }
 
 /* Try to grab a distro: */
-void
-World::trygrabdistro(float x, float y, int bounciness)
+void World::trygrabdistro(float x, float y, int bounciness)
 {
   Tile* tile = gettile(x, y);
   if (tile && tile->distro)
@@ -848,8 +830,7 @@ World::trygrabdistro(float x, float y, int bounciness)
 }
 
 /* Try to bump a bad guy from below: */
-void
-World::trybumpbadguy(float x, float y)
+void World::trybumpbadguy(float x, float y)
 {
   // Bad guys:
   for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)

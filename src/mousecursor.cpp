@@ -29,14 +29,25 @@ MouseCursor* MouseCursor::current_ = nullptr;  // Initialize static member to nu
  * Loads the cursor image and initializes its state and position.
  */
 MouseCursor::MouseCursor(std::string cursor_file, int frames)
-  : mid_x(0), mid_y(0), cur_state(MC_NORMAL), cur_frame(0), tot_frames(frames)
+  : mid_x(0), mid_y(0), cur_state(MC_NORMAL), cur_frame(0), tot_frames(frames),
+    frame_w(0), frame_h(0)  // Initialize cached dimensions
 {
   cursor = new Surface(cursor_file, USE_ALPHA);
-  if (!cursor) {
-    // Uncomment for debugging during development:
-    // printf("Failed to load cursor image: %s\n", cursor_file.c_str());
+  if (!cursor)
+  {
+#ifdef DEBUG
+    printf("Failed to load cursor image: %s\n", cursor_file.c_str());
+#endif
     return;
   }
+
+  // Calculate and cache the dimensions of a single animation frame
+  // Avoids doing this division on every draw() call
+  if (tot_frames > 0)
+  {
+    frame_w = cursor->w / tot_frames;
+  }
+  frame_h = cursor->h / MC_STATES_NB;
 
   timer.init(false);  // Initialize the timer without starting it
   timer.start(MC_FRAME_PERIOD);  // Start the timer with the frame period
@@ -92,12 +103,11 @@ void MouseCursor::set_mid(int x, int y)
  */
 void MouseCursor::draw()
 {
-  int x, y, w, h;
+  int x, y;
   Uint8 ispressed = SDL_GetMouseState(&x, &y);  // Get the mouse position and button state
 
-  // Calculate the width and height of the cursor frame
-  w = cursor->w / tot_frames;
-  h = cursor->h / MC_STATES_NB;
+  // Note: The width and height of the cursor frame ('frame_w', 'frame_h') are now
+  // pre-calculated and cached in the constructor, so we don't recalculate them here.
 
   // Check if any mouse button is pressed
   if(ispressed & SDL_BUTTON(1) || ispressed & SDL_BUTTON(2))
@@ -111,7 +121,9 @@ void MouseCursor::draw()
   else
   {
     if(cur_state == MC_CLICK)
+    {
       cur_state = state_before_click;  // Revert to the previous state if no buttons are pressed
+    }
   }
 
   // Update the current frame based on the timer
@@ -119,13 +131,15 @@ void MouseCursor::draw()
   {
     cur_frame++;
     if(cur_frame >= tot_frames)
+    {
       cur_frame = 0;
+    }
 
     timer.start(MC_FRAME_PERIOD);  // Restart the timer for the next frame
   }
 
-  // Draw the appropriate part of the cursor based on the current state and frame
-  cursor->draw_part(w * cur_frame, h * cur_state, x - mid_x, y - mid_y, w, h);
+  // Draw the appropriate part of the cursor using the cached frame dimensions.
+  cursor->draw_part(frame_w * cur_frame, frame_h * cur_state, x - mid_x, y - mid_y, frame_w, frame_h);
 }
 
 // EOF

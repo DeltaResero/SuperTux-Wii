@@ -244,7 +244,7 @@ void check_contrib_menu()
     WorldMapNS::WorldMap worldmap;
     worldmap.loadmap(item.path); // 'item.path' is the filename, e.g., "bonusisland1.stwm"
 
-    // Prepare the save game path.\
+    // Prepare the save game path.
     std::string savegame = item.path;
     savegame = savegame.substr(0, savegame.size() - 5);
     savegame = (fs::path(st_save_dir) / (savegame + ".stsg")).string();

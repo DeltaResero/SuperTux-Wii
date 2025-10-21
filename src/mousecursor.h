@@ -55,6 +55,10 @@ private:
   int cur_frame, tot_frames;
   Surface* cursor;
   Timer timer;
+
+  // Cache frame dimensions to avoid recalculating every frame
+  int frame_w;
+  int frame_h;
 };
 
 #endif /*SUPERTUX_MOUSECURSOR_H*/
