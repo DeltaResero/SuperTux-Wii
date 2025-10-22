@@ -21,6 +21,10 @@
 #ifndef SUPERTUX_TIMER_H
 #define SUPERTUX_TIMER_H
 
+#include "SDL.h"
+#include <stdio.h>
+
+// Global variables used to track the total amount of time the game has been paused.
 extern Uint32 st_pause_ticks, st_pause_count;
 
 Uint32 st_get_ticks(void);
@@ -29,36 +33,46 @@ void st_pause_ticks_start(void);
 void st_pause_ticks_stop(void);
 bool st_pause_ticks_started(void);
 
+// A general-purpose timer for managing time-based events.
 class Timer
 {
- public:
+private:
+  // The duration of the timer in milliseconds.
   Uint32 period;
-  Uint32 time;
-  Uint32 (*get_ticks) (void);  
 
- public:
+  // The timestamp (in ticks) when the timer was started.
+  Uint32 time;
+
+  // If true, the timer will pause along with the game (using st_get_ticks).
+  // If false, it uses the raw SDL hardware timer and will not pause.
+  bool use_st_ticks;
+
+  // An inline helper function to get the current time from the correct source.
+  inline Uint32 get_current_ticks() const
+  {
+    return use_st_ticks ? st_get_ticks() : SDL_GetTicks();
+  }
+
+public:
   Timer();
 
   void init(bool st_ticks);
   void start(Uint32 period);
   void stop();
 
-  /*======================================================================
-    return: NO  = the timer is not started
-    or it is over
-    YES = otherwise
-    ======================================================================*/
-  int check();
-  int started();
+  // Returns true if the timer is active and has not yet expired.
+  bool check();
 
-  /*======================================================================
-    return: the time left (in millisecond)
-    note  : the returned value can be negative
-    ======================================================================*/
-  int get_left();
+  // Returns true if the timer has been started (even if expired).
+  bool started() const;
 
-  int  get_gone();
-  void fwrite(FILE* fi);
+  // Returns the time left in milliseconds (can be negative).
+  int get_left() const;
+
+  // Returns the elapsed time in milliseconds since the timer started.
+  int get_gone() const;
+
+  void fwrite(FILE* fi) const;
   void fread(FILE* fi);
 };
 
