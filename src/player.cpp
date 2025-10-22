@@ -229,21 +229,28 @@ void Player::action(double frame_ratio)
     // Handle gravity and landing logic
     if (!on_ground())
     {
+      // If we are in the air, gravity should be active.
       physic.enable_gravity(true);
       if (under_solid())
       {
-        physic.set_velocity_y(0); // Stop upward movement
-        jumped_in_solid = true; // Flag that we hit a ceiling
+        // If we hit a ceiling, stop all upward velocity.
+        physic.set_velocity_y(0);
+        jumped_in_solid = true; // Flag that we hit a ceiling this frame.
       }
     }
     else
     {
-      // Landed on the ground
+      // If the player was previously falling (negative y-velocity in our coordinate system)
+      // and is now on the ground, it means they have just landed.
       if (physic.get_velocity_y() < 0)
       {
-        base.y = (int)(((int)base.y / 32) * 32);
+        // Snap the player's FEET to the top of the tile grid to ensure they are perfectly aligned.
+        // This prevents jittering and falling through thin platforms.
+        base.y = (int)((base.y + base.height) / 32) * 32 - base.height;
         physic.set_velocity_y(0);
       }
+
+      // Since we are on the ground, gravity should be disabled to prevent accumulating downward velocity.
       physic.enable_gravity(false);
       player_status.score_multiplier = 1; // Reset score multiplier (for multi-hits)
     }
@@ -272,18 +279,7 @@ void Player::action(double frame_ratio)
         World::current()->tryemptybox(base.x + 31, base.y, LEFT);
       }
     }
-
     grabdistros();
-
-    if (jumped_in_solid)
-    {
-      ++base.y;
-      ++old_base.y;
-      if (on_ground())
-      {
-        jumping = false;
-      }
-    }
   }
 
   // Update timers
