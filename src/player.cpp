@@ -807,7 +807,9 @@ void Player::remove_powerups()
 }
 
 /**
- * Enforces level boundaries on the player.
+ * Enforces level boundaries on the player, preventing them from moving off-screen.
+ * This also handles the logic for killing the player if they fall out of the bottom
+ * of the level or get crushed by an auto-scrolling screen.
  * @param back_scrolling Whether the level allows scrolling backward.
  * @param hor_autoscroll Whether the level is auto-scrolling horizontally.
  */
@@ -817,21 +819,33 @@ void Player::check_bounds(bool back_scrolling, bool hor_autoscroll)
   if (base.x < 0)
   {
     base.x = 0;
+
+    // If we hit the level boundary, we must also stop all horizontal momentum.
+    // This makes the invisible wall feel solid and prevents physics glitches.
+    physic.set_velocity_x(0);
   }
 
-  // Kill Tux if he falls out of bounds vertically
+  // Kill Tux if he falls out of the bottom of the screen.
   if (base.y > screen->h)
   {
     kill(KILL);
   }
 
+  // Prevent Tux from moving past the left edge of the camera's view.
+  // This is the logic that stops the screen from scrolling backward in most levels.
   if (base.x < scroll_x && (!back_scrolling || hor_autoscroll))
   {
     base.x = scroll_x;
+
+    // Similar to the level edge, we must also stop momentum here to prevent
+    // clipping into blocks that might be at the very edge of the screen.
+    physic.set_velocity_x(0);
   }
 
+  // Special logic for auto-scrolling levels.
   if (hor_autoscroll)
   {
+    // Check if Tux is being crushed against a wall by the auto-scrolling camera.
     if (base.x == scroll_x)
     {
       if ((issolid(base.x + 32, base.y) || (size != SMALL && !duck && issolid(base.x + 32, base.y + 32))) && (dying == DYING_NOT))
@@ -840,9 +854,13 @@ void Player::check_bounds(bool back_scrolling, bool hor_autoscroll)
       }
     }
 
+    // Prevent Tux from moving past the right edge of the screen.
     if (base.x + base.width > scroll_x + screen->w)
     {
       base.x = scroll_x + screen->w - base.width;
+
+      // We must also stop momentum when hitting the right edge of the screen.
+      physic.set_velocity_x(0);
     }
   }
 }
