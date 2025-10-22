@@ -250,28 +250,33 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
 }
 
 /**
- * Handles the movement and actions of MrIceBlock bad guy.
- * This includes falling, horizontal movement, and interactions with the player.
- * @param frame_ratio The frame ratio used to adjust movement based on frame time.
+ * Handles the movement and actions of a Mr. Ice Block enemy.
+ * This includes its logic for being carried, kicked, sliding, and colliding.
+ * @param frame_ratio The time delta for the current frame, used for physics calculations.
  */
 void BadGuy::action_mriceblock(double frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
 
+  // Apply gravity and landing logic unless the block is being held by the player.
   if (mode != HELD)
+  {
     fall();
+  }
 
   /* Move left/right: */
   if (mode != HELD)
   {
-    // Move
+    // Apply physics to move the block based on its current velocity.
     physic.apply(frame_ratio, base.x, base.y);
     if (dying != DYING_FALLING)
+    {
       collision_swept_object_map(&old_base, &base);
+    }
   }
   else if (mode == HELD)
   {
-    // If we're holding the ice block
+    // When held, the block's position is locked relative to Tux.
     dir = tux.dir;
     if (dir == RIGHT)
     {
@@ -283,46 +288,84 @@ void BadGuy::action_mriceblock(double frame_ratio)
       base.x = tux.base.x - 16;
       base.y = tux.base.y + tux.base.height / 1.5f - base.height;
     }
+
+    // If the ideal held position is inside a wall, adjust it.
     if (collision_object_map(base))
     {
       base.x = tux.base.x;
       base.y = tux.base.y + tux.base.height / 1.5f - base.height;
     }
 
-    // SHOOT!
+    // Check if the player has released the fire button to kick the block.
     if (tux.input.fire != DOWN)
     {
+      // Nudge the block forward to prevent it from immediately colliding with Tux.
       if (dir == LEFT)
+      {
         base.x -= 24;
+      }
       else
+      {
         base.x += 24;
+      }
       old_base = base;
 
       mode = KICK;
       tux.kick_timer.start(KICKING_TIME);
       set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
-      physic.set_velocity_x((dir == LEFT) ? -3.5f : 3.5f);
+
+      // Set the initial sliding velocity.
+      float initial_velocity = (dir == LEFT) ? -3.5f : 3.5f;
+      physic.set_velocity_x(initial_velocity);
+
+      // Check for an immediate collision caused by spawning next to a wall.
+      // If we are already inside a solid tile, we must reverse direction instantly.
+      if (collision_object_map(base))
+      {
+        // Reverse direction and velocity.
+        dir = (dir == LEFT) ? RIGHT : LEFT;
+        physic.set_velocity_x(-initial_velocity);
+
+        // Nudge the block out of the wall to prevent it from getting stuck.
+        if (dir == LEFT)
+        {
+          base.x -= base.width;
+        }
+        else
+        {
+          base.x += base.width;
+        }
+      }
+      // Play a kick sound
       play_sound(sounds[SND_KICK], SOUND_CENTER_SPEAKER);
     }
   }
 
+  // If the badguy is not in a dying state, check for wall collisions.
   if (!dying)
   {
     int changed = dir;
-    check_horizontal_bump();
+    check_horizontal_bump(); // This handles bouncing off walls during movement.
     if (mode == KICK && changed != dir)
     {
-      // Handle stereo sound (number 10 should be tweaked...)
+      // Play a ricochet sound if the direction changed.
       if (base.x < scroll_x + screen->w / 2 - 10)
+      {
         play_sound(sounds[SND_RICOCHET], SOUND_LEFT_SPEAKER);
+      }
       else if (base.x > scroll_x + screen->w / 2 + 10)
+      {
         play_sound(sounds[SND_RICOCHET], SOUND_RIGHT_SPEAKER);
+      }
       else
+      {
         play_sound(sounds[SND_RICOCHET], SOUND_CENTER_SPEAKER);
+      }
     }
   }
 
-  // Handle mode timer:
+  // If the block is 'flattened' (from being stomped), it will eventually
+  // recover back to its normal walking state.
   if (mode == FLAT)
   {
     if (!timer.check())
