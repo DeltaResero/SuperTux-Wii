@@ -168,54 +168,45 @@ void Menu::set_current(Menu* menu)
 }
 #pragma endregion  // DialogAndMenuNavigation
 
+/**
+ * @brief Constructor for a MenuItem.
+ * Initializes all members to a default, safe state.
+ */
 MenuItem::MenuItem() :
 kind(MN_DEACTIVE),
 toggled(false),
 int_p(nullptr),
 id(-1),
 list_active_item(0),
-target_menu(nullptr),
-input_flickering(false)
+target_menu(nullptr)
 {
-  input_flickering_timer.init(true);
-  input_flickering_timer.start(FLICK_CURSOR_TIME);
+  // Initialization of members is handled in the initializer list
 }
 
+/**
+ * @brief Changes the main display text of the menu item
+ * @param text_ The new text to display
+ */
 void MenuItem::change_text(const std::string& text_)
 {
   text = text_;
 }
 
+/**
+ * @brief Changes the input/value text of the menu item
+ * Used for fields that display a configured value, like a keybinding
+ * @param text_ The new text to display
+ */
 void MenuItem::change_input(const std::string& text_)
 {
   input = text_;
 }
 
-std::string MenuItem::get_input_with_symbol(bool active_item)
-{
-  if (!active_item)
-  {
-    input_flickering = true;
-  }
-  else
-  {
-    if (input_flickering_timer.get_left() < 0)
-    {
-      input_flickering = !input_flickering;
-      input_flickering_timer.start(FLICK_CURSOR_TIME);
-    }
-  }
-
-  if (input_flickering)
-  {
-    return input + "_";
-  }
-  else
-  {
-    return input + " ";
-  }
-}
-
+/**
+ * @brief Converts the integer key code from a control field into a human-readable string
+ * This is used to display the name of the currently bound key (e.g., "Up cursor", "Space")
+ * @param item A pointer to the MN_CONTROLFIELD item to process
+ */
 void Menu::get_controlfield_key_into_input(MenuItem* item)
 {
   switch (*item->int_p)
@@ -240,7 +231,8 @@ void Menu::get_controlfield_key_into_input(MenuItem* item)
 
 /**
  * Destructor for the Menu class.
- * Frees all menu items and their associated resources.
+ * The use of std::vector for menu items ensures automatic cleanup,
+ * so this destructor is currently empty.
  */
 Menu::~Menu()
 {
@@ -248,14 +240,12 @@ Menu::~Menu()
 }
 
 /**
- * Constructs a Menu object and initializes its attributes.
+ * Constructs a Menu object and initializes its attributes to their default states
  */
 Menu::Menu()
 {
   hit_item = -1;
   menuaction = MENU_ACTION_NONE;
-  delete_character = 0;
-  mn_input_char = '\0';
   pos_x = screen->w / 2;
   pos_y = screen->h / 2;
   arrange_left = 0;
@@ -264,11 +254,11 @@ Menu::Menu()
 }
 
 /**
- * Sets the position of the menu on the screen.
- * @param x The x-coordinate for the menu's position.
- * @param y The y-coordinate for the menu's position.
- * @param rw Relative width factor.
- * @param rh Relative height factor.
+ * Sets the position of the menu on the screen
+ * @param x The x-coordinate for the menu's center
+ * @param y The y-coordinate for the menu's center
+ * @param rw Relative width factor for positioning
+ * @param rh Relative height factor for positioning
  */
 void Menu::set_pos(int x, int y, float rw, float rh)
 {
@@ -277,13 +267,13 @@ void Menu::set_pos(int x, int y, float rw, float rh)
 }
 
 /**
- * Adds a new item to the menu.
- * @param kind_ The type of menu item to add.
- * @param text_ The text to display for the item.
- * @param toggle_ Initial toggle state for toggle items.
- * @param menu_ Pointer to a target menu (used for MN_GOTO items).
- * @param id Unique ID for the menu item.
- * @param int_p Pointer to an integer (used for control fields).
+ * Adds a new item to the menu
+ * @param kind The type of menu item to add
+ * @param text The text to display for the item
+ * @param toggle Initial toggle state for toggle items
+ * @param menu Pointer to a target menu (used for MN_GOTO items)
+ * @param id Unique ID for the menu item
+ * @param int_p Pointer to an integer (used for control fields)
  */
 void Menu::additem(MenuItemKind kind, const std::string& text, int toggle, Menu* menu, int id, int* int_p)
 {
@@ -298,8 +288,8 @@ void Menu::additem(MenuItemKind kind, const std::string& text, int toggle, Menu*
 }
 
 /**
- * Adds a pre-existing menu item to the menu.
- * @param pmenu_item Pointer to the menu item to add.
+ * Adds a pre-existing menu item to the menu
+ * @param pmenu_item A MenuItem object to add
  */
 void Menu::additem(const MenuItem& pmenu_item)
 {
@@ -307,7 +297,7 @@ void Menu::additem(const MenuItem& pmenu_item)
 }
 
 /**
- * Clears all items from the menu.
+ * Clears all items from the menu, making it empty
  */
 void Menu::clear()
 {
@@ -315,8 +305,9 @@ void Menu::clear()
 }
 
 /**
- * Processes actions performed on the menu.
- * Handles user input and updates the menu state accordingly.
+ * Processes a pending menu action, such as navigation or selection.
+ * This function is called in the main loop to update the menu's state based on
+ * user input that was processed and queued by the event() function.
  */
 void Menu::action()
 {
@@ -360,8 +351,10 @@ void Menu::action()
       {
         case MN_GOTO:
           if (item[active_item].target_menu != nullptr)
+          {
             Menu::push_current(item[active_item].target_menu);
-        break;
+          }
+          break;
         case MN_TOGGLE:
           item[active_item].toggled = !item[active_item].toggled;
           break;
@@ -369,8 +362,8 @@ void Menu::action()
           Menu::set_current(nullptr);
           item[active_item].toggled = true;
           break;
-        case MN_TEXTFIELD:
-        case MN_NUMFIELD:
+        case MN_CONTROLFIELD:
+          // When a control field is 'hit', move to the next item automatically.
           menuaction = MENU_ACTION_DOWN;
           action();
           break;
@@ -385,44 +378,34 @@ void Menu::action()
       }
       break;
 
-        case MENU_ACTION_REMOVE:
-          if (item[active_item].kind == MN_TEXTFIELD || item[active_item].kind == MN_NUMFIELD)
-          {
-            if (!item[active_item].input.empty())
-            {
-              item[active_item].input.pop_back();
-            }
-          }
-          break;
-
-        case MENU_ACTION_INPUT:
-          if (item[active_item].kind == MN_TEXTFIELD || (item[active_item].kind == MN_NUMFIELD && mn_input_char >= '0' && mn_input_char <= '9'))
-          {
-            item[active_item].input += mn_input_char;
-          }
-          break;
-
         case MENU_ACTION_NONE:
           break;
   }
 
+  // Automatically skip over any non-interactive items during navigation.
   if (item[active_item].kind == MN_DEACTIVE || item[active_item].kind == MN_LABEL || item[active_item].kind == MN_HL)
   {
     if (menuaction != MENU_ACTION_UP && menuaction != MENU_ACTION_DOWN)
+    {
       menuaction = MENU_ACTION_DOWN;
+    }
 
     if (item.size() > 1)
+    {
       action();
+    }
   }
 
-  menuaction = MENU_ACTION_NONE;
+  menuaction = MENU_ACTION_NONE; // Reset for the next frame.
 
   if (active_item >= static_cast<int>(item.size()))
+  {
     active_item = item.size() - 1;
+  }
 }
 
 /**
- * Checks which menu item was hit.
+ * Checks which menu item was hit in the last action.
  * @return Returns the ID of the hit item, or -1 if no item was hit.
  */
 int Menu::check()
@@ -448,7 +431,8 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
   MenuItem& pitem = item[index];
   int font_width = 16;
   int effect_offset = 0;
-  if (effect.check()) {
+  if (effect.check())
+  {
     int effect_time = effect.get_left() / 4;
     effect_offset = (index % 2) ? effect_time : -effect_time;
   }
@@ -461,12 +445,14 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
   int input_width = (pitem.input.length() + 1) * font_width;
 
   std::string active_list_item;
-  if (pitem.kind == MN_STRINGSELECT && !pitem.list.empty()) {
+  if (pitem.kind == MN_STRINGSELECT && !pitem.list.empty())
+  {
     active_list_item = pitem.list[pitem.list_active_item];
   }
   int list_width = active_list_item.length() * font_width;
 
-  if (arrange_left) {
+  if (arrange_left)
+  {
     x_pos += 24 - menu_width / 2 + (text_width + input_width + list_width) / 2;
   }
 
@@ -488,8 +474,6 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
       white_big_text->draw_align(pitem.text.c_str(), x_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
       break;
     }
-    case MN_TEXTFIELD:
-    case MN_NUMFIELD:
     case MN_CONTROLFIELD:
     {
       int input_pos = input_width / 2;
@@ -497,13 +481,11 @@ void Menu::draw_item(int index, int menu_width, int menu_height)
       fillrect(x_pos - input_pos + text_pos - 1, y_pos - 10, input_width + font_width + 2, 20, 255, 255, 255, 255);
       fillrect(x_pos - input_pos + text_pos, y_pos - 9, input_width + font_width, 18, 0, 0, 0, 128);
 
-      if (pitem.kind == MN_CONTROLFIELD)
-      {
-        get_controlfield_key_into_input(&pitem);
-      }
-      std::string display_input = (pitem.kind == MN_TEXTFIELD || pitem.kind == MN_NUMFIELD) ?
-      pitem.get_input_with_symbol(active_item == index) : pitem.input;
-      gold_text->draw_align(display_input.c_str(), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
+      // Get the human-readable name for the currently bound key.
+      get_controlfield_key_into_input(&pitem);
+
+      // Draw the label text and the key name text.
+      gold_text->draw_align(pitem.input.c_str(), x_pos + text_pos, y_pos, A_HMIDDLE, A_VMIDDLE, 2);
       text_font->draw_align(pitem.text.c_str(), x_pos - (input_width + font_width) / 2, y_pos, A_HMIDDLE, A_VMIDDLE, shadow_size);
       break;
     }
@@ -549,7 +531,8 @@ int Menu::get_width() const
   for (const auto& current_item : item)
   {
     std::string active_list_item;
-    if (current_item.kind == MN_STRINGSELECT && !current_item.list.empty()) {
+    if (current_item.kind == MN_STRINGSELECT && !current_item.list.empty())
+    {
       active_list_item = current_item.list[current_item.list_active_item];
     }
 
@@ -642,7 +625,6 @@ bool Menu::isToggled(int id)
 void Menu::event(SDL_Event& event)
 {
   SDLKey key;
-  char ch[2] = {0}; // Initialize ch to zero
   int x, y;
 
   switch (event.type)
@@ -650,18 +632,7 @@ void Menu::event(SDL_Event& event)
     case SDL_KEYDOWN:
       key = event.key.keysym.sym;
 
-      /* If the current Unicode character is an ASCII character,
-         assign it to ch. */
-      if ((event.key.keysym.unicode & 0xFF80) == 0)
-      {
-        ch[0] = event.key.keysym.unicode & 0x7F;
-        ch[1] = '\0';
-      }
-      else
-      {
-        // An International Character - ch should be handled accordingly
-      }
-
+      // Special handling for control fields, which are actively waiting for a key press.
       if (item[active_item].kind == MN_CONTROLFIELD)
       {
         if (key == SDLK_ESCAPE)
@@ -669,6 +640,7 @@ void Menu::event(SDL_Event& event)
           Menu::pop_current();
           return;
         }
+        // Capture the pressed key, store it, and move to the next item.
         *item[active_item].int_p = key;
         menuaction = MENU_ACTION_DOWN;
         return;
@@ -689,91 +661,72 @@ void Menu::event(SDL_Event& event)
           menuaction = MENU_ACTION_RIGHT;
           break;
         case SDLK_SPACE:
-          if (item[active_item].kind == MN_TEXTFIELD)
-          {
-            menuaction = MENU_ACTION_INPUT;
-            mn_input_char = ' ';
-            break;
-          }
         case SDLK_RETURN:    /* Menu Hit */
           menuaction = MENU_ACTION_HIT;
-          break;
-        case SDLK_DELETE:
-        case SDLK_BACKSPACE:
-          menuaction = MENU_ACTION_REMOVE;
-          delete_character++;
           break;
         case SDLK_ESCAPE:
           Menu::pop_current();
           break;
         default:
-          if ((key >= SDLK_0 && key <= SDLK_9) || (key >= SDLK_a && key <= SDLK_z) || (key >= SDLK_SPACE && key <= SDLK_SLASH))
-          {
-            menuaction = MENU_ACTION_INPUT;
-            mn_input_char = *ch;
-          }
-          else
-          {
-            mn_input_char = '\0';
-          }
+          // Other keys are ignored in the menu.
           break;
       }
       break;
 
-    case SDL_JOYHATMOTION:
-      if (event.jhat.value == SDL_HAT_UP)
-      {
-        menuaction = MENU_ACTION_UP;
-      }
-      if (event.jhat.value == SDL_HAT_DOWN)
-      {
-        menuaction = MENU_ACTION_DOWN;
-      }
-      break;
+        case SDL_JOYHATMOTION:
+          if (event.jhat.value == SDL_HAT_UP)
+          {
+            menuaction = MENU_ACTION_UP;
+          }
+          if (event.jhat.value == SDL_HAT_DOWN)
+          {
+            menuaction = MENU_ACTION_DOWN;
+          }
+          break;
 
-    case SDL_JOYAXISMOTION:
-      if (event.jaxis.axis == joystick_keymap.y_axis)
-      {
-        if (event.jaxis.value > 1024)
-        {
-          menuaction = MENU_ACTION_DOWN;
-        }
-        else if (event.jaxis.value < -1024)
-        {
-          menuaction = MENU_ACTION_UP;
-        }
-      }
-      break;
+        case SDL_JOYAXISMOTION:
+          if (event.jaxis.axis == joystick_keymap.y_axis)
+          {
+            if (event.jaxis.value > 1024)
+            {
+              menuaction = MENU_ACTION_DOWN;
+            }
+            else if (event.jaxis.value < -1024)
+            {
+              menuaction = MENU_ACTION_UP;
+            }
+          }
+          break;
 
-    case SDL_JOYBUTTONDOWN:
-      menuaction = MENU_ACTION_HIT;
-      break;
+        case SDL_JOYBUTTONDOWN:
+          menuaction = MENU_ACTION_HIT;
+          break;
 
-    case SDL_MOUSEBUTTONDOWN:
-      x = event.motion.x;
-      y = event.motion.y;
-      if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
-      {
-        menuaction = MENU_ACTION_HIT;
-      }
-      break;
+        case SDL_MOUSEBUTTONDOWN:
+          x = event.motion.x;
+          y = event.motion.y;
+          if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+          {
+            menuaction = MENU_ACTION_HIT;
+          }
+          break;
 
-    case SDL_MOUSEMOTION:
-      x = event.motion.x;
-      y = event.motion.y;
-      if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
-      {
-        active_item = (y - (pos_y - get_height() / 2)) / 24;
-        mouse_cursor->set_state(MC_LINK);
-      }
-      else
-      {
-        mouse_cursor->set_state(MC_NORMAL);
-      }
-      break;
+        case SDL_MOUSEMOTION:
+          x = event.motion.x;
+          y = event.motion.y;
+          if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+          {
+            active_item = (y - (pos_y - get_height() / 2)) / 24;
+            mouse_cursor->set_state(MC_LINK);
+          }
+          else
+          {
+            mouse_cursor->set_state(MC_NORMAL);
+          }
+          break;
 
-    default:
-      break;
+        default:
+          break;
   }
 }
 

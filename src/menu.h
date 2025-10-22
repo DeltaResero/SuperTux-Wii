@@ -30,15 +30,17 @@
 
 /* IDs for menus */
 #pragma region MenuIDs
-enum MainMenuIDs {
+enum MainMenuIDs
+{
   MNID_STARTGAME,
   MNID_CONTRIB,
   MNID_OPTIONMENU,
   MNID_CREDITS,
   MNID_QUITMAINMENU
-  };
+};
 
-enum OptionsMenuIDs {
+enum OptionsMenuIDs
+{
   MNID_OPENGL,
   MNID_FULLSCREEN,
   MNID_SOUND,
@@ -46,97 +48,111 @@ enum OptionsMenuIDs {
   MNID_SHOWFPS,
   MNID_SHOWMOUSE,
   MNID_TV_OVERSCAN
-  };
+};
 
-enum GameMenuIDs {
+enum GameMenuIDs
+{
   MNID_CONTINUE,
   MNID_ABORTLEVEL
-  };
+};
 
-enum WorldMapMenuIDs {
+enum WorldMapMenuIDs
+{
   MNID_RETURNWORLDMAP,
   MNID_QUITWORLDMAP
-  };
+};
 #pragma endregion
 
 bool confirm_dialog(std::string text);
 
-/* Kinds of menu items */
-enum MenuItemKind {
-  MN_ACTION,
-  MN_GOTO,
-  MN_TOGGLE,
-  MN_BACKSAVE,
-  MN_BACK,
-  MN_DEACTIVE,
-  MN_TEXTFIELD,
-  MN_NUMFIELD,
-  MN_CONTROLFIELD,
-  MN_STRINGSELECT,
-  MN_LABEL,
-  MN_HL, /* horizontal line */
+/**
+ * @brief Defines the different types of items that can exist in a menu.
+ * Each kind determines the item's appearance and behavior.
+ */
+enum MenuItemKind
+{
+  MN_ACTION,          // A standard, clickable action item.
+  MN_GOTO,            // An item that navigates to another menu.
+  MN_TOGGLE,          // An option that can be toggled on or off (e.g., a checkbox).
+  MN_BACKSAVE,        // A "Back" button that also saves settings.
+  MN_BACK,            // A standard "Back" button to return to the previous menu.
+  MN_DEACTIVE,        // A grayed-out, non-interactive item.
+  MN_CONTROLFIELD,    // A special field used for capturing a keybinding.
+  MN_STRINGSELECT,    // An item that allows cycling through a list of strings.
+  MN_LABEL,           // A simple, non-interactive text label (usually for titles).
+  MN_HL,              // A decorative horizontal line for separating items.
 };
 
 class Menu;
 
+/**
+ * @brief Represents a single item within a Menu.
+ * Contains all properties needed to display and interact with the item,
+ * such as its text, type, and current state.
+ */
 class MenuItem
 {
 public:
   MenuItemKind kind;
-  bool toggled; // Use bool instead of int for clarity
-  std::string text;  // Replaced char* with std::string
-  std::string input; // Replaced char* with std::string
-  int* int_p;   // used for setting keys
-  int id;       // item id
-  StringList list; // Replaced string_list_type* with our modern StringList
-  int list_active_item; // To track the selected item in the list
+  bool toggled;
+  std::string text;
+  std::string input;
+  int* int_p;
+  int id;
+  StringList list;
+  int list_active_item;
   Menu* target_menu;
 
-  MenuItem(); // Add a constructor for proper initialization
+  MenuItem();
 
   void change_text (const std::string& text_);
   void change_input(const std::string& text_);
-
-  // No longer a static factory returning a pointer. We will construct objects directly.
-  std::string get_input_with_symbol(bool active_item);
-
-private:
-  bool input_flickering;
-  Timer input_flickering_timer;
 };
 
+/**
+ * @brief Manages a collection of menu items, handling user input,
+ * navigation, and rendering for a complete menu screen.
+ */
 class Menu
 {
 private:
+  /**
+   * @brief Stores the history of opened menus to handle "Back" functionality.
+   */
   static std::vector<Menu*> last_menus;
+
+  /**
+   * @brief A pointer to the currently active and visible menu.
+   */
   static Menu* current_;
 
 private:
-  enum MenuAction {
-    MENU_ACTION_NONE = -1,
-    MENU_ACTION_UP,
-    MENU_ACTION_DOWN,
-    MENU_ACTION_LEFT,
-    MENU_ACTION_RIGHT,
-    MENU_ACTION_HIT,
-    MENU_ACTION_INPUT,
-    MENU_ACTION_REMOVE
+  /**
+   * @brief Defines the internal actions the user can perform on a menu,
+   * typically translated from raw keyboard or joystick input events.
+   */
+  enum MenuAction
+  {
+    MENU_ACTION_NONE = -1,  // No action is currently pending.
+    MENU_ACTION_UP,         // User navigated up.
+    MENU_ACTION_DOWN,       // User navigated down.
+    MENU_ACTION_LEFT,       // User navigated left (e.g., in a string select).
+    MENU_ACTION_RIGHT,      // User navigated right.
+    MENU_ACTION_HIT,        // User selected/activated the current item.
   };
 
-  /** Number of the item that got 'hit' (ie. pressed) in the last
-      event()/action() call, -1 if none */
+  /**
+   * @brief The index of the menu item that was 'hit' (e.g., clicked or selected with Enter)
+   * in the most recent call to action(). It is -1 if no item was hit.
+   */
   int hit_item;
 
-  // position of the menu (ie. center of the menu, not top/left)
+  // Position of the menu (center of the menu, not top/left).
   int pos_x;
   int pos_y;
 
-  /** input event for the menu (up, down, left, right, etc.) */
+  /** @brief The input event to be processed in the next call to action(). */
   MenuAction menuaction;
-
-  /* input implementation variables */
-  int delete_character;
-  char mn_input_char;
 
   void draw_item(int index, int menu_width, int menu_height);
   void get_controlfield_key_into_input(MenuItem* item);
@@ -146,7 +162,10 @@ public:
   static void push_current(Menu* pmenu);
   static void pop_current();
   static void set_current(Menu* pmenu);
-  static Menu* current() { return current_; }
+  static Menu* current()
+  {
+    return current_;
+  }
 
   Timer effect;
   int arrange_left;
@@ -154,7 +173,7 @@ public:
   std::vector<MenuItem> item;
 
   Menu();
-  ~Menu(); // Now much simpler, no manual deallocation needed
+  ~Menu();
 
   void additem(const MenuItem& pmenu_item);
   void additem(MenuItemKind kind, const std::string& text, int init_toggle, Menu* target_menu, int id = -1, int *int_p = nullptr);
@@ -164,10 +183,13 @@ public:
   /** Remove all entries from the menu */
   void clear();
 
-  /** Return index of menu item that's 'hit' (ie. the user clicked on it) in the last event() call */
+  /** Return ID of menu item that's 'hit' (ie. the user clicked on it) in the last event() call */
   int check();
 
-  MenuItem& get_item(int index) { return item[index]; }
+  MenuItem& get_item(int index)
+  {
+    return item[index];
+  }
   MenuItem& get_item_by_id(int id);
   int get_active_item_id();
   bool isToggled(int id);
