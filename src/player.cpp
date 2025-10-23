@@ -280,6 +280,17 @@ void Player::action(double frame_ratio)
       }
     }
     grabdistros();
+
+    // Make sure Tux doesn't try to stick to solid roofs
+    if (jumped_in_solid)
+    {
+      ++base.y;
+      ++old_base.y;
+      if (on_ground())
+      {
+        jumping = false;
+      }
+    }
   }
 
   // Update timers
