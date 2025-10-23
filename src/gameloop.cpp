@@ -286,25 +286,35 @@ void GameSession::process_events()
       switch (event.type)
       {
         case SDL_QUIT:  // Quit event
+        {
           st_abort("Received window close", "");
           break;
+        }
 
         case SDL_KEYDOWN:  // Handle key down events
+        {
           if (event.key.keysym.sym == SDLK_ESCAPE)
           {
             on_escape_press();
           }
+
           break;
+        }
 
         case SDL_JOYBUTTONDOWN:
+        {
           if (event.jbutton.button == 6 || event.jbutton.button == 19)
           {
             on_escape_press();
           }
+
           break;
+        }
 
         default:
+        {
           break;
+        }
       }
     }
   }
@@ -334,30 +344,41 @@ void GameSession::process_events()
         switch (event.type)
         {
           case SDL_QUIT:
+          {
             st_abort("Received window close", "");
             break;
+          }
 
           case SDL_KEYDOWN:
+          {
             if (!tux.key_event(event.key.keysym.sym, DOWN))
             {
               switch (event.key.keysym.sym)
               {
                 case SDLK_ESCAPE:
+                {
                   on_escape_press();
                   break;
+                }
 
                 default:
+                {
                   break;
+                }
               }
             }
+
             break;
+          }
 
           case SDL_KEYUP:
+          {
             if (!tux.key_event(event.key.keysym.sym, UP))
             {
               switch (event.key.keysym.sym)
               {
                 case SDLK_p:
+                {
                   if (!Menu::current())
                   {
                     if (game_pause)
@@ -371,71 +392,102 @@ void GameSession::process_events()
                       st_pause_ticks_start();
                     }
                   }
+
                   break;
+                }
 
                 case SDLK_TAB:
+                {
                   if (debug_mode)
                   {
                     tux.size = !tux.size;
                     tux.base.height = (tux.size == BIG) ? 64 : 32;
                   }
+
                   break;
+                }
 
                 case SDLK_END:
+                {
                   if (debug_mode)
                   {
                     player_status.distros += 50;
                   }
+
                   break;
+                }
 
                 case SDLK_DELETE:
+                {
                   if (debug_mode)
                   {
                     tux.got_coffee = 1;
                   }
+
                   break;
+                }
 
                 case SDLK_INSERT:
+                {
                   if (debug_mode)
                   {
                     tux.invincible_timer.start(TUX_INVINCIBLE_TIME);
                   }
+
                   break;
+                }
 
                 case SDLK_l:
+                {
                   if (debug_mode)
                   {
                     --player_status.lives;
                   }
+
                   break;
+                }
 
                 case SDLK_s:
+                {
                   if (debug_mode)
                   {
                     player_status.score += 1000;
                   }
+
                   break;
+                }
 
                 case SDLK_f:
+                {
                   debug_fps = !debug_fps;
                   break;
+                }
 
                 default:
+                {
                   break;
+                }
               }
             }
+
             break;
+          }
 
 #ifdef TSCONTROL
           case SDL_MOUSEBUTTONDOWN:
+          {
             tux.input.fire = DOWN;
             break;
+          }
 
           case SDL_MOUSEBUTTONUP:
+          {
             tux.input.fire = UP;
             break;
+          }
 
           case SDL_MOUSEMOTION:
+          {
             if (event.motion.y < old_mouse_y - 16)
             {
               tux.input.up = DOWN;
@@ -444,60 +496,67 @@ void GameSession::process_events()
             {
               tux.input.up = UP;
             }
+
             old_mouse_y = event.motion.y;
 
             // Stand still
             if ((event.motion.x < (screen->w / 2) + (screen->w / 10)) &&
                 (event.motion.x > (screen->w / 2) - (screen->w / 10)))
             {
-              tux.input.fire = UP;
-              tux.input.left = UP;
+              tux.input.fire  = UP;
+              tux.input.left  = UP;
               tux.input.right = UP;
             }
             // Run left
             else if ((event.motion.x > 0) && (event.motion.x < (screen->w / 8)))
             {
-              tux.input.fire = DOWN;
-              tux.input.left = DOWN;
+              tux.input.fire  = DOWN;
+              tux.input.left  = DOWN;
               tux.input.right = UP;
             }
             // Walk left
             else if ((event.motion.x > (screen->w / 8)) && (event.motion.x < (screen->w / 2)))
             {
-              tux.input.fire = UP;
+              tux.input.fire  = UP;
               tux.input.right = UP;
-              tux.input.left = DOWN;
+              tux.input.left  = DOWN;
             }
             // Walk right
             else if ((event.motion.x > (screen->w / 2)) && (event.motion.x < (7 * screen->w / 8)))
             {
-              tux.input.fire = UP;
+              tux.input.fire  = UP;
               tux.input.right = DOWN;
-              tux.input.left = UP;
+              tux.input.left  = UP;
             }
             // Run right
             else if ((event.motion.x > (7 * screen->w / 8)) && (event.motion.x < screen->w))
             {
-              tux.input.fire = DOWN;
+              tux.input.fire  = DOWN;
               tux.input.right = DOWN;
-              tux.input.left = UP;
+              tux.input.left  = UP;
             }
+
             break;
+          }
 #endif
+
           case SDL_JOYHATMOTION:
+          {
             if (event.jhat.value == SDL_HAT_RIGHT || event.jhat.value == SDL_HAT_RIGHTUP)
             {
-              tux.input.left = UP;
+              tux.input.left  = UP;
               tux.input.right = DOWN;
             }
+
             if (event.jhat.value == SDL_HAT_LEFT || event.jhat.value == SDL_HAT_LEFTUP)
             {
-              tux.input.left = DOWN;
+              tux.input.left  = DOWN;
               tux.input.right = UP;
             }
+
             if (event.jhat.value == SDL_HAT_CENTERED)
             {
-              tux.input.left = DOWN;
+              tux.input.left  = DOWN;
               tux.input.right = DOWN;
             }
 
@@ -514,24 +573,27 @@ void GameSession::process_events()
             {
               tux.input.down = UP;
             }
+
             break;
+          }
 
           case SDL_JOYAXISMOTION:
+          {
             if (event.jaxis.axis == joystick_keymap.x_axis)
             {
               if (event.jaxis.value < -joystick_keymap.dead_zone)
               {
-                tux.input.left = DOWN;
+                tux.input.left  = DOWN;
                 tux.input.right = UP;
               }
               else if (event.jaxis.value > joystick_keymap.dead_zone)
               {
-                tux.input.left = UP;
+                tux.input.left  = UP;
                 tux.input.right = DOWN;
               }
               else
               {
-                tux.input.left = DOWN;
+                tux.input.left  = DOWN;
                 tux.input.right = DOWN;
               }
             }
@@ -550,9 +612,12 @@ void GameSession::process_events()
                 tux.input.down = UP;
               }
             }
+
             break;
+          }
 
           case SDL_JOYBUTTONDOWN:
+          {
             if (event.jbutton.button == 3)
             {
               tux.input.up = DOWN;
@@ -565,9 +630,12 @@ void GameSession::process_events()
             {
               on_escape_press();
             }
+
             break;
+          }
 
           case SDL_JOYBUTTONUP:
+          {
             if (event.jbutton.button == 3)
             {
               tux.input.up = UP;
@@ -576,10 +644,14 @@ void GameSession::process_events()
             {
               tux.input.fire = UP;
             }
+
             break;
+          }
 
           default:
+          {
             break;
+          }
         }
       }
     }
