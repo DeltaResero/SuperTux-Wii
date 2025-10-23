@@ -60,24 +60,24 @@
 // Structure defining Lisp stream types
 typedef struct
 {
-  int type;  // Type of stream
+  int type;
 
   union
   {
-    FILE *file;  // File stream
+    FILE *file;
     struct
     {
-      char *buf;  // Buffer for the string
-      int pos;    // Current position in the buffer
-      int len;    // Length of the string buffer
-    } string;  // String stream
+      const char *buf;
+      size_t pos;
+      size_t len;
+    } string;
 
     struct
     {
       void *data;
-      int (*next_char) (void *data);  // Function pointer for next char
-      void (*unget_char) (char c, void *data);  // Function pointer for ungetting char
-    } any;  // Custom stream
+      int (*next_char) (void *data);
+      void (*unget_char) (char c, void *data);
+    } any;
   } v;
 }
 lisp_stream_t;
@@ -86,19 +86,19 @@ lisp_stream_t;
 typedef struct _lisp_object_t lisp_object_t;
 struct _lisp_object_t
 {
-  int type;  // Type of Lisp object
+  int type;
 
   union
   {
     struct
     {
-      struct _lisp_object_t *car; // Head of cons
-      struct _lisp_object_t *cdr; // Tail of cons
+      struct _lisp_object_t *car;
+      struct _lisp_object_t *cdr;
     } cons;
 
-    char *string;  // String value
-    int integer;   // Integer value
-    float real;    // Real number value
+    char *string;
+    int integer;
+    float real;
 
     struct
     {
@@ -110,9 +110,8 @@ struct _lisp_object_t
 };
 
 // Stream initialization functions
-lisp_stream_t* lisp_stream_init_gzfile(lisp_stream_t *stream, gzFile file);
 lisp_stream_t* lisp_stream_init_file(lisp_stream_t *stream, FILE *file);
-lisp_stream_t* lisp_stream_init_string(lisp_stream_t *stream, char *buf);
+lisp_stream_t* lisp_stream_init_string(lisp_stream_t *stream, const char *buf);
 lisp_stream_t* lisp_stream_init_any(lisp_stream_t *stream, void *data,
                                     int (*next_char) (void *data),
                                     void (*unget_char) (char c, void *data));
@@ -122,6 +121,7 @@ lisp_object_t* lisp_read(lisp_stream_t *in);
 lisp_object_t* lisp_read_from_file(const std::string& filename);
 void lisp_free(lisp_object_t *obj);
 lisp_object_t* lisp_read_from_string(const char *buf);
+void lisp_reset_pool();
 
 // Pattern matching functions
 int lisp_compile_pattern(lisp_object_t **obj, int *num_subs);
@@ -170,45 +170,43 @@ void lisp_dump(lisp_object_t *obj, FILE *out);
 // LispReader class for reading Lisp objects
 class LispReader
 {
-  private:
-    lisp_object_t* lst;  // List of Lisp objects
+private:
+  lisp_object_t* lst;
 
-    lisp_object_t* search_for(const char* name);  // Search for a symbol in the list
-  public:
-    LispReader(lisp_object_t* l);
+  lisp_object_t* search_for(const char* name);
+public:
+  LispReader(lisp_object_t* l);
 
-    bool read_int_vector(const char* name, std::vector<int>* vec);
-    bool read_char_vector(const char* name, std::vector<char>* vec);
-    bool read_string_vector(const char* name, std::vector<std::string>* vec);
-    bool read_string(const char* name, std::string* str);
-    bool read_int(const char* name, int* i);
-    bool read_float(const char* name, float* f);
-    bool read_bool(const char* name, bool* b);
-    bool read_lisp(const char* name, lisp_object_t** b);
+  bool read_int_vector(const char* name, std::vector<int>* vec);
+  bool read_char_vector(const char* name, std::vector<char>* vec);
+  bool read_string_vector(const char* name, std::vector<std::string>* vec);
+  bool read_string(const char* name, std::string* str);
+  bool read_int(const char* name, int* i);
+  bool read_float(const char* name, float* f);
+  bool read_bool(const char* name, bool* b);
+  bool read_lisp(const char* name, lisp_object_t** b);
 };
 
 // LispWriter class for writing Lisp objects
 class LispWriter
 {
-  private:
-    std::vector<lisp_object_t*> lisp_objs;  // List of objects to write
+private:
+  std::vector<lisp_object_t*> lisp_objs;
 
-    void append(lisp_object_t* obj);  // Append a Lisp object to the list
-    lisp_object_t* make_list3(lisp_object_t*, lisp_object_t*, lisp_object_t*);
-    lisp_object_t* make_list2(lisp_object_t*, lisp_object_t*);
-  public:
-    LispWriter(const char* name);  // Constructor initializing writer with a symbol
+  void append(lisp_object_t* obj);
+  lisp_object_t* make_list3(lisp_object_t*, lisp_object_t*, lisp_object_t*);
+  lisp_object_t* make_list2(lisp_object_t*, lisp_object_t*);
+public:
+  LispWriter(const char* name);
 
-    void write_float(const char* name, float f);
-    void write_int(const char* name, int i);
-    void write_boolean(const char* name, bool b);
-    void write_string(const char* name, const char* str);
-    void write_symbol(const char* name, const char* symname);
-    void write_lisp_obj(const char* name, lisp_object_t* lst);
+  void write_float(const char* name, float f);
+  void write_int(const char* name, int i);
+  void write_boolean(const char* name, bool b);
+  void write_string(const char* name, const char* str);
+  void write_symbol(const char* name, const char* symname);
+  void write_lisp_obj(const char* name, lisp_object_t* lst);
 
-    lisp_object_t* create_lisp();  // Create a Lisp object from the written data
+  lisp_object_t* create_lisp();
 };
 
 #endif // __LISPREADER_H__
-
-// EOF

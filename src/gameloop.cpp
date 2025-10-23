@@ -161,6 +161,7 @@ void GameSession::restart_level()
 GameSession::~GameSession()
 {
   delete world;
+  lisp_reset_pool(); // Free all memory used by the level data
 }
 
 /**

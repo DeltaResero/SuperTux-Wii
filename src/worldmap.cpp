@@ -540,6 +540,7 @@ WorldMap::~WorldMap()
   delete tile_manager;
 
   deleteSprites();
+  lisp_reset_pool(); // Free all memory used by the worldmap data
 }
 
 /**
