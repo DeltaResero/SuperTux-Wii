@@ -24,9 +24,9 @@
 #define __LISPREADER_H__
 
 #include <stdio.h>
-#include <zlib.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 // Stream types for handling file, string, and custom streams
 #define LISP_STREAM_FILE       1
@@ -172,6 +172,9 @@ class LispReader
 {
 private:
   lisp_object_t* lst;
+  // Map for O(1) property lookups.
+  // Keys are interned C-strings, so pointer comparison is sufficient and fast.
+  std::unordered_map<const char*, lisp_object_t*> property_map;
 
   lisp_object_t* search_for(const char* name);
 public:

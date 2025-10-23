@@ -682,65 +682,6 @@ namespace
     }
     return match;
   }
-
-  bool has_suffix(const char* data, const char* suffix)
-  {
-    if (data == nullptr || suffix == nullptr) return false;
-    size_t data_len = strlen(data);
-    size_t suffix_len = strlen(suffix);
-    if (data_len < suffix_len) return false;
-    return (strncmp(data + data_len - suffix_len, suffix, suffix_len) == 0);
-  }
-
-  lisp_object_t* lisp_read_from_gzfile(const char* filename)
-  {
-    gzFile in = gzopen(filename, "rb");
-    if (!in) return nullptr;
-
-    const int CHUNK_SIZE = 128 * 1024;
-    size_t buffer_size = CHUNK_SIZE;
-    // Use unique_ptr with free for safe C-style memory management
-    auto buffer_deleter = [](char* p) { free(p); };
-    std::unique_ptr<char, decltype(buffer_deleter)> buffer(static_cast<char*>(malloc(buffer_size)), buffer_deleter);
-    if (!buffer)
-    {
-      gzclose(in);
-      return nullptr;
-    }
-
-    size_t total_read = 0;
-    while (true)
-    {
-      int bytes_read = gzread(in, buffer.get() + total_read, buffer_size - total_read);
-      if (bytes_read < 0) // Error
-      {
-        gzclose(in);
-        return nullptr;
-      }
-      total_read += bytes_read;
-      if (total_read < buffer_size)
-      {
-        break; // EOF
-      }
-
-      // Buffer is full, resize using realloc for performance
-      buffer_size *= 2;
-      char* new_buffer = static_cast<char*>(realloc(buffer.get(), buffer_size));
-      if (!new_buffer)
-      {
-        gzclose(in);
-        return nullptr;
-      }
-      buffer.release(); // unique_ptr gives up ownership
-      buffer.reset(new_buffer);
-    }
-    gzclose(in);
-    buffer.get()[total_read] = '\0'; // Null-terminate
-
-    lisp_stream_t stream;
-    lisp_stream_init_string(&stream, buffer.get());
-    return lisp_read(&stream);
-  }
 } // anonymous namespace
 
 //
@@ -1044,23 +985,33 @@ void lisp_dump(lisp_object_t* obj, FILE* out)
 
 LispReader::LispReader(lisp_object_t* l) : lst(l)
 {
+  // Pre-populate the property map for fast lookups.
+  // We iterate through the list once, hashing every symbol key we find.
+  for (lisp_object_t* cursor = lst; !lisp_nil_p(cursor); cursor = lisp_cdr(cursor))
+  {
+    lisp_object_t* cur = lisp_car(cursor);
+    // We are looking for pairs: (SYMBOL . VALUE) or (SYMBOL VALUE...)
+    if (lisp_cons_p(cur) && lisp_symbol_p(lisp_car(cur)))
+    {
+      // Key: interned C-string pointer (O(1) hashing/comparison because it's just a pointer address)
+      // Value: the rest of the list (the value associated with the symbol)
+      property_map[lisp_symbol(lisp_car(cur))] = lisp_cdr(cur);
+    }
+  }
 }
 
 lisp_object_t* LispReader::search_for(const char* name)
 {
+  // Intern the search string so we can use pointer comparison.
   const char* interned_name = g_string_interner.intern(name);
-  for (lisp_object_t* cursor = lst; !lisp_nil_p(cursor); cursor = lisp_cdr(cursor))
+
+  // O(1) average case lookup
+  auto it = property_map.find(interned_name);
+  if (it != property_map.end())
   {
-    lisp_object_t* cur = lisp_car(cursor);
-    if (lisp_cons_p(cur) && lisp_symbol_p(lisp_car(cur)))
-    {
-      if (lisp_car(cur)->v.string == interned_name) // Fast pointer compare
-      {
-        return lisp_cdr(cur);
-      }
-    }
+    return it->second;
   }
-  return 0;
+  return nullptr;
 }
 
 bool LispReader::read_int(const char* name, int* i)
@@ -1232,11 +1183,6 @@ lisp_object_t* LispWriter::create_lisp()
 
 lisp_object_t* lisp_read_from_file(const std::string& filename)
 {
-  if (has_suffix(filename.c_str(), ".gz"))
-  {
-    return lisp_read_from_gzfile(filename.c_str());
-  }
-
   FILE* in = fopen(filename.c_str(), "rb");
   if (!in)
   {

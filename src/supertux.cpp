@@ -33,10 +33,10 @@
 #include "texture.h"
 #include "tile.h"
 #ifdef _WII_
-    #include <wiiuse/wpad.h>
-    #include <ogc/lwp_watchdog.h>
-    #include <fat.h>
-    //#include <dopmii/FileSystem.h>
+  #include <unistd.h>
+  #include <wiiuse/wpad.h>
+  #include <ogc/lwp_watchdog.h>
+  #include <fat.h>
 #endif
 
 // Loading Screen as SuperTux on Wii takes a long, long time to load
@@ -57,12 +57,6 @@ int main(int argc, char ** argv)
 {
 
 #ifdef _WII_
-  //IO::SD OurSD;
-  //OurSD.Mount();
-  //IO::USB OurUSB;
-  //OurUSB.Startup();
-  //OurUSB.Mount();
-
   // Wii-specific setup for FAT library and USB disk handling.
   sleep(1);  // Delay to allow USB disks behind hubs to initialize.
   bool res = fatInitDefault();
