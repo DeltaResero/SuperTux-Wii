@@ -87,15 +87,34 @@ void loadconfig()
   // Parse the config values
   LispReader reader(lisp_cdr(root_obj));
 
+#ifdef _WII_
+  // On Wii Homebrew, fullscreen is mandatory, so we enforce it here.
+  use_fullscreen = true;
+  // We read the config value to advance the parser but ignore its value.
+  bool dummy_fullscreen_setting;
+  reader.read_bool("fullscreen", &dummy_fullscreen_setting);
+#else
+  // For other platforms, respect the user's fullscreen setting.
   reader.read_bool("fullscreen", &use_fullscreen);
+#endif
+
   reader.read_bool("sound", &use_sound);
   reader.read_bool("music", &use_music);
   reader.read_bool("show_fps", &show_fps);
   reader.read_bool("tv_overscan", &tv_overscan_enabled);
 
+#ifdef NOOPENGL
+  // When OpenGL is disabled at compile time, always force SDL mode.
+  use_gl = false;
+  // We read the "video" setting to advance the parser but ignore its value.
+  std::string dummy_video_setting;
+  reader.read_string("video", &dummy_video_setting);
+#else
+  // When OpenGL is available, read the user's preference from the config.
   std::string video;
   reader.read_string("video", &video);
   use_gl = (video == "opengl");
+#endif
 
   reader.read_int("joystick", &joystick_num);
   use_joystick = (joystick_num >= 0);
