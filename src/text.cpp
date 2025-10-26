@@ -40,6 +40,10 @@ struct CharVertex {
   float tx, ty;
 };
 
+// A single, static buffer to be reused for all batched text drawing.
+// This completely avoids the expensive 64KB per-call stack allocation.
+static CharVertex vertex_buffer[MAX_TEXT_LEN * 4];
+
 // Helper function to get next power of two (needed for OpenGL texture coordinates)
 inline int power_of_two(int input)
 {
@@ -205,9 +209,8 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
     len = MAX_TEXT_LEN;
 
 
-  // Instead of a std::vector, we use a fixed-size array on the stack
-  // Avoids heap memory allocation every frame which can be slow and can cause memory fragmentation
-  CharVertex vertices[MAX_TEXT_LEN * 4]; // Fixed-size array on the stack
+  // Use the single, pre-allocated static buffer instead of a new 64KB stack array.
+  CharVertex* vertices = vertex_buffer;
   int vertex_count = 0;
 
   SurfaceImpl* impl = pchars->impl;

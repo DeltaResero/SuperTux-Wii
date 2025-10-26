@@ -692,6 +692,11 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   w = power_of_two(surf->w);
   h = power_of_two(surf->h);
 
+  // Cache the calculated power-of-two dimensions for later use.
+  // This prevents recalculating them in the hot loop of text rendering.
+  tex_w_pow2 = static_cast<float>(w);
+  tex_h_pow2 = static_cast<float>(h);
+
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
   conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, surf->format->BitsPerPixel,
                               0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
@@ -739,8 +744,8 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
  */
 int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
 {
-  float pw = power_of_two(w);
-  float ph = power_of_two(h);
+  float pw = tex_w_pow2;
+  float ph = tex_h_pow2;
 
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_BLEND);
@@ -753,12 +758,12 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
   glBegin(GL_QUADS);
   glTexCoord2f(0, 0);
   glVertex2f(x, y);
-  glTexCoord2f(static_cast<float>(w) / pw, 0);
-  glVertex2f(static_cast<float>(w) + x, y);
-  glTexCoord2f(static_cast<float>(w) / pw, static_cast<float>(h) / ph);
-  glVertex2f(static_cast<float>(w) + x, static_cast<float>(h) + y);
-  glTexCoord2f(0, static_cast<float>(h) / ph);
-  glVertex2f(x, static_cast<float>(h) + y);
+  glTexCoord2f(static_cast<float>(this->w) / pw, 0);
+  glVertex2f(static_cast<float>(this->w) + x, y);
+  glTexCoord2f(static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph);
+  glVertex2f(static_cast<float>(this->w) + x, static_cast<float>(this->h) + y);
+  glTexCoord2f(0, static_cast<float>(this->h) / ph);
+  glVertex2f(x, static_cast<float>(this->h) + y);
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
@@ -777,8 +782,8 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
  */
 int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
 {
-  float pw = power_of_two(w);
-  float ph = power_of_two(h);
+  float pw = tex_w_pow2;
+  float ph = tex_h_pow2;
 
   glColor3ub(alpha, alpha, alpha);
 
@@ -788,11 +793,11 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
   glBegin(GL_QUADS);
   glTexCoord2f(0, 0);
   glVertex2f(0, 0);
-  glTexCoord2f(static_cast<float>(w) / pw, 0);
+  glTexCoord2f(static_cast<float>(this->w) / pw, 0);
   glVertex2f(screen->w, 0);
-  glTexCoord2f(static_cast<float>(w) / pw, static_cast<float>(h) / ph);
+  glTexCoord2f(static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph);
   glVertex2f(screen->w, screen->h);
-  glTexCoord2f(0, static_cast<float>(h) / ph);
+  glTexCoord2f(0, static_cast<float>(this->h) / ph);
   glVertex2f(0, screen->h);
   glEnd();
 
@@ -817,8 +822,8 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
  */
 int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update)
 {
-  float pw = power_of_two(int(this->w));
-  float ph = power_of_two(int(this->h));
+  float pw = tex_w_pow2;
+  float ph = tex_h_pow2;
 
   glBindTexture(GL_TEXTURE_2D, gl_texture);
 
@@ -859,8 +864,8 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
  */
 int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update)
 {
-  float pw = power_of_two(int(this->w));
-  float ph = power_of_two(int(this->h));
+  float pw = tex_w_pow2;
+  float ph = tex_h_pow2;
 
   glBindTexture(GL_TEXTURE_2D, gl_texture);
 
@@ -874,11 +879,11 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
   glBegin(GL_QUADS);
   glTexCoord2f(0, 0);
   glVertex2f(x, y);
-  glTexCoord2f(static_cast<float>(w) / pw, 0);
+  glTexCoord2f(static_cast<float>(this->w) / pw, 0);
   glVertex2f(sw + x, y);
-  glTexCoord2f(static_cast<float>(w) / pw, static_cast<float>(h) / ph);
+  glTexCoord2f(static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph);
   glVertex2f(sw + x, sh + y);
-  glTexCoord2f(0, static_cast<float>(h) / ph);
+  glTexCoord2f(0, static_cast<float>(this->h) / ph);
   glVertex2f(x, sh + y);
   glEnd();
 

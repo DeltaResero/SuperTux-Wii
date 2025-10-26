@@ -131,6 +131,11 @@ class SurfaceOpenGL : public SurfaceImpl
 {
 public:
   unsigned gl_texture;
+  // Cached texture dimensions rounded up to the nearest power of two.
+  // This is calculated once at texture creation to avoid expensive re-calculation
+  // during every batched text draw call.
+  float tex_w_pow2;
+  float tex_h_pow2;
 
   SurfaceOpenGL(SDL_Surface* surf, int use_alpha);
   SurfaceOpenGL(const std::string& file, int use_alpha);
