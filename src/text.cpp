@@ -25,6 +25,8 @@
 #include "screen.h"
 #include "text.h"
 
+Text::Texts Text::texts;
+
 #define MAX_TEXT_LEN 1024   // Define a maximum length for safety
 #define MAX_VEL     10      // Maximum velocity for scrolling text
 #define SPEED_INC   0.01    // Speed increment for scrolling
@@ -60,6 +62,14 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
   // Load the main font surface
   chars = new Surface(file, USE_ALPHA);
 
+#ifndef NOOPENGL
+  // --- One-time setup for OpenGL pointer caching ---
+  // Cache the result of the (potentially expensive) dynamic_cast now,
+  // rather than in the hot loop of the draw function.
+  opengl_chars = use_gl ? dynamic_cast<SurfaceOpenGL*>(chars->impl) : nullptr;
+  opengl_shadow_chars = nullptr; // Initialize to null
+#endif
+
   // Load shadow font by processing the original surface
   SDL_Surface *conv = SDL_DisplayFormatAlpha(chars->impl->get_sdl_surface());
   int pixels = conv->w * conv->h;
@@ -76,8 +86,18 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
   SDL_SetAlpha(conv, SDL_SRCALPHA, 128);  // Set the alpha transparency level
   shadow_chars = new Surface(conv, USE_ALPHA);
 
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl);
+  }
+#endif
+
   // Clean up the temporary surface
   SDL_FreeSurface(conv);
+
+  // Add this instance to the global list for tracking
+  texts.push_back(this);
 }
 
 /**
@@ -86,9 +106,47 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
  */
 Text::~Text()
 {
+  // Remove this instance from the global list
+  texts.remove(this);
+
   // Free allocated memory
   delete chars;
   delete shadow_chars;
+}
+
+/**
+ * Updates the cached OpenGL pointers for a single Text object.
+ * This is crucial to call after a video mode switch to prevent rendering
+ * with dangling pointers to deleted surface implementations.
+ */
+void Text::recache_opengl_pointers()
+{
+#ifndef NOOPENGL
+  // Re-run the dynamic_cast to get the new, valid pointers.
+  if (use_gl)
+  {
+    opengl_chars = dynamic_cast<SurfaceOpenGL*>(chars->impl);
+    opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl);
+  }
+  else
+  {
+    opengl_chars = nullptr;
+    opengl_shadow_chars = nullptr;
+  }
+#endif
+}
+
+/**
+ * Iterates over all existing Text objects and updates their cached
+ * OpenGL pointers. This is the master function to call after a video
+ * mode switch.
+ */
+void Text::recache_all_pointers()
+{
+  for (auto& text : texts)
+  {
+    text->recache_opengl_pointers();
+  }
 }
 
 /**
@@ -111,11 +169,14 @@ void Text::draw(const std::string& text, int x, int y, int shadowsize, int updat
     if (use_gl)
     {
       // Use batched rendering for OpenGL
-      if (shadowsize != 0)
+      if (shadowsize != 0 && opengl_shadow_chars)
       {
         draw_chars_batched(shadow_chars, text, x + shadowsize, y + shadowsize, update);
       }
-      draw_chars_batched(chars, text, x, y, update);
+      if (opengl_chars)
+      {
+        draw_chars_batched(chars, text, x, y, update);
+      }
       return;
     }
 #endif
@@ -152,10 +213,12 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
   SurfaceImpl* impl = pchars->impl;
   if (!impl) return;
 
-  SurfaceOpenGL* gl_impl = dynamic_cast<SurfaceOpenGL*>(impl);
+  // Get the correct, pre-cached opengl implementation
+  SurfaceOpenGL* gl_impl = (pchars == chars) ? opengl_chars : opengl_shadow_chars;
+
+  // If for some reason the pointer is bad (e.g., non-OpenGL surface), fall back.
   if (!gl_impl)
   {
-    // Fallback if the surface isn't an OpenGL one for some reason
     draw_chars(pchars, text, x, y, update);
     return;
   }

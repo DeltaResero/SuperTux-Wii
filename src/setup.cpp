@@ -698,6 +698,9 @@ void st_video_setup(void)
 
   Surface::reload_all();
 
+  // After reloading all surfaces, tell all Text objects to recache their internal pointers.
+  Text::recache_all_pointers();
+
 #ifndef _WII_ /* Skip window manager setup for Wii builds */
   SDL_WM_SetCaption("SuperTux Wii " VERSION, "SuperTux Wii");
 #endif /* #ifndef _WII_ */

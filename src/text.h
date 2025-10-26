@@ -22,6 +22,7 @@
 #define SUPERTUX_TEXT_H
 
 #include <string>
+#include <list>
 #include "texture.h"
 
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed);
@@ -54,9 +55,21 @@ class Text
   int kind;
   int w;
   int h;
+
+ private:
+  // Cache the result of the expensive dynamic_cast ONCE, instead of on every draw call.
+  SurfaceOpenGL* opengl_chars;
+  SurfaceOpenGL* opengl_shadow_chars;
+
  public:
+  typedef std::list<Text*> Texts;
+  static Texts texts;
+
   Text(const std::string& file, int kind, int w, int h);
   ~Text();
+
+  void recache_opengl_pointers(); // Public method to update pointers after a video mode switch.
+  static void recache_all_pointers();
 
   void draw(const std::string& text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
 #ifndef NOOPENGL
