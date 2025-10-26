@@ -44,15 +44,44 @@ struct CharVertex {
 // This completely avoids the expensive 64KB per-call stack allocation.
 static CharVertex vertex_buffer[MAX_TEXT_LEN * 4];
 
-// Helper function to get next power of two (needed for OpenGL texture coordinates)
-inline int power_of_two(int input)
+// --- The Lookup Table (LUT) ---
+// This replaces the entire expensive if/else if chain in the main loop.
+// It provides an instantaneous, O(1) lookup for character sprite info.
+struct CharInfo
 {
-  int value = 1;
-  while (value < input)
+  bool visible;
+  int row;
+  int col;
+};
+
+// The LUT itself. Index is the ASCII value of the character.
+static CharInfo char_lut[256];
+static bool is_lut_initialized = false;
+
+/**
+ * Initializes the character lookup table.
+ * This function runs only once and pre-computes the position of all
+ * drawable characters on the font spritesheet.
+ */
+void initialize_char_lut()
+{
+  if (is_lut_initialized)
   {
-    value <<= 1;
+    return;
   }
-  return value;
+
+  for (int i = 0; i < 256; ++i)
+  {
+    char_lut[i] = { false, 0, 0 }; // Default to invisible
+    if      (i >= ' ' && i <= '/') { char_lut[i] = { true, 0, i - ' ' }; }
+    else if (i >= '0' && i <= '?') { char_lut[i] = { true, 1, i - '0' }; }
+    else if (i >= '@' && i <= 'O') { char_lut[i] = { true, 2, i - '@' }; }
+    else if (i >= 'P' && i <= '_') { char_lut[i] = { true, 3, i - 'P' }; }
+    else if (i >= '`' && i <= 'o') { char_lut[i] = { true, 4, i - '`' }; }
+    else if (i >= 'p' && i <= '~') { char_lut[i] = { true, 5, i - 'p' }; }
+  }
+
+  is_lut_initialized = true;
 }
 #endif
 
@@ -68,6 +97,8 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
 
 #ifndef NOOPENGL
   // --- One-time setup for OpenGL pointer caching ---
+  initialize_char_lut(); // Ensure the LUT is ready (runs only once).
+
   // Cache the result of the (potentially expensive) dynamic_cast now,
   // rather than in the hot loop of the draw function.
   opengl_chars = use_gl ? dynamic_cast<SurfaceOpenGL*>(chars->impl) : nullptr;
@@ -226,9 +257,9 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
     return;
   }
 
-  // Calculate texture dimensions
-  float pw = power_of_two(pchars->w);
-  float ph = power_of_two(pchars->h);
+  // Use the pre-calculated power-of-two values from the SurfaceOpenGL object
+  float pw = gl_impl->tex_w_pow2;
+  float ph = gl_impl->tex_h_pow2;
 
   int current_x = x;
   int current_y = y;
@@ -236,65 +267,34 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
   // Build the array of vertices for all characters in the string
   for (size_t i = 0; i < len; ++i)
   {
-    int offset_x = 0;
-    int offset_y = 0;
-
-    // Determine character position (same logic as original)
-    if (text[i] >= ' ' && text[i] <= '/')
-    {
-      offset_x = (text[i] - ' ') * w;
-      offset_y = 0;
-    }
-    else if (text[i] >= '0' && text[i] <= '?')
-    {
-      offset_x = (text[i] - '0') * w;
-      offset_y = h * 1;
-    }
-    else if (text[i] >= '@' && text[i] <= 'O')
-    {
-      offset_x = (text[i] - '@') * w;
-      offset_y = h * 2;
-    }
-    else if (text[i] >= 'P' && text[i] <= '_')
-    {
-      offset_x = (text[i] - 'P') * w;
-      offset_y = h * 3;
-    }
-    else if (text[i] >= '`' && text[i] <= 'o')
-    {
-      offset_x = (text[i] - '`') * w;
-      offset_y = h * 4;
-    }
-    else if (text[i] >= 'p' && text[i] <= '~')
-    {
-      offset_x = (text[i] - 'p') * w;
-      offset_y = h * 5;
-    }
-    else if (text[i] == '\n')
+    unsigned char character = text[i];
+    if (character == '\n')
     {
       current_y += h + 2;
       current_x = x;
       continue;
     }
-    else
+
+    // --- The LUT Optimization ---
+    // This is instantaneous compared to the old if/else if chain.
+    const CharInfo& info = char_lut[character];
+    if (!info.visible)
     {
       continue;
     }
 
-    // Calculate texture coordinates for the character
-    float tx1 = static_cast<float>(offset_x) / pw;
-    float ty1 = static_cast<float>(offset_y) / ph;
-    float tx2 = static_cast<float>(offset_x + w) / pw;
-    float ty2 = static_cast<float>(offset_y + h) / ph;
+    float offset_x = info.col * w;
+    float offset_y = info.row * h;
 
-    // Add quad vertices (two triangles)
-    // Bottom-left
+    float tx1 = offset_x / pw;
+    float ty1 = offset_y / ph;
+    float tx2 = (offset_x + w) / pw;
+    float ty2 = (offset_y + h) / ph;
+
+    // Add quad vertices (two triangles - Bottom-left, Bottom-right, Top-right, and Top-left)
     vertices[vertex_count++] = {static_cast<float>(current_x), static_cast<float>(current_y + h), tx1, ty2};
-    // Bottom-right
     vertices[vertex_count++] = {static_cast<float>(current_x + w), static_cast<float>(current_y + h), tx2, ty2};
-    // Top-right
     vertices[vertex_count++] = {static_cast<float>(current_x + w), static_cast<float>(current_y), tx2, ty1};
-    // Top-left
     vertices[vertex_count++] = {static_cast<float>(current_x), static_cast<float>(current_y), tx1, ty1};
 
     current_x += w;
@@ -618,13 +618,13 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
 
   Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
 
-  #ifndef NOOPENGL
+#ifndef NOOPENGL
   // For OpenGL, we can use double buffering more efficiently
   if (use_gl)
   {
     glClear(GL_COLOR_BUFFER_BIT);
   }
-  #endif
+#endif
 
   while (!done)
   {
@@ -679,13 +679,13 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     scroll += speed * (ticks - lastticks);
     lastticks = ticks;
 
-    #ifndef NOOPENGL
+#ifndef NOOPENGL
     if (use_gl)
     {
       // Only clear once per frame for OpenGL
       glClear(GL_COLOR_BUFFER_BIT);
     }
-    #endif
+#endif
 
     // Draw the background and the scrolling text
     surface->draw_bg();

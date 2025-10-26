@@ -57,9 +57,11 @@ class Text
   int h;
 
  private:
+#ifndef NOOPENGL
   // Cache the result of the expensive dynamic_cast ONCE, instead of on every draw call.
   SurfaceOpenGL* opengl_chars;
   SurfaceOpenGL* opengl_shadow_chars;
+#endif
 
  public:
   typedef std::list<Text*> Texts;
