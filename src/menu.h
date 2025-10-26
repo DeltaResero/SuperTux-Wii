@@ -154,6 +154,7 @@ private:
   /** @brief The input event to be processed in the next call to action(). */
   MenuAction menuaction;
 
+  void process_options_menu();
   void draw_item(int index, int menu_width, int menu_height);
   void get_controlfield_key_into_input(MenuItem* item);
 

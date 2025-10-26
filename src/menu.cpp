@@ -39,6 +39,9 @@
 #include "scene.h"
 #include "timer.h"
 
+#include "music_manager.h"
+extern MusicManager* music_manager;
+
 #define FLICK_CURSOR_TIME 500
 
 #pragma region Globals
@@ -230,6 +233,77 @@ void Menu::get_controlfield_key_into_input(MenuItem* item)
 }
 
 /**
+ * Processes actions for the main options menu. This is called from the main
+ * action() loop when an item in the options menu is hit. It syncs the global
+ * game settings with the state of the menu's toggle items.
+ */
+void Menu::process_options_menu()
+{
+  switch (check()) // check() returns the ID of the item that was just hit.
+  {
+    case MNID_OPENGL:
+#ifndef NOOPENGL
+      // The toggle state was flipped in Menu::action(). Now we sync the game state.
+      if (use_gl != isToggled(MNID_OPENGL))
+      {
+        use_gl = isToggled(MNID_OPENGL);
+        st_video_setup();
+      }
+#else
+      // If OpenGL is not compiled, ensure the toggle can't be set to true.
+      get_item_by_id(MNID_OPENGL).toggled = false;
+#endif
+      break;
+
+    case MNID_FULLSCREEN:
+#ifndef _WII_
+      if (use_fullscreen != isToggled(MNID_FULLSCREEN))
+      {
+        use_fullscreen = isToggled(MNID_FULLSCREEN);
+        st_video_setup();
+      }
+#else
+      // Fullscreen is forced on Wii.
+      get_item_by_id(MNID_FULLSCREEN).toggled = true;
+#endif
+      break;
+
+    case MNID_SOUND:
+      if (use_sound != isToggled(MNID_SOUND))
+        use_sound = isToggled(MNID_SOUND);
+      break;
+
+    case MNID_MUSIC:
+      if (use_music != isToggled(MNID_MUSIC))
+      {
+        use_music = isToggled(MNID_MUSIC);
+        music_manager->enable_music(use_music);
+      }
+      break;
+
+#ifdef TSCONTROL
+    case MNID_SHOWMOUSE:
+      if (show_mouse != isToggled(MNID_SHOWMOUSE))
+        show_mouse = isToggled(MNID_SHOWMOUSE);
+      break;
+#endif
+
+    case MNID_SHOWFPS:
+      if (show_fps != isToggled(MNID_SHOWFPS))
+        show_fps = isToggled(MNID_SHOWFPS);
+      break;
+
+    case MNID_TV_OVERSCAN:
+      if (tv_overscan_enabled != isToggled(MNID_TV_OVERSCAN))
+      {
+        tv_overscan_enabled = isToggled(MNID_TV_OVERSCAN);
+        offset_y = tv_overscan_enabled ? 40 : 0;
+      }
+      break;
+  }
+}
+
+/**
  * Destructor for the Menu class.
  * The use of std::vector for menu items ensures automatic cleanup,
  * so this destructor is currently empty.
@@ -401,6 +475,12 @@ void Menu::action()
   if (active_item >= static_cast<int>(item.size()))
   {
     active_item = item.size() - 1;
+  }
+
+  // If this is the options menu, check for and handle specific actions.
+  if (this == options_menu && hit_item != -1)
+  {
+    process_options_menu();
   }
 }
 

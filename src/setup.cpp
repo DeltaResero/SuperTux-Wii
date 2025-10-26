@@ -588,59 +588,9 @@ bool process_load_game_menu()
  */
 void process_options_menu(void)
 {
-  switch (options_menu->check())
-  {
-    case MNID_OPENGL:
-#ifndef NOOPENGL
-      if (use_gl != options_menu->isToggled(MNID_OPENGL))
-      {
-        use_gl = !use_gl;
-        st_video_setup();
-      }
-#else
-      options_menu->get_item_by_id(MNID_OPENGL).toggled = false;
-#endif
-      break;
-    case MNID_FULLSCREEN:
-#ifndef _WII_
-      if (use_fullscreen != options_menu->isToggled(MNID_FULLSCREEN))
-      {
-        use_fullscreen = !use_fullscreen;
-        st_video_setup();
-      }
-#else
-      options_menu->get_item_by_id(MNID_FULLSCREEN).toggled = false;
-#endif
-      break;
-    case MNID_SOUND:
-      if (use_sound != options_menu->isToggled(MNID_SOUND))
-        use_sound = !use_sound;
-      break;
-    case MNID_MUSIC:
-      if (use_music != options_menu->isToggled(MNID_MUSIC))
-      {
-        use_music = !use_music;
-        music_manager->enable_music(use_music);
-      }
-      break;
-#ifdef TSCONTROL
-    case MNID_SHOWMOUSE:
-      if (show_mouse != options_menu->isToggled(MNID_SHOWMOUSE))
-        show_mouse = !show_mouse;
-      break;
-#endif
-    case MNID_SHOWFPS:
-      if (show_fps != options_menu->isToggled(MNID_SHOWFPS))
-        show_fps = !show_fps;
-      break;
-    case MNID_TV_OVERSCAN:
-      if (tv_overscan_enabled != options_menu->isToggled(MNID_TV_OVERSCAN))
-      {
-        tv_overscan_enabled = !tv_overscan_enabled;
-        offset_y = tv_overscan_enabled ? 40 : 0;
-      }
-      break;
-  }
+  // This function is now deprecated.
+  // The logic has been moved to Menu::process_options_menu() in menu.cpp
+  // to centralize menu action handling.
 }
 
 /**
