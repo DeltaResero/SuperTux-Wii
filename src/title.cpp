@@ -536,18 +536,12 @@ void title(void)
         if (event.key.keysym.sym == SDLK_DELETE)
         {
           int slot = menu->get_active_item_id();
-          char str[1024];
-          snprintf(str, sizeof(str), "Are you sure you want to delete slot %d?", slot);
 
           draw_background();
 
-          if (confirm_dialog(str))
+          if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?"))
           {
-            snprintf(str, sizeof(str), "%s/slot%d.stsg", st_save_dir, slot);
-#ifdef DEBUG
-            printf("Removing: %s\n", str);
-#endif
-            remove(str);
+            remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
           }
 
           update_load_save_game_menu(load_game_menu);

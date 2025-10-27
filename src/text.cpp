@@ -585,23 +585,22 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
   float scroll = 0;
   float speed = scroll_speed / 50;
   int y;
-  int length;
-  FILE* fi;
-  char temp[1024];
   std::vector<std::string> names;
-  char filename[1024];
 
-  snprintf(filename, sizeof(filename), "%s/%s", datadir.c_str(), file.c_str());
+  // Construct the full path using std::string
+  std::string filename = datadir + "/" + file;
 
   // Read file line by line
-  if ((fi = fopen(filename, "r")) != nullptr)
+  std::ifstream fi(filename);
+  if (fi.is_open())
   {
-    while (fgets(temp, sizeof(temp), fi) != nullptr)
+    std::string line;
+    while (std::getline(fi, line))
     {
-      temp[strnlen(temp, sizeof(temp)) - 1] = '\0';  // Remove newline character
-      names.emplace_back(temp);  // Add each line to the vector
+      // std::getline automatically handles the newline characters.
+      // We can just add the line directly to our vector.
+      names.emplace_back(line);
     }
-    fclose(fi);
   }
   else
   {
@@ -613,7 +612,6 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     names.emplace_back("in your SuperTux distribution.");
   }
 
-  length = names.size();
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
@@ -691,7 +689,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     surface->draw_bg();
 
     y = 0;
-    for (int i = 0; i < length; ++i)
+    for (size_t i = 0; i < names.size(); ++i)
     {
       // Calculate y position
       int text_y = screen->h + y - int(scroll);

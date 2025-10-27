@@ -1030,12 +1030,9 @@ void GameSession::drawresultscreen()
  */
 std::string slotinfo(int slot)
 {
-  char tmp[1024];
-  char slotfile[1024];
   std::string title;
-  snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", st_save_dir, slot);
+  lisp_object_t* savegame = lisp_read_from_file((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
 
-  lisp_object_t* savegame = lisp_read_from_file(slotfile);
   if (savegame)
   {
     LispReader reader(lisp_cdr(savegame));
@@ -1045,14 +1042,12 @@ std::string slotinfo(int slot)
 
   if (!title.empty())
   {
-    snprintf(tmp, sizeof(tmp), "Slot %d - %s", slot, title.c_str());
+    return "Slot " + std::to_string(slot) + " - " + title;
   }
   else
   {
-    snprintf(tmp, sizeof(tmp), "Slot %d - Savegame", slot);
+    return "Slot " + std::to_string(slot) + " - Savegame";
   }
-
-  return tmp;
 }
 
 // EOF
