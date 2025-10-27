@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector> // Required for lisp_read_from_file buffer
 
 // All implementation details are hidden in an anonymous namespace
 // to prevent symbol conflicts and improve encapsulation.
@@ -41,6 +42,24 @@ namespace
   constexpr size_t MAX_TOKEN_LENGTH = 1024;
   // 8192 objects * ~8 bytes/object = ~64KB per block. A reasonable starting size.
   constexpr size_t OBJECT_POOL_SIZE = 8192;
+
+  enum CharProperty : uint8_t {
+    PROP_NONE = 0,
+    PROP_WHITESPACE = 1 << 0,
+    PROP_DELIMITER  = 1 << 1,
+    PROP_DIGIT      = 1 << 2,
+  };
+
+  static const std::array<uint8_t, 256> g_char_props = [] {
+    std::array<uint8_t, 256> props{};
+    for (int i = 0; i < 256; ++i) {
+        if (isspace(i)) props[i] |= PROP_WHITESPACE;
+        if (strchr("\"();", i)) props[i] |= PROP_DELIMITER;
+        if (isdigit(i)) props[i] |= PROP_DIGIT;
+    }
+    return props;
+  }();
+
 
   enum class TokenType : int
   {
@@ -123,7 +142,7 @@ namespace
   };
 
   /**
-   * String interning system for symbols.
+   * String interning system for symbols AND strings.
    * Reduces memory usage by ensuring identical strings share the same memory.
    * Crucially, this allows for fast O(1) pointer comparison instead of slow strcmp().
    */
@@ -298,7 +317,6 @@ namespace
 
   TokenType LispParserInternal::scan(lisp_stream_t* stream)
   {
-    static const char* delims = "\"();";
     int c;
 
     token_clear();
@@ -322,7 +340,7 @@ namespace
         }
       }
     }
-    while (isspace(c));
+    while (g_char_props[static_cast<unsigned char>(c)] & PROP_WHITESPACE);
 
     switch (c)
     {
@@ -352,29 +370,27 @@ namespace
         return TokenType::STRING;
       }
 
-              case '#':
-              {
-                c = next_char(stream);
-                switch (c)
-                {
-                  case 't': return TokenType::TRUE;
-                  case 'f': return TokenType::FALSE;
-                  case '?':
-                  {
-                    c = next_char(stream);
-                    if (c == '(')
-                    {
-                      return TokenType::PATTERN_OPEN_PAREN;
-                    }
-                    return TokenType::ERROR;
-                  }
-                }
-                return TokenType::ERROR;
-              }
+      case '#':
+      {
+        c = next_char(stream);
+        switch (c)
+        {
+          case 't': return TokenType::TRUE;
+          case 'f': return TokenType::FALSE;
+          case '?':
+          {
+            c = next_char(stream);
+            if (c == '(')
+            {
+              return TokenType::PATTERN_OPEN_PAREN;
+            }
+            return TokenType::ERROR;
+          }
+        }
+        return TokenType::ERROR;
+      }
     }
 
-    // It's not a special character, so it must be a symbol, number, or dot.
-    // Unget the character and start parsing.
     unget_char(c, stream);
 
     c = next_char(stream);
@@ -383,22 +399,23 @@ namespace
     {
       c = next_char(stream);
       unget_char(c, stream);
-      if (isspace(c) || strchr(delims, c))
+
+      if ((g_char_props[static_cast<unsigned char>(c)] & (PROP_WHITESPACE | PROP_DELIMITER)))
       {
         return TokenType::DOT;
       }
     }
 
-    unget_char(c, stream); // Put back the first char to be read by the loop
+    unget_char(c, stream);
 
-    int have_digits = 0;
-    int have_nondigits = 0;
+    bool have_digits = false;
+    bool have_nondigits = false;
     int dot_count = 0;
 
     while (true)
     {
       c = next_char(stream);
-      if (c == EOF || isspace(c) || strchr(delims, c))
+      if (c == EOF || (g_char_props[static_cast<unsigned char>(c)] & (PROP_WHITESPACE | PROP_DELIMITER)))
       {
         if (c != EOF)
         {
@@ -409,17 +426,17 @@ namespace
 
       token_append(c);
 
-      if (isdigit(c))
+      if (g_char_props[static_cast<unsigned char>(c)] & PROP_DIGIT)
       {
-        have_digits = 1;
+        have_digits = true;
       }
       else if (c == '.')
       {
         dot_count++;
       }
-      else if (c != '-') // A leading dash is ok
+      else if (c != '-')
       {
-        have_nondigits = 1;
+        have_nondigits = true;
       }
     }
 
@@ -634,7 +651,7 @@ namespace
       case LISP_TYPE_SYMBOL:
         return pattern->v.string == obj->v.string; // Pointer comparison
       case LISP_TYPE_STRING:
-        return strcmp(lisp_string(pattern), lisp_string(obj)) == 0;
+        return pattern->v.string == obj->v.string; // Pointer comparison
       case LISP_TYPE_INTEGER:
         return lisp_integer(pattern) == lisp_integer(obj);
       case LISP_TYPE_REAL:
@@ -688,6 +705,15 @@ namespace
 // --- Public API ---
 //
 
+lisp_stream_t* lisp_stream_init_string(lisp_stream_t* stream, const char* buf, size_t len)
+{
+  stream->type = LISP_STREAM_STRING;
+  stream->v.string.buf = buf;
+  stream->v.string.pos = 0;
+  stream->v.string.len = len;
+  return stream;
+}
+
 lisp_stream_t* lisp_stream_init_file(lisp_stream_t* stream, FILE* file)
 {
   stream->type = LISP_STREAM_FILE;
@@ -697,11 +723,8 @@ lisp_stream_t* lisp_stream_init_file(lisp_stream_t* stream, FILE* file)
 
 lisp_stream_t* lisp_stream_init_string(lisp_stream_t* stream, const char* buf)
 {
-  stream->type = LISP_STREAM_STRING;
-  stream->v.string.buf = buf;
-  stream->v.string.pos = 0;
-  stream->v.string.len = buf ? strlen(buf) : 0;
-  return stream;
+  // Maintain backward compatibility.
+  return lisp_stream_init_string(stream, buf, buf ? strlen(buf) : 0);
 }
 
 lisp_stream_t* lisp_stream_init_any(lisp_stream_t* stream, void* data,
@@ -740,7 +763,7 @@ lisp_object_t* lisp_make_symbol(const char* value)
 lisp_object_t* lisp_make_string(const char* value)
 {
   lisp_object_t* obj = lisp_object_alloc(LISP_TYPE_STRING);
-  obj->v.string = strdup(value); // Strings are not interned
+  obj->v.string = const_cast<char*>(g_string_interner.intern(value));
   return obj;
 }
 
@@ -765,10 +788,6 @@ lisp_object_t* lisp_read(lisp_stream_t* in)
   return parser.read(in);
 }
 
-/**
- * NOTE: This function is slow and should only be used for small, temporary Lisp trees.
- * For clearing all data from a level, use lisp_reset_pool() for an instantaneous cleanup.
- */
 void lisp_free(lisp_object_t* obj)
 {
   if (obj == 0 || obj == &error_object || obj == &end_marker || obj == &close_paren_marker || obj == &dot_marker)
@@ -778,10 +797,6 @@ void lisp_free(lisp_object_t* obj)
 
   switch (obj->type)
   {
-    case LISP_TYPE_STRING:
-      free(obj->v.string);
-      break;
-
     case LISP_TYPE_CONS:
     case LISP_TYPE_PATTERN_CONS:
       lisp_free(obj->v.cons.car);
@@ -792,12 +807,18 @@ void lisp_free(lisp_object_t* obj)
       lisp_free(obj->v.pattern.sub);
       break;
   }
-  // Individual objects are not freed as they belong to the pool.
-  // Symbols are also not freed as they are interned and managed globally.
+}
+
+lisp_object_t* lisp_read_from_string(const char* buf, size_t len)
+{
+  lisp_stream_t stream;
+  lisp_stream_init_string(&stream, buf, len);
+  return lisp_read(&stream);
 }
 
 lisp_object_t* lisp_read_from_string(const char* buf)
 {
+  // Maintain backward compatibility.
   lisp_stream_t stream;
   lisp_stream_init_string(&stream, buf);
   return lisp_read(&stream);
@@ -889,7 +910,8 @@ lisp_object_t* lisp_cdr(lisp_object_t* obj)
 lisp_object_t* lisp_cxr(lisp_object_t* obj, const char* x)
 {
   if (x == nullptr) return nullptr;
-  for (int i = strlen(x) - 1; i >= 0; --i)
+  const size_t len = strlen(x);
+  for (size_t i = len; i-- > 0; )
   {
     if (obj == nullptr) return nullptr;
     if (x[i] == 'a') obj = lisp_car(obj);
@@ -985,16 +1007,11 @@ void lisp_dump(lisp_object_t* obj, FILE* out)
 
 LispReader::LispReader(lisp_object_t* l) : lst(l)
 {
-  // Pre-populate the property map for fast lookups.
-  // We iterate through the list once, hashing every symbol key we find.
   for (lisp_object_t* cursor = lst; !lisp_nil_p(cursor); cursor = lisp_cdr(cursor))
   {
     lisp_object_t* cur = lisp_car(cursor);
-    // We are looking for pairs: (SYMBOL . VALUE) or (SYMBOL VALUE...)
     if (lisp_cons_p(cur) && lisp_symbol_p(lisp_car(cur)))
     {
-      // Key: interned C-string pointer (O(1) hashing/comparison because it's just a pointer address)
-      // Value: the rest of the list (the value associated with the symbol)
       property_map[lisp_symbol(lisp_car(cur))] = lisp_cdr(cur);
     }
   }
@@ -1002,10 +1019,7 @@ LispReader::LispReader(lisp_object_t* l) : lst(l)
 
 lisp_object_t* LispReader::search_for(const char* name)
 {
-  // Intern the search string so we can use pointer comparison.
   const char* interned_name = g_string_interner.intern(name);
-
-  // O(1) average case lookup
   auto it = property_map.find(interned_name);
   if (it != property_map.end())
   {
@@ -1199,26 +1213,18 @@ lisp_object_t* lisp_read_from_file(const std::string& filename)
     return nullptr;
   }
 
-  // A vector is a safe and simple way to manage a buffer of the file's contents.
-  // This reads the entire file in one I/O operation, which is critical for performance.
-  std::vector<char> buffer(file_size + 1);
+  std::vector<char> buffer(file_size);
   if (fread(buffer.data(), 1, file_size, in) != static_cast<size_t>(file_size))
   {
     fclose(in);
     return nullptr;
   }
   fclose(in);
-  buffer[file_size] = '\0'; // Null-terminate the buffer for the string parser
 
-  return lisp_read_from_string(buffer.data());
+  // Call the new overload of lisp_read_from_string that takes a size.
+  return lisp_read_from_string(buffer.data(), file_size);
 }
 
-/**
- * Resets the entire lisp object memory pool.
- * This is the primary cleanup function. Call this when transitioning
- * between major scenes (e.g., leaving a level or worldmap) to free all
- * Lisp-related memory instantly.
- */
 void lisp_reset_pool()
 {
   g_object_pool.reset();
