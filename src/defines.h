@@ -27,6 +27,15 @@
   #define VERSION "0.1.4-wii-d.2"
 #endif
 
+/* Memory Optimizations */
+#ifdef _WII_
+  // Wii has limited RAM and predictable, short file paths.
+  #define PATH_BUFFER_SIZE 128
+#else
+  // Other platforms have more RAM and may have very long directory paths.
+  #define PATH_BUFFER_SIZE 1024
+#endif
+
 /* FPS */
 #define FPS (1000 / 25)  // Target: 25 frames/sec (~40 ms frame delay)
 

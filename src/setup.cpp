@@ -337,7 +337,7 @@ void st_directory_setup(void)
 void st_directory_setup(void)
 {
   const char *home;
-  char str[1024];
+  char str[PATH_BUFFER_SIZE];
 
   /* Get home directory from $HOME variable or use current directory (".") */
   home = getenv("HOME") ? getenv("HOME") : ".";
@@ -536,23 +536,23 @@ bool process_load_game_menu()
 
   if (slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
   {
-    char slotfile[1024];
+    char slotfile[PATH_BUFFER_SIZE];
 
 #ifdef _WII_
     if (selecteddevice == 1)
     {
-      snprintf(slotfile, 1024, "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
+      snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
     }
     else if (selecteddevice == 2)
     {
-      snprintf(slotfile, 1024, "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
+      snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
     }
     else if (selecteddevice == 3)
     {
-      snprintf(slotfile, 1024, "%s/slot%d.stsg", "/apps/supertux/save", slot);
+      snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", "/apps/supertux/save", slot);
     }
 #else
-    snprintf(slotfile, 1024, "%s/slot%d.stsg", st_save_dir, slot);
+    snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", st_save_dir, slot);
 #endif
 
     // Uncomment if needed to handle starting a new save files (plays intro text)
