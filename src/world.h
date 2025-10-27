@@ -38,8 +38,8 @@ class Level;
 class World
 {
 private:
-  typedef std::list<BadGuy*> BadGuys;
-  BadGuys bad_guys_to_add;
+  typedef std::vector<BadGuy*> BadGuys;
+  std::vector<BadGuy*> bad_guys_to_add;
   Level* level;
   Player tux;
 

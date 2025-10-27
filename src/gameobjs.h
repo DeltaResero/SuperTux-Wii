@@ -34,6 +34,7 @@
 class BouncyDistro : public GameObject
 {
  public:
+  bool removable;
 
   void init(float x, float y);
   void action(double frame_ratio);
@@ -51,6 +52,7 @@ class Tile;
 class BrokenBrick : public GameObject
 {
  public:
+  bool removable;
   Timer timer;
   Tile* tile;
 
@@ -67,6 +69,7 @@ class BrokenBrick : public GameObject
 class BouncyBrick : public GameObject
 {
  public:
+  bool removable;
   float offset;
   float offset_m;
   int shape;
@@ -80,6 +83,7 @@ class BouncyBrick : public GameObject
 class FloatingScore : public GameObject
 {
  public:
+  bool removable;
   int value;
   Timer timer;
 

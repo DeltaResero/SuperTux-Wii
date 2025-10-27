@@ -69,25 +69,7 @@ void Bullet::init(float x, float y, float xm, Direction dir)
   base.y = y;
   base.ym = BULLET_STARTING_YM;
   old_base = base;
-}
-
-/**
- * Removes the bullet from the bullet list.
- */
-void Bullet::remove_me()
-{
-  std::vector<Bullet>& bullets = World::current()->bullets;
-  for (std::vector<Bullet>::iterator i = bullets.begin();
-       i != bullets.end(); ++i)
-  {
-    if (&(*i) == this)
-    {
-      bullets.erase(i);
-      return;
-    }
-  }
-
-  assert(false);
+  removable = false;
 }
 
 /**
@@ -129,7 +111,7 @@ void Bullet::action(double frame_ratio)
       issolid(base.x, base.y + 2) ||
       life_count <= 0)
   {
-    remove_me();
+    removable = true;
   }
 }
 
@@ -153,7 +135,7 @@ void Bullet::collision(int c_object)
 {
   if (c_object == CO_BADGUY)
   {
-    remove_me();
+    removable = true;
   }
 }
 
@@ -175,6 +157,7 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
   base.y = y_;
   old_base = base;
 
+  removable = false;
   physic.reset();
   physic.enable_gravity(false);
 
@@ -196,25 +179,6 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
   {
     physic.set_velocity(dir == LEFT ? -2 : 2, 0);
   }
-}
-
-/**
- * Removes the upgrade from the upgrade list.
- */
-void Upgrade::remove_me()
-{
-  std::vector<Upgrade>& upgrades = World::current()->upgrades;
-  for (std::vector<Upgrade>::iterator i = upgrades.begin();
-       i != upgrades.end(); ++i)
-  {
-    if (&(*i) == this)
-    {
-      upgrades.erase(i);
-      return;
-    }
-  }
-
-  assert(false);
 }
 
 /**
@@ -241,12 +205,12 @@ void Upgrade::action(double frame_ratio)
   /* Remove upgrade if off-screen */
   if (base.x < scroll_x - OFFSCREEN_DISTANCE)
   {
-    remove_me();
+    removable = true;
     return;
   }
   if (base.y > screen->h)
   {
-    remove_me();
+    removable = true;
     return;
   }
 
@@ -357,26 +321,6 @@ void Upgrade::draw()
 }
 
 /**
- * Handles upgrade bump interaction with the player.
- * @param player The player who bumps the upgrade.
- */
-void Upgrade::bump(Player*)
-{
-  // these can't be bumped
-  if (kind != UPGRADE_GROWUP)
-  {
-    return;
-  }
-
-  //play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
-
-  // do a little jump and change direction
-  physic.set_velocity(-physic.get_velocity_x(), 3);
-  dir = dir == LEFT ? RIGHT : LEFT;
-  physic.enable_gravity(true);
-}
-
-/**
  * Handles upgrade collisions with other objects.
  * @param p_c_object Pointer to the colliding object.
  * @param c_object Type of the object (e.g., player).
@@ -388,11 +332,15 @@ void Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
 
   if (type == COLLISION_BUMP)
   {
-    if (c_object == CO_PLAYER)
+    // BUMP LOGIC
+    if (kind != UPGRADE_GROWUP)
     {
-      pplayer = (Player*)p_c_object;
+      return;
     }
-    bump(pplayer);
+    //play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
+    physic.set_velocity(-physic.get_velocity_x(), 3);
+    dir = dir == LEFT ? RIGHT : LEFT;
+    physic.enable_gravity(true);
     return;
   }
 
@@ -427,7 +375,7 @@ void Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
         }
       }
 
-      remove_me();
+      removable = true;
       return;
   }
 }

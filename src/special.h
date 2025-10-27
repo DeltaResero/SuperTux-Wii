@@ -41,6 +41,7 @@ void free_special_gfx();
 class Upgrade : public GameObject
 {
 public:
+  bool removable;
   UpgradeKind kind;
   Direction dir;
   Physic physic;
@@ -52,16 +53,12 @@ public:
   std::string type() { return "Upgrade"; };
 
   ~Upgrade() {};
-
-private:
-  // Removes the upgrade from the global upgrade list, class does not exist afterward
-  void remove_me();
-  void bump(Player* player);
 };
 
 class Bullet : public GameObject
 {
  public:
+  bool removable;
   int life_count;
   base_type base;
   base_type old_base;
@@ -71,12 +68,6 @@ class Bullet : public GameObject
   void draw();
   void collision(int c_object);
   std::string type() { return "Bullet"; };
-
-private:
-  // Removes the bullet from the global bullet list, class does not exist afterward
-  void remove_me();
 };
 
 #endif /*SUPERTUX_SPECIAL_H*/
-
-// EOF

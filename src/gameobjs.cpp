@@ -36,6 +36,7 @@ void BouncyDistro::init(float x, float y)
   base.x = x;
   base.y = y;
   base.ym = -2;
+  removable = false;
 }
 
 /**
@@ -49,12 +50,7 @@ void BouncyDistro::action(double frame_ratio)
 
   if (base.ym >= 0)
   {
-    std::vector<BouncyDistro*>::iterator i = std::find(
-        World::current()->bouncy_distros.begin(),
-        World::current()->bouncy_distros.end(),
-        this);
-    if (i != World::current()->bouncy_distros.end())
-      World::current()->bouncy_distros.erase(i);
+    removable = true;
   }
 }
 
@@ -81,6 +77,7 @@ void BrokenBrick::init(Tile* tile_, float x, float y, float xm, float ym)
   base.y = y;
   base.xm = xm;
   base.ym = ym;
+  removable = false;
 
   // Cache random values for texture offsets
   // Use a bitwise AND with 15 which is a faster equivalent of modulo 16.
@@ -102,13 +99,7 @@ void BrokenBrick::action(double frame_ratio)
 
   if (!timer.check())
   {
-    auto& broken_bricks = World::current()->broken_bricks;
-    auto i = std::find(broken_bricks.begin(), broken_bricks.end(), this);
-    if (i != broken_bricks.end())
-    {
-      std::iter_swap(i, broken_bricks.end() - 1);  // Swap with the last element
-      broken_bricks.pop_back();  // Remove the last element
-    }
+    removable = true;
   }
 }
 
@@ -144,6 +135,7 @@ void BouncyBrick::init(float x, float y)
   offset = 0;
   offset_m = -BOUNCY_BRICK_SPEED;
   shape = World::current()->get_level()->gettileid(x, y);
+  removable = false;
 }
 
 /**
@@ -161,13 +153,7 @@ void BouncyBrick::action(double frame_ratio)
   /* Stop bouncing? */
   if (offset >= 0)
   {
-    auto& bouncy_bricks = World::current()->bouncy_bricks;
-    auto i = std::find(bouncy_bricks.begin(), bouncy_bricks.end(), this);
-    if (i != bouncy_bricks.end())
-    {
-      std::iter_swap(i, bouncy_bricks.end() - 1);  // Swap with the last element
-      bouncy_bricks.pop_back();  // Remove the last element
-    }
+    removable = true;
   }
 }
 
@@ -217,6 +203,7 @@ void FloatingScore::init(float x, float y, int s)
   timer.init(true);
   timer.start(1000);
   value = s;
+  removable = false;
 }
 
 /**
@@ -230,13 +217,7 @@ void FloatingScore::action(double frame_ratio)
 
   if (!timer.check())
   {
-    auto& floating_scores = World::current()->floating_scores;
-    auto i = std::find(floating_scores.begin(), floating_scores.end(), this);
-    if (i != floating_scores.end())
-    {
-      std::iter_swap(i, floating_scores.end() - 1);  // Swap with the last element
-      floating_scores.pop_back();  // Remove the last element
-    }
+    removable = true;
   }
 }
 

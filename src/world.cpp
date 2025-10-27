@@ -24,6 +24,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
 #include "globals.h"
 #include "scene.h"
 #include "screen.h"
@@ -115,8 +116,10 @@ void World::activate_world()
 
 void World::deactivate_world()
 {
-  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
-    delete *i;
+  for (auto* badguy : bad_guys)
+  {
+    delete badguy;
+  }
   bad_guys.clear();
 
   for (ParticleSystems::iterator i = particle_systems.begin();
@@ -251,9 +254,9 @@ void World::draw()
     bouncy_bricks[i]->draw();
   }
 
-  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+  for (auto* badguy : bad_guys)
   {
-    (*i)->draw();
+    badguy->draw();
   }
 
   tux.draw();
@@ -306,52 +309,117 @@ void World::draw()
 
 void World::action(float elapsed_time)
 {
+  // Update all game logic
   tux.action(elapsed_time);
   tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
   scrolling(elapsed_time);
 
-  /* Handle bouncy distros: */
-  for (unsigned int i = 0; i < bouncy_distros.size(); i++)
-    bouncy_distros[i]->action(elapsed_time);
+  // Update all game objects using simple forward loops.
+  // No removal happens in this phase.
+  for (auto* distro : bouncy_distros)
+  {
+    distro->action(elapsed_time);
+  }
 
-  /* Handle broken bricks: */
-  for (unsigned int i = 0; i < broken_bricks.size(); i++)
-    broken_bricks[i]->action(elapsed_time);
+  for (auto* brick : broken_bricks)
+  {
+    brick->action(elapsed_time);
+  }
 
-  // Handle all kinds of game objects
-  for (unsigned int i = 0; i < bouncy_bricks.size(); i++)
-    bouncy_bricks[i]->action(elapsed_time);
+  for (auto* brick : bouncy_bricks)
+  {
+    brick->action(elapsed_time);
+  }
 
-  for (unsigned int i = 0; i < floating_scores.size(); i++)
-    floating_scores[i]->action(elapsed_time);
+  for (auto* score : floating_scores)
+  {
+    score->action(elapsed_time);
+  }
 
-  for (unsigned int i = 0; i < bullets.size(); ++i)
-    bullets[i].action(elapsed_time);
+  for (auto& bullet : bullets)
+  {
+    bullet.action(elapsed_time);
+  }
 
-  for (unsigned int i = 0; i < upgrades.size(); i++)
-    upgrades[i].action(elapsed_time);
+  for (auto& upgrade : upgrades)
+  {
+    upgrade.action(elapsed_time);
+  }
 
-  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
-    (*i)->action(elapsed_time);
+  for (auto* badguy : bad_guys)
+  {
+    badguy->action(elapsed_time);
+  }
 
-  /* update particle systems */
-  std::vector<ParticleSystem*>::iterator p;
-  for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
-    {
-      (*p)->simulate(elapsed_time);
-    }
+  for(auto* p : particle_systems)
+  {
+    p->simulate(elapsed_time);
+  }
 
-  /* Handle all possible collisions. */
+  // Handle all collisions
   collision_handler();
 
-  // Cleanup marked badguys
-  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end();
-      /* ++i handled at end of the loop */) {
-    if ((*i)->is_removable()) {
-      delete *i;
-      i =  bad_guys.erase(i);
-    } else {
-      ++i;
+  // Clean up all removable objects
+  // All cleanup now happens at the very end of the frame, using safe backward iteration.
+  for (int i = bouncy_distros.size() - 1; i >= 0; --i)
+  {
+    if (bouncy_distros[i]->removable)
+    {
+      delete bouncy_distros[i];
+      bouncy_distros.erase(bouncy_distros.begin() + i);
+    }
+  }
+
+  for (int i = broken_bricks.size() - 1; i >= 0; --i)
+  {
+    if (broken_bricks[i]->removable)
+    {
+      delete broken_bricks[i];
+      broken_bricks.erase(broken_bricks.begin() + i);
+    }
+  }
+
+  for (int i = bouncy_bricks.size() - 1; i >= 0; --i)
+  {
+    if (bouncy_bricks[i]->removable)
+    {
+      delete bouncy_bricks[i];
+      bouncy_bricks.erase(bouncy_bricks.begin() + i);
+    }
+  }
+
+  for (int i = floating_scores.size() - 1; i >= 0; --i)
+  {
+    if (floating_scores[i]->removable)
+    {
+      delete floating_scores[i];
+      floating_scores.erase(floating_scores.begin() + i);
+    }
+  }
+
+  for (int i = bullets.size() - 1; i >= 0; --i)
+  {
+    if (bullets[i].removable)
+    {
+      bullets.erase(bullets.begin() + i);
+    }
+  }
+
+  for (int i = upgrades.size() - 1; i >= 0; --i)
+  {
+    if (upgrades[i].removable)
+    {
+      upgrades.erase(upgrades.begin() + i);
+    }
+  }
+
+  // Use the same safe backward loop for bad_guys.
+  for (int i = bad_guys.size() - 1; i >= 0; --i)
+  {
+    if (bad_guys[i]->is_removable())
+    {
+      delete bad_guys[i];
+      bad_guys.erase(bad_guys.begin() + i);
     }
   }
 }
@@ -833,12 +901,12 @@ void World::trygrabdistro(float x, float y, int bounciness)
 void World::trybumpbadguy(float x, float y)
 {
   // Bad guys:
-  for (BadGuys::iterator i = bad_guys.begin(); i != bad_guys.end(); ++i)
+  for (auto* badguy : bad_guys)
     {
-      if ((*i)->base.x >= x - 32 && (*i)->base.x <= x + 32 &&
-          (*i)->base.y >= y - 16 && (*i)->base.y <= y + 16)
+      if (badguy->base.x >= x - 32 && badguy->base.x <= x + 32 &&
+          badguy->base.y >= y - 16 && badguy->base.y <= y + 16)
         {
-          (*i)->collision(&tux, CO_PLAYER, COLLISION_BUMP);
+          badguy->collision(&tux, CO_PLAYER, COLLISION_BUMP);
         }
     }
 
