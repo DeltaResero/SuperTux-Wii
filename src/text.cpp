@@ -27,11 +27,11 @@
 
 Text::Texts Text::texts;
 
-#define MAX_TEXT_LEN 1024   // Define a maximum length for safety
-#define MAX_VEL     10      // Maximum velocity for scrolling text
-#define SPEED_INC   0.01    // Speed increment for scrolling
-#define SCROLL      60      // Fixed scroll amount when space/enter is pressed
-#define ITEMS_SPACE 4       // Space between lines of text
+#define MAX_TEXT_LEN 256     // Define a maximum length for safety
+#define MAX_VEL      10      // Maximum velocity for scrolling text
+#define SPEED_INC    0.01    // Speed increment for scrolling
+#define SCROLL       60      // Fixed scroll amount when space/enter is pressed
+#define ITEMS_SPACE  4       // Space between lines of text
 
 #ifndef NOOPENGL
 #include <vector>
