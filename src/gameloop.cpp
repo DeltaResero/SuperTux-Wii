@@ -1037,7 +1037,6 @@ std::string slotinfo(int slot)
   {
     LispReader reader(lisp_cdr(savegame));
     reader.read_string("title", &title);
-    lisp_free(savegame);
   }
 
   if (!title.empty())

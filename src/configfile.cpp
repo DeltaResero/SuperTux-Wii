@@ -72,14 +72,12 @@ void loadconfig()
 
   if (root_obj->type == LISP_TYPE_EOF || root_obj->type == LISP_TYPE_PARSE_ERROR)
   {
-    lisp_free(root_obj);
     fclose(file);
     return;
   }
 
   if (strcmp(lisp_symbol(lisp_car(root_obj)), "supertux-config") != 0)
   {
-    lisp_free(root_obj);
     fclose(file);
     return;
   }
@@ -133,7 +131,6 @@ void loadconfig()
   reader.read_int("keyboard-fire", &keymap.fire);
 
   // Free the Lisp object and close the file
-  lisp_free(root_obj);
   fclose(file);
 }
 

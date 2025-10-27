@@ -212,7 +212,6 @@ void TileManager::load_tileset(std::string filename)
     assert(0);
   }
 
-  lisp_free(root_obj);
   current_tileset = filename;
 }
 

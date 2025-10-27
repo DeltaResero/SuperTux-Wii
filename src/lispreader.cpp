@@ -957,6 +957,27 @@ lisp_object_t* lisp_list_nth(lisp_object_t* obj, int index)
   return obj->v.cons.car;
 }
 
+lisp_object_t* lisp_find_value(lisp_object_t* list, const char* key)
+{
+  // Intern the key once for fast pointer comparisons inside the loop.
+  const char* interned_key = g_string_interner.intern(key);
+
+  while (!lisp_nil_p(list))
+  {
+    lisp_object_t* cur = lisp_car(list);
+    if (lisp_cons_p(cur) && lisp_symbol_p(lisp_car(cur)))
+    {
+      if (lisp_symbol(lisp_car(cur)) == interned_key)
+      {
+        return lisp_cdr(cur); // Found it
+      }
+    }
+    list = lisp_cdr(list);
+  }
+
+  return nullptr; // Not found
+}
+
 void lisp_dump(lisp_object_t* obj, FILE* out)
 {
   if (obj == 0)

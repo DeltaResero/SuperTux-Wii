@@ -74,36 +74,11 @@ void LevelSubset::create(const std::string& subset_name)
  * @param cursor Pointer to the Lisp object to parse.
  * Iterates through the object to extract the title and description.
  */
-void LevelSubset::parse(lisp_object_t* cursor)
+void LevelSubset::parse(lisp_object_t* data)
 {
-  while (!lisp_nil_p(cursor))
-  {
-    lisp_object_t* cur = lisp_car(cursor);
-    char* s;
-
-    if (!lisp_cons_p(cur) || !lisp_symbol_p(lisp_car(cur)))
-    {
-      printf("Not good");
-    }
-    else
-    {
-      if (strcmp(lisp_symbol(lisp_car(cur)), "title") == 0)
-      {
-        if ((s = lisp_string(lisp_car(lisp_cdr(cur)))) != nullptr)
-        {
-          title = s;
-        }
-      }
-      else if (strcmp(lisp_symbol(lisp_car(cur)), "description") == 0)
-      {
-        if ((s = lisp_string(lisp_car(lisp_cdr(cur)))) != nullptr)
-        {
-          description = s;
-        }
-      }
-    }
-    cursor = lisp_cdr(cursor);
-  }
+  LispReader reader(data);
+  reader.read_string("title", &title);
+  reader.read_string("description", &description);
 }
 
 /**
@@ -160,7 +135,6 @@ void LevelSubset::load(const std::string& subset)
       }
     }
 
-    lisp_free(root_obj);
     fclose(fi);
 
     fs::path image_file = filename.parent_path() / (filename.stem().string() + ".png");
@@ -429,43 +403,45 @@ int Level::load(const std::string& filename)
     reader.read_int_vector("foreground-tm", &fg_tm);
 
     // Read ResetPoints
-    lisp_object_t* cur = nullptr;
-    if (reader.read_lisp("reset-points", &cur))
+    lisp_object_t* reset_points_list = nullptr;
+    if (reader.read_lisp("reset-points", &reset_points_list))
     {
-      while (!lisp_nil_p(cur))
+      while (!lisp_nil_p(reset_points_list))
       {
-        lisp_object_t* data = lisp_car(cur);
+        lisp_object_t* data = lisp_car(reset_points_list);
+        lisp_object_t* x_val = lisp_find_value(lisp_cdr(data), "x");
+        lisp_object_t* y_val = lisp_find_value(lisp_cdr(data), "y");
 
-        ResetPoint pos;
-
-        LispReader reader(lisp_cdr(data));
-        if (reader.read_int("x", &pos.x) && reader.read_int("y", &pos.y))
+        if (x_val && y_val && lisp_integer_p(lisp_car(x_val)) && lisp_integer_p(lisp_car(y_val)))
         {
-          reset_points.push_back(pos);
+            reset_points.push_back({lisp_integer(lisp_car(x_val)), lisp_integer(lisp_car(y_val))});
         }
-
-        cur = lisp_cdr(cur);
+        reset_points_list = lisp_cdr(reset_points_list);
       }
     }
 
     // Read BadGuys
-    cur = nullptr;
-    if (reader.read_lisp("objects", &cur))
+    lisp_object_t* objects_list = nullptr;
+    if (reader.read_lisp("objects", &objects_list))
     {
-      while (!lisp_nil_p(cur))
+      while (!lisp_nil_p(objects_list))
       {
-        lisp_object_t* data = lisp_car(cur);
+        lisp_object_t* data = lisp_car(objects_list);
 
         BadGuyData bg_data;
         bg_data.kind = badguykind_from_string(lisp_symbol(lisp_car(data)));
-        LispReader reader(lisp_cdr(data));
-        reader.read_int("x", &bg_data.x);
-        reader.read_int("y", &bg_data.y);
-        reader.read_bool("stay-on-platform", &bg_data.stay_on_platform);
+
+        lisp_object_t* val_x = lisp_find_value(lisp_cdr(data), "x");
+        if (val_x) bg_data.x = lisp_integer(lisp_car(val_x));
+
+        lisp_object_t* val_y = lisp_find_value(lisp_cdr(data), "y");
+        if (val_y) bg_data.y = lisp_integer(lisp_car(val_y));
+
+        lisp_object_t* val_stay = lisp_find_value(lisp_cdr(data), "stay-on-platform");
+        if (val_stay) bg_data.stay_on_platform = lisp_boolean(lisp_car(val_stay));
 
         badguy_data.push_back(bg_data);
-
-        cur = lisp_cdr(cur);
+        objects_list = lisp_cdr(objects_list);
       }
     }
 
@@ -634,7 +610,6 @@ int Level::load(const std::string& filename)
     }
   }
 
-  lisp_free(root_obj);
   return 0;
 }
 

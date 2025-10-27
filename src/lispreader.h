@@ -140,6 +140,8 @@ lisp_object_t* lisp_cdr(lisp_object_t *obj);
 
 // Utility function for accessing parts of a cons list based on a string of 'a' and 'd'
 lisp_object_t* lisp_cxr(lisp_object_t *obj, const char *x);
+// Utility function to find the value associated with a symbol in a list (ideal for small lists)
+lisp_object_t* lisp_find_value(lisp_object_t* list, const char* key);
 
 // Lisp object creation functions
 lisp_object_t* lisp_make_integer(int value);

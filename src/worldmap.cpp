@@ -214,8 +214,6 @@ TileManager::TileManager()
   {
     assert(0);
   }
-
-  lisp_free(root_obj);
 }
 
 /**
@@ -674,7 +672,6 @@ void WorldMap::load_map()
     }
   }
 
-  lisp_free(root_obj);
   tux = new Tux(this);
 }
 
@@ -711,7 +708,6 @@ void WorldMap::get_level_title(Levels::pointer level)
     reader.read_string("name", &level->title);
   }
 
-  lisp_free(root_obj);
   fclose(fi);
 }
 
