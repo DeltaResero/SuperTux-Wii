@@ -52,6 +52,8 @@ private:
   static World* current_;
 public:
   BadGuys bad_guys;
+  BadGuys normal_colliders;
+  BadGuys special_colliders;
   std::vector<BouncyDistro*> bouncy_distros;
   std::vector<BrokenBrick*>  broken_bricks;
   std::vector<BouncyBrick*>  bouncy_bricks;
@@ -105,6 +107,8 @@ public:
 
   void add_upgrade(float x, float y, Direction dir, UpgradeKind kind);
   void add_bullet(float x, float y, float xm, Direction dir);
+
+  void set_badguy_collision_state(BadGuy* bg, bool is_special);
 
   /** Try to grab the coin at the given coordinates */
   void trygrabdistro(float x, float y, int bounciness);

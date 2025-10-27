@@ -338,6 +338,9 @@ void BadGuy::action_mriceblock(double frame_ratio)
       }
       // Play a kick sound
       play_sound(sounds[SND_KICK], SOUND_CENTER_SPEAKER);
+
+      // Notify the world that we are now a special collider.
+      World::current()->set_badguy_collision_state(this, true);
     }
   }
 
@@ -364,8 +367,8 @@ void BadGuy::action_mriceblock(double frame_ratio)
     }
   }
 
-  // If the block is 'flattened' (from being stomped), it will eventually
-  // recover back to its normal walking state.
+  // If Mr. Ice Block is 'flattened' (from being stomped), he will eventually
+  // recover back to a normal walking state.
   if (mode == FLAT)
   {
     if (!timer.check())
@@ -373,6 +376,9 @@ void BadGuy::action_mriceblock(double frame_ratio)
       mode = NORMAL;
       set_sprite(img_mriceblock_left, img_mriceblock_right);
       physic.set_velocity((dir == LEFT) ? -0.8f : 0.8f, 0);
+
+      // Mr. Ice Block has recovered. Tell the world he is a normal collider.
+      World::current()->set_badguy_collision_state(this, false);
     }
   }
 }
@@ -388,27 +394,37 @@ void BadGuy::check_horizontal_bump(bool checkcliff)
   if (dir == LEFT && issolid(base.x, static_cast<int>(base.y) + halfheight))
   {
     if (kind == BAD_MRICEBLOCK && mode == KICK)
+    {
       World::current()->trybreakbrick(base.x, base.y + halfheight, false, dir);
+    }
 
     dir = RIGHT;
+    // On a wall hit, always reverse velocity.
     physic.set_velocity(-physic.get_velocity_x(), physic.get_velocity_y());
     return;
   }
   if (dir == RIGHT && issolid(base.x + base.width, static_cast<int>(base.y) + halfheight))
   {
     if (kind == BAD_MRICEBLOCK && mode == KICK)
+    {
       World::current()->trybreakbrick(base.x + base.width, static_cast<int>(base.y) + halfheight, false, dir);
+    }
 
     dir = LEFT;
+    // On a wall hit, always reverse velocity.
     physic.set_velocity(-physic.get_velocity_x(), physic.get_velocity_y());
     return;
   }
 
   // Don't check for cliffs when we're falling
   if (!checkcliff)
+  {
     return;
+  }
   if (!issolid(base.x + base.width / 2, base.y + base.height))
+  {
     return;
+  }
 
   if (dir == LEFT && !issolid(base.x, static_cast<int>(base.y) + base.height + halfheight))
   {
@@ -1040,6 +1056,12 @@ void BadGuy::squish(Player* player)
       set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
       physic.set_velocity_x(0);
 
+      // We are no longer a special collider.
+      if (mode == KICK)
+      {
+        World::current()->set_badguy_collision_state(this, false);
+      }
+
       timer.start(4000);
     }
     else if (mode == FLAT)
@@ -1061,6 +1083,9 @@ void BadGuy::squish(Player* player)
       mode = KICK;
       player->kick_timer.start(KICKING_TIME);
       set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
+
+      // We are now a special collider.
+      World::current()->set_badguy_collision_state(this, true);
     }
 
     player->jump_of_badguy(this);
