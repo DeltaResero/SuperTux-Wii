@@ -582,10 +582,10 @@ void display_text_file(const std::string& file, const std::string& surface, floa
  */
 void display_text_file(const std::string& file, Surface* surface, float scroll_speed)
 {
-  int done = 0;
+  bool done = false;
   float scroll = 0;
   float speed = scroll_speed / 50;
-  int y;
+  int y = 0;
   std::vector<std::string> names;
 
   // Construct the full path using std::string
@@ -650,7 +650,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
                *   break;
                */
               case SDLK_ESCAPE:
-                done = 1;
+                done = true;
                 break;
               default:
                 break;
@@ -660,12 +660,12 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
           case SDL_JOYBUTTONDOWN:
             if (event.jbutton.button == 6)  // Wii Remote Home Button alternative to SDLK_ESCAPE
             {
-              done = 1;
+              done = true;
             }
             break;
 
           case SDL_QUIT:
-            done = 1;
+            done = true;
             break;
 
           default:
@@ -741,7 +741,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     // Check if the entire text has scrolled off the screen
     if (screen->h + y - scroll < 0 && 20 + screen->h + y - scroll < 0)
     {
-      done = 1;
+      done = true;
     }
 
     if (scroll < 0)
