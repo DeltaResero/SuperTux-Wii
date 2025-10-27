@@ -39,7 +39,12 @@
 // to prevent symbol conflicts and improve encapsulation.
 namespace
 {
+#ifdef _WII_
+  constexpr size_t MAX_TOKEN_LENGTH = 256;
+#else
   constexpr size_t MAX_TOKEN_LENGTH = 1024;
+#endif
+
   // 8192 objects * ~8 bytes/object = ~64KB per block. A reasonable starting size.
   constexpr size_t OBJECT_POOL_SIZE = 8192;
 
