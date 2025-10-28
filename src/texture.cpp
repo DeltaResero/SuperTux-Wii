@@ -374,60 +374,6 @@ void Surface::resize(int w_, int h_)
 }
 
 /**
- * Captures the current screen and returns it as a Surface.
- * @return A pointer to a Surface representing the captured screen.
- */
-Surface* Surface::CaptureScreen()
-{
-  Surface* cap_screen = nullptr;  // Ensure initialization
-
-  if (!(screen->flags & SDL_OPENGL))
-  {
-    cap_screen = new Surface(SDL_GetVideoSurface(), false);
-  }
-
-#ifndef NOOPENGL
-  if (use_gl)
-  {
-    SDL_Surface* temp;
-    unsigned char* pixels;
-    int i;
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE, screen->w, screen->h, 24,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-                                0x000000FF, 0x0000FF00, 0x00FF0000, 0
-#else
-                                0x00FF0000, 0x0000FF00, 0x000000FF, 0
-#endif
-                               );
-    if (temp == nullptr)
-    {
-      st_abort("Error while trying to capture the screen in OpenGL mode", "");
-    }
-
-    pixels = static_cast<unsigned char*>(malloc(3 * screen->w * screen->h));
-    if (pixels == nullptr)
-    {
-      SDL_FreeSurface(temp);
-      st_abort("Error while trying to capture the screen in OpenGL mode", "");
-    }
-
-    glReadPixels(0, 0, screen->w, screen->h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-    for (i = 0; i < screen->h; i++)
-    {
-      memcpy(static_cast<char*>(temp->pixels) + temp->pitch * i, pixels + 3 * screen->w * (screen->h - i - 1), screen->w * 3);
-    }
-    free(pixels);
-
-    cap_screen = new Surface(temp, false);
-    SDL_FreeSurface(temp);
-  }
-#endif
-
-  return cap_screen;
-}
-
-/**
  * Loads a portion of an image file into an SDL_Surface.
  * @param file The path to the image file.
  * @param x The x-coordinate of the part to load.

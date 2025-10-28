@@ -91,7 +91,6 @@ public:
   Surface(const std::string& file, int x, int y, int w, int h, int use_alpha);
   ~Surface();
 
-  static Surface* CaptureScreen();
   void reload();
   void draw(float x, float y, Uint8 alpha = 255, bool update = false);
   void draw_bg(Uint8 alpha = 255, bool update = false);
