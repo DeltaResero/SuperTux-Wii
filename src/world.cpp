@@ -566,6 +566,12 @@ void World::collision_handler()
   // Only check active bullets against visible enemies.
   for (auto& bullet : bullets)
   {
+    // If a bullet has already been marked for removal, skip it.
+    if (bullet.removable)
+    {
+        continue;
+    }
+
     // Skip collision checks for this bullet if it is outside the active area.
     if (bullet.base.x + bullet.base.width < screen_x_start || bullet.base.x > screen_x_end)
     {
@@ -591,8 +597,31 @@ void World::collision_handler()
       {
         badguy->collision(0, CO_BULLET);
         bullet.collision(CO_BADGUY);
-        break;
+        break; // A bullet can only hit one enemy.
       }
+    }
+
+    // If the bullet hit a normal_collider, it is now inactive. Skip special_colliders.
+    if (bullet.removable)
+    {
+        continue;
+    }
+
+    // Check against special colliders
+    for (auto* badguy : special_colliders)
+    {
+        // Tux can't kill a dying enemy
+        if (badguy->dying != DYING_NOT)
+        {
+            continue;
+        }
+
+        if (rectcollision(bullet.base, badguy->base))
+        {
+            badguy->collision(0, CO_BULLET);
+            bullet.collision(CO_BADGUY);
+            break; // A bullet can only hit one enemy.
+        }
     }
   }
 
