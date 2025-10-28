@@ -999,6 +999,12 @@ void BadGuy::set_sprite(Sprite* left, Sprite* right)
  */
 void BadGuy::bump()
 {
+  // Can't bump an enemy that is already dying.
+  if (dying != DYING_NOT)
+  {
+    return;
+  }
+
   // These can't be bumped
   if (kind == BAD_FLAME || kind == BAD_BOMB || kind == BAD_FISH || kind == BAD_FLYINGSNOWBALL)
     return;
