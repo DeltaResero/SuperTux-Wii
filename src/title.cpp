@@ -465,6 +465,27 @@ void title(void)
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
+      // First, check for our custom delete action if the load game menu is active.
+      if (Menu::current() == load_game_menu &&
+          ((event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DELETE) ||
+           (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 4))) // 4 is the Wii Remote Minus button
+      {
+        int slot = load_game_menu->get_active_item_id();
+
+        // Call the dialog, passing the correct background surface.
+        if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", bkg_title))
+        {
+          remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
+        }
+
+        // After the action, refresh the save list and return to the main menu.
+        update_load_save_game_menu(load_game_menu);
+        Menu::set_current(main_menu);
+        Menu::push_current(load_game_menu);
+        continue; // Skip passing this event to the generic handler.
+      }
+
+      // If it wasn't our special delete action, let the current menu handle it.
       if (Menu::current())
       {
         Menu::current()->event(event);
@@ -533,22 +554,7 @@ void title(void)
       }
       else if (menu == load_game_menu)
       {
-        if (event.key.keysym.sym == SDLK_DELETE)
-        {
-          int slot = menu->get_active_item_id();
-
-          draw_background();
-
-          if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?"))
-          {
-            remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
-          }
-
-          update_load_save_game_menu(load_game_menu);
-          update_time = st_get_ticks();
-          Menu::set_current(main_menu);
-        }
-        else if (process_load_game_menu())
+        if (process_load_game_menu())
         {
           createDemo();
           loadsounds();
@@ -584,6 +590,7 @@ void title(void)
 
     // Pause the loop for a short duration
     frame++;
+
 #ifdef _WII_
     /*FIXME: Gets 60fps now on Wii by removing SDL_Delay, but animation of "?" blocks are
      * about 2x too fast unless we compensate by only incrementing global frame counter

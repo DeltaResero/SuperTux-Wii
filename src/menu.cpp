@@ -70,10 +70,8 @@ Menu* Menu::current_ = 0;
  * @param text The text to display in the dialog.
  * @return Returns true if 'Yes' is selected, false if 'No' is selected.
  */
-bool confirm_dialog(std::string text)
+bool confirm_dialog(std::string text, Surface* background)
 {
-  Surface* cap_screen = Surface::CaptureScreen();
-
   Menu* dialog = new Menu;
   dialog->additem(MN_DEACTIVE, text, 0, 0);
   dialog->additem(MN_HL, "", 0, 0);
@@ -92,7 +90,10 @@ bool confirm_dialog(std::string text)
       dialog->event(event);
     }
 
-    cap_screen->draw(0, 0);
+    if (background)
+    {
+      background->draw_bg();
+    }
 
     dialog->draw();
     dialog->action();
@@ -100,13 +101,11 @@ bool confirm_dialog(std::string text)
     switch (dialog->check())
     {
       case true:
-        delete cap_screen;
         Menu::set_current(0);
         delete dialog;
         return true;
         break;
       case false:
-        delete cap_screen;
         Menu::set_current(0);
         delete dialog;
         return false;
@@ -741,7 +740,7 @@ void Menu::event(SDL_Event& event)
           menuaction = MENU_ACTION_RIGHT;
           break;
         case SDLK_SPACE:
-        case SDLK_RETURN:    /* Menu Hit */
+        case SDLK_RETURN:     /* Menu Hit */
           menuaction = MENU_ACTION_HIT;
           break;
         case SDLK_ESCAPE:
@@ -753,60 +752,71 @@ void Menu::event(SDL_Event& event)
       }
       break;
 
-        case SDL_JOYHATMOTION:
-          if (event.jhat.value == SDL_HAT_UP)
-          {
-            menuaction = MENU_ACTION_UP;
-          }
-          if (event.jhat.value == SDL_HAT_DOWN)
-          {
-            menuaction = MENU_ACTION_DOWN;
-          }
-          break;
+    case SDL_JOYHATMOTION:
+      if (event.jhat.value == SDL_HAT_UP)
+      {
+        menuaction = MENU_ACTION_UP;
+      }
+      if (event.jhat.value == SDL_HAT_DOWN)
+      {
+        menuaction = MENU_ACTION_DOWN;
+      }
+      break;
 
-        case SDL_JOYAXISMOTION:
-          if (event.jaxis.axis == joystick_keymap.y_axis)
-          {
-            if (event.jaxis.value > 1024)
-            {
-              menuaction = MENU_ACTION_DOWN;
-            }
-            else if (event.jaxis.value < -1024)
-            {
-              menuaction = MENU_ACTION_UP;
-            }
-          }
-          break;
+    case SDL_JOYAXISMOTION:
+      if (event.jaxis.axis == joystick_keymap.y_axis)
+      {
+        if (event.jaxis.value > 1024)
+        {
+          menuaction = MENU_ACTION_DOWN;
+        }
+        else if (event.jaxis.value < -1024)
+        {
+          menuaction = MENU_ACTION_UP;
+        }
+      }
+      break;
 
-        case SDL_JOYBUTTONDOWN:
-          menuaction = MENU_ACTION_HIT;
-          break;
+    case SDL_JOYBUTTONDOWN:
+    {
+      // This version correctly uses the global keymap and adds Wii specifics.
+      if (event.jbutton.button == joystick_keymap.a_button || event.jbutton.button == 2 || event.jbutton.button == 3)
+      {
+        menuaction = MENU_ACTION_HIT;
+      }
+      else if (event.jbutton.button == joystick_keymap.b_button || event.jbutton.button == 1)
+      {
+        Menu::pop_current();
+      }
+      // All other buttons (Minus, Plus, Home) are ignored here, allowing them to be handled elsewhere.
+      break;
+    }
 
-        case SDL_MOUSEBUTTONDOWN:
-          x = event.motion.x;
-          y = event.motion.y;
-          if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
-          {
-            menuaction = MENU_ACTION_HIT;
-          }
-          break;
+    case SDL_MOUSEBUTTONDOWN:
+      x = event.button.x;
+      y = event.button.y;
+      if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+      {
+        menuaction = MENU_ACTION_HIT;
+      }
+      break;
 
-        case SDL_MOUSEMOTION:
-          x = event.motion.x;
-          y = event.motion.y;
-          if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
-          {
-            active_item = (y - (pos_y - get_height() / 2)) / 24;
-            mouse_cursor->set_state(MC_LINK);
-          }
-          else
-          {
-            mouse_cursor->set_state(MC_NORMAL);
-          }
-          break;
+    case SDL_MOUSEMOTION:
+      x = event.motion.x;
+      y = event.motion.y;
+      if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+      {
+        active_item = (y - (pos_y - get_height() / 2)) / 24;
+        mouse_cursor->set_state(MC_LINK);
+      }
+      else
+      {
+        mouse_cursor->set_state(MC_NORMAL);
+      }
+      break;
 
-        default:
-          break;
+    default:
+      break;
   }
 }
 
