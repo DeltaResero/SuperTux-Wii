@@ -188,8 +188,6 @@ namespace
   // Sentinel objects to avoid allocating for simple markers.
   static lisp_object_t end_marker = { LISP_TYPE_EOF, {{0, 0}} };
   static lisp_object_t error_object = { LISP_TYPE_PARSE_ERROR , {{0, 0}} };
-  static lisp_object_t close_paren_marker = { LISP_TYPE_PARSE_ERROR , {{0, 0}} };
-  static lisp_object_t dot_marker = { LISP_TYPE_PARSE_ERROR , {{0, 0}} };
 
   lisp_object_t* lisp_object_alloc(int type)
   {
@@ -223,8 +221,9 @@ namespace
     std::array<char, MAX_TOKEN_LENGTH + 1> token_string;
     size_t token_length;
 
+    static constexpr int MAX_PARSE_OPERATIONS = 500000;
+
     void token_clear();
-    void token_append(char c);
     const char* token_c_str() const;
 
     int next_char(lisp_stream_t* stream);
@@ -250,15 +249,6 @@ namespace
   {
     token_string[0] = '\0';
     token_length = 0;
-  }
-
-  void LispParserInternal::token_append(char c)
-  {
-    if (token_length < MAX_TOKEN_LENGTH)
-    {
-      token_string[token_length++] = c;
-      token_string[token_length] = '\0';
-    }
   }
 
   const char* LispParserInternal::token_c_str() const
@@ -354,11 +344,11 @@ namespace
 
       case '"':
       {
-        while (true)
+        for (size_t i = 0; i < MAX_TOKEN_LENGTH + 1; ++i)
         {
           c = next_char(stream);
           if (c == EOF) return TokenType::ERROR;
-          if (c == '"') break;
+          if (c == '"') return TokenType::STRING;
 
           if (c == '\\')
           {
@@ -370,9 +360,13 @@ namespace
               case 't': c = '\t'; break;
             }
           }
-          token_append(c);
+          if (token_length < MAX_TOKEN_LENGTH)
+          {
+            token_string[token_length++] = c;
+            token_string[token_length] = '\0';
+          }
         }
-        return TokenType::STRING;
+        return TokenType::ERROR; // String too long
       }
 
       case '#':
@@ -417,7 +411,7 @@ namespace
     bool have_nondigits = false;
     int dot_count = 0;
 
-    while (true)
+    for (size_t i = 0; i < MAX_TOKEN_LENGTH; ++i)
     {
       c = next_char(stream);
       if (c == EOF || (g_char_props[static_cast<unsigned char>(c)] & (PROP_WHITESPACE | PROP_DELIMITER)))
@@ -429,7 +423,11 @@ namespace
         break;
       }
 
-      token_append(c);
+      if (token_length < MAX_TOKEN_LENGTH)
+      {
+        token_string[token_length++] = c;
+        token_string[token_length] = '\0';
+      }
 
       if (g_char_props[static_cast<unsigned char>(c)] & PROP_DIGIT)
       {
@@ -461,104 +459,85 @@ namespace
 
   lisp_object_t* LispParserInternal::read(lisp_stream_t* in)
   {
-    TokenType token = scan(in);
-    lisp_object_t* obj = lisp_nil();
+    struct ParseState {
+      lisp_object_t* head = nullptr;
+      lisp_object_t* tail = nullptr;
+      bool is_pattern = false;
+    };
+    std::vector<ParseState> stack;
+    lisp_object_t* result = nullptr;
+    bool dot_pending = false;
 
-    switch (token)
-    {
-      case TokenType::ERROR:
-        return &error_object;
+    for (int op_count = 0; op_count < MAX_PARSE_OPERATIONS; ++op_count) {
+        TokenType token = scan(in);
+        lisp_object_t* current_obj = nullptr;
 
-      case TokenType::END_OF_FILE:
-        return &end_marker;
+        switch (token) {
+            case TokenType::OPEN_PAREN:
+            case TokenType::PATTERN_OPEN_PAREN:
+                stack.push_back({nullptr, nullptr, token == TokenType::PATTERN_OPEN_PAREN});
+                continue;
 
-      case TokenType::OPEN_PAREN:
-      case TokenType::PATTERN_OPEN_PAREN:
-      {
-        lisp_object_t* last = lisp_nil();
-        lisp_object_t* car;
+            case TokenType::CLOSE_PAREN:
+                if (stack.empty() || dot_pending) return &error_object;
+                current_obj = stack.back().head ? stack.back().head : lisp_nil();
+                stack.pop_back();
+                break;
 
-        while (true)
-        {
-          car = read(in);
-          if (car == &error_object || car == &end_marker)
-          {
-            return &error_object;
-          }
+            case TokenType::DOT:
+                if (stack.empty() || dot_pending || stack.back().head == nullptr) return &error_object;
+                dot_pending = true;
+                continue;
 
-          if (car == &close_paren_marker)
-          {
-            break; // End of list
-          }
+            case TokenType::END_OF_FILE:
+                return stack.empty() ? &end_marker : &error_object;
 
-          if (car == &dot_marker)
-          {
-            if (lisp_nil_p(last)) return &error_object;
-            last->v.cons.cdr = read(in);
-            if (read(in) != &close_paren_marker) return &error_object;
-            break;
-          }
+            case TokenType::ERROR:
+                return &error_object;
 
-          lisp_object_t* new_cons = (token == TokenType::OPEN_PAREN) ?
-          lisp_make_cons(car, lisp_nil()) :
-          lisp_make_pattern_cons(car, lisp_nil());
-          if (lisp_nil_p(last))
-          {
-            obj = last = new_cons;
-          }
-          else
-          {
-            last->v.cons.cdr = new_cons;
-            last = new_cons;
-          }
+            case TokenType::SYMBOL:  current_obj = lisp_make_symbol(token_c_str()); break;
+            case TokenType::STRING:  current_obj = lisp_make_string(token_c_str()); break;
+            case TokenType::TRUE:    current_obj = lisp_make_boolean(1); break;
+            case TokenType::FALSE:   current_obj = lisp_make_boolean(0); break;
+            case TokenType::INTEGER: {
+                char* endptr;
+                errno = 0;
+                long int_val = strtol(token_c_str(), &endptr, 10);
+                if (errno != 0 || *endptr != '\0' || int_val < INT_MIN || int_val > INT_MAX) return &error_object;
+                current_obj = lisp_make_integer(static_cast<int>(int_val));
+                break;
+            }
+            case TokenType::REAL: {
+                char* endptr;
+                errno = 0;
+                float real_val = strtof(token_c_str(), &endptr);
+                if (errno != 0 || *endptr != '\0') return &error_object;
+                current_obj = lisp_make_real(real_val);
+                break;
+            }
         }
-        return obj;
-      }
 
-      case TokenType::CLOSE_PAREN:
-        return &close_paren_marker;
-
-      case TokenType::SYMBOL:
-        return lisp_make_symbol(token_c_str());
-
-      case TokenType::STRING:
-        return lisp_make_string(token_c_str());
-
-      case TokenType::INTEGER:
-      {
-        char* endptr;
-        errno = 0;
-        long int_val = strtol(token_c_str(), &endptr, 10);
-        if (errno != 0 || *endptr != '\0' || int_val < INT_MIN || int_val > INT_MAX)
-        {
-          return &error_object;
+        if (stack.empty()) {
+            if (result != nullptr) return &error_object;
+            return current_obj;
         }
-        return lisp_make_integer(static_cast<int>(int_val));
-      }
 
-      case TokenType::REAL:
-      {
-        char* endptr;
-        errno = 0;
-        float real_val = strtof(token_c_str(), &endptr);
-        if (errno != 0 || *endptr != '\0')
-        {
-          return &error_object;
+        ParseState& top = stack.back();
+        if (dot_pending) {
+            if (top.tail == nullptr) return &error_object;
+            top.tail->v.cons.cdr = current_obj;
+            dot_pending = false;
+        } else {
+            auto make_node = top.is_pattern ? lisp_make_pattern_cons : lisp_make_cons;
+            lisp_object_t* new_cons = make_node(current_obj, lisp_nil());
+            if (top.head == nullptr) {
+                top.head = top.tail = new_cons;
+            } else {
+                top.tail->v.cons.cdr = new_cons;
+                top.tail = new_cons;
+            }
         }
-        return lisp_make_real(real_val);
-      }
-
-      case TokenType::DOT:
-        return &dot_marker;
-
-      case TokenType::TRUE:
-        return lisp_make_boolean(1);
-
-      case TokenType::FALSE:
-        return lisp_make_boolean(0);
     }
-
-    assert(0);
     return &error_object;
   }
 
@@ -728,8 +707,8 @@ lisp_stream_t* lisp_stream_init_file(lisp_stream_t* stream, FILE* file)
 
 lisp_stream_t* lisp_stream_init_string(lisp_stream_t* stream, const char* buf)
 {
-  // Maintain backward compatibility.
-  return lisp_stream_init_string(stream, buf, buf ? strlen(buf) : 0);
+  const size_t len = buf ? strnlen(buf, 1024 * 1024) : 0;
+  return lisp_stream_init_string(stream, buf, len);
 }
 
 lisp_stream_t* lisp_stream_init_any(lisp_stream_t* stream, void* data,
@@ -850,7 +829,8 @@ int lisp_match_pattern(lisp_object_t* pattern, lisp_object_t* obj, lisp_object_t
 
 int lisp_match_string(const char* pattern_string, lisp_object_t* obj, lisp_object_t** vars)
 {
-  lisp_object_t* pattern = lisp_read_from_string(pattern_string);
+  const size_t pattern_len = strnlen(pattern_string, 4096);
+  lisp_object_t* pattern = lisp_read_from_string(pattern_string, pattern_len);
   if (lisp_type(pattern) == LISP_TYPE_EOF || lisp_type(pattern) == LISP_TYPE_PARSE_ERROR)
   {
     return 0;
@@ -915,7 +895,7 @@ lisp_object_t* lisp_cdr(lisp_object_t* obj)
 lisp_object_t* lisp_cxr(lisp_object_t* obj, const char* x)
 {
   if (x == nullptr) return nullptr;
-  const size_t len = strlen(x);
+  const size_t len = strnlen(x, 64);
   for (size_t i = len; i-- > 0; )
   {
     if (obj == nullptr) return nullptr;
@@ -1255,3 +1235,5 @@ void lisp_reset_pool()
 {
   g_object_pool.reset();
 }
+
+// EOF
