@@ -38,6 +38,75 @@ ParticleSystem::ParticleSystem()
 }
 
 /**
+ * Destroys the ParticleSystem object.
+ * Cleans up any dynamically allocated memory associated with particles.
+ */
+ParticleSystem::~ParticleSystem()
+{
+  // Delete all particles to free up memory
+  for (auto* particle : particles)
+  {
+    delete particle;
+  }
+}
+
+/**
+ * Draws the particles on the screen.
+ * This function remaps particle coordinates based on the scrolling offsets
+ * and ensures that they are visible within the screen boundaries before drawing.
+ * @param scrollx Horizontal scroll offset.
+ * @param scrolly Vertical scroll offset.
+ * @param layer The layer on which the particles should be drawn.
+ */
+void ParticleSystem::draw(float scrollx, float scrolly, int layer)
+{
+  for (auto* particle : particles)
+  {
+    if (particle->layer != layer)
+    {
+      continue;
+    }
+
+    // Remap x,y coordinates onto screen coordinates
+    float x = std::fmod(particle->x - scrollx, virtual_width);
+    if (x < 0)
+    {
+      x += virtual_width;
+    }
+
+    float y = std::fmod(particle->y - scrolly, virtual_height);
+    if (y < 0)
+    {
+      y += virtual_height;
+    }
+
+    float xmax = std::fmod(x + particle->texture->w, virtual_width);
+    float ymax = std::fmod(y + particle->texture->h, virtual_height);
+
+    // Particle on screen
+    if (x >= screen->w && xmax >= screen->w)
+    {
+      continue;
+    }
+    if (y >= screen->h && ymax >= screen->h)
+    {
+      continue;
+    }
+
+    if (x > screen->w)
+    {
+      x -= virtual_width;
+    }
+    if (y > screen->h)
+    {
+      y -= virtual_height;
+    }
+
+    particle->texture->draw(x, y);
+  }
+}
+
+/**
  * Constructs a SnowParticleSystem object.
  * Initializes snowflake particles with random positions, layers, and speeds.
  * The snowflake textures are loaded from image files.
@@ -49,30 +118,31 @@ SnowParticleSystem::SnowParticleSystem()
   snowimages[1] = new Surface(datadir + "/images/shared/snow1.png", USE_ALPHA);
   snowimages[2] = new Surface(datadir + "/images/shared/snow2.png", USE_ALPHA);
 
-  virtual_width = screen->w * 2.0f;
-  virtual_height = screen->h;
+  virtual_width = screen->w * 2;
 
-  // Pre-allocate memory for all particles at once to avoid using 'new' in a loop.
-  // This is the core of the object pool pattern for performance.
-  size_t snowflakecount = static_cast<size_t>(virtual_width / 10.0);
-  particles.resize(snowflakecount);
+  // Reserve space in the vector to avoid reallocations
+  particles.reserve(static_cast<size_t>(virtual_width / 10.0));
 
   // Create some random snowflakes
-  for (SnowParticle& particle : particles)
+  size_t snowflakecount = static_cast<size_t>(virtual_width / 10.0);
+  for (size_t i = 0; i < snowflakecount; ++i)
   {
-    particle.x = static_cast<float>(rand() % static_cast<int>(virtual_width));
-    particle.y = static_cast<float>(rand() % screen->h);
-    particle.layer = rand() % 2;
+    SnowParticle* particle = new SnowParticle;
+    particle->x = rand() % static_cast<int>(virtual_width);
+    particle->y = rand() % screen->h;
+    particle->layer = i % 2;
     int snowsize = rand() % 3;
-    particle.texture = snowimages[snowsize];
+    particle->texture = snowimages[snowsize];
 
     do
     {
-      particle.speed = snowsize / 60.0f + (static_cast<float>(rand() % 10) / 300.0f);
+      particle->speed = snowsize / 60.0f + (static_cast<float>(rand() % 10) / 300.0f);
     }
-    while (particle.speed < 0.01f);
+    while (particle->speed < 0.01f);
 
-    particle.speed *= World::current()->get_level()->gravity;
+    particle->speed *= World::current()->get_level()->gravity;
+
+    particles.push_back(particle);
   }
 }
 
@@ -83,12 +153,12 @@ SnowParticleSystem::SnowParticleSystem()
 SnowParticleSystem::~SnowParticleSystem()
 {
   // Delete snowflake textures
-  for (Surface* image : snowimages)
+  for (int i = 0; i < 3; ++i)
   {
-    delete image;
+    delete snowimages[i];
   }
-  // The particles vector automatically cleans up its own memory,
-  // as it now stores objects directly instead of pointers.
+
+  // Delete particles, handled by base class destructor
 }
 
 /**
@@ -99,56 +169,17 @@ SnowParticleSystem::~SnowParticleSystem()
  */
 void SnowParticleSystem::simulate(float elapsed_time)
 {
-  for (SnowParticle& particle : particles)
+  for (auto* particle : particles)
   {
-    particle.y += particle.speed * elapsed_time;
-    if (particle.y > virtual_height)
+    SnowParticle* snow_particle = static_cast<SnowParticle*>(particle);
+    snow_particle->y += snow_particle->speed * elapsed_time;
+    if (snow_particle->y > screen->h)
     {
-      // Reset particle to the top with a new random x position
-      particle.y = std::fmod(particle.y, virtual_height) - virtual_height;
-      particle.x = static_cast<float>(rand() % static_cast<int>(virtual_width));
+      snow_particle->y = std::fmod(snow_particle->y, virtual_height);
+      snow_particle->x = rand() % static_cast<int>(virtual_width);
     }
   }
 }
-
-/**
- * Draws the snow particles on the screen.
- * This function remaps particle coordinates based on the scrolling offsets
- * and handles wrapping for seamless parallax effects.
- * @param scrollx Horizontal scroll offset.
- * @param scrolly Vertical scroll offset (unused for snow).
- * @param layer The layer on which the particles should be drawn.
- */
-void SnowParticleSystem::draw(float scrollx, float scrolly, int layer)
-{
-  for (const SnowParticle& particle : particles)
-  {
-    if (particle.layer != layer)
-    {
-      continue;
-    }
-
-    // Remap x coordinate onto screen coordinates with parallax effect.
-    // Different layers scroll at different speeds.
-    float screen_x = std::fmod(particle.x - scrollx * (0.5f + particle.layer * 0.5f), virtual_width);
-    if (screen_x < 0)
-    {
-      screen_x += virtual_width;
-    }
-
-    // Snow y-position is not affected by camera's vertical scroll.
-    float screen_y = particle.y;
-
-    // Draw the particle.
-    particle.texture->draw(screen_x, screen_y);
-
-    // If the particle is on the edge, draw its wrapped-around copy to ensure seamless tiling.
-    if (screen_x + particle.texture->w > virtual_width) {
-      particle.texture->draw(screen_x - virtual_width, screen_y);
-    }
-  }
-}
-
 
 /**
  * Constructs a CloudParticleSystem object.
@@ -161,19 +192,21 @@ CloudParticleSystem::CloudParticleSystem()
   cloudimage = new Surface(datadir + "/images/shared/cloud.png", USE_ALPHA);
 
   virtual_width = 2000.0f;
-  virtual_height = screen->h;
 
-  // Pre-allocate memory for all particles at once.
-  particles.resize(15);
+  // Reserve space in the vector to avoid reallocations
+  particles.reserve(15);
 
   // Create some random clouds
-  for (CloudParticle& particle : particles)
+  for (size_t i = 0; i < 15; ++i)
   {
-    particle.x = static_cast<float>(rand() % static_cast<int>(virtual_width));
-    particle.y = static_cast<float>(rand() % static_cast<int>(virtual_height));
-    particle.layer = 0;
-    particle.texture = cloudimage;
-    particle.speed = -static_cast<float>(250 + rand() % 200) / 1000.0f;
+    CloudParticle* particle = new CloudParticle;
+    particle->x = rand() % static_cast<int>(virtual_width);
+    particle->y = rand() % static_cast<int>(virtual_height);
+    particle->layer = 0;
+    particle->texture = cloudimage;
+    particle->speed = -static_cast<float>(250 + rand() % 200) / 1000.0f;
+
+    particles.push_back(particle);
   }
 }
 
@@ -185,59 +218,21 @@ CloudParticleSystem::~CloudParticleSystem()
 {
   // Delete cloud texture
   delete cloudimage;
-  // The particles vector automatically cleans up its own memory.
+
+  // Delete particles, handled by base class destructor
 }
 
 /**
  * Simulates the movement of cloud particles over the elapsed time.
- * Particles are moved horizontally based on their speed and wrap around the screen.
+ * Particles are moved horizontally based on their speed.
  * @param elapsed_time The time passed since the last simulation update.
  */
 void CloudParticleSystem::simulate(float elapsed_time)
 {
-  for (CloudParticle& particle : particles)
+  for (auto* particle : particles)
   {
-    particle.x += particle.speed * elapsed_time;
-    // If a particle moves completely off the left side of the screen,
-    // wrap it around to the right side to create a continuous flow.
-    if (particle.x < -particle.texture->w)
-    {
-      particle.x += virtual_width + particle.texture->w;
-    }
-  }
-}
-
-/**
- * Draws the cloud particles on the screen.
- * This function remaps particle coordinates based on the scrolling offsets
- * and handles wrapping for a seamless parallax effect.
- * @param scrollx Horizontal scroll offset.
- * @param scrolly Vertical scroll offset (unused for clouds).
- * @param layer The layer on which the particles should be drawn.
- */
-void CloudParticleSystem::draw(float scrollx, float scrolly, int layer)
-{
-  // Clouds are always on layer 0.
-  if(layer != 0) return;
-
-  for (const CloudParticle& particle : particles)
-  {
-    // Remap x coordinate onto screen coordinates with a parallax effect (slower scrolling).
-    float screen_x = std::fmod(particle.x - scrollx * 0.5f, virtual_width);
-    if(screen_x < 0)
-    {
-      screen_x += virtual_width;
-    }
-
-    // Cloud y-position is not affected by camera's vertical scroll.
-    float screen_y = particle.y;
-
-    particle.texture->draw(screen_x, screen_y);
-
-    // If the particle is on the edge, draw its wrapped-around copy.
-    if (screen_x + particle.texture->w > virtual_width) {
-      particle.texture->draw(screen_x - virtual_width, screen_y);
-    }
+    CloudParticle* cloud_particle = static_cast<CloudParticle*>(particle);
+    cloud_particle->x += cloud_particle->speed * elapsed_time;
   }
 }
 

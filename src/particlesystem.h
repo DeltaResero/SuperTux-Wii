@@ -21,93 +21,83 @@
 #define SUPERTUX_PARTICLESYSTEM_H
 
 #include <vector>
-#include <array>
 #include "texture.h"
 
 /**
- * This is the base class for particle systems. It defines the interface for
- * systems that are responsible for storing and managing a set of particles.
- * Each particle has an x- and y-coordinate, the number of the layer where it
- * should be drawn, and a texture.
+ * This is the base class for particle systems. It is responsible for storing a
+ * set of particles with each having an x- and y-coordinate the number of the
+ * layer where it should be drawn and a texture.
  * The coordinate system used here is a virtual one. It would be a bad idea to
- * populate whole levels with particles, so we're using a virtual rectangle
- * that is tiled onto the level when drawing. This rectangle has the size
+ * populate whole levels with particles. So we're using a virtual rectangle
+ * here that is tiled onto the level when drawing. This rectangle has the size
  * (virtual_width, virtual_height). We're using modulo on the particle
- * coordinates, so when a particle leaves one side, it'll reenter on the
- * opposite side.
+ * coordinates, so when a particle leaves left, it'll reenter at the right
+ * side.
  *
- * Classes that implement a specific particle system should subclass from this
- * class, initialize particles in the constructor, and move them in the simulate
+ * Classes that implement a particle system should subclass from this class,
+ * initialize particles in the constructor and move them in the simulate
  * function.
  */
-
-struct Particle
-{
-    float x = 0.0f;
-    float y = 0.0f;
-    int layer = 0;
-    Surface* texture = nullptr;
-    // We can add an 'active' flag if we want dynamic particle effects later.
-    // For snow/clouds that live forever, we don't need it.
-};
-
-// Specialized data for a snow particle
-struct SnowParticle : public Particle
-{
-    float speed = 0.0f;
-};
-
-// Specialized data for a cloud particle
-struct CloudParticle : public Particle
-{
-    float speed = 0.0f;
-};
-
 class ParticleSystem
 {
 public:
     ParticleSystem();
-    virtual ~ParticleSystem() = default; // Use default destructor
+    virtual ~ParticleSystem();
 
-    // The draw function can be shared if we templatize it or use std::function,
-    // but for simplicity, we'll let subclasses handle their own drawing for now.
-    virtual void draw(float scrollx, float scrolly, int layer) = 0;
+    void draw(float scrollx, float scrolly, int layer);
+
     virtual void simulate(float elapsed_time) = 0;
 
 protected:
-    float virtual_width = 0.0f;
-    float virtual_height = 0.0f;
+    class Particle
+    {
+    public:
+        virtual ~Particle()
+        { }
+
+        float x, y;
+        int layer;
+        Surface* texture;
+    };
+
+    std::vector<Particle*> particles;
+    float virtual_width, virtual_height;
 };
 
 class SnowParticleSystem : public ParticleSystem
 {
 public:
     SnowParticleSystem();
-    ~SnowParticleSystem() override; // Use override for clarity
+    virtual ~SnowParticleSystem();
 
-    void draw(float scrollx, float scrolly, int layer) override;
-    void simulate(float elapsed_time) override;
+    virtual void simulate(float elapsed_time);
 
 private:
-    // Store particles by value in a contiguous block of memory
-    std::vector<SnowParticle> particles;
-    // Use std::array for fixed-size texture arrays
-    std::array<Surface*, 3> snowimages;
+    class SnowParticle : public Particle
+    {
+    public:
+        float speed;
+    };
+
+    Surface* snowimages[3];
 };
 
 class CloudParticleSystem : public ParticleSystem
 {
 public:
     CloudParticleSystem();
-    ~CloudParticleSystem() override;
+    virtual ~CloudParticleSystem();
 
-    void draw(float scrollx, float scrolly, int layer) override;
-    void simulate(float elapsed_time) override;
+    virtual void simulate(float elapsed_time);
 
 private:
-    // Store particles by value.
-    std::vector<CloudParticle> particles;
-    Surface* cloudimage = nullptr;
+    class CloudParticle : public Particle
+    {
+    public:
+        float speed;
+    };
+
+    Surface* cloudimage;
 };
 
 #endif
