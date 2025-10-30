@@ -450,7 +450,13 @@ void World::action(float elapsed_time)
 // the time it takes to move the camera (in ms)
 #define CHANGE_DIR_SCROLL_SPEED 2000
 
-/* This function takes care of the scrolling */
+/**
+ * This function smoothly scrolls the camera to keep the player in view.
+ * It calculates a target position for the camera based on the original game's
+ * rules and then smoothly moves the current scroll position towards that target
+ * using a frame-rate independent exponential smoothing filter. This provides
+ * a responsive feel without the jitter of the original implementation.
+ */
 void World::scrolling(float elapsed_time)
 {
   if (level->hor_autoscroll_speed)
@@ -460,95 +466,32 @@ void World::scrolling(float elapsed_time)
     return;
   }
 
-  float tux_pos_x = (tux.base.x + (tux.base.width / 2));
-
-  if (level->back_scrolling || debug_mode)
+  // Determine the camera's target position based on a central "dead zone".
+  float target_scroll_x = scroll_x;
+  const float tux_pos_x = (tux.base.x + (tux.base.width / 2));
+  if (tux_pos_x > scroll_x + screen->w - X_SPACE)
   {
-    if (tux.old_dir != tux.dir && level->back_scrolling)
-      scrolling_timer.start(CHANGE_DIR_SCROLL_SPEED);
-
-    if (scrolling_timer.check())
-    {
-      float final_scroll_x = scroll_x; // Initialize with current scroll position
-      float constant1;
-      float constant2;
-
-      // Determine the target scroll position based on player velocity and direction
-      if (tux.physic.get_velocity_x() > 0)
-        final_scroll_x = tux_pos_x - (screen->w - X_SPACE);
-      else if (tux.physic.get_velocity_x() < 0)
-        final_scroll_x = tux_pos_x - X_SPACE;
-      else
-      {
-        if (tux.dir == RIGHT)
-          final_scroll_x = tux_pos_x - (screen->w - X_SPACE);
-        else if (tux.dir == LEFT && level->back_scrolling)
-          final_scroll_x = tux_pos_x - X_SPACE;
-      }
-
-      // Apply smoothing parameters
-      if ((tux.physic.get_velocity_x() > 0 && tux.dir == RIGHT) ||
-          (tux.physic.get_velocity_x() < 0 && tux.dir == LEFT))
-      {
-        constant1 = 1.0;
-        constant2 = .4;
-      }
-      else
-      {
-        constant1 = 0.;
-        constant2 = 0.;
-      }
-
-      float number = 2.5 / (elapsed_time * CHANGE_DIR_SCROLL_SPEED / 1000) *
-                     exp((CHANGE_DIR_SCROLL_SPEED - scrolling_timer.get_left()) / 1400.);
-      if (tux.dir == LEFT) number *= -1.;
-
-      // Update the scroll position with smoothing
-      scroll_x += number
-          + constant1 * tux.physic.get_velocity_x() * elapsed_time
-          + constant2 * tux.physic.get_acceleration_x() * elapsed_time * elapsed_time;
-
-      // Ensure scroll_x doesn't overshoot the target position
-      if ((tux.dir == RIGHT && final_scroll_x - scroll_x < 0) ||
-          (tux.dir == LEFT && final_scroll_x - scroll_x > 0))
-        scroll_x = final_scroll_x;
-    }
-    else
-    {
-      // Handle scrolling based on player movement in debug mode or back scrolling
-      if (tux.physic.get_velocity_x() > 0 && scroll_x < tux_pos_x - (screen->w - X_SPACE))
-        scroll_x = tux_pos_x - (screen->w - X_SPACE);
-      else if (tux.physic.get_velocity_x() < 0 && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
-        scroll_x = tux_pos_x - X_SPACE;
-      else
-      {
-        if (tux.dir == RIGHT && scroll_x < tux_pos_x - (screen->w - X_SPACE))
-            scroll_x = tux_pos_x - (screen->w - X_SPACE);
-        else if (tux.dir == LEFT && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
-            scroll_x = tux_pos_x - X_SPACE;
-      }
-    }
+    target_scroll_x = tux_pos_x - (screen->w - X_SPACE);
   }
-  else /* no debug */
+  else if (tux_pos_x < scroll_x + X_SPACE && (level->back_scrolling || debug_mode))
   {
-    if (tux.physic.get_velocity_x() > 0 && scroll_x < tux_pos_x - (screen->w - X_SPACE))
-      scroll_x = tux_pos_x - (screen->w - X_SPACE);
-    else if (tux.physic.get_velocity_x() < 0 && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
-      scroll_x = tux_pos_x - X_SPACE;
-    else
-    {
-      if (tux.dir == RIGHT && scroll_x < tux_pos_x - (screen->w - X_SPACE))
-        scroll_x = tux_pos_x - (screen->w - X_SPACE);
-      else if (tux.dir == LEFT && scroll_x > tux_pos_x - X_SPACE && level->back_scrolling)
-        scroll_x = tux_pos_x - X_SPACE;
-    }
+    target_scroll_x = tux_pos_x - X_SPACE;
   }
+
+  // Smoothly move the camera towards the target.
+  const float camera_stiffness = 15.0f;
+  const float blend_factor = 1.0f - expf(-camera_stiffness * elapsed_time);
+  scroll_x += (target_scroll_x - scroll_x) * blend_factor;
 
   // Prevent scrolling before the start or after the level's end
   if (scroll_x < 0)
+  {
     scroll_x = 0;
+  }
   if (scroll_x > level->width * 32 - screen->w)
+  {
     scroll_x = level->width * 32 - screen->w;
+  }
 }
 
 void World::collision_handler()
