@@ -21,85 +21,75 @@
 #define SUPERTUX_PARTICLESYSTEM_H
 
 #include <vector>
+#include <array>
 #include "texture.h"
 
-/**
- * This is the base class for particle systems. It is responsible for storing a
- * set of particles with each having an x- and y-coordinate the number of the
- * layer where it should be drawn and a texture.
- * The coordinate system used here is a virtual one. It would be a bad idea to
- * populate whole levels with particles. So we're using a virtual rectangle
- * here that is tiled onto the level when drawing. This rectangle has the size
- * (virtual_width, virtual_height). We're using modulo on the particle
- * coordinates, so when a particle leaves left, it'll reenter at the right
- * side.
- *
- * Classes that implement a particle system should subclass from this class,
- * initialize particles in the constructor and move them in the simulate
- * function.
- */
+// Instead of complex inheritance, we use simple structs.
+// This makes the data layout much more efficient for the CPU.
+struct Particle
+{
+    float x = 0.0f;
+    float y = 0.0f;
+    int layer = 0;
+    Surface* texture = nullptr;
+};
+
+// Specialized data for a snow particle
+struct SnowParticle : public Particle
+{
+    float speed = 0.0f;
+};
+
+// Specialized data for a cloud particle
+struct CloudParticle : public Particle
+{
+    float speed = 0.0f;
+};
+
+
 class ParticleSystem
 {
 public:
     ParticleSystem();
-    virtual ~ParticleSystem();
+    virtual ~ParticleSystem() = default;
 
-    void draw(float scrollx, float scrolly, int layer);
-
+    virtual void draw(float scrollx, float scrolly, int layer) = 0;
     virtual void simulate(float elapsed_time) = 0;
 
 protected:
-    class Particle
-    {
-    public:
-        virtual ~Particle()
-        { }
-
-        float x, y;
-        int layer;
-        Surface* texture;
-    };
-
-    std::vector<Particle*> particles;
-    float virtual_width, virtual_height;
+    float virtual_width = 0.0f;
+    float virtual_height = 0.0f;
 };
 
 class SnowParticleSystem : public ParticleSystem
 {
 public:
     SnowParticleSystem();
-    virtual ~SnowParticleSystem();
+    ~SnowParticleSystem() override;
 
-    virtual void simulate(float elapsed_time);
+    void draw(float scrollx, float scrolly, int layer) override;
+    void simulate(float elapsed_time) override;
 
 private:
-    class SnowParticle : public Particle
-    {
-    public:
-        float speed;
-    };
-
-    Surface* snowimages[3];
+    std::vector<SnowParticle> particles;
+    std::array<Surface*, 3> snowimages;
 };
 
 class CloudParticleSystem : public ParticleSystem
 {
 public:
     CloudParticleSystem();
-    virtual ~CloudParticleSystem();
+    ~CloudParticleSystem() override;
 
-    virtual void simulate(float elapsed_time);
+    void draw(float scrollx, float scrolly, int layer) override;
+    void simulate(float elapsed_time) override;
 
 private:
-    class CloudParticle : public Particle
-    {
-    public:
-        float speed;
-    };
-
-    Surface* cloudimage;
+    // Object pool for clouds
+    std::vector<CloudParticle> particles;
+    Surface* cloudimage = nullptr;
 };
 
-#endif
+#endif /*SUPERTUX_PARTICLESYSTEM_H*/
 
 // EOF
