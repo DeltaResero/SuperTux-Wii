@@ -779,16 +779,26 @@ void Menu::event(SDL_Event& event)
 
     case SDL_JOYBUTTONDOWN:
     {
-      // This version correctly uses the global keymap and adds Wii specifics.
-      if (event.jbutton.button == joystick_keymap.a_button || event.jbutton.button == 2 || event.jbutton.button == 3)
+      // CONFIRM action on Wii Remote 'A' (0) and '2' (3)
+      if (event.jbutton.button == 0 || event.jbutton.button == 3)
       {
         menuaction = MENU_ACTION_HIT;
       }
-      else if (event.jbutton.button == joystick_keymap.b_button || event.jbutton.button == 1)
+      // CANCEL action on Wii Remote 'B' (1) and '1' (2)
+      else if (event.jbutton.button == 1 || event.jbutton.button == 2)
+      {
+        // On the main menu, these buttons do nothing.
+        if (this != main_menu)
+        {
+          Menu::pop_current();
+        }
+      }
+      // HOME button always functions as a back/exit key
+      else if (event.jbutton.button == 6)
       {
         Menu::pop_current();
       }
-      // All other buttons (Minus, Plus, Home) are ignored here, allowing them to be handled elsewhere.
+      // All other buttons are ignored here.
       break;
     }
 
