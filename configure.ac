@@ -18,7 +18,7 @@ dnl Initialization
 AC_PREREQ([2.72])
 
 dnl Remember to update src/defines.h and hbc/apps/supertux/meta.xml when changing versions
-AC_INIT([SuperTux-Wii],[0.1.4-wii-d.2])
+AC_INIT([SuperTux-Wii],[0.1.4-wii-d.3])
 AC_CONFIG_SRCDIR([src/supertux.cpp])
 AC_CANONICAL_TARGET
 

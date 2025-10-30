@@ -2,9 +2,7 @@
   <img src="https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/data/images/title/logo.png" alt="SuperTux-Wii">
 </p>
 
-&nbsp;
-
-&nbsp;
+<br><br>
 
 ### Wii port of the free open source game SuperTux Classic (Milestone 1)
 
@@ -12,7 +10,7 @@
 Ported by: scanff & Arikado
 Updated by: DeltaResero
 Type: Platform game
-Version: 0.1.4-wii-d.2
+Version: 0.1.4-wii-d.3
 Software license: GPLv2
 ```
 
@@ -21,7 +19,7 @@ Software license: GPLv2
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f)](
 https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-&nbsp;
+<br>
 
 ### About Repository
 
@@ -38,7 +36,7 @@ SuperTux Milestone 1 can now be found in the [milestone 1 branch](https://github
 of the [SuperTux GitHub repository](https://github.com/SuperTux/supertux).
 For more information about SuperTux, please visit the official website at [supertux.org](https://www.supertux.org).
 
-&nbsp;
+<br>
 
 ### About SuperTux
 
@@ -49,7 +47,7 @@ Run and jump through multiple worlds, fighting off enemies by jumping on them,
 bumping them from below, or tossing objects at them, while grabbing power-ups and
 other collectibles along the way.
 
-&nbsp;
+<br>
 
 ### How to Build: Wii Homebrew Build
 
@@ -68,7 +66,7 @@ the game:
    ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi --disable-opengl
    ```
 
-&nbsp;
+   <br>
 
    For configure help:
    ```
@@ -105,7 +103,7 @@ the game:
 
 5. Launch SuperTux from the Homebrew Channel. The game will create a config file and save folder on the first run.
 
-&nbsp;
+<br>
 
 ### Setup Guide for devkitPro PowerPC Build System
 
@@ -134,7 +132,7 @@ wii-glu
 wii-opengx
 ```
 
-&nbsp;
+<br>
 
 ### How to Build: Unsupported Standard Build (mostly for testing)
 
@@ -157,7 +155,7 @@ To test-run, copy the `data` folder to a safe place, then add the `build/supertu
 and `extras/supertux.png` image alongside it. A template `.desktop` entry file has been
 included in the `extras` directory as `supertux.desktop`.
 
-&nbsp;
+<br>
 
 ### Disclaimer
 

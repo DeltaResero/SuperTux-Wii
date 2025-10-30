@@ -24,7 +24,7 @@
 
 /* Version */
 #ifndef VERSION
-  #define VERSION "0.1.4-wii-d.2"
+  #define VERSION "0.1.4-wii-d.3"
 #endif
 
 /* Memory Optimizations */
