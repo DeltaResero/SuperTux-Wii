@@ -587,6 +587,15 @@ void World::collision_handler()
         continue;
       }
 
+      // Broad-phase AABB check on X-axis.
+      // If the objects are not even close on the X-axis, they can't be colliding.
+      // This avoids the more expensive rectcollision() call for most pairs.
+      if (special->base.x > normal->base.x + normal->base.width ||
+          special->base.x + special->base.width < normal->base.x)
+      {
+        continue;
+      }
+
       if (rectcollision(special->base, normal->base))
       {
         normal->collision(special, CO_BADGUY);
@@ -599,24 +608,33 @@ void World::collision_handler()
   // Check special colliders against each other.
   for (size_t i = 0; i < special_colliders.size(); ++i)
   {
+    BadGuy* special1 = special_colliders[i];
     // Skip any enemy that is already dying.
-    if (special_colliders[i]->dying != DYING_NOT)
+    if (special1->dying != DYING_NOT)
     {
       continue;
     }
 
     for (size_t j = i + 1; j < special_colliders.size(); ++j)
     {
+      BadGuy* special2 = special_colliders[j];
       // Skip self-check and dying enemies
-      if (special_colliders[j]->dying != DYING_NOT)
+      if (special2->dying != DYING_NOT)
       {
         continue;
       }
 
-      if (rectcollision(special_colliders[i]->base, special_colliders[j]->base))
+      // Broad-phase AABB check on X-axis.
+      if (special1->base.x > special2->base.x + special2->base.width ||
+          special1->base.x + special1->base.width < special2->base.x)
       {
-        special_colliders[j]->collision(special_colliders[i], CO_BADGUY);
-        special_colliders[i]->collision(special_colliders[j], CO_BADGUY);
+        continue;
+      }
+
+      if (rectcollision(special1->base, special2->base))
+      {
+        special2->collision(special1, CO_BADGUY);
+        special1->collision(special2, CO_BADGUY);
       }
     }
   }
