@@ -28,6 +28,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <sstream>
+#include <algorithm>
 
 #ifndef NOOPENGL
 #include <GL/gl.h>
@@ -365,23 +367,25 @@ void st_directory_setup(void)
   {
     /* Detect datadir */
     char exe_file[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exe_file, sizeof(exe_file) - 1);
 
-    if (readlink("/proc/self/exe", exe_file, PATH_MAX) < 0)
+    if (len < 0)
     {
       puts("Couldn't read /proc/self/exe, using default path: " DATA_PREFIX);
       datadir = DATA_PREFIX;
     }
     else
     {
+      exe_file[len] = '\0'; // Null-terminate the string
       std::filesystem::path exedir = std::filesystem::path(exe_file).parent_path();
       std::string exedir_str = exedir.string() + "/";  // Ensure trailing slash
 
       // Use `exedir_str` to maintain trailing slash behavior
       datadir = exedir_str + "../data";  // SuperTux run from source dir
-      if (access(datadir.c_str(), F_OK) != 0)
+      if (!fs::is_directory(datadir))
       {
         datadir = exedir_str + "../share/supertux";  // SuperTux run from PATH
-        if (access(datadir.c_str(), F_OK) != 0)
+        if (!fs::is_directory(datadir))
         {
           datadir = DATA_PREFIX;  // Fallback to compiled path
         }
@@ -1037,12 +1041,10 @@ void parseargs(int argc, char* argv[])
     {
       if (i + 1 < argc)
       {
-        if (sscanf(argv[++i], "%4d:%4d:%4d:%4d:%4d",
-                   &joystick_keymap.x_axis,
-                   &joystick_keymap.y_axis,
-                   &joystick_keymap.a_button,
-                   &joystick_keymap.b_button,
-                   &joystick_keymap.start_button) != 5)
+        std::string joymap_str = argv[++i];
+        std::replace(joymap_str.begin(), joymap_str.end(), ':', ' '); // Replace colons with spaces
+        std::stringstream ss(joymap_str);
+        if (!(ss >> joystick_keymap.x_axis >> joystick_keymap.y_axis >> joystick_keymap.a_button >> joystick_keymap.b_button >> joystick_keymap.start_button))
         {
           puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
         }
