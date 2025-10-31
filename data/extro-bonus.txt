@@ -10,7 +10,7 @@
 	Matr1x
 	Torfi Gunnarsson
 
-	
+
 	If you didn't clear all levels yet,
 	find your way back home and take 
 	another path. There is still more
@@ -18,7 +18,7 @@
 
 	And there is a secret level to be
 	found as well...
-	
+
 	A big "Thank you" goes out to
 	everyone who contributed to this
 	release. We hope you enjoyed it!

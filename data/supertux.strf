@@ -1,6 +1,10 @@
 ;; -*- mode: scheme; -*-
 (supertux-resources
- ;; Small Tux Walk
+
+ ;; ========================================================================
+ ;; Small Tux
+ ;; ========================================================================
+
  (sprite (name "smalltux-walk-left")
          (fps 15.0)
          (x-hotspot 5)
@@ -27,7 +31,6 @@
                  "shared/smalltux-right-7.png"
                  "shared/smalltux-right-8.png"))
 
- ;; Small Tux Stand
  (sprite (name "smalltux-stand-left")
          (fps 15.0)
          (x-hotspot 5)
@@ -40,7 +43,6 @@
          (y-hotspot 9)
          (images "shared/smalltux-right-6.png"))
 
- ;; Small Tux Jump
  (sprite (name "smalltux-jump-left")
          (fps 15.0)
          (x-hotspot 5)
@@ -61,44 +63,55 @@
                  "shared/smalltux-gameover-1.png"))
 
  (sprite (name "smalltux-skid-left")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 8)
          (images "shared/smalltux-skid-left.png"))
 
  (sprite (name "smalltux-skid-right")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 8)
          (images "shared/smalltux-skid-right.png"))
 
  (sprite (name "smalltux-kick-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 9)
          (images "shared/smalltux-kick-left-0.png"))
 
  (sprite (name "smalltux-kick-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 9)
          (images "shared/smalltux-kick-right-0.png"))
 
  (sprite (name "smalltux-grab-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 9)
          (images "shared/smalltux-grab-left-0.png"))
 
  (sprite (name "smalltux-grab-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 9)
          (images "shared/smalltux-grab-right-0.png"))
 
  (sprite (name "smalltux-star")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 15)
          (images "shared/smalltux-star-0.png"
                  "shared/smalltux-star-1.png"
                  "shared/smalltux-star-2.png"))
 
- ;; Large Tux Walk
+ ;; ========================================================================
+ ;; Large Tux
+ ;; ========================================================================
+
  (sprite (name "largetux-walk-left")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 2)
          (images "shared/largetux-walk-left-0.png"
@@ -109,6 +122,7 @@
                  "shared/largetux-walk-left-5.png"))
 
  (sprite (name "largetux-walk-right")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 2)
          (images "shared/largetux-walk-right-0.png"
@@ -119,73 +133,91 @@
                  "shared/largetux-walk-right-5.png"))
 
  (sprite (name "largetux-skid-right")
+         (fps 10.0)
          (x-hotspot 8)
          (y-hotspot 3)
          (images "shared/largetux-skid-right.png"))
 
  (sprite (name "largetux-skid-left")
+         (fps 10.0)
          (x-hotspot 8)
          (y-hotspot 3)
          (images "shared/largetux-skid-left.png"))
-        
+
  (sprite (name "largetux-stand-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/largetux-stand-left.png"))
 
  (sprite (name "largetux-stand-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/largetux-stand-right.png"))
 
  (sprite (name "largetux-jump-left")
+         (fps 10.0)
          (x-hotspot 9)
          (y-hotspot 2)
          (images "shared/largetux-jump-left-0.png"))
+
  (sprite (name "largetux-jump-right")
+         (fps 10.0)
          (x-hotspot 9)
          (y-hotspot 2)
          (images "shared/largetux-jump-right-0.png"))
 
  (sprite (name "largetux-duck-left")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 6)
-         (images "shared/tux-duck-left.png"))
- (sprite (name "largetux-duck-right")
-         (x-hotspot 6)
-         (y-hotspot 6)
-         (images "shared/tux-duck-right.png"))
+         (images "shared/largetux-duck-left.png"))
 
+ (sprite (name "largetux-duck-right")
+         (fps 10.0)
+         (x-hotspot 6)
+         (y-hotspot 6)
+         (images "shared/largetux-duck-right.png"))
 
  (sprite (name "largetux-kick-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/largetux-kick-left-0.png"))
 
  (sprite (name "largetux-kick-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/largetux-kick-right-0.png"))
 
  (sprite (name "largetux-grab-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/largetux-grab-left-0.png"))
 
  (sprite (name "largetux-grab-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/largetux-grab-right-0.png"))
 
  (sprite (name "largetux-star")
+         (fps 10.0)
          (x-hotspot 8)
          (y-hotspot 8)
          (images "shared/largetux-star-0.png"
                  "shared/largetux-star-1.png"
                  "shared/largetux-star-2.png"))
 
- ;; Firetux
+ ;; ========================================================================
+ ;; Fire Tux
+ ;; ========================================================================
+
  (sprite (name "firetux-walk-left")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 2)
          (images "shared/firetux-walk-left-0.png"
@@ -196,6 +228,7 @@
                  "shared/firetux-walk-left-5.png"))
 
  (sprite (name "firetux-walk-right")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 2)
          (images "shared/firetux-walk-right-0.png"
@@ -206,66 +239,83 @@
                  "shared/firetux-walk-right-5.png"))
 
  (sprite (name "firetux-skid-right")
+         (fps 10.0)
          (x-hotspot 8)
          (y-hotspot 3)
          (images "shared/firetux-skid-right.png"))
 
  (sprite (name "firetux-skid-left")
+         (fps 10.0)
          (x-hotspot 8)
          (y-hotspot 3)
          (images "shared/firetux-skid-left.png"))
-        
+
  (sprite (name "firetux-stand-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/firetux-stand-left.png"))
 
  (sprite (name "firetux-stand-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/firetux-stand-right.png"))
 
  (sprite (name "firetux-jump-left")
+         (fps 10.0)
          (x-hotspot 9)
          (y-hotspot 2)
          (images "shared/firetux-jump-left-0.png"))
+
  (sprite (name "firetux-jump-right")
+         (fps 10.0)
          (x-hotspot 9)
          (y-hotspot 2)
          (images "shared/firetux-jump-right-0.png"))
 
  (sprite (name "firetux-duck-left")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 6)
          (images "shared/firetux-duck-left.png"))
+
  (sprite (name "firetux-duck-right")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 6)
          (images "shared/firetux-duck-right.png"))
 
-
  (sprite (name "firetux-kick-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/firetux-kick-left-0.png"))
 
  (sprite (name "firetux-kick-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/firetux-kick-right-0.png"))
 
  (sprite (name "firetux-grab-left")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/firetux-grab-left-0.png"))
 
  (sprite (name "firetux-grab-right")
+         (fps 10.0)
          (x-hotspot 5)
          (y-hotspot 1)
          (images "shared/firetux-grab-right-0.png"))
 
- ;; Laptop
+ ;; ========================================================================
+ ;; Enemies and Objects
+ ;; ========================================================================
+
  (sprite (name "mriceblock-left")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-left-0.png"
@@ -274,6 +324,7 @@
                  "shared/mriceblock-left-1.png"))
 
  (sprite (name "mriceblock-right")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-right-0.png"
@@ -282,44 +333,53 @@
                  "shared/mriceblock-right-1.png"))
 
  (sprite (name "mriceblock-falling-right")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-flat-right.png"))
 
  (sprite (name "mriceblock-falling-left")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-flat-left.png"))
- 
+
  (sprite (name "mriceblock-flat-left")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-flat-left.png"))
 
  (sprite (name "mriceblock-flat-right")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/mriceblock-flat-right.png"))
 
  (sprite (name "snowball-squished-left")
+         (fps 10.0)
          (x-hotspot 1)
          (y-hotspot -19)
          (images "shared/snowball-squished-left.png"))
 
  (sprite (name "snowball-squished-right")
+         (fps 10.0)
          (x-hotspot 1)
          (y-hotspot -19)
          (images "shared/snowball-squished-right.png"))
 
  (sprite (name "jumpy-left-up")
+         (fps 10.0)
          (x-hotspot 7)
          (y-hotspot 8)
          (images "shared/jumpy-left-up-0.png"))
  (sprite (name "jumpy-left-down")
+         (fps 10.0)
          (x-hotspot 7)
          (y-hotspot 8)
          (images "shared/jumpy-left-down-0.png"))
  (sprite (name "jumpy-left-middle")
+         (fps 10.0)
          (x-hotspot 7)
          (y-hotspot 8)
          (images "shared/jumpy-left-middle-0.png"))
@@ -341,7 +401,6 @@
                  "shared/mrbomb-right-1.png"
                  "shared/mrbomb-right-2.png"
                  "shared/mrbomb-right-3.png"))
- 
 
  (sprite (name "mrbomb-ticking-left")
          (fps 15.0)
@@ -365,31 +424,39 @@
                  "shared/mrbomb-explosion-1.png"))
 
  (sprite (name "stalactite")
+         (fps 10.0)
          (x-hotspot 0)
          (y-hotspot 0)
          (images "shared/stalactite.png"))
 
  (sprite (name "stalactite-broken")
+         (fps 10.0)
          (x-hotspot 0)
          (y-hotspot 16)
          (images "shared/stalactite-broken.png"))
 
  (sprite (name "flame")
+         (fps 10.0)
+         (x-hotspot 0)
+         (y-hotspot 0)
          (images "shared/flame-0.png"
                  "shared/flame-1.png"))
 
  (sprite (name "fish")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 3)
          (images "shared/fish-left-0.png"
                  "shared/fish-left-1.png"))
 
  (sprite (name "fish-down")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 11)
          (images "shared/fish-down-0.png"))
 
  (sprite (name "bouncingsnowball-left")
+         (fps 10.0)
          (x-hotspot 1)
          (y-hotspot 0)
          (images "shared/bouncingsnowball-left-0.png"
@@ -400,6 +467,7 @@
                  "shared/bouncingsnowball-left-5.png"))
 
  (sprite (name "bouncingsnowball-right")
+         (fps 10.0)
          (x-hotspot 1)
          (y-hotspot 0)
          (images "shared/bouncingsnowball-right-0.png"
@@ -410,28 +478,34 @@
                  "shared/bouncingsnowball-right-5.png"))
 
  (sprite (name "bouncingsnowball-squished")
+         (fps 10.0)
          (x-hotspot 1)
          (y-hotspot -19)
          (images "shared/snowball-squished-left.png"))
 
  (sprite (name "flyingsnowball")
+         (fps 10.0)
          (x-hotspot 4)
          (y-hotspot 3)
          (images "shared/flyingsnowball-left-0.png"
                  "shared/flyingsnowball-left-1.png"))
 
  (sprite (name "flyingsnowball-squished")
+         (fps 10.0)
          (x-hotspot 1)
          (y-hotspot -19)
          (images "shared/snowball-squished-left.png"))
 
  (sprite (name "spiky-left")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 10)
          (images "shared/spiky-left-0.png"
                  "shared/spiky-left-1.png"
                  "shared/spiky-left-2.png"))
+
  (sprite (name "spiky-right")
+         (fps 10.0)
          (x-hotspot 6)
          (y-hotspot 10)
          (images "shared/spiky-right-0.png"
@@ -439,6 +513,7 @@
                  "shared/spiky-right-2.png"))
 
  (sprite (name "snowball-left")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 4)
          (images "shared/snowball-left-0.png"
@@ -447,6 +522,7 @@
                  "shared/snowball-left-1.png"))
 
  (sprite (name "snowball-right")
+         (fps 10.0)
          (x-hotspot 2)
          (y-hotspot 4)
          (images "shared/snowball-right-0.png"
@@ -454,11 +530,26 @@
                  "shared/snowball-right-2.png"
                  "shared/snowball-right-1.png"))
 
+ ;; ========================================================================
+ ;; Powerups and Collectibles
+ ;; ========================================================================
+
  (sprite (name "egg")
+         (fps 10.0)
+         (x-hotspot 0)
+         (y-hotspot 0)
          (images "shared/egg.png"))
+
  (sprite (name "1up")
+         (fps 10.0)
+         (x-hotspot 0)
+         (y-hotspot 0)
          (images "shared/1up.png"))
+
  (sprite (name "star")
+         (fps 10.0)
+         (x-hotspot 0)
+         (y-hotspot 0)
          (images "shared/star.png"
                  "shared/star-1.png"
                  "shared/star-2.png"
@@ -467,7 +558,11 @@
                  "shared/star-3.png"
                  "shared/star-2.png"
                  "shared/star-1.png"))
+
  (sprite (name "iceflower")
+         (fps 10.0)
+         (x-hotspot 0)
+         (y-hotspot 0)
          (images "shared/iceflower.png"
                  "shared/iceflower-1.png"
                  "shared/iceflower-2.png"
@@ -476,13 +571,12 @@
                  "shared/iceflower-1.png"))
 
  (sprite (name "bullet")
+         (fps 20.0)
          (x-hotspot 12)
-         (x-hotspot 12)
-         (fps 20)
+         (y-hotspot 12)
          (images "shared/bullet-1.png"
                  "shared/bullet-2.png"
                  "shared/bullet-3.png"
                  "shared/bullet-4.png"))
- )
-
+)
 ;; EOF ;;
