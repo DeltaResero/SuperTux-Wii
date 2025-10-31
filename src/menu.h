@@ -66,7 +66,7 @@ enum WorldMapMenuIDs
 bool confirm_dialog(std::string text, Surface* background);
 
 /**
- * @brief Defines the different types of items that can exist in a menu.
+ * Defines the different types of items that can exist in a menu.
  * Each kind determines the item's appearance and behavior.
  */
 enum MenuItemKind
@@ -86,7 +86,7 @@ enum MenuItemKind
 class Menu;
 
 /**
- * @brief Represents a single item within a Menu.
+ * Represents a single item within a Menu.
  * Contains all properties needed to display and interact with the item,
  * such as its text, type, and current state.
  */
@@ -110,25 +110,25 @@ public:
 };
 
 /**
- * @brief Manages a collection of menu items, handling user input,
+ * Manages a collection of menu items, handling user input,
  * navigation, and rendering for a complete menu screen.
  */
 class Menu
 {
 private:
   /**
-   * @brief Stores the history of opened menus to handle "Back" functionality.
+   * Stores the history of opened menus to handle "Back" functionality.
    */
   static std::vector<Menu*> last_menus;
 
   /**
-   * @brief A pointer to the currently active and visible menu.
+   * A pointer to the currently active and visible menu.
    */
   static Menu* current_;
 
 private:
   /**
-   * @brief Defines the internal actions the user can perform on a menu,
+   * Defines the internal actions the user can perform on a menu,
    * typically translated from raw keyboard or joystick input events.
    */
   enum MenuAction
@@ -142,7 +142,7 @@ private:
   };
 
   /**
-   * @brief The index of the menu item that was 'hit' (e.g., clicked or selected with Enter)
+   * The index of the menu item that was 'hit' (e.g., clicked or selected with Enter)
    * in the most recent call to action(). It is -1 if no item was hit.
    */
   int hit_item;
@@ -151,7 +151,7 @@ private:
   int pos_x;
   int pos_y;
 
-  /** @brief The input event to be processed in the next call to action(). */
+  /** The input event to be processed in the next call to action(). */
   MenuAction menuaction;
 
   void process_options_menu();

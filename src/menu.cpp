@@ -171,7 +171,7 @@ void Menu::set_current(Menu* menu)
 #pragma endregion  // DialogAndMenuNavigation
 
 /**
- * @brief Constructor for a MenuItem.
+ * Constructor for a MenuItem.
  * Initializes all members to a default, safe state.
  */
 MenuItem::MenuItem() :
@@ -186,7 +186,7 @@ target_menu(nullptr)
 }
 
 /**
- * @brief Changes the main display text of the menu item
+ * Changes the main display text of the menu item
  * @param text_ The new text to display
  */
 void MenuItem::change_text(const std::string& text_)
@@ -195,7 +195,7 @@ void MenuItem::change_text(const std::string& text_)
 }
 
 /**
- * @brief Changes the input/value text of the menu item
+ * Changes the input/value text of the menu item
  * Used for fields that display a configured value, like a keybinding
  * @param text_ The new text to display
  */
@@ -205,7 +205,7 @@ void MenuItem::change_input(const std::string& text_)
 }
 
 /**
- * @brief Converts the integer key code from a control field into a human-readable string
+ * Converts the integer key code from a control field into a human-readable string
  * This is used to display the name of the currently bound key (e.g., "Up cursor", "Space")
  * @param item A pointer to the MN_CONTROLFIELD item to process
  */

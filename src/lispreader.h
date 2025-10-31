@@ -179,6 +179,9 @@ private:
   std::unordered_map<const char*, lisp_object_t*> property_map;
 
   lisp_object_t* search_for(const char* name);
+
+  template <typename T, typename Predicate, typename Getter>
+  bool read_vector_impl(const char* name, std::vector<T>* vec, Predicate pred, Getter get);
 public:
   LispReader(lisp_object_t* l);
 
@@ -215,3 +218,5 @@ public:
 };
 
 #endif // __LISPREADER_H__
+
+// EOF

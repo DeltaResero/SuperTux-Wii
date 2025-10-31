@@ -67,7 +67,7 @@ static unsigned int last_update_time;  // Time of the last update
 static unsigned int update_time;       // Current time for updates
 
 /**
- * @brief A structure to cache information about bonus content.
+ * A structure to cache information about bonus content.
  * This prevents repeated, slow file I/O when generating the bonus menu.
  * The cache is populated only once when the title screen loads.
  */
