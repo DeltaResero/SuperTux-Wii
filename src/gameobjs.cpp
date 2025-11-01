@@ -162,30 +162,10 @@ void BouncyBrick::action(double frame_ratio)
  */
 void BouncyBrick::draw()
 {
-  SDL_Rect dest;
-
+  // Only draw if the brick is on screen.
   if (base.x >= scroll_x - 32 && base.x <= scroll_x + screen->w)
   {
-    dest.x = static_cast<int>(base.x - scroll_x);
-    dest.y = static_cast<int>(base.y);
-    dest.w = 32;
-    dest.h = 32;
-
-    Level* plevel = World::current()->get_level();
-
-    // FIXME: overdrawing hack to clean the tile from the screen to paint it later at an offsetted position
-    if (plevel->bkgd_image[0] == '\0')
-    {
-      fillrect(base.x - scroll_x, base.y, 32, 32,
-               plevel->bkgd_top.red, plevel->bkgd_top.green, plevel->bkgd_top.blue, 0);
-      // FIXME: doesn't respect the gradient, furthermore is this necessary at all??
-    }
-    else
-    {
-      int s = static_cast<int>(scroll_x / 2) % 640;
-      plevel->img_bkgd->draw_part(dest.x + s, dest.y, dest.x, dest.y, dest.w, dest.h);
-    }
-
+    // Simply draw the tile at its current animated position (No more erasing!)
     Tile::draw(base.x - scroll_x, base.y + offset, shape);
   }
 }
@@ -226,11 +206,12 @@ void FloatingScore::action(double frame_ratio)
  */
 void FloatingScore::draw()
 {
-  char str[10];  // Buffer to hold the score as a string
-  snprintf(str, sizeof(str), "%d", value);  // Safely format the score
-  int str_len = strnlen(str, sizeof(str));  // Safely determine string length
-  int x_pos = static_cast<int>(base.x + 16 - str_len * 8);  // Calculate x position
-  gold_text->draw(str, x_pos, static_cast<int>(base.y), 1);  // Draw score
+  char str[10];
+  snprintf(str, sizeof(str), "%d", value);
+  int str_len = strnlen(str, sizeof(str));
+  // Apply the scroll offset at draw time, just like everything else.
+  int x_pos = static_cast<int>(base.x - scroll_x + 16 - str_len * 8);
+  gold_text->draw(str, x_pos, static_cast<int>(base.y), 1);
 }
 
 // EOF

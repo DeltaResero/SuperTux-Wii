@@ -218,20 +218,25 @@ void World::draw()
     (*p)->draw(scroll_x, 0, 0);
   }
 
-  int tile_scroll_x = static_cast<int>(scroll_x) >> 5; // Divide by 32
-  float sub_tile_scroll_x = fmodf(scroll_x, 32.0f);
   int current_width = level->width;
+  // Calculate the index of the first tile visible on the left edge of the screen.
+  int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f));
 
   /* Draw background: */
   for (y = 0; y < 15; ++y)
   {
+    // Loop enough times to cover the screen width plus one extra tile for sub-pixel scrolling.
     for (x = 0; x < 21; ++x)
     {
-      int tile_x = x + tile_scroll_x;
-      if (tile_x < current_width)
+      int map_tile_x = first_tile_x + x;
+      if (map_tile_x >= 0 && map_tile_x < current_width)
       {
-        Tile::draw(32 * x - sub_tile_scroll_x, y * 32,
-                   level->bg_tiles[y * current_width + tile_x]);
+        // Calculate the tile's absolute world position.
+        float tile_world_x = map_tile_x * 32.0f;
+
+        // Draw using the consistent formula: world_position - scroll_position.
+        unsigned int bg_tile_id = level->bg_tiles[y * current_width + map_tile_x];
+        Tile::draw(tile_world_x - scroll_x, y * 32.0f, bg_tile_id);
       }
     }
   }
@@ -241,11 +246,29 @@ void World::draw()
   {
     for (x = 0; x < 21; ++x)
     {
-      int tile_x = x + tile_scroll_x;
-      if (tile_x < current_width)
+      int map_tile_x = first_tile_x + x;
+      if (map_tile_x >= 0 && map_tile_x < current_width)
       {
-        Tile::draw(32 * x - sub_tile_scroll_x, y * 32,
-                   level->ia_tiles[y * current_width + tile_x]);
+        bool should_draw_tile = true;
+
+        // Check if there is an active bouncy brick at this tile's location.
+        for (const auto* brick : bouncy_bricks)
+        {
+          // Compare integer grid coordinates to avoid float precision issues.
+          if (static_cast<int>(brick->base.x) / 32 == map_tile_x &&
+              static_cast<int>(brick->base.y) / 32 == y)
+          {
+            should_draw_tile = false; // A brick is bouncing here, so don't draw the static tile.
+            break;
+          }
+        }
+
+        if (should_draw_tile)
+        {
+          float tile_world_x = map_tile_x * 32.0f;
+          unsigned int ia_tile_id = level->ia_tiles[y * current_width + map_tile_x];
+          Tile::draw(tile_world_x - scroll_x, y * 32.0f, ia_tile_id);
+        }
       }
     }
   }
@@ -293,11 +316,13 @@ void World::draw()
   {
     for (x = 0; x < 21; ++x)
     {
-      int tile_x = x + tile_scroll_x;
-      if (tile_x < current_width)
+      int map_tile_x = first_tile_x + x;
+      if (map_tile_x >= 0 && map_tile_x < current_width)
       {
-        Tile::draw(32 * x - sub_tile_scroll_x, y * 32,
-                   level->fg_tiles[y * current_width + tile_x]);
+        float tile_world_x = map_tile_x * 32.0f;
+
+        unsigned int fg_tile_id = level->fg_tiles[y * current_width + map_tile_x];
+        Tile::draw(tile_world_x - scroll_x, y * 32.0f, fg_tile_id);
       }
     }
   }
@@ -738,7 +763,9 @@ void World::add_score(float x, float y, int s)
   player_status.score += s;
 
   FloatingScore* new_floating_score = new FloatingScore();
-  new_floating_score->init(x-scroll_x, y, s);
+  // Pass world coordinates (x, y) without subtracting scroll_x
+  // FloatingScore::draw() in gameobjs.cpp doesn't use scroll_x
+  new_floating_score->init(x, y, s);
   floating_scores.push_back(new_floating_score);
 }
 

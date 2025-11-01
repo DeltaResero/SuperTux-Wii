@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include "SDL.h"
 #include "SDL_image.h"
 #include "texture.h"
@@ -669,8 +670,8 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
 
   glGenTextures(1, tex);
   glBindTexture(GL_TEXTURE_2D, *tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, conv->pitch / conv->format->BytesPerPixel);
@@ -690,6 +691,9 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
  */
 int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
 {
+  x = floorf(x + 0.5f);
+  y = floorf(y + 0.5f);
+
   float pw = tex_w_pow2;
   float ph = tex_h_pow2;
 
@@ -768,6 +772,9 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
  */
 int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update)
 {
+  x = floorf(x + 0.5f);
+  y = floorf(y + 0.5f);
+
   float pw = tex_w_pow2;
   float ph = tex_h_pow2;
 
@@ -784,9 +791,9 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
   glTexCoord2f(sx / pw, sy / ph);
   glVertex2f(x, y);
   glTexCoord2f((sx + w) / pw, sy / ph);
-  glVertex2f(x + w + 1.0f, y - 1.0f);            // FIXME: nasty OB1 workaround
+  glVertex2f(x + w, y);
   glTexCoord2f((sx + w) / pw, (sy + h) / ph);
-  glVertex2f(x + w + 1.0f, y + h - 1.0f);        // FIXME: nasty OB1 workaround
+  glVertex2f(x + w, y + h);
   glTexCoord2f(sx / pw, (sy + h) / ph);
   glVertex2f(x, h + y);
   glEnd();
@@ -893,8 +900,9 @@ int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
 {
   SDL_Rect dest;
 
-  dest.x = static_cast<int>(x);
-  dest.y = static_cast<int>(y);
+  // Round to nearest integer for SDL rendering to prevent sub-pixel jitter
+  dest.x = static_cast<int>(x + 0.5f);
+  dest.y = static_cast<int>(y + 0.5f);
   dest.w = w;
   dest.h = h;
 
@@ -1012,8 +1020,9 @@ int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w, float h
   src.w = static_cast<int>(w);
   src.h = static_cast<int>(h);
 
-  dest.x = static_cast<int>(x);
-  dest.y = static_cast<int>(y);
+  // Round to nearest integer for SDL rendering to prevent sub-pixel jitter
+  dest.x = static_cast<int>(x + 0.5f);
+  dest.y = static_cast<int>(y + 0.5f);
   dest.w = static_cast<int>(w);
   dest.h = static_cast<int>(h);
 
@@ -1070,8 +1079,9 @@ int SurfaceSDL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bo
 {
   SDL_Rect dest;
 
-  dest.x = static_cast<int>(x);
-  dest.y = static_cast<int>(y);
+  // Round to nearest integer for SDL rendering to prevent sub-pixel jitter
+  dest.x = static_cast<int>(x + 0.5f);
+  dest.y = static_cast<int>(y + 0.5f);
   dest.w = static_cast<int>(sw);
   dest.h = static_cast<int>(sh);
 
