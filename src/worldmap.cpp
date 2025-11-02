@@ -1472,15 +1472,14 @@ void WorldMap::loadgame(const std::string& filename)
 #endif
   savegame_file = filename;
 
-//  if (access(filename.c_str(), F_OK) != 0)
-//    return;
-
   lisp_object_t* savegame = lisp_read_from_file(filename);
   if (!savegame)
   {
+    // Reset player state for a new game
 #ifdef DEBUG
     std::cout << "WorldMap:loadgame: File not found: " << filename << std::endl;
 #endif
+    player_status.reset();
     return;
   }
 
