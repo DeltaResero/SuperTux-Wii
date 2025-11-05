@@ -1052,7 +1052,8 @@ void BadGuy::squish(Player* player)
   if (kind == BAD_MRBOMB)
   {
     // MrBomb transforms into a bomb now
-    World::current()->add_bad_guy(base.x, base.y, BAD_BOMB);
+    BadGuy* new_bomb = World::current()->add_bad_guy(base.x, base.y, BAD_BOMB);
+    new_bomb->dir = this->dir;
 
     player->jump_of_badguy(this);
     World::current()->add_score(base.x, base.y, 50 * player_status.score_multiplier);
@@ -1190,7 +1191,8 @@ void BadGuy::kill_me(int score)
  */
 void BadGuy::explode(BadGuy* badguy)
 {
-  World::current()->add_bad_guy(badguy->base.x, badguy->base.y, BAD_BOMB);
+  BadGuy* new_bomb = World::current()->add_bad_guy(badguy->base.x, badguy->base.y, BAD_BOMB);
+  new_bomb->dir = badguy->dir;
   badguy->remove_me();
 }
 
