@@ -337,7 +337,6 @@ void Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
     {
       return;
     }
-    //play_sound(sounds[SND_BUMP_UPGRADE], SOUND_CENTER_SPEAKER);
     physic.set_velocity(-physic.get_velocity_x(), 3);
     dir = dir == LEFT ? RIGHT : LEFT;
     physic.enable_gravity(true);
@@ -371,8 +370,8 @@ void Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
         if (player_status.lives < MAX_LIVES)
         {
           player_status.lives++;
-          play_sound(sounds[SND_LIFEUP], SOUND_CENTER_SPEAKER);
         }
+        play_sound(sounds[SND_LIFEUP], SOUND_CENTER_SPEAKER);
       }
 
       removable = true;
