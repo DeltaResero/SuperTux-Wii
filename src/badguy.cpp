@@ -535,15 +535,24 @@ void BadGuy::action_jumpy(double frame_ratio)
   }
 
   // Set direction based on Tux
-  if (tux.base.x > base.x)
-    dir = RIGHT;
-  else
-    dir = LEFT;
+  if (dying == DYING_NOT)
+  {
+    if (tux.base.x > base.x)
+    {
+      dir = RIGHT;
+    }
+    else
+    {
+      dir = LEFT;
+    }
+  }
 
   // Move
   physic.apply(frame_ratio, base.x, base.y);
   if (dying == DYING_NOT)
+  {
     collision_swept_object_map(&old_base, &base);
+  }
 }
 
 /**
