@@ -22,138 +22,97 @@
 #define SUPERTUX_LEVEL_H
 
 #include <string>
+#include <vector>
+#include "lispreader.h"
 #include "texture.h"
 #include "badguy.h"
-#include "lispreader.h"
 #include "musicref.h"
 
-class Tile;
+// Tilemaps
+#define TM_BG 0
+#define TM_IA 1
+#define TM_FG 2
 
-/** This type holds meta-information about a level-subset.
-    It could be extended to handle manipulation of subsets. */
 class LevelSubset
-  {
-  public:
-    LevelSubset();
-    ~LevelSubset();
-
-    static void create(const std::string& subset_name);
-    void load(const std::string& subset);
-    void save();
-
-    std::string name;        /**< The name of the subset */
-    std::string title;       /**< The title of the subset */
-    std::string description; /**< The description of the subset */
-    Surface* image;          /**< The image associated with the subset */
-    int levels;              /**< The number of levels in the subset */
-
-  private:
-    void parse(lisp_object_t* cursor);
-  };
-
-#define LEVEL_NAME_MAX 20
-
-
-enum TileMapType {
- TM_BG,
- TM_IA,
- TM_FG
- };
-
-struct ResetPoint
 {
-  int x;
-  int y;
+public:
+  std::string name;
+  std::string title;
+  std::string description;
+  Surface* image;
+  int levels;
+
+  LevelSubset();
+  ~LevelSubset();
+
+  void create(const std::string& subset_name);
+  void parse(lisp_object_t* data);
+  void load(const std::string& subset);
+  void save();
 };
 
 struct OriginalTileInfo
 {
-  // Information for restoring coins, bricks, "?" blocks, etc. upon death
-  int x;
-  int y;
-  int tile;
+  int x, y;
+  unsigned int tile;
 };
 
-class Level 
+struct ResetPoint
 {
- public:
-  Surface* img_bkgd;                      /**< The background image of the level */
-  MusicRef level_song;                    /**< The music for the level */
-  MusicRef level_song_fast;               /**< The fast version of the level's music */
+  int x, y;
+};
 
-  std::string name;                       /**< The name of the level */
-  std::string author;                     /**< The author of the level */
-  std::string song_title;                 /**< The title of the level's song */
-  std::string bkgd_image;                 /**< The background image name */
-  std::string particle_system;            /**< The particle system used in the level */
-  std::vector<unsigned int> bg_tiles;     /**< Tiles in the background */
-  std::vector<unsigned int> ia_tiles;     /**< Tiles which can interact in the game (solids, etc.) */
-  std::vector<unsigned int> fg_tiles;     /**< Tiles in the foreground */
-  int time_left;                          /**< The time left in the level */
-  Color bkgd_top;
-  Color bkgd_bottom;
+class Level
+{
+public:
+  std::string name;
+  std::string author;
+  std::string song_title;
+  std::string bkgd_image;
+  std::string particle_system;
   int width;
-  int bkgd_speed;
-  int start_pos_x;
-  int start_pos_y;
+  int start_pos_x, start_pos_y;
+  int time_left;
   float gravity;
   bool back_scrolling;
   float hor_autoscroll_speed;
+  int bkgd_speed;
+  Color bkgd_top;
+  Color bkgd_bottom;
+  Surface* img_bkgd;
 
+  std::vector<unsigned int> bg_tiles;
+  std::vector<unsigned int> ia_tiles;
+  std::vector<unsigned int> fg_tiles;
+  std::vector<OriginalTileInfo> original_tiles;
+  std::vector<ResetPoint> reset_points;
   std::vector<BadGuyData> badguy_data;
 
-  /** A collection of points to which Tux can be reset after a lost live */
-  std::vector<ResetPoint> reset_points;  /**< Collection of reset points */
-
-  // collection of original brick/coin/bonus block tile positions
-  std::vector<OriginalTileInfo> original_tiles;
-
- public:
   Level();
   Level(const std::string& subset, int level);
   Level(const std::string& filename);
   ~Level();
 
-  /** Will the Level structure with default values */
   void init_defaults();
-
-  /** Cleanup the level struct from allocated tile data and such */
-  void cleanup();
-
-  /** Load data for this level:
-      Returns -1, if the loading of the level failed. */
-  int  load(const std::string& subset, int level);
-
-  /** Load data for this level:
-      Returns -1, if the loading of the level failed. */
-  int  load(const std::string& filename);
-
+  int load(const std::string& subset, int level);
+  int load(const std::string& filename);
   void reload_bricks_and_coins();
-
+  void save(const std::string& subset, int level);
+  void cleanup();
   void load_gfx();
-
+  void load_image(Surface** ptexture, std::string theme, const char* file, bool use_alpha);
+  void change_size(int new_width);
+  void change(float x, float y, int tm, unsigned int c);
   void load_song();
   void free_song();
   MusicRef get_level_music() const;
   MusicRef get_level_music_fast() const;
-
-  void save(const std::string& subset, int level);
-
-  /** Edit a piece of the map! */
-  void change(float x, float y, int tm, unsigned int c);
-
-  /** Resize the level to a new width */
-  void change_size(int new_width);
-
-  /** Return the id of the tile at position x/y */
   unsigned int gettileid(float x, float y) const;
-
-  /** returns the id of the tile at position x,y
-   * (these are logical and not pixel coordinates)
-   */
   unsigned int get_tile_at(int x, int y) const;
 
-  void load_image(Surface** ptexture, std::string theme, const char* file, int use_alpha);
+private:
+  MusicRef level_song;
+  MusicRef level_song_fast;
 };
 
 #endif /*SUPERTUX_LEVEL_H*/

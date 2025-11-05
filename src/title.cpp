@@ -135,7 +135,7 @@ void createDemo()
   bkg_title = session->get_level()->img_bkgd;
 
   // Load the logo image with alpha transparency
-  logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
+  logo = new Surface(datadir + "/images/title/logo.png", true);
 }
 
 /**
@@ -401,8 +401,8 @@ void title(void)
   }
 
   // Load and draw the title screen background and logo
-  bkg_title = new Surface(datadir + "/images/title/background.jpg", IGNORE_ALPHA);
-  logo = new Surface(datadir + "/images/title/logo.png", USE_ALPHA);
+  bkg_title = new Surface(datadir + "/images/title/background.jpg", false);
+  logo = new Surface(datadir + "/images/title/logo.png", true);
 
   // After title screen elements are loaded, delete the loading surface
   if(loading_surf)

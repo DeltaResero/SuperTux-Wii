@@ -157,7 +157,7 @@ void TileManager::load_tileset(std::string filename)
         {
           Surface* cur_image = nullptr;
           tile->images.push_back(cur_image);
-          tile->images.back() = new Surface(base_path + filename, USE_ALPHA);
+          tile->images.back() = new Surface(base_path + filename, true);
         }
 
         // Ensure the tiles vector is large enough

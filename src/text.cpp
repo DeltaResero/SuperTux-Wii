@@ -15,8 +15,7 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <fstream>
 #include <stdio.h>
@@ -94,7 +93,7 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
   : kind(kind_), w(w_), h(h_)
 {
   // Load the main font surface
-  chars = new Surface(file, USE_ALPHA);
+  chars = new Surface(file, true);
 
 #ifndef NOOPENGL
   // --- One-time setup for OpenGL pointer caching ---
@@ -120,7 +119,7 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
 
   SDL_UnlockSurface(conv);
   SDL_SetAlpha(conv, SDL_SRCALPHA, 128);  // Set the alpha transparency level
-  shadow_chars = new Surface(conv, USE_ALPHA);
+  shadow_chars = new Surface(conv, true);
 
 #ifndef NOOPENGL
   if (use_gl)
@@ -568,7 +567,7 @@ void Text::erasecenteredtext(const std::string& text, int y, Surface* ptexture, 
  */
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed)
 {
-  Surface* sur = new Surface(datadir + surface, IGNORE_ALPHA);
+  Surface* sur = new Surface(datadir + surface, false);
   display_text_file(file, sur, scroll_speed);
   delete sur;
 }

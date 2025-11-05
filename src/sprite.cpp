@@ -47,7 +47,7 @@ Sprite::Sprite(lisp_object_t* cur)
   for (const auto& image : images)
   {
     surfaces.push_back(
-        new Surface(datadir + "/images/" + image, USE_ALPHA));
+        new Surface(datadir + "/images/" + image, true));
   }
 
   frame_delay = 1000.0f / fps;

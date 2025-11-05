@@ -45,9 +45,9 @@ ParticleSystem::ParticleSystem()
 SnowParticleSystem::SnowParticleSystem()
 {
   // Initialize snowflake textures
-  snowimages[0] = new Surface(datadir + "/images/shared/snow0.png", USE_ALPHA);
-  snowimages[1] = new Surface(datadir + "/images/shared/snow1.png", USE_ALPHA);
-  snowimages[2] = new Surface(datadir + "/images/shared/snow2.png", USE_ALPHA);
+  snowimages[0] = new Surface(datadir + "/images/shared/snow0.png", true);
+  snowimages[1] = new Surface(datadir + "/images/shared/snow1.png", true);
+  snowimages[2] = new Surface(datadir + "/images/shared/snow2.png", true);
 
   virtual_width = screen->w * 2.0f;
   virtual_height = screen->h;
@@ -172,7 +172,7 @@ void SnowParticleSystem::draw(float scrollx, float scrolly, int layer)
 CloudParticleSystem::CloudParticleSystem()
 {
   // Initialize cloud texture
-  cloudimage = new Surface(datadir + "/images/shared/cloud.png", USE_ALPHA);
+  cloudimage = new Surface(datadir + "/images/shared/cloud.png", true);
 
   virtual_width = 2000.0f;
   virtual_height = screen->h;

@@ -82,7 +82,7 @@ int main(int argc, char ** argv)
 
   // Initialize and show the loading screen
   clearscreen(0, 0, 0);
-  loading_surf = new Surface(datadir + "/images/title/loading.png", USE_ALPHA);
+  loading_surf = new Surface(datadir + "/images/title/loading.png", true);
   loading_surf->draw(160, 30);
   updatescreen();  // Refresh screen to show the loading screen
 

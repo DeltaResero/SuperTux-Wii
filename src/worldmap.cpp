@@ -195,7 +195,7 @@ TileManager::TileManager()
           }
         }
 
-        tile->sprite = new Surface(datadir + "/images/worldmap/" + filename, USE_ALPHA);
+        tile->sprite = new Surface(datadir + "/images/worldmap/" + filename, true);
         if (id >= int(tiles.size()))
         {
           tiles.resize(id + 1);
@@ -244,9 +244,9 @@ Tile* TileManager::get(int i)
  */
 Tux::Tux(WorldMap* worldmap_) : worldmap(worldmap_)
 {
-  largetux_sprite = new Surface(datadir + "/images/worldmap/tux.png", USE_ALPHA);
-  firetux_sprite = new Surface(datadir + "/images/worldmap/firetux.png", USE_ALPHA);
-  smalltux_sprite = new Surface(datadir + "/images/worldmap/smalltux.png", USE_ALPHA);
+  largetux_sprite = new Surface(datadir + "/images/worldmap/tux.png", true);
+  firetux_sprite = new Surface(datadir + "/images/worldmap/firetux.png", true);
+  smalltux_sprite = new Surface(datadir + "/images/worldmap/smalltux.png", true);
 
   offset = 0;
   moving = false;
@@ -269,9 +269,9 @@ Tux::~Tux()
  */
 void Tux::loadSprites()
 {
-  largetux_sprite = new Surface(datadir + "/images/worldmap/tux.png", USE_ALPHA);
-  firetux_sprite = new Surface(datadir + "/images/worldmap/firetux.png", USE_ALPHA);
-  smalltux_sprite = new Surface(datadir + "/images/worldmap/smalltux.png", USE_ALPHA);
+  largetux_sprite = new Surface(datadir + "/images/worldmap/tux.png", true);
+  firetux_sprite = new Surface(datadir + "/images/worldmap/firetux.png", true);
+  smalltux_sprite = new Surface(datadir + "/images/worldmap/smalltux.png", true);
 }
 
 /**
@@ -546,9 +546,9 @@ WorldMap::~WorldMap()
  */
 void WorldMap::loadSprites()
 {
-  leveldot_green = new Surface(datadir + "/images/worldmap/leveldot_green.png", USE_ALPHA);
-  leveldot_red = new Surface(datadir + "/images/worldmap/leveldot_red.png", USE_ALPHA);
-  leveldot_teleporter = new Surface(datadir + "/images/worldmap/teleporter.png", USE_ALPHA);
+  leveldot_green = new Surface(datadir + "/images/worldmap/leveldot_green.png", true);
+  leveldot_red = new Surface(datadir + "/images/worldmap/leveldot_red.png", true);
+  leveldot_teleporter = new Surface(datadir + "/images/worldmap/teleporter.png", true);
 }
 
 /**

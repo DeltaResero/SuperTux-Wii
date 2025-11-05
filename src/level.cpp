@@ -141,13 +141,13 @@ void LevelSubset::load(const std::string& subset)
     if (faccessible(image_file.string().c_str()))
     {
       delete image;
-      image = new Surface(image_file.string().c_str(), IGNORE_ALPHA);
+      image = new Surface(image_file.string().c_str(), false);
     }
     else
     {
       fs::path default_image = fs::path(datadir) / "images/status/level-subset-info.png";
       delete image;
-      image = new Surface(default_image.string().c_str(), IGNORE_ALPHA);
+      image = new Surface(default_image.string().c_str(), false);
     }
   }
 
@@ -771,7 +771,7 @@ void Level::load_gfx()
     {
       fname = fs::path(datadir) / "images/background" / bkgd_image;
     }
-    img_bkgd = new Surface(fname.string().c_str(), IGNORE_ALPHA);
+    img_bkgd = new Surface(fname.string().c_str(), false);
   }
 }
 
@@ -782,7 +782,7 @@ void Level::load_gfx()
  * @param file The filename of the image to load.
  * @param use_alpha Whether to use alpha channel for the image.
  */
-void Level::load_image(Surface** ptexture, string theme, const char* file, int use_alpha)
+void Level::load_image(Surface** ptexture, string theme, const char* file, bool use_alpha)
 {
   fs::path fname = fs::path(st_dir) / "themes" / theme / file;
   if (!faccessible(fname.string().c_str()))

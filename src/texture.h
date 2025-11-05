@@ -31,13 +31,13 @@
 #include "screen.h"
 
 // Load part of an image into SDL_Surface
-SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, int use_alpha);
+SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, bool use_alpha);
 
 // Load entire image file into SDL_Surface
-SDL_Surface* sdl_surface_from_file(const std::string& file, int use_alpha);
+SDL_Surface* sdl_surface_from_file(const std::string& file, bool use_alpha);
 
 // Create a new SDL_Surface from an existing one
-SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, int use_alpha);
+SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha);
 
 class SurfaceImpl;
 class SurfaceSDL;
@@ -54,15 +54,15 @@ public:
   ConstructorType type;
   SDL_Surface* surface;
   std::string file;
-  int use_alpha;
+  bool use_alpha;
   int x;
   int y;
   int w;
   int h;
 
-  SurfaceData(SDL_Surface* surf, int use_alpha_);
-  SurfaceData(const std::string& file_, int use_alpha_);
-  SurfaceData(const std::string& file_, int x_, int y_, int w_, int h_, int use_alpha_);
+  SurfaceData(SDL_Surface* surf, bool use_alpha_);
+  SurfaceData(const std::string& file_, bool use_alpha_);
+  SurfaceData(const std::string& file_, int x_, int y_, int w_, int h_, bool use_alpha_);
   ~SurfaceData();
 
   SurfaceSDL* create_SurfaceSDL();
@@ -86,9 +86,9 @@ public:
   typedef std::list<Surface*> Surfaces;
   static Surfaces surfaces;
 
-  Surface(SDL_Surface* surf, int use_alpha);
-  Surface(const std::string& file, int use_alpha);
-  Surface(const std::string& file, int x, int y, int w, int h, int use_alpha);
+  Surface(SDL_Surface* surf, bool use_alpha);
+  Surface(const std::string& file, bool use_alpha);
+  Surface(const std::string& file, int x, int y, int w, int h, bool use_alpha);
   ~Surface();
 
   void reload();
@@ -136,9 +136,9 @@ public:
   float tex_w_pow2;
   float tex_h_pow2;
 
-  SurfaceOpenGL(SDL_Surface* surf, int use_alpha);
-  SurfaceOpenGL(const std::string& file, int use_alpha);
-  SurfaceOpenGL(const std::string& file, int x, int y, int w, int h, int use_alpha);
+  SurfaceOpenGL(SDL_Surface* surf, bool use_alpha);
+  SurfaceOpenGL(const std::string& file, bool use_alpha);
+  SurfaceOpenGL(const std::string& file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceOpenGL();
 
   int draw(float x, float y, Uint8 alpha, bool update);
@@ -156,9 +156,9 @@ private:
 class SurfaceSDL : public SurfaceImpl
 {
 public:
-  SurfaceSDL(SDL_Surface* surf, int use_alpha);
-  SurfaceSDL(const std::string& file, int use_alpha);
-  SurfaceSDL(const std::string& file, int x, int y, int w, int h, int use_alpha);
+  SurfaceSDL(SDL_Surface* surf, bool use_alpha);
+  SurfaceSDL(const std::string& file, bool use_alpha);
+  SurfaceSDL(const std::string& file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceSDL();
 
   int draw(float x, float y, Uint8 alpha, bool update);

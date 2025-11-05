@@ -32,7 +32,7 @@ MouseCursor::MouseCursor(std::string cursor_file, int frames)
   : mid_x(0), mid_y(0), cur_state(MC_NORMAL), cur_frame(0), tot_frames(frames),
     frame_w(0), frame_h(0)  // Initialize cached dimensions
 {
-  cursor = new Surface(cursor_file, USE_ALPHA);
+  cursor = new Surface(cursor_file, true);
   if (!cursor)
   {
 #ifdef DEBUG

@@ -30,8 +30,6 @@
 // Constants
 #define NO_UPDATE     false
 #define UPDATE        true
-#define USE_ALPHA     0
-#define IGNORE_ALPHA  1
 
 // Represents a color with red, green, and blue components
 struct Color

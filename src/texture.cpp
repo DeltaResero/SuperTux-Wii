@@ -35,7 +35,7 @@ Surface::Surfaces Surface::surfaces;
  * @param temp SDL_Surface to copy.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceData::SurfaceData(SDL_Surface* temp, int use_alpha_)
+SurfaceData::SurfaceData(SDL_Surface* temp, bool use_alpha_)
   : type(SURFACE), surface(nullptr), use_alpha(use_alpha_)
 {
   // Copy the given surface and make sure that it is not stored in
@@ -60,7 +60,7 @@ SurfaceData::SurfaceData(SDL_Surface* temp, int use_alpha_)
  * @param file_ Path to the image file.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceData::SurfaceData(const std::string& file_, int use_alpha_)
+SurfaceData::SurfaceData(const std::string& file_, bool use_alpha_)
   : type(LOAD), surface(nullptr), file(file_), use_alpha(use_alpha_)
 {
 }
@@ -74,7 +74,7 @@ SurfaceData::SurfaceData(const std::string& file_, int use_alpha_)
  * @param h_ Height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceData::SurfaceData(const std::string& file_, int x_, int y_, int w_, int h_, int use_alpha_)
+SurfaceData::SurfaceData(const std::string& file_, int x_, int y_, int w_, int h_, bool use_alpha_)
   : type(LOAD_PART), surface(nullptr), file(file_), use_alpha(use_alpha_),
     x(x_), y(y_), w(w_), h(h_)
 {
@@ -170,7 +170,7 @@ inline int power_of_two(int input)
  * @param surf The SDL_Surface to wrap.
  * @param use_alpha Whether to use alpha transparency.
  */
-Surface::Surface(SDL_Surface* surf, int use_alpha)
+Surface::Surface(SDL_Surface* surf, bool use_alpha)
   : data(surf, use_alpha), w(0), h(0)
 {
   impl = data.create();
@@ -187,7 +187,7 @@ Surface::Surface(SDL_Surface* surf, int use_alpha)
  * @param file The path to the image file.
  * @param use_alpha Whether to use alpha transparency.
  */
-Surface::Surface(const std::string& file, int use_alpha)
+Surface::Surface(const std::string& file, bool use_alpha)
   : data(file, use_alpha), w(0), h(0)
 {
   impl = data.create();
@@ -208,7 +208,7 @@ Surface::Surface(const std::string& file, int use_alpha)
  * @param h The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-Surface::Surface(const std::string& file, int x, int y, int w, int h, int use_alpha)
+Surface::Surface(const std::string& file, int x, int y, int w, int h, bool use_alpha)
   : data(file, x, y, w, h, use_alpha), w(0), h(0)
 {
   impl = data.create();
@@ -384,7 +384,7 @@ void Surface::resize(int w_, int h_)
  * @param use_alpha Whether to use alpha transparency.
  * @return A pointer to the loaded SDL_Surface.
  */
-SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, int use_alpha)
+SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, bool use_alpha)
 {
   SDL_Rect src;
   SDL_Surface* sdl_surface;
@@ -413,7 +413,7 @@ SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, i
   SDL_SetAlpha(temp, 0, 0);
 
   SDL_BlitSurface(temp, &src, conv, NULL);
-  if (use_alpha == IGNORE_ALPHA && !use_gl)
+  if (!use_alpha && !use_gl)
   {
     sdl_surface = SDL_DisplayFormat(conv);
   }
@@ -427,7 +427,7 @@ SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, i
     st_abort("Can't convert to display format (part)", file);
   }
 
-  if (use_alpha == IGNORE_ALPHA && !use_gl)
+  if (!use_alpha && !use_gl)
   {
     SDL_SetAlpha(sdl_surface, 0, 0);
   }
@@ -444,7 +444,7 @@ SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, i
  * @param use_alpha Whether to use alpha transparency.
  * @return A pointer to the loaded SDL_Surface.
  */
-SDL_Surface* sdl_surface_from_file(const std::string& file, int use_alpha)
+SDL_Surface* sdl_surface_from_file(const std::string& file, bool use_alpha)
 {
   SDL_Surface* sdl_surface;
   SDL_Surface* temp;
@@ -456,7 +456,7 @@ SDL_Surface* sdl_surface_from_file(const std::string& file, int use_alpha)
     st_abort("Can't load", file);
   }
 
-  if (use_alpha == IGNORE_ALPHA && !use_gl)
+  if (!use_alpha && !use_gl)
   {
     sdl_surface = SDL_DisplayFormat(temp);
   }
@@ -470,7 +470,7 @@ SDL_Surface* sdl_surface_from_file(const std::string& file, int use_alpha)
     st_abort("Can't convert to display format", file);
   }
 
-  if (use_alpha == IGNORE_ALPHA && !use_gl)
+  if (!use_alpha && !use_gl)
   {
     SDL_SetAlpha(sdl_surface, 0, 0);
   }
@@ -486,7 +486,7 @@ SDL_Surface* sdl_surface_from_file(const std::string& file, int use_alpha)
  * @param use_alpha Whether to use alpha transparency.
  * @return A pointer to the created SDL_Surface.
  */
-SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, int use_alpha)
+SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha)
 {
   SDL_Surface* sdl_surface;
   Uint32 saved_flags;
@@ -499,7 +499,7 @@ SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, int use_alpha)
     SDL_SetAlpha(sdl_surf, 0, 0);
   }
 
-  if (use_alpha == IGNORE_ALPHA && !use_gl)
+  if (!use_alpha && !use_gl)
   {
     sdl_surface = SDL_DisplayFormat(sdl_surf);
   }
@@ -518,7 +518,7 @@ SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, int use_alpha)
     SDL_SetAlpha(sdl_surface, saved_flags, saved_alpha);
   }
 
-  if (use_alpha == IGNORE_ALPHA && !use_gl)
+  if (!use_alpha && !use_gl)
   {
     SDL_SetAlpha(sdl_surface, 0, 0);
   }
@@ -575,7 +575,7 @@ int SurfaceImpl::resize(int w_, int h_)
  * @param surf The SDL_Surface to wrap.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceOpenGL::SurfaceOpenGL(SDL_Surface* surf, int use_alpha)
+SurfaceOpenGL::SurfaceOpenGL(SDL_Surface* surf, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_sdl_surface(surf, use_alpha);
   create_gl(sdl_surface, &gl_texture);
@@ -589,7 +589,7 @@ SurfaceOpenGL::SurfaceOpenGL(SDL_Surface* surf, int use_alpha)
  * @param file The path to the image file.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceOpenGL::SurfaceOpenGL(const std::string& file, int use_alpha)
+SurfaceOpenGL::SurfaceOpenGL(const std::string& file, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_file(file, use_alpha);
   create_gl(sdl_surface, &gl_texture);
@@ -607,7 +607,7 @@ SurfaceOpenGL::SurfaceOpenGL(const std::string& file, int use_alpha)
  * @param h The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceOpenGL::SurfaceOpenGL(const std::string& file, int x, int y, int w, int h, int use_alpha)
+SurfaceOpenGL::SurfaceOpenGL(const std::string& file, int x, int y, int w, int h, bool use_alpha)
 {
   sdl_surface = sdl_surface_part_from_file(file, x, y, w, h, use_alpha);
   create_gl(sdl_surface, &gl_texture);
@@ -853,7 +853,7 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
  * @param surf The SDL_Surface to wrap.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceSDL::SurfaceSDL(SDL_Surface* surf, int use_alpha)
+SurfaceSDL::SurfaceSDL(SDL_Surface* surf, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_sdl_surface(surf, use_alpha);
   w = sdl_surface->w;
@@ -865,7 +865,7 @@ SurfaceSDL::SurfaceSDL(SDL_Surface* surf, int use_alpha)
  * @param file The path to the image file.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceSDL::SurfaceSDL(const std::string& file, int use_alpha)
+SurfaceSDL::SurfaceSDL(const std::string& file, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_file(file, use_alpha);
   w = sdl_surface->w;
@@ -881,7 +881,7 @@ SurfaceSDL::SurfaceSDL(const std::string& file, int use_alpha)
  * @param h The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceSDL::SurfaceSDL(const std::string& file, int x, int y, int w, int h, int use_alpha)
+SurfaceSDL::SurfaceSDL(const std::string& file, int x, int y, int w, int h, bool use_alpha)
 {
   sdl_surface = sdl_surface_part_from_file(file, x, y, w, h, use_alpha);
   w = sdl_surface->w;

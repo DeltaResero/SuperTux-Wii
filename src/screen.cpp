@@ -219,7 +219,7 @@ void fade(Surface *surface, int seconds, bool fade_out)
  */
 void fade(const std::string& surface, int seconds, bool fade_out)
 {
-  Surface* sur = new Surface(datadir + surface, IGNORE_ALPHA);
+  Surface* sur = new Surface(datadir + surface, false);
   fade(sur, seconds, fade_out);
   delete sur;  // Clean up the dynamically allocated Surface object
 }
@@ -343,7 +343,7 @@ void drawline(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
       cycle += lg_delta;
       if (cycle > sh_delta)
       {
-        cycle -= sh_delta;
+        cycle -= lg_delta;
         x1 += lg_step;
       }
       y1 += sh_step;
