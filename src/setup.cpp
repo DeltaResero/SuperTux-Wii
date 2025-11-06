@@ -376,18 +376,32 @@ void st_directory_setup(void)
     else
     {
       exe_file[len] = '\0'; // Null-terminate the string
-      std::filesystem::path exedir = std::filesystem::path(exe_file).parent_path();
-      std::string exedir_str = exedir.string() + "/"; // Ensure trailing slash
+      fs::path exedir = fs::path(exe_file).parent_path();
 
-      // Use `exedir_str` to maintain trailing slash behavior
-      datadir = exedir_str + "../data"; // SuperTux run from source dir
-      if (!fs::is_directory(datadir))
+      // A list of potential relative paths to the data directory.
+      // The search is performed in this order.
+      const std::vector<fs::path> search_paths = {
+          exedir / "data",                 // Case 1: Running from the project root.
+          exedir / "../data",              // Case 2: Running from a 'build' or 'bin' subdir.
+          exedir / "../share/supertux",    // Case 3: Standard system install (e.g., /usr/local/bin).
+      };
+
+      bool found = false;
+      for (const auto& path : search_paths)
       {
-        datadir = exedir_str + "../share/supertux"; // SuperTux run from PATH
-        if (!fs::is_directory(datadir))
+        // Check if the path exists and is a directory.
+        if (fs::is_directory(path))
         {
-          datadir = DATA_PREFIX; // Fallback to compiled path
+          datadir = fs::canonical(path).string(); // Use canonical path to resolve ".."
+          found = true;
+          break;
         }
+      }
+
+      if (!found)
+      {
+        // Fallback to the compile-time default if no path was found.
+        datadir = DATA_PREFIX;
       }
     }
   }
