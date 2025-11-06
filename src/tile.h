@@ -85,9 +85,13 @@ public:
 struct TileGroup
 {
   friend bool operator<(const TileGroup& lhs, const TileGroup& rhs)
-  { return lhs.name < rhs.name; };
+  {
+    return lhs.name < rhs.name;
+  };
   friend bool operator>(const TileGroup& lhs, const TileGroup& rhs)
-  { return lhs.name > rhs.name; };
+  {
+    return lhs.name > rhs.name;
+  };
 
   std::string name;
   std::vector<int> tiles;
@@ -95,7 +99,7 @@ struct TileGroup
 
 class TileManager
 {
- private:
+private:
   TileManager();
   ~TileManager();
 
@@ -106,23 +110,49 @@ class TileManager
 
   std::string current_tileset;
 
- public:
-  static TileManager* instance() { return instance_ ? instance_ : instance_ = new TileManager(); }
-  static void destroy_instance() { delete instance_; instance_ = 0; }
+public:
+  static TileManager* instance()
+  {
+    if (!instance_)
+    {
+      instance_ = new TileManager();
+    }
+    return instance_;
+  }
 
-  static std::set<TileGroup>* tilegroups() { if(!instance_) { instance_ = new TileManager(); } return tilegroups_ ? tilegroups_ : tilegroups_ = new std::set<TileGroup>; }
-  Tile* get(unsigned int id) {
-    if(id < tiles.size())
+  static void destroy_instance()
+  {
+    delete instance_;
+    instance_ = 0;
+  }
+
+  static std::set<TileGroup>* tilegroups()
+  {
+    if (!instance_)
+    {
+      instance_ = new TileManager();
+    }
+    if (!tilegroups_)
+    {
+      tilegroups_ = new std::set<TileGroup>;
+    }
+    return tilegroups_;
+  }
+
+  Tile* get(unsigned int id)
+  {
+    if (id < tiles.size())
+    {
+      Tile* tile = tiles[id];
+      // Also check if the pointer at this index is valid.
+      if (tile != nullptr)
       {
-        return tiles[id]; 
+        return tile;
       }
-    else
-      {
-        // Never return 0, but return the 0th tile instead so that
-        // user code doesn't have to check for NULL pointers all over
-        // the place
-        return tiles[0]; 
-      }
+    }
+    // If the ID was out of bounds OR the pointer was null,
+    // return the default tile to prevent a crash.
+    return tiles[0];
   }
 };
 
