@@ -750,7 +750,12 @@ void GameSession::draw()
                (i * 20 + pause_menu_frame) % screen->h, screen->w, 10, 20, 20, 20, rand() % 20 + 1);
     }
     fillrect(0, 0, screen->w, screen->h, rand() % 50, rand() % 50, rand() % 50, 128);
-    blue_text->drawf("PAUSE - Press 'P' To Play", 0, 230, A_HMIDDLE, A_TOP, 1);
+
+    char str[60];
+    snprintf(str, sizeof(str), "Playing: %s", world->get_level()->name.c_str());
+    white_text->drawf(str, 0, 210, A_HMIDDLE, A_TOP, 1);
+
+    blue_text->drawf("- PAUSE -", 0, 230, A_HMIDDLE, A_TOP, 1);
   }
 
   if (Menu::current())
