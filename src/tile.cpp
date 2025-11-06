@@ -74,6 +74,9 @@ TileManager::~TileManager()
   {
     delete tile;
   }
+
+  // Free the memory for the tilegroups set to prevent a leak
+  delete tilegroups_;
 }
 
 /**
