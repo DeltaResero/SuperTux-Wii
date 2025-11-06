@@ -473,10 +473,12 @@ void title(void)
         int slot = load_game_menu->get_active_item_id();
 
         // Call the dialog, passing the correct background surface.
-        if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", bkg_title))
+        Surface* dialog_background = new Surface(datadir + "/images/title/background.jpg", false);
+        if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", dialog_background))
         {
           remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
         }
+        delete dialog_background; // Clean up the temporary surface.
 
         // After the action, refresh the save list and return to the main menu.
         update_load_save_game_menu(load_game_menu);
@@ -538,7 +540,11 @@ void title(void)
             menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
             music_manager->halt_music();
             music_manager->play_music(menu_song, 0);
-            display_text_file("CREDITS", bkg_title, SCROLL_SPEED_CREDITS);
+            { // Using a block to scope the temporary surface
+              Surface* credits_background = new Surface(datadir + "/images/title/background.jpg", false);
+              display_text_file("CREDITS", credits_background, SCROLL_SPEED_CREDITS);
+              delete credits_background;
+            }
             music_manager->halt_music();
             session->get_world()->play_music(LEVEL_MUSIC);
             Menu::set_current(main_menu);
