@@ -210,14 +210,14 @@ void World::draw()
   }
 
   int current_width = level->width;
-  // Calculate the index of the first tile visible on the left edge of the screen.
-  int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f));
+  // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
+  int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f)) - 12;
 
   /* Draw background: */
   for (y = 0; y < 15; ++y)
   {
-    // Loop enough times to cover the screen width plus one extra tile for sub-pixel scrolling.
-    for (x = 0; x < 21; ++x)
+    // Loop 34 times to cover the screen plus the wide buffer.
+    for (x = 0; x < 34; ++x)
     {
       int map_tile_x = first_tile_x + x;
       if (map_tile_x >= 0 && map_tile_x < current_width)
@@ -235,7 +235,8 @@ void World::draw()
   /* Draw interactive tiles: */
   for (y = 0; y < 15; ++y)
   {
-    for (x = 0; x < 21; ++x)
+    // Loop 34 times to cover the screen plus the wide buffer.
+    for (x = 0; x < 34; ++x)
     {
       int map_tile_x = first_tile_x + x;
       if (map_tile_x >= 0 && map_tile_x < current_width)
@@ -305,7 +306,8 @@ void World::draw()
   /* Draw foreground: */
   for (y = 0; y < 15; ++y)
   {
-    for (x = 0; x < 21; ++x)
+    // Loop 34 times to cover the screen plus the wide buffer.
+    for (x = 0; x < 34; ++x)
     {
       int map_tile_x = first_tile_x + x;
       if (map_tile_x >= 0 && map_tile_x < current_width)
