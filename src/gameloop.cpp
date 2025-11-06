@@ -311,7 +311,7 @@ void GameSession::process_events()
       {
         case SDL_QUIT:  // Quit event
         {
-          st_abort("Received window close", "");
+          exit_status = ES_LEVEL_ABORT;
           break;
         }
 
@@ -369,7 +369,7 @@ void GameSession::process_events()
         {
           case SDL_QUIT:
           {
-            st_abort("Received window close", "");
+            exit_status = ES_LEVEL_ABORT;
             break;
           }
 
