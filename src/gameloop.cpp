@@ -756,13 +756,8 @@ void GameSession::draw()
 
   if (game_pause)
   {
-    int x = screen->h / 20;
-    for (int i = 0; i < x; ++i)
-    {
-      fillrect(i % 2 ? (pause_menu_frame * i) % screen->w : -((pause_menu_frame * i) % screen->w),
-               (i * 20 + pause_menu_frame) % screen->h, screen->w, 10, 20, 20, 20, rand() % 20 + 1);
-    }
-    fillrect(0, 0, screen->w, screen->h, rand() % 50, rand() % 50, rand() % 50, 128);
+    // Draw a single, static, semi-transparent black overlay
+    fillrect(0, 0, screen->w, screen->h, 0, 0, 0, 128);
 
     char str[60];
     snprintf(str, sizeof(str), "Playing: %s", world->get_level()->name.c_str());
