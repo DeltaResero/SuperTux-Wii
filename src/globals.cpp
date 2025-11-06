@@ -19,6 +19,8 @@
 //  02111-1307, USA.
 
 #include "globals.h"
+#include "player.h"
+#include "resources.h" // Needed for tux_life sprite
 
 /** The datadir prefix prepended when loading game data file */
 std::string datadir;
@@ -121,6 +123,41 @@ int wait_for_event(SDL_Event& event,unsigned int min_delay, unsigned int max_del
     }
 
   return 0;
+}
+
+/**
+ * Draws the common player status HUD (Score, Coins, Lives).
+ * This function is shared between the game level and the world map.
+ */
+void draw_player_hud()
+{
+  char str[60];
+
+  // Draw Score
+  snprintf(str, sizeof(str), "%d", player_status.score);
+  white_text->draw("SCORE", 20, offset_y, 1);
+  gold_text->draw(str, 116, offset_y, 1);
+
+  // Draw Coins
+  snprintf(str, sizeof(str), "%d", player_status.distros);
+  white_text->draw("COINS", 460, offset_y, 1);
+  gold_text->draw(str, 555, offset_y, 1);
+
+  // Draw Lives
+  white_text->draw("LIVES", 460, 20 + offset_y, 1);
+  if (player_status.lives >= 5)
+  {
+    snprintf(str, sizeof(str), "%dx", player_status.lives);
+    gold_text->draw_align(str, 597, 20 + offset_y, A_RIGHT, A_TOP);
+    tux_life->draw(545 + (18 * 3), 20 + offset_y);
+  }
+  else
+  {
+    for (int i = 0; i < player_status.lives; ++i)
+    {
+      tux_life->draw(545 + (18 * i), 20 + offset_y);
+    }
+  }
 }
 
 // EOF

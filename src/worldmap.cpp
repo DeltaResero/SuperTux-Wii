@@ -1276,31 +1276,10 @@ void WorldMap::draw(const Point& offset)
  */
 void WorldMap::draw_status()
 {
-  char str[80];
+  // Draw the shared HUD elements
+  draw_player_hud();
 
-  snprintf(str, sizeof(str), "%d", player_status.score);
-  white_text->draw("SCORE", 20, offset_y);
-  gold_text->draw(str, 116, offset_y);
-
-  snprintf(str, sizeof(str), "%d", player_status.distros);
-  white_text->draw_align("COINS", 320 - 64, offset_y, A_LEFT, A_TOP);
-  gold_text->draw_align(str, 320 + 64, offset_y, A_RIGHT, A_TOP);
-
-  white_text->draw("LIVES", 460, offset_y);
-  if (player_status.lives >= 5)
-  {
-    snprintf(str, sizeof(str), "%dx", player_status.lives);
-    gold_text->draw_align(str, 597, offset_y, A_RIGHT, A_TOP);
-    tux_life->draw(545 + (18 * 3), offset_y);
-  }
-  else
-  {
-    for (int i = 0; i < player_status.lives; ++i)
-    {
-      tux_life->draw(545 + (18 * i), offset_y);
-    }
-  }
-
+  // Draw elements specific to the world map
   if (!tux->is_moving())
   {
     for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
