@@ -846,6 +846,13 @@ GameSession::ExitStatus GameSession::run()
     /* Calculate the movement-factor */
     double frame_ratio = static_cast<double>(update_time - last_update_time) / FRAME_RATE;
 
+    // Clamp the frame_ratio to prevent physics explosions on frame rate spikes.
+    // This prevents the "bullet through paper" tunneling problem.
+    if (frame_ratio > 2.5)
+    {
+        frame_ratio = 2.5;
+    }
+
     if (!frame_timer.check())
     {
       frame_timer.start(25);
