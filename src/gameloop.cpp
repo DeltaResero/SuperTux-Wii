@@ -188,8 +188,11 @@ void GameSession::levelintro(void)
   snprintf(str.data(), str.size(), "TUX x %d", player_status.lives);
   white_text->drawf(str.data(), 0, 224, A_HMIDDLE, A_TOP, 1);
 
-  snprintf(str.data(), str.size(), "by %s", world->get_level()->author.c_str());
-  white_small_text->drawf(str.data(), 0, 360, A_HMIDDLE, A_TOP, 1);
+  if (!world->get_level()->author.empty())
+  {
+    snprintf(str.data(), str.size(), "by %s", world->get_level()->author.c_str());
+    white_small_text->drawf(str.data(), 0, 360, A_HMIDDLE, A_TOP, 1);
+  }
 
   flipscreen();
 
