@@ -699,42 +699,35 @@ void Player::collision(void* p_c_object, int c_object)
     {
       BadGuy* pbad_c = static_cast<BadGuy*>(p_c_object);
 
-      // Hurt player if they touch a non-dying badguy and are not invincible
-      if (!pbad_c->dying && !dying && !safe_timer.started() && pbad_c->mode != BadGuy::HELD)
+      // Handle collision with a non-dying badguy
+      if (!pbad_c->dying && !dying && pbad_c->mode != BadGuy::HELD)
       {
-        if (pbad_c->mode == BadGuy::FLAT && input.fire == DOWN && !holding_something)
+        // First, check for Starman invincibility, which has the highest priority.
+        if (invincible_timer.started())
         {
-          holding_something = true;
-          pbad_c->mode = BadGuy::HELD;
-          pbad_c->base.y -= 8;
+          pbad_c->kill_me(25);
+          player_status.score_multiplier++;
         }
-        else if (pbad_c->mode == BadGuy::FLAT)
+        // If not Starman-invincible, check for other interactions, but only if not in a post-damage safe state.
+        else if (!safe_timer.started())
         {
-          // Don't get hurt if we're just running into a flat badguy
-        }
-        else if (pbad_c->mode == BadGuy::KICK)
-        {
-          if (!invincible_timer.started())
+          if (pbad_c->mode == BadGuy::FLAT && input.fire == DOWN && !holding_something)
+          {
+            holding_something = true;
+            pbad_c->mode = BadGuy::HELD;
+            pbad_c->base.y -= 8;
+          }
+          else if (pbad_c->mode == BadGuy::FLAT)
+          {
+            // Don't get hurt if we're just running into a flat badguy
+          }
+          else // This includes KICK mode and normal enemies
           {
             kill(SHRINK);
-          }
-          else
-          {
-            pbad_c->kill_me(25);
+            player_status.score_multiplier++;
           }
         }
-        else
-        {
-          if (!invincible_timer.started())
-          {
-            kill(SHRINK);
-          }
-          else
-          {
-            pbad_c->kill_me(25);
-          }
-        }
-        player_status.score_multiplier++;
+        // If safe_timer is running and invincible_timer is not, do nothing (pass through).
       }
       break;
     }
