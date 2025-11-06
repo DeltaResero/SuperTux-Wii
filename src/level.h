@@ -109,6 +109,7 @@ public:
   MusicRef get_level_music_fast() const;
   unsigned int gettileid(float x, float y) const;
   unsigned int get_tile_at(int x, int y) const;
+  void draw_bg();
 
 private:
   MusicRef level_song;

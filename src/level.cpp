@@ -944,4 +944,23 @@ unsigned int Level::get_tile_at(int x, int y) const
   return ia_tiles[y * width + x];
 }
 
+/**
+ * Draws the background of the level.
+ * Chooses between drawing a background image with parallax scrolling
+ * or a color gradient.
+ */
+void Level::draw_bg()
+{
+  if (img_bkgd)
+  {
+    int s = (int)((float)scroll_x * ((float)bkgd_speed / 100.0f)) % screen->w;
+    img_bkgd->draw_part(s, 0, 0, 0, img_bkgd->w - s, img_bkgd->h);
+    img_bkgd->draw_part(0, 0, screen->w - s, 0, s, img_bkgd->h);
+  }
+  else
+  {
+    drawgradient(bkgd_top, bkgd_bottom);
+  }
+}
+
 // EOF

@@ -200,16 +200,7 @@ void World::draw()
   int y,x;
 
   /* Draw the real background */
-  if(level->img_bkgd)
-  {
-    int s = (int)((float)scroll_x * ((float)level->bkgd_speed/100.0f)) % screen->w;
-    level->img_bkgd->draw_part(s, 0,0,0,level->img_bkgd->w - s, level->img_bkgd->h);
-    level->img_bkgd->draw_part(0, 0,screen->w - s ,0,s,level->img_bkgd->h);
-  }
-  else
-  {
-    drawgradient(level->bkgd_top, level->bkgd_bottom);
-  }
+  level->draw_bg();
 
   /* Draw particle systems (background) */
   std::vector<ParticleSystem*>::iterator p;

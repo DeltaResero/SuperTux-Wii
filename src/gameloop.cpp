@@ -173,14 +173,7 @@ void GameSession::levelintro(void)
 
   std::array<char, 60> str;
 
-  if (get_level()->img_bkgd)
-  {
-    get_level()->img_bkgd->draw(0, 0);
-  }
-  else
-  {
-    drawgradient(get_level()->bkgd_top, get_level()->bkgd_bottom);
-  }
+  get_level()->draw_bg();
 
   snprintf(str.data(), str.size(), "%s", world->get_level()->name.c_str());
   gold_text->drawf(str.data(), 0, 200, A_HMIDDLE, A_TOP, 1);
@@ -1002,14 +995,7 @@ void GameSession::drawresultscreen()
 {
   char str[80];
 
-  if (get_level()->img_bkgd)
-  {
-    get_level()->img_bkgd->draw(0, 0);
-  }
-  else
-  {
-    drawgradient(get_level()->bkgd_top, get_level()->bkgd_bottom);
-  }
+  get_level()->draw_bg();
 
   blue_text->drawf("Result:", 0, 200, A_HMIDDLE, A_TOP, 1);
 
