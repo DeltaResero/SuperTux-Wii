@@ -112,6 +112,7 @@ class GameSession
 
  private:
   void on_escape_press();
+  void toggle_pause();
   void process_menu();
 };
 

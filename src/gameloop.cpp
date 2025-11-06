@@ -244,6 +244,27 @@ void GameSession::on_escape_press()
 }
 
 /**
+ * Toggles the simple pause state.
+ * Does nothing if a menu is already active.
+ */
+void GameSession::toggle_pause()
+{
+  if (!Menu::current())
+  {
+    if (game_pause)
+    {
+      game_pause = false;
+      st_pause_ticks_stop();
+    }
+    else
+    {
+      game_pause = true;
+      st_pause_ticks_start();
+    }
+  }
+}
+
+/**
  * Processes all SDL events during gameplay.
  * Handles keyboard, joystick, and other input events, including game pauses and menu triggers.
  */
@@ -379,20 +400,7 @@ void GameSession::process_events()
               {
                 case SDLK_p:
                 {
-                  if (!Menu::current())
-                  {
-                    if (game_pause)
-                    {
-                      game_pause = false;
-                      st_pause_ticks_stop();
-                    }
-                    else
-                    {
-                      game_pause = true;
-                      st_pause_ticks_start();
-                    }
-                  }
-
+                  toggle_pause();
                   break;
                 }
 
@@ -647,6 +655,11 @@ void GameSession::process_events()
             else if (event.jbutton.button == 1 || event.jbutton.button == 2)
             {
               tux.input.fire = UP;
+            }
+            // PAUSE on Wii Remote '+' (5)
+            else if (event.jbutton.button == 5)
+            {
+              toggle_pause();
             }
 
             break;
