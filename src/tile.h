@@ -18,8 +18,8 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 
-#ifndef TILE_H
-#define TILE_H
+#ifndef SUPERTUX_TILE_H
+#define SUPERTUX_TILE_H
 
 #include <set>
 #include <map>
@@ -143,16 +143,15 @@ public:
   {
     if (id < tiles.size())
     {
-      Tile* tile = tiles[id];
-      // Also check if the pointer at this index is valid.
-      if (tile != nullptr)
-      {
-        return tile;
-      }
+      return tiles[id];
     }
-    // If the ID was out of bounds OR the pointer was null,
-    // return the default tile to prevent a crash.
-    return tiles[0];
+    else
+    {
+      // Never return 0, but return the 0th tile instead so that
+      // user code doesn't have to check for NULL pointers all over
+      // the place
+      return tiles[0];
+    }
   }
 };
 
