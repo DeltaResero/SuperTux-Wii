@@ -29,59 +29,62 @@ void display_text_file(const std::string& file, const std::string& surface, floa
 void display_text_file(const std::string& file, Surface* surface, float scroll_speed);
 
 /* Kinds of texts. */
-enum {
-   TEXT_TEXT,
-   TEXT_NUM
+enum
+{
+  TEXT_TEXT,
+  TEXT_NUM
 };
 
-enum TextHAlign {
-   A_LEFT,
-   A_HMIDDLE,
-   A_RIGHT,
+enum TextHAlign
+{
+  A_LEFT,
+  A_HMIDDLE,
+  A_RIGHT,
 };
 
-enum TextVAlign {
-   A_TOP,
-   A_VMIDDLE,
-   A_BOTTOM,
+enum TextVAlign
+{
+  A_TOP,
+  A_VMIDDLE,
+  A_BOTTOM,
 };
 
 /* Text type */
 class Text
 {
- public:
-  Surface* chars;
-  Surface* shadow_chars;
-  int kind;
-  int w;
-  int h;
+  public:
+    Surface* chars;
+    Surface* shadow_chars;
+    int kind;
+    int w;
+    int h;
 
- private:
+  private:
 #ifndef NOOPENGL
-  // Cache the result of the expensive dynamic_cast ONCE, instead of on every draw call.
-  SurfaceOpenGL* opengl_chars;
-  SurfaceOpenGL* opengl_shadow_chars;
+    // Cache the result of the expensive dynamic_cast ONCE, instead of on every draw call.
+    SurfaceOpenGL* opengl_chars;
+    SurfaceOpenGL* opengl_shadow_chars;
 #endif
 
- public:
-  typedef std::list<Text*> Texts;
-  static Texts texts;
+  public:
+    typedef std::list<Text*> Texts;
+    static Texts texts;
 
-  Text(const std::string& file, int kind, int w, int h);
-  ~Text();
+    Text(const std::string& file, int kind, int w, int h);
+    ~Text();
 
-  void recache_opengl_pointers(); // Public method to update pointers after a video mode switch.
-  static void recache_all_pointers();
+    void recache_opengl_pointers(); // Public method to update pointers after a video mode switch.
+    static void recache_all_pointers();
 
-  void draw(const std::string& text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
+    void draw(const std::string& text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
 #ifndef NOOPENGL
-  void draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
+    void draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
 #endif
-  void draw_chars(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
-  void drawf(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
-  void draw_align(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
-  void erasetext(const std::string& text, int x, int y, Surface* surf, int update, int shadowsize);
-  void erasecenteredtext(const std::string& text, int y, Surface* surf, int update, int shadowsize);
+    void draw_chars(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
+    void drawf(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
+    void draw_align(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
+    void erasetext(const std::string& text, int x, int y, Surface* surf, int update, int shadowsize);
+    void erasecenteredtext(const std::string& text, int y, Surface* surf, int update, int shadowsize);
 };
 
 #endif /*SUPERTUX_TEXT_H*/

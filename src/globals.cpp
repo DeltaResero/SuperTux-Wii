@@ -39,7 +39,7 @@ JoystickKeymap::JoystickKeymap()
 
 JoystickKeymap joystick_keymap;
 
-SDL_Surface * screen;
+SDL_Surface* screen;
 Text* black_text;
 Text* gold_text;
 Text* blue_text;
@@ -47,7 +47,7 @@ Text* white_text;
 Text* white_small_text;
 Text* white_big_text;
 
-MouseCursor * mouse_cursor;
+MouseCursor* mouse_cursor;
 
 bool use_gl;
 bool use_joystick;
@@ -60,15 +60,15 @@ int offset_y = 0;
 float game_speed = 1.0f;
 
 int joystick_num = 0;
-char* level_startup_file = 0;
+std::string level_startup_file;
 
 /* SuperTux directory ($HOME/.supertux) and save directory($HOME/.supertux/save) */
-char *st_dir, *st_save_dir;
+std::string st_dir, st_save_dir;
 
-SDL_Joystick * js;
+SDL_Joystick* js;
 
 /* Returns 1 for every button event, 2 for a quit event and 0 for no event. */
-int wait_for_event(SDL_Event& event,unsigned int min_delay, unsigned int max_delay, bool empty_events)
+int wait_for_event(SDL_Event& event, unsigned int min_delay, unsigned int max_delay, bool empty_events)
 {
   int i;
   Timer maxdelay;
@@ -77,50 +77,52 @@ int wait_for_event(SDL_Event& event,unsigned int min_delay, unsigned int max_del
   maxdelay.init(false);
   mindelay.init(false);
 
-  if(max_delay < min_delay)
+  if (max_delay < min_delay)
+  {
     max_delay = min_delay;
+  }
 
   maxdelay.start(max_delay);
   mindelay.start(min_delay);
 
-  if(empty_events)
+  if (empty_events)
+  {
     while (SDL_PollEvent(&event))
     {}
+  }
 
   /* Handle events: */
 
-  for(i = 0; maxdelay.check() || !i; ++i)
+  for (i = 0; maxdelay.check() || !i; ++i)
+  {
+    while (SDL_PollEvent(&event))
     {
-      while (SDL_PollEvent(&event))
+      if (!mindelay.check())
+      {
+        if (event.type == SDL_QUIT)
         {
-          if(!mindelay.check())
-            {
-              if (event.type == SDL_QUIT)
-                {
-                  /* Quit event - quit: */
-                  return 2;
-                }
-              else if (event.type == SDL_KEYDOWN)
-                {
-                  /* Keypress - skip intro: */
-
-                  return 1;
-                }
-              else if (event.type == SDL_JOYBUTTONDOWN)
-                {
-                  /* Fire button - skip intro: */
-
-                  return 1;
-                }
-              else if (event.type == SDL_MOUSEBUTTONDOWN)
-                {
-                  /* Mouse button - skip intro: */
-                  return 1;
-                }
-            }
+          /* Quit event - quit: */
+          return 2;
         }
-      SDL_Delay(10);
+        else if (event.type == SDL_KEYDOWN)
+        {
+          /* Keypress - skip intro: */
+          return 1;
+        }
+        else if (event.type == SDL_JOYBUTTONDOWN)
+        {
+          /* Fire button - skip intro: */
+          return 1;
+        }
+        else if (event.type == SDL_MOUSEBUTTONDOWN)
+        {
+          /* Mouse button - skip intro: */
+          return 1;
+        }
+      }
     }
+    SDL_Delay(10);
+  }
 
   return 0;
 }
@@ -131,24 +133,20 @@ int wait_for_event(SDL_Event& event,unsigned int min_delay, unsigned int max_del
  */
 void draw_player_hud()
 {
-  char str[60];
-
   // Draw Score
-  snprintf(str, sizeof(str), "%d", player_status.score);
   white_text->draw("SCORE", 20, offset_y, 1);
-  gold_text->draw(str, 116, offset_y, 1);
+  gold_text->draw(std::to_string(player_status.score), 116, offset_y, 1);
 
   // Draw Coins
-  snprintf(str, sizeof(str), "%d", player_status.distros);
   white_text->draw("COINS", 460, offset_y, 1);
-  gold_text->draw(str, 555, offset_y, 1);
+  gold_text->draw(std::to_string(player_status.distros), 555, offset_y, 1);
 
   // Draw Lives
   white_text->draw("LIVES", 460, 20 + offset_y, 1);
   if (player_status.lives >= 5)
   {
-    snprintf(str, sizeof(str), "%dx", player_status.lives);
-    gold_text->draw_align(str, 597, 20 + offset_y, A_RIGHT, A_TOP);
+    std::string lives_str = std::to_string(player_status.lives) + "x";
+    gold_text->draw_align(lives_str, 597, 20 + offset_y, A_RIGHT, A_TOP);
     tux_life->draw(545 + (18 * 3), 20 + offset_y);
   }
   else

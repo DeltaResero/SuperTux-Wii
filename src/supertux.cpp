@@ -93,7 +93,7 @@ int main(int argc, char ** argv)
   loadshared();  // Load shared game resources (graphics, sounds, etc.)
 
   // Check if a level startup file is specified (start a game session), otherwise show the title screen
-  if (level_startup_file)
+  if (!level_startup_file.empty())
   {
     GameSession session(level_startup_file, 1, ST_GL_LOAD_LEVEL_FILE);
     session.run();  // Run the specified game session

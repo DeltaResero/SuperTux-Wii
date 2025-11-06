@@ -33,6 +33,7 @@ Surface* img_pole;
 Surface* img_poletop;
 Surface* img_flag[2];
 Surface* img_cloud[2][4];
+Surface* img_distro[4];
 
 MusicRef herring_song;
 MusicRef level_end_song;
@@ -199,16 +200,23 @@ void unloadshared(void)
   delete tux_life;
 
   // Delete arrays of images
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++)
+  {
       delete img_waves[i];
-      delete img_distro[i];
   }
 
-  for (int i = 0; i < 2; i++) {
+  delete img_distro[0];
+  delete img_distro[1];
+  delete img_distro[2];
+
+
+  for (int i = 0; i < 2; i++)
+  {
       delete img_flag[i];
   }
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 4; i++)
+  {
       delete img_cloud[0][i];
       delete img_cloud[1][i];
   }
@@ -234,7 +242,9 @@ void loadsounds()
                     Send a mail to me: neoneurone@users.sf.net, if you have another opinion. :)
   */
   for (int i = 0; i < NUM_SOUNDS; i++)
+  {
     sounds[i] = load_sound(datadir + soundfilenames[i]);
+  }
 }
 
 void unloadsounds()

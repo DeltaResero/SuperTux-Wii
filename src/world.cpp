@@ -34,8 +34,6 @@
 #include "tile.h"
 #include "resources.h"
 
-Surface* img_distro[4];
-
 World* World::current_ = 0;
 
 World::World(const std::string& filename)

@@ -155,6 +155,6 @@ public:
   }
 };
 
-#endif
+#endif /*SUPERTUX_TILE_H*/
 
 // EOF

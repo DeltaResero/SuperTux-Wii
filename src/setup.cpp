@@ -80,7 +80,7 @@ int selecteddevice;
 
 /* Local function prototypes: */
 void seticon(void);
-void usage(char * prog, int ret);
+void usage(char* prog, int ret);
 
 namespace fs = std::filesystem;
 
@@ -89,7 +89,7 @@ namespace fs = std::filesystem;
  * @param filename Path to the file.
  * @return true if the file exists and is accessible, false otherwise.
  */
-bool faccessible(const char *filename)
+bool faccessible(const char* filename)
 {
   return fs::exists(filename) && fs::is_regular_file(filename);
 }
@@ -99,7 +99,7 @@ bool faccessible(const char *filename)
  * @param filename Path to the file.
  * @return true if the file is writable, false otherwise.
  */
-bool fwriteable(const char *filename)
+bool fwriteable(const char* filename)
 {
   std::ofstream file(filename, std::ios::app);
   return file.is_open();
@@ -132,7 +132,7 @@ bool fcreatedir(const char* relative_dir)
  * @param mode Mode in which the file should be opened (read/write).
  * @return Pointer to the opened file, or nullptr if the file could not be opened.
  */
-FILE * opendata(const char * rel_filename, const char * mode)
+FILE* opendata(const char* rel_filename, const char* mode)
 {
   fs::path filename = fs::path(st_dir) / rel_filename;
 
@@ -165,9 +165,9 @@ FILE * opendata(const char * rel_filename, const char * mode)
  * @param exception_str Optional substring that if found, excludes entries.
  * @param sdirs List to store the results (files or directories).
  */
-static void process_directory(const std::string &base_path, const std::string &rel_path,
-                              const char *expected_file, bool is_subdir, const char *glob,
-                              const char *exception_str, StringList &sdirs)
+static void process_directory(const std::string& base_path, const std::string& rel_path,
+  const char* expected_file, bool is_subdir, const char* glob,
+  const char* exception_str, StringList& sdirs)
 {
   // Construct the full path
   fs::path path = fs::path(base_path) / rel_path;
@@ -184,7 +184,7 @@ static void process_directory(const std::string &base_path, const std::string &r
       return;
     }
 
-    for (const auto &entry : fs::directory_iterator(path))
+    for (const auto& entry: fs::directory_iterator(path))
     {
       // Check if entry matches directory or file based on is_subdir flag
       if ((is_subdir && entry.is_directory()) || (!is_subdir && entry.is_regular_file()))
@@ -213,7 +213,8 @@ static void process_directory(const std::string &base_path, const std::string &r
         sdirs.push_back(entry.path().filename().string());
       }
     }
-  } catch (const fs::filesystem_error& e)
+  }
+  catch (const fs::filesystem_error& e)
   {
     // Silently ignore errors, as directories might not be readable.
   }
@@ -225,7 +226,7 @@ static void process_directory(const std::string &base_path, const std::string &r
  * @param expected_file The expected file to be found in the subdirectories (optional).
  * @return List of subdirectories.
  */
-StringList dsubdirs(const char *rel_path, const char *expected_file)
+StringList dsubdirs(const char* rel_path, const char* expected_file)
 {
   StringList sdirs; // Creates an empty vector
   process_directory(st_dir, rel_path, expected_file, true, nullptr, nullptr, sdirs);
@@ -240,7 +241,7 @@ StringList dsubdirs(const char *rel_path, const char *expected_file)
  * @param exception_str Optional substring that if found, excludes entries.
  * @return List of files.
  */
-StringList dfiles(const char *rel_path, const char* glob, const char* exception_str)
+StringList dfiles(const char* rel_path, const char* glob, const char* exception_str)
 {
   StringList sdirs; // Creates an empty vector
   process_directory(st_dir, rel_path, nullptr, false, glob, exception_str, sdirs);
@@ -257,7 +258,7 @@ StringList dfiles(const char *rel_path, const char* glob, const char* exception_
 void st_directory_setup(void)
 {
   bool deviceselection = false;
-  std::FILE *fp = nullptr;
+  std::FILE* fp = nullptr;
 
   // SD Card
   fp = std::fopen("sd:/apps/supertux/data/supertux.strf", "rb");
@@ -266,13 +267,13 @@ void st_directory_setup(void)
   {
     deviceselection = true;
     datadir = "sd:/apps/supertux/data";
-    st_dir = strdup("sd:/apps/supertux");  // Use strdup here for compatibility
-    st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
+    st_dir = "sd:/apps/supertux";
+    st_save_dir = st_dir + "/save";
 
     // Ensure 'save' and 'levels' directories exist
-    fs::create_directories(st_dir);
-    fs::create_directories(st_save_dir);
-    fs::create_directories((std::string(st_dir) + "/levels").c_str());
+    fs::create_directories(st_dir.c_str());
+    fs::create_directories(st_save_dir.c_str());
+    fs::create_directories((st_dir + "/levels").c_str());
 
     selecteddevice = 1;
     std::fclose(fp);
@@ -287,13 +288,13 @@ void st_directory_setup(void)
     {
       deviceselection = true;
       datadir = "usb:/apps/supertux/data";
-      st_dir = strdup("usb:/apps/supertux");  // Use strdup here for compatibility
-      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
+      st_dir = "usb:/apps/supertux";
+      st_save_dir = st_dir + "/save";
 
       // Ensure 'save' and 'levels' directories exist
-      fs::create_directories(st_dir);
-      fs::create_directories(st_save_dir);
-      fs::create_directories((std::string(st_dir) + "/levels").c_str());
+      fs::create_directories(st_dir.c_str());
+      fs::create_directories(st_save_dir.c_str());
+      fs::create_directories((st_dir + "/levels").c_str());
 
       selecteddevice = 2;
       std::fclose(fp);
@@ -309,13 +310,13 @@ void st_directory_setup(void)
     {
       deviceselection = true;
       datadir = "/apps/supertux/data";
-      st_dir = strdup("/apps/supertux");  // Use strdup here for compatibility
-      st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
+      st_dir = "/apps/supertux";
+      st_save_dir = st_dir + "/save";
 
       // Ensure 'save' and 'levels' directories exist
-      fs::create_directories(st_dir);
-      fs::create_directories(st_save_dir);
-      fs::create_directories((std::string(st_dir) + "/levels").c_str());
+      fs::create_directories(st_dir.c_str());
+      fs::create_directories(st_save_dir.c_str());
+      fs::create_directories((st_dir + "/levels").c_str());
 
       selecteddevice = 3;
       std::fclose(fp);
@@ -328,7 +329,7 @@ void st_directory_setup(void)
   }
 }
 
-#else  // #ifndef _WII_
+#else // #ifndef _WII_
 
 /**
  * Set SuperTux configuration and save directories (non HBC Wii)
@@ -338,28 +339,26 @@ void st_directory_setup(void)
  */
 void st_directory_setup(void)
 {
-  const char *home;
-  char str[PATH_BUFFER_SIZE];
+  const char* home;
 
   /* Get home directory from $HOME variable or use current directory (".") */
   home = getenv("HOME") ? getenv("HOME") : ".";
 
-  st_dir = strdup((std::string(home) + "/.supertux").c_str());  // Use strdup here for compatibility
+  st_dir = std::string(home) + "/.supertux";
 
   /* Remove .supertux config-file from old SuperTux versions */
-  if (faccessible(st_dir))
+  if (faccessible(st_dir.c_str()))
   {
-    fs::remove(st_dir);
+    fs::remove(st_dir.c_str());
   }
 
-  st_save_dir = strdup((std::string(st_dir) + "/save").c_str());  // Duplicate memory for save dir
+  st_save_dir = st_dir + "/save";
 
   /* Create directories. If they exist, they won't be destroyed. */
-  fs::create_directories(st_dir);
-  fs::create_directories(st_save_dir);
+  fs::create_directories(st_dir.c_str());
+  fs::create_directories(st_save_dir.c_str());
 
-  snprintf(str, sizeof(str), "%s/levels", st_dir);
-  fs::create_directories(str);  // Ensure 'levels' directory exists
+  fs::create_directories((st_dir + "/levels").c_str()); // Ensure 'levels' directory exists
 
 #ifndef WIN32
   // Handle datadir detection logic (Linux version)
@@ -378,34 +377,34 @@ void st_directory_setup(void)
     {
       exe_file[len] = '\0'; // Null-terminate the string
       std::filesystem::path exedir = std::filesystem::path(exe_file).parent_path();
-      std::string exedir_str = exedir.string() + "/";  // Ensure trailing slash
+      std::string exedir_str = exedir.string() + "/"; // Ensure trailing slash
 
       // Use `exedir_str` to maintain trailing slash behavior
-      datadir = exedir_str + "../data";  // SuperTux run from source dir
+      datadir = exedir_str + "../data"; // SuperTux run from source dir
       if (!fs::is_directory(datadir))
       {
-        datadir = exedir_str + "../share/supertux";  // SuperTux run from PATH
+        datadir = exedir_str + "../share/supertux"; // SuperTux run from PATH
         if (!fs::is_directory(datadir))
         {
-          datadir = DATA_PREFIX;  // Fallback to compiled path
+          datadir = DATA_PREFIX; // Fallback to compiled path
         }
       }
     }
   }
-#else  // #ifdef WIN32
+#else // #ifdef WIN32
   // For Windows, use default data path
   datadir = "data";
 #endif
 
 #ifdef DEBUG
   // Print the paths for verification in debug mode
-  printf("st_dir: %s\n", st_dir);
-  printf("st_save_dir: %s\n", st_save_dir);
+  printf("st_dir: %s\n", st_dir.c_str());
+  printf("st_save_dir: %s\n", st_save_dir.c_str());
   printf("Datadir: %s\n", datadir.c_str());
-  #endif
+#endif
 }
 
-#endif  // def _WII_
+#endif // def _WII_
 
 /* Create and setup menus. */
 void st_menu(void)
@@ -540,30 +539,30 @@ bool process_load_game_menu()
 
   if (slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
   {
-    char slotfile[PATH_BUFFER_SIZE];
+    std::string slotfile;
 
 #ifdef _WII_
     if (selecteddevice == 1)
     {
-      snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", "sd:/apps/supertux/save", slot);
+      slotfile = "sd:/apps/supertux/save/slot" + std::to_string(slot) + ".stsg";
     }
     else if (selecteddevice == 2)
     {
-      snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", "usb:/apps/supertux/save", slot);
+      slotfile = "usb:/apps/supertux/save/slot" + std::to_string(slot) + ".stsg";
     }
     else if (selecteddevice == 3)
     {
-      snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", "/apps/supertux/save", slot);
+      slotfile = "/apps/supertux/save/slot" + std::to_string(slot) + ".stsg";
     }
 #else
-    snprintf(slotfile, sizeof(slotfile), "%s/slot%d.stsg", st_save_dir, slot);
+    slotfile = st_save_dir + "/slot" + std::to_string(slot) + ".stsg";
 #endif
 
     // Uncomment if needed to handle starting a new save files (plays intro text)
-//    if (access(slotfile, F_OK) != 0)
-//    {
-//      draw_intro();
-//    }
+    //    if (access(slotfile, F_OK) != 0)
+    //    {
+    //      draw_intro();
+    //    }
 
     unloadsounds();
     deleteDemo();
@@ -573,7 +572,7 @@ bool process_load_game_menu()
     WorldMapNS::WorldMap worldmap;
     worldmap.set_map_file("world1.stwm");
     worldmap.load_map();
-    worldmap.loadgame(slotfile);
+    worldmap.loadgame(slotfile.c_str());
     worldmap.display();
 
     Menu::set_current(main_menu);
@@ -610,7 +609,7 @@ void st_general_setup(void)
   srand(SDL_GetTicks());
 
 #ifndef _WII_
-  seticon();  /* Set window manager icon image */
+  seticon(); // Set window manager icon image
 #endif
 
   /* Unicode needed for input handling: */
@@ -695,10 +694,14 @@ void st_video_setup(void)
   /* Open display and select video setup based on if we have OpenGL support: */
 #ifndef NOOPENGL
   if (use_gl)
-    st_video_setup_gl();  // Call OpenGL setup function if OpenGL is enabled
+  {
+    st_video_setup_gl(); // Call OpenGL setup function if OpenGL is enabled
+  }
   else
 #endif
-    st_video_setup_sdl();  // Call SDL setup function otherwise
+  {
+    st_video_setup_sdl(); // Call SDL setup function otherwise
+  }
 
   Surface::reload_all();
 
@@ -724,11 +727,9 @@ void st_video_setup_sdl(void)
 
     if (screen == NULL)
     {
-      fprintf(stderr,
-              "\nWarning: Could not set up fullscreen video for "
-              "640x480 mode.\n"
-              "The Simple DirectMedia error that occurred was:\n"
-              "%s\n\n", SDL_GetError());
+      fprintf(stderr, "\nWarning: Could not set up fullscreen video for 640x480 mode.\n"
+                      "The Simple DirectMedia error that occurred was:\n"
+                      "%s\n\n", SDL_GetError());
       use_fullscreen = false;
     }
   }
@@ -959,14 +960,14 @@ void st_abort(const std::string& reason, const std::string& details)
   print_status(errmsg.c_str());
 
   // Wait for 3 seconds before exiting to allow reading the error message
-  struct timespec req = {3, 0};  // 3 seconds sleep
-  nanosleep(&req, nullptr);
+  struct timespec req = {3, 0}; // 3 seconds sleep
+  nanosleep( &req, nullptr);
 
   // Perform standard shutdown
   st_shutdown();
 
   // Use abort as a final fallback
-  abort();  // This ensures the process terminates if shutdown doesn't fully exit
+  abort(); // This ensures the process terminates if shutdown doesn't fully exit
 }
 
 /**
@@ -974,7 +975,7 @@ void st_abort(const std::string& reason, const std::string& details)
  */
 void load_config_file()
 {
-  loadconfig();  // Load the config file and if none exist create one
+  loadconfig(); // Load the config file and if none exist create one
   offset_y = tv_overscan_enabled ? 40 : 0;
 }
 
@@ -1119,28 +1120,27 @@ void parseargs(int argc, char* argv[])
            "  Please see the file \"README.txt\" for more details.\n");
       printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
       puts("Display Options:\n"
-           "  -w, --window        Run in window mode.\n"
-           "  -f, --fullscreen    Run in fullscreen mode.\n"
-           "  -gl, --opengl       If opengl support was compiled in, this will enable\n"
-           "                      the OpenGL mode.\n"
-           "  --sdl               Use non-opengl renderer\n"
-           "\n"
-           "Sound Options:\n"
-           "  --disable-sound     If sound support was compiled in,  this will\n"
-           "                      disable sound for this session of the game.\n"
-           "  --disable-music     Like above, but this will disable music.\n"
-           "\n"
-           "Misc Options:\n"
-           "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
-           "  --joymap XAXIS:YAXIS:A:B:START\n"
-           "                      Define how joystick buttons and axis should be mapped\n"
-           "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
-           "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
-           "  --help              Display a help message summarizing command-line\n"
-           "                      options, license and game controls.\n"
-           "  --usage             Display a brief message summarizing command-line options.\n"
-           "  --version           Display the version of SuperTux you're running.\n\n"
-           );
+        "  -w, --window        Run in window mode.\n"
+        "  -f, --fullscreen    Run in fullscreen mode.\n"
+        "  -gl, --opengl       If opengl support was compiled in, this will enable\n"
+        "                      the OpenGL mode.\n"
+        "  --sdl               Use non-opengl renderer\n"
+        "\n"
+        "Sound Options:\n"
+        "  --disable-sound     If sound support was compiled in,  this will\n"
+        "                      disable sound for this session of the game.\n"
+        "  --disable-music     Like above, but this will disable music.\n"
+        "\n"
+        "Misc Options:\n"
+        "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
+        "  --joymap XAXIS:YAXIS:A:B:START\n"
+        "                      Define how joystick buttons and axis should be mapped\n"
+        "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
+        "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
+        "  --help              Display a help message summarizing command-line\n"
+        "                      options, license and game controls.\n"
+        "  --usage             Display a brief message summarizing command-line options.\n"
+        "  --version           Display the version of SuperTux you're running.\n\n");
       exit(0);
     }
     else if (argv[i][0] != '-')

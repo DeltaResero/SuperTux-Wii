@@ -31,15 +31,18 @@
 #define NO_BOUNCE 0
 #define BOUNCE 1
 
-class BouncyDistro : public GameObject
+class BouncyDistro: public GameObject
 {
- public:
-  bool removable;
+  public:
+    bool removable;
 
-  void init(float x, float y);
-  void action(double frame_ratio);
-  void draw();
-  std::string type() { return "BouncyDistro"; };
+    void init(float x, float y);
+    void action(double frame_ratio);
+    void draw();
+    std::string type()
+    {
+      return "BouncyDistro";
+    };
 };
 
 extern Surface* img_distro[4];
@@ -49,50 +52,59 @@ extern Surface* img_distro[4];
 
 class Tile;
 
-class BrokenBrick : public GameObject
+class BrokenBrick: public GameObject
 {
- public:
-  bool removable;
-  Timer timer;
-  Tile* tile;
+  public:
+    bool removable;
+    Timer timer;
+    Tile* tile;
 
-  // Cached random values to avoid repeated rand() calls in draw
-  int random_offset_x;
-  int random_offset_y;
+    // Cached random values to avoid repeated rand() calls in draw
+    int random_offset_x;
+    int random_offset_y;
 
-  void init(Tile* tile, float x, float y, float xm, float ym);
-  void action(double frame_ratio);
-  void draw();
-  std::string type() { return "BrokenBrick"; };
+    void init(Tile* tile, float x, float y, float xm, float ym);
+    void action(double frame_ratio);
+    void draw();
+    std::string type()
+    {
+      return "BrokenBrick";
+    };
 };
 
-class BouncyBrick : public GameObject
+class BouncyBrick: public GameObject
 {
- public:
-  bool removable;
-  float offset;
-  float offset_m;
-  int shape;
+  public:
+    bool removable;
+    float offset;
+    float offset_m;
+    int shape;
 
-  void init(float x, float y);
-  void action(double frame_ratio);
-  void draw();
-  std::string type() { return "BouncyBrick"; };
+    void init(float x, float y);
+    void action(double frame_ratio);
+    void draw();
+    std::string type()
+    {
+      return "BouncyBrick";
+    };
 };
 
-class FloatingScore : public GameObject
+class FloatingScore: public GameObject
 {
- public:
-  bool removable;
-  int value;
-  Timer timer;
+  public:
+    bool removable;
+    int value;
+    Timer timer;
 
-  void init(float x, float y, int s);
-  void action(double frame_ratio);
-  void draw();
-  std::string type() { return "FloatingScore"; };
+    void init(float x, float y, int s);
+    void action(double frame_ratio);
+    void draw();
+    std::string type()
+    {
+      return "FloatingScore";
+    };
 };
 
-#endif
+#endif /*SUPERTUX_GAMEOBJS_H*/
 
 // EOF

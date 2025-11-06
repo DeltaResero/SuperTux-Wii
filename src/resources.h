@@ -25,12 +25,13 @@
 class SpriteManager;
 class MusicManager;
 
-extern Surface* img_waves[3]; 
+extern Surface* img_waves[3];
 extern Surface* img_water;
 extern Surface* img_pole;
 extern Surface* img_poletop;
 extern Surface* img_flag[2];
 extern Surface* img_cloud[2][4];
+extern Surface* img_distro[4]; // Corrected Declaration
 
 extern Surface* img_super_bkgd;
 
@@ -45,6 +46,6 @@ void unloadshared();
 void loadsounds();
 void unloadsounds();
 
-#endif
+#endif /*SUPERTUX_RESOURCES_H*/
 
 // EOF

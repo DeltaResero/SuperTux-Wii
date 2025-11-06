@@ -44,76 +44,92 @@ class World;
     keeping the speed and framerate sane, etc. */
 class GameSession
 {
- private:
-  Timer fps_timer;
-  Timer frame_timer;
-  Timer endsequence_timer;
-  World* world;
-  int st_gl_mode;
-  int levelnb;
-  float fps_fps;
-  unsigned int last_update_time;
-  unsigned int update_time;
-  int pause_menu_frame;
-  int debug_fps;
+  private:
+    Timer fps_timer;
+    Timer frame_timer;
+    Timer endsequence_timer;
+    World* world;
+    int st_gl_mode;
+    int levelnb;
+    float fps_fps;
+    unsigned int last_update_time;
+    unsigned int update_time;
+    int pause_menu_frame;
+    int debug_fps;
 #ifdef TSCONTROL
-  int old_mouse_y;
+    int old_mouse_y;
 #endif
 
-  /** If true the end_sequence will be played, user input will be
-      ignored while doing that */
-  enum EndSequenceState {
-    NO_ENDSEQUENCE,
-    ENDSEQUENCE_RUNNING, // tux is running right
-    ENDSEQUENCE_WAITING  // waiting for the end of the music
-  };
-  EndSequenceState end_sequence;
-  float last_x_pos;
+    /** If true the end_sequence will be played, user input will be
+        ignored while doing that */
+    enum EndSequenceState
+    {
+      NO_ENDSEQUENCE,
+      ENDSEQUENCE_RUNNING, // tux is running right
+      ENDSEQUENCE_WAITING // waiting for the end of the music
+    };
+    EndSequenceState end_sequence;
+    float last_x_pos;
 
-  bool game_pause;
+    bool game_pause;
 
-  // FIXME: Hack for restarting the level
-  std::string subset;
+    // FIXME: Hack for restarting the level
+    std::string subset;
 
- public:
-  enum ExitStatus { ES_NONE, ES_LEVEL_FINISHED, ES_GAME_OVER, ES_LEVEL_ABORT };
- private:
-  ExitStatus exit_status;
- public:
+  public:
+    enum ExitStatus
+    {
+      ES_NONE,
+      ES_LEVEL_FINISHED,
+      ES_GAME_OVER,
+      ES_LEVEL_ABORT
+    };
+  private:
+    ExitStatus exit_status;
+  public:
 
-  Timer time_left;
+    Timer time_left;
 
-  GameSession(const std::string& subset, int levelnb, int mode);
-  ~GameSession();
+    GameSession(const std::string& subset, int levelnb, int mode);
+    ~GameSession();
 
-  /** Enter the busy loop */
-  ExitStatus run();
+    /** Enter the busy loop */
+    ExitStatus run();
 
-  void draw();
-  void action(double frame_ratio);
+    void draw();
+    void action(double frame_ratio);
 
-  Level* get_level() { return world->get_level(); }
-  World* get_world() { return world; }
+    Level* get_level()
+    {
+      return world->get_level();
+    }
+    World* get_world()
+    {
+      return world;
+    }
 
-  static GameSession* current() { return current_; }
- private:
-  static GameSession* current_;
+    static GameSession* current()
+    {
+      return current_;
+    }
+  private:
+    static GameSession* current_;
 
-  void restart_level();
+    void restart_level();
 
-  void check_end_conditions();
-  void start_timers();
-  void process_events();
+    void check_end_conditions();
+    void start_timers();
+    void process_events();
 
-  void levelintro();
-  void drawstatus();
-  void drawendscreen();
-  void drawresultscreen(void);
+    void levelintro();
+    void drawstatus();
+    void drawendscreen();
+    void drawresultscreen(void);
 
- private:
-  void on_escape_press();
-  void toggle_pause();
-  void process_menu();
+  private:
+    void on_escape_press();
+    void toggle_pause();
+    void process_menu();
 };
 
 std::string slotinfo(int slot);

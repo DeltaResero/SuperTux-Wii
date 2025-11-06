@@ -49,7 +49,7 @@ struct JoystickKeymap
 
 extern JoystickKeymap joystick_keymap;
 
-extern SDL_Surface * screen;
+extern SDL_Surface* screen;
 extern Text* black_text;
 extern Text* gold_text;
 extern Text* white_text;
@@ -57,7 +57,7 @@ extern Text* white_small_text;
 extern Text* white_big_text;
 extern Text* blue_text;
 
-extern MouseCursor * mouse_cursor;
+extern MouseCursor* mouse_cursor;
 
 extern bool use_gl;
 extern bool use_joystick;
@@ -70,16 +70,16 @@ extern int offset_y;
 
 /** The number of the joystick that will be use in the game */
 extern int joystick_num;
-extern char* level_startup_file;
+extern std::string level_startup_file;
 
 /* SuperTux directory ($HOME/.supertux) and save directory($HOME/.supertux/save) */
-extern char* st_dir;
-extern char* st_save_dir;
+extern std::string st_dir;
+extern std::string st_save_dir;
 
 extern float game_speed;
-extern SDL_Joystick * js;
+extern SDL_Joystick* js;
 
-int wait_for_event(SDL_Event& event,unsigned int min_delay = 0, unsigned int max_delay = 0, bool empty_events = false);
+int wait_for_event(SDL_Event& event, unsigned int min_delay = 0, unsigned int max_delay = 0, bool empty_events = false);
 
 void draw_player_hud();
 

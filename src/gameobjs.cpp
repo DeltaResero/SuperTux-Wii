@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
 #include "world.h"
 #include "tile.h"
 #include "gameloop.h"
@@ -109,8 +110,8 @@ void BrokenBrick::action(double frame_ratio)
 void BrokenBrick::draw()
 {
   SDL_Rect src, dest;
-  src.x = random_offset_x;  // Use cached value for x offset
-  src.y = random_offset_y;  // Use cached value for y offset
+  src.x = random_offset_x; // Use cached value for x offset
+  src.y = random_offset_y; // Use cached value for y offset
   src.w = 16;
   src.h = 16;
 
@@ -120,7 +121,9 @@ void BrokenBrick::draw()
   dest.h = 16;
 
   if (!tile->images.empty())
+  {
     tile->images[0]->draw_part(src.x, src.y, dest.x, dest.y, dest.w, dest.h);
+  }
 }
 
 /**
@@ -148,7 +151,9 @@ void BouncyBrick::action(double frame_ratio)
 
   /* Go back down? */
   if (offset < -BOUNCY_BRICK_MAX_OFFSET)
+  {
     offset_m = BOUNCY_BRICK_SPEED;
+  }
 
   /* Stop bouncing? */
   if (offset >= 0)
@@ -206,12 +211,10 @@ void FloatingScore::action(double frame_ratio)
  */
 void FloatingScore::draw()
 {
-  char str[10];
-  snprintf(str, sizeof(str), "%d", value);
-  int str_len = strnlen(str, sizeof(str));
+  std::string score_str = std::to_string(value);
   // Apply the scroll offset at draw time, just like everything else.
-  int x_pos = static_cast<int>(base.x - scroll_x + 16 - str_len * 8);
-  gold_text->draw(str, x_pos, static_cast<int>(base.y), 1);
+  int x_pos = static_cast<int>(base.x - scroll_x + 16 - score_str.length() * 8);
+  gold_text->draw(score_str, x_pos, static_cast<int>(base.y), 1);
 }
 
 // EOF

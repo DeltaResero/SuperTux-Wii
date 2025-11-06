@@ -29,7 +29,9 @@
 #include <unistd.h>
 #include <time.h>
 #include <SDL.h>
-#include <array> // Modern C++ array
+#include <string>
+#include <sstream>
+#include <iomanip>
 
 #ifndef WIN32
 #include <sys/types.h>
@@ -63,9 +65,8 @@ GameSession* GameSession::current_ = nullptr;
  * @param levelnb_ The level number.
  * @param mode The game mode (e.g., demo, play).
  */
-GameSession::GameSession(const std::string& subset_, int levelnb_, int mode)
-  : world(nullptr), st_gl_mode(mode), levelnb(levelnb_), end_sequence(NO_ENDSEQUENCE),
-    subset(subset_)
+GameSession::GameSession(const std::string& subset_, int levelnb_, int mode): world(nullptr),
+          st_gl_mode(mode), levelnb(levelnb_), end_sequence(NO_ENDSEQUENCE), subset(subset_)
 {
   current_ = this;
   global_frame_counter = 0;
@@ -108,16 +109,15 @@ void GameSession::restart_level()
   else
   {
     // Create a new world based on the mode
-    world = (st_gl_mode == ST_GL_LOAD_LEVEL_FILE || st_gl_mode == ST_GL_DEMO_GAME)
-            ? new World(subset)
-            : new World(subset, levelnb);
+    world = (st_gl_mode == ST_GL_LOAD_LEVEL_FILE || st_gl_mode == ST_GL_DEMO_GAME) ?
+             new World(subset): new World(subset, levelnb);
   }
 
   // Try to reset to nearest checkpoint if applicable
   if (old_x_pos != -1)
   {
     ResetPoint best_reset_point = {-1, -1};
-    for (const auto& reset_point : get_level()->reset_points)  // Range-based for loop
+    for (const auto& reset_point : get_level()->reset_points) // Range-based for loop
     {
       if (reset_point.x - screen->w / 2 < old_x_pos && best_reset_point.x < reset_point.x)
       {
@@ -171,20 +171,15 @@ void GameSession::levelintro(void)
 {
   music_manager->halt_music();
 
-  std::array<char, 60> str;
-
   get_level()->draw_bg();
 
-  snprintf(str.data(), str.size(), "%s", world->get_level()->name.c_str());
-  gold_text->drawf(str.data(), 0, 200, A_HMIDDLE, A_TOP, 1);
+  gold_text->drawf(world->get_level()->name, 0, 200, A_HMIDDLE, A_TOP, 1);
 
-  snprintf(str.data(), str.size(), "TUX x %d", player_status.lives);
-  white_text->drawf(str.data(), 0, 224, A_HMIDDLE, A_TOP, 1);
+  white_text->drawf("TUX x " + std::to_string(player_status.lives), 0, 224, A_HMIDDLE, A_TOP, 1);
 
   if (!world->get_level()->author.empty())
   {
-    snprintf(str.data(), str.size(), "by %s", world->get_level()->author.c_str());
-    white_small_text->drawf(str.data(), 0, 360, A_HMIDDLE, A_TOP, 1);
+    white_small_text->drawf("by " + world->get_level()->author, 0, 360, A_HMIDDLE, A_TOP, 1);
   }
 
   flipscreen();
@@ -228,11 +223,11 @@ void GameSession::on_escape_press()
   {
     // Reset key states to avoid control bugs
     Player& tux = *world->get_tux();
-    tux.key_event((SDLKey)keymap.jump, UP);
-    tux.key_event((SDLKey)keymap.duck, UP);
-    tux.key_event((SDLKey)keymap.left, UP);
-    tux.key_event((SDLKey)keymap.right, UP);
-    tux.key_event((SDLKey)keymap.fire, UP);
+    tux.key_event((SDLKey) keymap.jump,  UP);
+    tux.key_event((SDLKey) keymap.duck,  UP);
+    tux.key_event((SDLKey) keymap.left,  UP);
+    tux.key_event((SDLKey) keymap.right, UP);
+    tux.key_event((SDLKey) keymap.fire,  UP);
 
     Menu::set_current(game_menu);
     st_pause_ticks_start();
@@ -302,13 +297,13 @@ void GameSession::process_events()
 
       switch (event.type)
       {
-        case SDL_QUIT:  // Quit event
+        case SDL_QUIT: // Quit event
         {
           exit_status = ES_LEVEL_ABORT;
           break;
         }
 
-        case SDL_KEYDOWN:  // Handle key down events
+        case SDL_KEYDOWN: // Handle key down events
         {
           if (event.key.keysym.sym == SDLK_ESCAPE)
           {
@@ -507,8 +502,8 @@ void GameSession::process_events()
             if ((event.motion.x < (screen->w / 2) + (screen->w / 10)) &&
                 (event.motion.x > (screen->w / 2) - (screen->w / 10)))
             {
-              tux.input.fire  = UP;
-              tux.input.left  = UP;
+              tux.input.fire  =  UP;
+              tux.input.left  =  UP;
               tux.input.right = UP;
             }
             // Run left
@@ -568,14 +563,14 @@ void GameSession::process_events()
                 event.jhat.value == SDL_HAT_LEFTDOWN ||
                 event.jhat.value == SDL_HAT_RIGHTDOWN)
             {
-              tux.input.down = DOWN;
+              tux.input.down  = DOWN;
             }
 
             if (event.jhat.value != SDL_HAT_DOWN &&
                 event.jhat.value != SDL_HAT_LEFTDOWN &&
                 event.jhat.value != SDL_HAT_RIGHTDOWN)
             {
-              tux.input.down = UP;
+              tux.input.down  = UP;
             }
 
             break;
@@ -755,9 +750,7 @@ void GameSession::draw()
     // Draw a single, static, semi-transparent black overlay
     fillrect(0, 0, screen->w, screen->h, 0, 0, 0, 128);
 
-    char str[60];
-    snprintf(str, sizeof(str), "Playing: %s", world->get_level()->name.c_str());
-    white_text->drawf(str, 0, 210, A_HMIDDLE, A_TOP, 1);
+    white_text->drawf("Playing: " + world->get_level()->name, 0, 210, A_HMIDDLE, A_TOP, 1);
 
     blue_text->drawf("- PAUSE -", 0, 230, A_HMIDDLE, A_TOP, 1);
   }
@@ -843,7 +836,8 @@ GameSession::ExitStatus GameSession::run()
 
   // Eat unneeded events
   SDL_Event event;
-  while (SDL_PollEvent(&event)) {}
+  while (SDL_PollEvent(&event))
+  {}
 
   draw();
 
@@ -893,11 +887,11 @@ GameSession::ExitStatus GameSession::run()
     last_update_time = update_time;
     update_time = st_get_ticks();
 
-#ifndef _WII_  // Wii runs too slow to need this
+#ifndef _WII_ // Wii runs too slow to need this
     /* Pause till next frame */
-    if(last_update_time >= update_time - 12)
+    if (last_update_time >= update_time - 12)
     {
-      SDL_Delay(5);  // FIXME: Throttle hack as without it many things subtly break at higher framerates (default: 10; lowered to 5 for testing)
+      SDL_Delay(5); // FIXME: Throttle hack as without it many things subtly break at higher framerates (default: 10; lowered to 5 for testing)
       update_time = st_get_ticks();
     }
 #endif
@@ -957,8 +951,6 @@ void bumpbrick(float x, float y)
  */
 void GameSession::drawstatus()
 {
-  char str[60];
-
   // Draw the shared HUD elements
   draw_player_hud();
 
@@ -975,16 +967,16 @@ void GameSession::drawstatus()
   }
   else if (time_left.get_left() > TIME_WARNING || (global_frame_counter % 10) < 5)
   {
-    snprintf(str, sizeof(str), "%d", time_left.get_left() / 1000);
     white_text->draw("TIME", 258, offset_y, 1);
-    gold_text->draw(str, 342, offset_y, 1);
+    gold_text->draw(std::to_string(time_left.get_left() / 1000), 342, offset_y, 1);
   }
 
   if (show_fps)
   {
-    snprintf(str, sizeof(str), "%2.1f", fps_fps);
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << fps_fps;
     white_text->draw("FPS", 460, 40 + offset_y, 1);
-    gold_text->draw(str, 520, 40 + offset_y, 1);
+    gold_text->draw(ss.str(), 520, 40 + offset_y, 1);
   }
 }
 
@@ -993,17 +985,13 @@ void GameSession::drawstatus()
  */
 void GameSession::drawresultscreen()
 {
-  char str[80];
-
   get_level()->draw_bg();
 
   blue_text->drawf("Result:", 0, 200, A_HMIDDLE, A_TOP, 1);
 
-  snprintf(str, sizeof(str), "SCORE: %d", player_status.score);
-  gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
+  gold_text->drawf("SCORE: " + std::to_string(player_status.score), 0, 224, A_HMIDDLE, A_TOP, 1);
 
-  snprintf(str, sizeof(str), "COINS: %d", player_status.distros);
-  gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
+  gold_text->drawf("COINS: " + std::to_string(player_status.distros), 0, 256, A_HMIDDLE, A_TOP, 1);
 
   flipscreen();
 
@@ -1019,7 +1007,7 @@ void GameSession::drawresultscreen()
 std::string slotinfo(int slot)
 {
   std::string title;
-  lisp_object_t* savegame = lisp_read_from_file((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
+  lisp_object_t* savegame = lisp_read_from_file((st_save_dir + "/slot" + std::to_string(slot) + ".stsg").c_str());
 
   if (savegame)
   {
