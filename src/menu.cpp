@@ -456,7 +456,7 @@ void Menu::action()
   }
 
   // Automatically skip over any non-interactive items during navigation.
-  if (item[active_item].kind == MN_DEACTIVE || item[active_item].kind == MN_LABEL || item[active_item].kind == MN_HL)
+  if (!item.empty() && (item[active_item].kind == MN_DEACTIVE || item[active_item].kind == MN_LABEL || item[active_item].kind == MN_HL))
   {
     if (menuaction != MENU_ACTION_UP && menuaction != MENU_ACTION_DOWN)
     {
@@ -712,7 +712,7 @@ void Menu::event(SDL_Event& event)
       key = event.key.keysym.sym;
 
       // Special handling for control fields, which are actively waiting for a key press.
-      if (item[active_item].kind == MN_CONTROLFIELD)
+      if (!item.empty() && item[active_item].kind == MN_CONTROLFIELD)
       {
         if (key == SDLK_ESCAPE)
         {
@@ -814,7 +814,7 @@ void Menu::event(SDL_Event& event)
     case SDL_MOUSEMOTION:
       x = event.motion.x;
       y = event.motion.y;
-      if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+      if (!item.empty() && x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
       {
         active_item = (y - (pos_y - get_height() / 2)) / 24;
         mouse_cursor->set_state(MC_LINK);
