@@ -17,8 +17,8 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef HEADER_SPRITE_HXX
-#define HEADER_SPRITE_HXX
+#ifndef SUPERTUX_SPRITE_H
+#define SUPERTUX_SPRITE_H
 
 #include <string>
 #include <vector>
@@ -43,6 +43,10 @@ class Sprite
   Sprite(lisp_object_t* cur);    // Constructs a Sprite from Lisp data
   ~Sprite();                     // Destructor
 
+  // Forbid copying to prevent double-free errors
+  Sprite(const Sprite&) = delete;
+  Sprite& operator=(const Sprite&) = delete;
+
   void reset();                  // Resets animation timer
   void update(float delta);      // Updates the animation
 
@@ -57,6 +61,6 @@ class Sprite
   int get_height() const;        // Gets the height of the current frame
 };
 
-#endif
+#endif /*SUPERTUX_SPRITE_H*/
 
 // EOF

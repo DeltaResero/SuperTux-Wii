@@ -122,6 +122,10 @@ public:
 
   static void destroy_instance()
   {
+    // The static destroy function is responsible for cleaning up ALL static resources.
+    delete tilegroups_;
+    tilegroups_ = 0;
+
     delete instance_;
     instance_ = 0;
   }

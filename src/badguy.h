@@ -51,7 +51,6 @@ enum BadGuyKind {
 BadGuyKind  badguykind_from_string(const std::string& str);
 std::string badguykind_to_string(BadGuyKind kind);
 void load_badguy_gfx();
-void free_badguy_gfx();
 
 class Player;
 

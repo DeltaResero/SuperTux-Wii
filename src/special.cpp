@@ -392,12 +392,4 @@ void load_special_gfx()
   img_bullet = sprite_manager->load("bullet");
 }
 
-/**
- * Frees special graphics resources (empty for now).
- */
-void free_special_gfx()
-{
-  // No resources to free at the moment
-}
-
 // EOF

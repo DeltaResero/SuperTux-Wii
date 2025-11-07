@@ -1388,13 +1388,4 @@ void load_badguy_gfx()
   img_snowball_squished_right = sprite_manager->load("snowball-squished-right");
 }
 
-/**
- * Frees all the bad guy graphics resources.
- * This function should be called to release the memory used by the bad guy sprites.
- */
-void free_badguy_gfx()
-{
-  // Currently not implemented
-}
-
 // EOF

@@ -58,7 +58,7 @@ MusicRef::operator =(const MusicRef& other)
   if(oldres) {
     oldres->refcount--;
     if(oldres->refcount == 0)
-      music->manager->free_music(music);
+      oldres->manager->free_music(oldres);
   }
 
   return *this;

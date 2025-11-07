@@ -941,14 +941,16 @@ void st_audio_setup(void)
  */
 void st_shutdown(void)
 {
-  // Close the audio system and free resources
+  // Save the current game configuration first.
+  saveconfig();
+
+  // Close the audio system.
   close_audio();
 
-  // Quit SDL subsystems
-  SDL_Quit();
-
-  // Save the current game configuration
-  saveconfig();
+  // DO NOT call SDL_Quit() here.
+  // SDL_Init() registers its own cleanup function via atexit(),
+  // which will be called automatically and safely when main() returns.
+  // Calling it manually here leads to a double-free and a segfault.
 
 #ifdef _WII_
   // Reset the system and return to the system menu

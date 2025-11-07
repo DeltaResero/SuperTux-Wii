@@ -106,16 +106,16 @@ int main(int argc, char ** argv)
   // Clear the screen (but don't flip the buffer at shutdown)
   clearscreen(0, 0, 0);
 
-  // Unload shared resources and clean up game state
+  // Unload all high-level game resources BEFORE running the debug check.
   unloadshared();
-  st_general_free();  // Free general game resources
-  TileManager::destroy_instance();  // Destroy the singleton instance of TileManager
+  st_general_free();
+  TileManager::destroy_instance();
 
 #ifdef DEBUG
-  Surface::debug_check();  // Check for any debug issues in surfaces
+  Surface::debug_check();  // Now this check should report an empty list.
 #endif
 
-  // Perform system shutdown and cleanup
+  // Perform the final, low-level system shutdown.
   st_shutdown();
 
   return 0;

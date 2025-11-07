@@ -219,9 +219,8 @@ void fade(Surface *surface, int seconds, bool fade_out)
  */
 void fade(const std::string& surface, int seconds, bool fade_out)
 {
-  Surface* sur = new Surface(datadir + surface, false);
-  fade(sur, seconds, fade_out);
-  delete sur;  // Clean up the dynamically allocated Surface object
+  Surface sur(datadir + surface, false); // Create on the stack
+  fade(&sur, seconds, fade_out);         // Pass its address
 }
 
 /* --- PUT PIXEL --- */

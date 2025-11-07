@@ -189,10 +189,6 @@ void loadshared()
 /* Free shared data: */
 void unloadshared(void)
 {
-  // Free graphics resources
-  free_special_gfx();
-  free_badguy_gfx();
-
   // Delete single images
   delete img_water;
   delete img_pole;
@@ -223,6 +219,9 @@ void unloadshared(void)
 
   // Free sound resources
   unloadsounds();
+
+  herring_song = MusicRef();
+  level_end_song = MusicRef();
 
   // Delete and nullify managers
   delete sprite_manager;

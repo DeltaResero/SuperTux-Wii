@@ -91,6 +91,10 @@ public:
   Surface(const std::string& file, int x, int y, int w, int h, bool use_alpha);
   ~Surface();
 
+  // Forbid copying to prevent double-free
+  Surface(const Surface&) = delete;
+  Surface& operator=(const Surface&) = delete;
+
   void reload();
   void draw(float x, float y, Uint8 alpha = 255, bool update = false);
   void draw_bg(Uint8 alpha = 255, bool update = false);

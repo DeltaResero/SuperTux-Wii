@@ -18,8 +18,8 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef HEADER_MUSIC_MANAGER_H
-#define HEADER_MUSIC_MANAGER_H
+#ifndef SUPERTUX_MUSIC_MANAGER_H
+#define SUPERTUX_MUSIC_MANAGER_H
 
 #include <SDL_mixer.h>
 #include <string>
@@ -60,6 +60,6 @@ private:
   bool music_enabled;            // Flag to enable or disable music
 };
 
-#endif // HEADER_MUSIC_MANAGER_H
+#endif /*SUPERTUX_MUSIC_MANAGER_H*/
 
 // EOF

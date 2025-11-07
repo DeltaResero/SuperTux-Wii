@@ -104,24 +104,16 @@ GameSession* getSession()
  */
 void deleteDemo()
 {
-  if (logo)
-  {
-    delete logo;
-  }
   if (session)
   {
     delete session;
+    session = nullptr;
   }
-
-  // Set pointers to null after deletion
-  logo = nullptr;
-  session = nullptr;
-  bkg_title = nullptr;
 }
 
 /**
- * Creates a new demo session and initializes the background.
- * The demo session is loaded from a predefined menu level, and the logo and background images are set up.
+ * Creates a new demo session.
+ * The demo session is loaded from a predefined menu level.
  */
 void createDemo()
 {
@@ -130,12 +122,6 @@ void createDemo()
 
   // Create a new game session for the demo
   session = new GameSession(datadir + "/levels/misc/menu.stl", 0, ST_GL_DEMO_GAME);
-
-  // Set up the background image from the loaded level
-  bkg_title = session->get_level()->img_bkgd;
-
-  // Load the logo image with alpha transparency
-  logo = new Surface(datadir + "/images/title/logo.png", true);
 }
 
 /**
@@ -400,7 +386,7 @@ void title(void)
     loading_surf->draw(160, 30);
   }
 
-  // Load and draw the title screen background and logo
+  // Load title screen graphics here, owned by the title() function.
   bkg_title = new Surface(datadir + "/images/title/background.jpg", false);
   logo = new Surface(datadir + "/images/title/logo.png", true);
 
@@ -500,7 +486,10 @@ void title(void)
       }
     }
 
-    // Draw the demo session
+    // Explicitly draw the background owned by title().
+    bkg_title->draw_bg();
+
+    // Draw the demo session on top of the background
     draw_demo(session, frame_ratio);
 
     // Draw the logo if on the main menu
@@ -610,11 +599,15 @@ void title(void)
 #endif
   }
 
-  // Free surfaces and resources
+  // Cleanup and free resources
+  delete bkg_title;
+  bkg_title = nullptr;
+
+  delete logo;
+  logo = nullptr;
+
   deleteDemo();
   free_contrib_menu();
-  delete bkg_title;
-  delete logo;
 }
 
 // EOF

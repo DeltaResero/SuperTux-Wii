@@ -40,7 +40,17 @@ MusicManager::MusicManager()
 MusicManager::~MusicManager()
 {
   if (audio_device)
-    Mix_HaltMusic();  // Stop any currently playing music on destruction
+  {
+    Mix_HaltMusic();  // Stop any currently playing music.
+
+    // Explicitly iterate through the map and free all loaded music chunks
+    // before the audio device is closed. This prevents a segfault on exit.
+    for (auto const& [key, val] : musics)
+    {
+      Mix_FreeMusic(val.music);
+    }
+    musics.clear(); // Clear the map to be tidy.
+  }
 }
 
 /**
@@ -92,14 +102,18 @@ bool MusicManager::exists_music(const std::string& file)
  */
 void MusicManager::free_music(MusicResource* music)
 {
-  Mix_FreeMusic(music->music);  // Free the music resource using SDL_mixer
+  Mix_FreeMusic(music->music);
 
-  for (auto i = musics.begin(); i != musics.end(); ++i)
+  for (auto i = musics.begin(); i != musics.end(); )
   {
     if (&i->second == music)
     {
-      musics.erase(i);
-      break;
+      i = musics.erase(i); // Erase and get the next valid iterator
+      return; // Exit immediately
+    }
+    else
+    {
+      ++i; // Only increment if we didn't erase
     }
   }
 }

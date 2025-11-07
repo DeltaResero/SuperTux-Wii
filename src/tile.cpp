@@ -69,14 +69,12 @@ TileManager::TileManager()
  */
 TileManager::~TileManager()
 {
-  // Destructor: Clean up allocated memory for tiles
+  // Destructor: Clean up instance-specific resources (the tiles).
   for (Tile* tile : tiles)
   {
     delete tile;
   }
-
-  // Free the memory for the tilegroups set to prevent a leak
-  delete tilegroups_;
+  // The static tilegroups_ pointer is now cleaned up in destroy_instance().
 }
 
 /**

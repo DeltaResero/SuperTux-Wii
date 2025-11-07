@@ -17,8 +17,8 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef HEADER_MUSIC_RESOURCE_H
-#define HEADER_MUSIC_RESOURCE_H
+#ifndef SUPERTUX_MUSICREF_H
+#define SUPERTUX_MUSICREF_H
 
 #include "music_manager.h"
 
@@ -39,6 +39,6 @@ private:
   MusicManager::MusicResource* music;  // Pointer to the actual music resource
 };
 
-#endif // HEADER_MUSIC_RESOURCE_H
+#endif /*SUPERTUX_MUSICREF_H*/
 
 // EOF
