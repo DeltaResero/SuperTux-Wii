@@ -574,12 +574,10 @@ bool process_load_game_menu()
 #endif
 
     // Plays intro text when starting a new save file
-    /*
     if (access(slotfile.c_str(), F_OK) != 0)
     {
       draw_intro();
     }
-    */
 
     unloadsounds();
     deleteDemo();

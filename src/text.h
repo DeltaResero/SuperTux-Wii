@@ -26,7 +26,7 @@
 #include "texture.h"
 
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed);
-void display_text_file(const std::string& file, Surface* surface, float scroll_speed);
+void display_text_file(const std::string& file, Surface* surface, float scroll_speed, bool is_static = false);
 
 /* Kinds of texts. */
 enum
@@ -88,5 +88,3 @@ class Text
 };
 
 #endif /*SUPERTUX_TEXT_H*/
-
-// EOF

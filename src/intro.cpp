@@ -35,7 +35,15 @@
 
 void draw_intro()
 {
-  display_text_file("intro.txt", "/images/background/arctis2.jpg", SCROLL_SPEED_MESSAGE);
+  // For a one-time event like the intro, we create the resource and
+  // free it immediately to conserve memory for the main game.
+  Surface* background = new Surface(datadir + "/images/background/arctis2.jpg", false);
+
+  // Call the modified function with the 'is_static' flag set to true.
+  display_text_file("intro.txt", background, 0.0f, true);
+
+  // Free the resource immediately.
+  delete background;
 }
 
 // EOF

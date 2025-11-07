@@ -58,6 +58,7 @@ namespace fs = std::filesystem;  // Alias for ease of use
 // Global variables
 static Surface* bkg_title;  // Background image for the title screen
 static Surface* logo;       // Logo image for the title screen
+static Surface* credits_background = nullptr;  // Credits background
 
 static bool walking;        // Indicates if the character is walking in the demo
 static Timer random_timer;  // Timer for controlling random events in the demo
@@ -529,13 +530,15 @@ void title(void)
             menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
             music_manager->halt_music();
             music_manager->play_music(menu_song, 0);
-            { // Using a block to scope the temporary surface
-              Surface* credits_background = new Surface(datadir + "/images/title/background.jpg", false);
-              display_text_file("CREDITS", credits_background, SCROLL_SPEED_CREDITS);
-              delete credits_background;
+
+            if (!credits_background)
+            {
+              credits_background = new Surface(datadir + "/images/title/background.jpg", false);
             }
+            display_text_file("CREDITS", credits_background, SCROLL_SPEED_CREDITS);
+
             music_manager->halt_music();
-            session->get_world()->play_music(LEVEL_MUSIC);
+            session->get_world()->play_music(LEVEL_MUSIC); // FIXME:Check if needed
             Menu::set_current(main_menu);
             break;
           case MNID_QUITMAINMENU:

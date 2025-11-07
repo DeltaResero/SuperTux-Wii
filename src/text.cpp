@@ -18,12 +18,16 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <fstream>
+#include <vector>
+#include <string>
+#include <tuple>
 #include <stdio.h>
 #include <string.h>
 #include "globals.h"
 #include "defines.h"
 #include "screen.h"
 #include "text.h"
+#include "menu.h"
 
 Text::Texts Text::texts;
 
@@ -34,7 +38,6 @@ Text::Texts Text::texts;
 #define ITEMS_SPACE  4       // Space between lines of text
 
 #ifndef NOOPENGL
-#include <vector>
 struct CharVertex {
   float x, y;
   float tx, ty;
@@ -237,15 +240,19 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
 
   size_t len = text.length();
   if (len > MAX_TEXT_LEN)
+  {
     len = MAX_TEXT_LEN;
-
+  }
 
   // Use the single, pre-allocated static buffer instead of a new 64KB stack array.
   CharVertex* vertices = vertex_buffer;
   int vertex_count = 0;
 
   SurfaceImpl* impl = pchars->impl;
-  if (!impl) return;
+  if (!impl)
+  {
+    return;
+  }
 
   // Get the correct, pre-cached opengl implementation
   SurfaceOpenGL* gl_impl = (pchars == chars) ? opengl_chars : opengl_shadow_chars;
@@ -351,7 +358,9 @@ void Text::draw_chars(Surface* pchars, const std::string& text, int x, int y, in
   // Limit string length to MAX_TEXT_LEN
   size_t len = text.length();
   if (len > MAX_TEXT_LEN)
+  {
     len = MAX_TEXT_LEN;
+  }
 
   // Loop through each character in the string
   for (size_t i = 0, j = 0; i < len; ++i, ++j)
@@ -529,13 +538,17 @@ void Text::erasetext(const std::string& text, int x, int y, Surface* ptexture, i
 
   // Clamp the width to the screen width
   if (dest.w > screen->w)
+  {
     dest.w = screen->w;
+  }
 
   ptexture->draw_part(dest.x, dest.y, dest.x, dest.y, dest.w, dest.h, 255, update);
 
   // Update the screen region if needed
   if (update == UPDATE)
+  {
     update_rect(screen, dest.x, dest.y, dest.w, dest.h);
+  }
 }
 
 /**
@@ -568,24 +581,22 @@ void Text::erasecenteredtext(const std::string& text, int y, Surface* ptexture, 
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed)
 {
   Surface* sur = new Surface(datadir + surface, false);
-  display_text_file(file, sur, scroll_speed);
+  display_text_file(file, sur, scroll_speed, false);
   delete sur;
 }
 
 /**
- * Display a text file on the screen, with a scrolling effect.
+ * Display a text file on the screen, with a scrolling or static effect.
  *
  * @param file The file to display.
  * @param surface Surface to draw the text on.
- * @param scroll_speed Speed of the scrolling effect.
+ * @param scroll_speed Speed of the scrolling effect (ignored if is_static is true).
+ * @param is_static Flag to determine if the display is static or scrolling.
  */
-void display_text_file(const std::string& file, Surface* surface, float scroll_speed)
+void display_text_file(const std::string& file, Surface* surface, float scroll_speed, bool is_static)
 {
-  bool done = false;
-  float scroll = 0;
-  float speed = scroll_speed / 50;
-  int y = 0;
-  std::vector<std::string> names;
+  // --- SHARED LOGIC: File Reading (with original comments) ---
+  std::vector<std::string> lines;
 
   // Construct the full path using std::string
   std::string filename = datadir + "/" + file;
@@ -599,49 +610,121 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     {
       // std::getline automatically handles the newline characters.
       // We can just add the line directly to our vector.
-      names.emplace_back(line);
+      lines.emplace_back(line);
     }
   }
   else
   {
     // Error messages if file not found
-    names.emplace_back("File was not found!");
-    names.emplace_back(filename);
-    names.emplace_back("Shame on the guy, who");
-    names.emplace_back("forgot to include it");
-    names.emplace_back("in your SuperTux distribution.");
+    lines.emplace_back("File was not found!");
+    lines.emplace_back(filename);
+    lines.emplace_back("Shame on the one, who");
+    lines.emplace_back("forgot to include it");
+    lines.emplace_back("in your SuperTux distribution.");
   }
 
-  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+  // --- SHARED LOGIC: Line Property Resolution (The DRY part) ---
+  struct LineProperties
+  {
+    Text* text_obj;
+    std::string content;
+    int height;
+    int shadow_size;
+  };
 
-  Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
+  auto get_line_properties = [&](const std::string& line) -> LineProperties
+  {
+    if (line.empty())
+    {
+      return { blue_text, "", blue_text->h, 0 };
+    }
+    switch (line[0])
+    {
+      // Text object and the appropriate shadow_size for its internal shadow.
+      case '-': return { white_big_text, line.substr(1), white_big_text->h, 3 };
+      case '\t': return { white_text, line.substr(1), white_text->h, 1 };
+      case ' ': return { white_small_text, line.substr(1), white_small_text->h, 1 };
+      default: return { blue_text, line, blue_text->h, 1 };
+    }
+  };
+
+  if (is_static)
+  {
+    // --- STATIC-MODE-SPECIFIC LOGIC ---
+    surface->draw_bg();
+    int total_text_height = 0;
+    for (const auto& line : lines)
+    {
+      total_text_height += get_line_properties(line).height + ITEMS_SPACE;
+    }
+    total_text_height += white_text->h * 2; // For the prompt
+
+    int current_y = (screen->h - total_text_height) / 2;
+    for (const auto& line : lines)
+    {
+      auto props = get_line_properties(line);
+      props.text_obj->draw_align(props.content, screen->w / 2, current_y, A_HMIDDLE, A_TOP, props.shadow_size);
+      current_y += props.height + ITEMS_SPACE;
+    }
+
+    current_y += white_text->h * 2;
+    blue_text->draw_align("Press any key to begin", screen->w / 2, current_y, A_HMIDDLE, A_TOP, 1);
+    flipscreen();
+
+    SDL_Event event;
+    while (true)
+    {
+      if (SDL_WaitEvent(&event))
+      {
+        if (event.type == SDL_QUIT)
+        {
+          Menu::set_current(nullptr);
+          break;
+        }
+        if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN)
+        {
+          break;
+        }
+      }
+    }
+  }
+  else // --- SCROLLING-MODE-SPECIFIC LOGIC (Preserving original structure) ---
+  {
+    bool done = false;
+    float scroll = 0;
+    float speed = scroll_speed / 50;
+    int y = 0;
+
+    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+
+    Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
 
 #ifndef NOOPENGL
-  // For OpenGL, we can use double buffering more efficiently
-  if (use_gl)
-  {
-    glClear(GL_COLOR_BUFFER_BIT);
-  }
+    // For OpenGL, we can use double buffering more efficiently
+    if (use_gl)
+    {
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
 #endif
 
-  while (!done)
-  {
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
+    while (!done)
     {
-      switch (event.type)
+      SDL_Event event;
+      while (SDL_PollEvent(&event))
       {
-        case SDL_KEYDOWN:
-          switch (event.key.keysym.sym)
-          {
-            case SDLK_UP:
-              speed -= SPEED_INC;
-              speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
-              break;
-            case SDLK_DOWN:
-              speed += SPEED_INC;
-              speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
-              break;
+        switch (event.type)
+        {
+          case SDL_KEYDOWN:
+            switch (event.key.keysym.sym)
+            {
+              case SDLK_UP:
+                speed -= SPEED_INC;
+                speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
+                break;
+              case SDLK_DOWN:
+                speed += SPEED_INC;
+                speed = (speed > MAX_VEL) ? MAX_VEL : ((speed < -MAX_VEL) ? -MAX_VEL : speed);  // Clamp speed here
+                break;
               /* case SDLK_SPACE:  // Fast-scroll
                * case SDLK_RETURN:
                *   if (speed >= 0)
@@ -653,8 +736,8 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
                 break;
               default:
                 break;
-          }
-          break;
+            }
+            break;
 
           case SDL_JOYBUTTONDOWN:
             if (event.jbutton.button == 6)  // Wii Remote Home Button alternative to SDLK_ESCAPE
@@ -669,89 +752,62 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
 
           default:
             break;
+        }
       }
-    }
 
-    // Re-use the previously declared 'ticks'
-    Uint32 ticks = SDL_GetTicks();
-    scroll += speed * (ticks - lastticks);
-    lastticks = ticks;
+      // Re-use the previously declared 'ticks'
+      Uint32 ticks = SDL_GetTicks();
+      scroll += speed * (ticks - lastticks);
+      lastticks = ticks;
 
 #ifndef NOOPENGL
-    if (use_gl)
-    {
-      // Only clear once per frame for OpenGL
-      glClear(GL_COLOR_BUFFER_BIT);
-    }
+      if (use_gl)
+      {
+        // Only clear once per frame for OpenGL
+        glClear(GL_COLOR_BUFFER_BIT);
+      }
 #endif
 
-    // Draw the background and the scrolling text
-    surface->draw_bg();
+      // Draw the background and the scrolling text
+      surface->draw_bg();
 
-    y = 0;
-    for (size_t i = 0; i < names.size(); ++i)
-    {
-      // Calculate y position
-      int text_y = screen->h + y - int(scroll);
-
-      // Skip if completely off-screen (with small margin)
-      int text_height = 0;
-      switch (names[i][0])
+      y = 0;
+      for (const auto& line : lines)
       {
-        case ' ': text_height = white_small_text->h; break;
-        case '\t': text_height = white_text->h; break;
-        case '-': text_height = white_big_text->h; break;
-        default: text_height = blue_text->h; break;
+        // Calculate y position
+        int text_y = screen->h + y - int(scroll);
+
+        auto props = get_line_properties(line);
+
+        // Skip if completely off-screen (with small margin)
+        if (text_y + props.height < -10 || text_y > screen->h + 10)
+        {
+          y += props.height + ITEMS_SPACE;
+          continue; // Skip drawing this line
+        }
+
+        props.text_obj->drawf(props.content, 0, text_y, A_HMIDDLE, A_TOP, props.shadow_size);
+        y += props.height + ITEMS_SPACE;
       }
 
-      if (text_y + text_height < -10 || text_y > screen->h + 10)
+      flipscreen();
+
+      // Check if the entire text has scrolled off the screen
+      if (screen->h + y - scroll < 0 && 20 + screen->h + y - scroll < 0)
       {
-        y += text_height + ITEMS_SPACE;
-        continue; // Skip drawing this line
+        done = true;
       }
 
-      switch (names[i][0])  // Access vector elements using 'names[i]'
+      if (scroll < 0)
       {
-        case ' ':
-          white_small_text->drawf(names[i].c_str() + 1, 0, screen->h + y - int(scroll),
-                                  A_HMIDDLE, A_TOP, 1);
-          y += white_small_text->h + ITEMS_SPACE;
-          break;
-        case '\t':
-          white_text->drawf(names[i].c_str() + 1, 0, screen->h + y - int(scroll),
-                            A_HMIDDLE, A_TOP, 1);
-          y += white_text->h + ITEMS_SPACE;
-          break;
-        case '-':
-          white_big_text->drawf(names[i].c_str() + 1, 0, screen->h + y - int(scroll),
-                                A_HMIDDLE, A_TOP, 3);
-          y += white_big_text->h + ITEMS_SPACE;
-          break;
-        default:
-          blue_text->drawf(names[i].c_str(), 0, screen->h + y - int(scroll),
-                           A_HMIDDLE, A_TOP, 1);
-          y += blue_text->h + ITEMS_SPACE;
-          break;
+        scroll = 0;
       }
     }
 
-    flipscreen();
-
-    // Check if the entire text has scrolled off the screen
-    if (screen->h + y - scroll < 0 && 20 + screen->h + y - scroll < 0)
-    {
-      done = true;
-    }
-
-    if (scroll < 0)
-    {
-      scroll = 0;
-    }
+    // No need to call string_list_free since std::vector handles memory automatically
+    SDL_EnableKeyRepeat(0, 0);  // Disable key repeating
+    Menu::set_current(main_menu);
   }
-
-  // No need to call string_list_free since std::vector handles memory automatically
-  SDL_EnableKeyRepeat(0, 0);  // Disable key repeating
-  Menu::set_current(main_menu);
 }
 
 // EOF
