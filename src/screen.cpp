@@ -176,53 +176,6 @@ void drawgradient(Color top_clr, Color bot_clr)
   }
 }
 
-/* --- FADE IN/OUT --- */
-/**
- * Fades the given surface to/from black over a specified number of seconds.
- * @param surface The surface to fade.
- * @param seconds The duration of the fade effect.
- * @param fade_out If true, the surface fades out; otherwise, it fades in.
- */
-void fade(Surface *surface, int seconds, bool fade_out)
-{
-  float alpha = fade_out ? 0.0f : 255.0f;  // Initialize alpha based on fade direction
-
-  int cur_time = SDL_GetTicks();
-  int old_time = cur_time;
-
-  // Fade loop: adjust alpha based on elapsed time
-  while ((fade_out && alpha < 256.0f) || (!fade_out && alpha >= 0.0f))
-  {
-    surface->draw(0, 0, static_cast<int>(alpha));  // Draw the surface with the current alpha
-    flipscreen();  // Update the screen
-
-    old_time = cur_time;
-    cur_time = SDL_GetTicks();
-
-    float calc = static_cast<float>(cur_time - old_time) / seconds;
-    if (fade_out)
-    {
-      alpha += 255.0f * calc;  // Increase alpha for fade out
-    }
-    else
-    {
-      alpha -= 255.0f * calc;  // Decrease alpha for fade in
-    }
-  }
-}
-
-/**
- * Wrapper function for fading with a surface file name.
- * @param surface The name of the surface file.
- * @param seconds The duration of the fade effect.
- * @param fade_out If true, the surface fades out; otherwise, it fades in.
- */
-void fade(const std::string& surface, int seconds, bool fade_out)
-{
-  Surface sur(datadir + surface, false); // Create on the stack
-  fade(&sur, seconds, fade_out);         // Pass its address
-}
-
 /* --- PUT PIXEL --- */
 /**
  * Set a pixel at (x, y) to the specified value.

@@ -49,6 +49,7 @@
 #include "worldmap.h"
 #include "resources.h"
 #include "title.h"
+#include "intro.h"
 #include "music_manager.h"
 #include "player.h"
 #include "SDL_audio.h"
@@ -572,11 +573,13 @@ bool process_load_game_menu()
     slotfile = st_save_dir + "/slot" + std::to_string(slot) + ".stsg";
 #endif
 
-    // Uncomment if needed to handle starting a new save files (plays intro text)
-    //    if (access(slotfile, F_OK) != 0)
-    //    {
-    //      draw_intro();
-    //    }
+    // Plays intro text when starting a new save file
+    /*
+    if (access(slotfile.c_str(), F_OK) != 0)
+    {
+      draw_intro();
+    }
+    */
 
     unloadsounds();
     deleteDemo();
