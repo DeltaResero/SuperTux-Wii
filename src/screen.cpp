@@ -446,7 +446,7 @@ void update_rect(SDL_Surface *scr, Sint32 x, Sint32 y, Sint32 w, Sint32 h)
 {
   if (!use_gl)
   {
-    SDL_Flip(screen);
+    SDL_UpdateRect(scr, x, y, w, h);
   }
 }
 
