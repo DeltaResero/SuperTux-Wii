@@ -55,6 +55,7 @@
 #include "particlesystem.h"
 #include "resources.h"
 #include "music_manager.h"
+#include "timer.h"
 
 GameSession* GameSession::current_ = nullptr;
 
@@ -193,9 +194,9 @@ void GameSession::levelintro(void)
  */
 void GameSession::start_timers()
 {
-  st_pause_ticks_init();
+  Ticks::pause_init();
   time_left.start(world->get_level()->time_left * 1000);
-  update_time = st_get_ticks();
+  update_time = Ticks::get();
 }
 
 /**
@@ -230,7 +231,7 @@ void GameSession::on_escape_press()
     tux.key_event((SDLKey) keymap.fire,  UP);
 
     Menu::set_current(game_menu);
-    st_pause_ticks_start();
+    Ticks::pause_start();
   }
 }
 
@@ -245,12 +246,12 @@ void GameSession::toggle_pause()
     if (game_pause)
     {
       game_pause = false;
-      st_pause_ticks_stop();
+      Ticks::pause_stop();
     }
     else
     {
       game_pause = true;
-      st_pause_ticks_start();
+      Ticks::pause_start();
     }
   }
 }
@@ -291,7 +292,7 @@ void GameSession::process_events()
         Menu::current()->event(event);
         if (!Menu::current())
         {
-          st_pause_ticks_stop();
+          Ticks::pause_stop();
         }
       }
 
@@ -335,7 +336,7 @@ void GameSession::process_events()
     // Normal gameplay input handling
     if (!Menu::current() && !game_pause)
     {
-      st_pause_ticks_stop();
+      Ticks::pause_stop();
     }
 
     SDL_Event event;
@@ -346,7 +347,7 @@ void GameSession::process_events()
         Menu::current()->event(event);
         if (!Menu::current())
         {
-          st_pause_ticks_stop();
+          Ticks::pause_stop();
         }
       }
       else
@@ -803,10 +804,10 @@ void GameSession::process_menu()
       switch (game_menu->check())
       {
         case MNID_CONTINUE:
-          st_pause_ticks_stop();
+          Ticks::pause_stop();
           break;
         case MNID_ABORTLEVEL:
-          st_pause_ticks_stop();
+          Ticks::pause_stop();
           exit_status = ES_LEVEL_ABORT;
           break;
       }
@@ -832,7 +833,7 @@ GameSession::ExitStatus GameSession::run()
   current_ = this;
 
   int fps_cnt = 0;
-  update_time = last_update_time = st_get_ticks();
+  update_time = last_update_time = Ticks::get();
 
   // Eat unneeded events
   SDL_Event event;
@@ -892,14 +893,14 @@ GameSession::ExitStatus GameSession::run()
 
     /* Set the time of the last update and the time of the current update */
     last_update_time = update_time;
-    update_time = st_get_ticks();
+    update_time = Ticks::get();
 
 #ifndef _WII_ // Wii runs too slow to need this
     /* Pause till next frame */
     if (last_update_time >= update_time - 12)
     {
       SDL_Delay(5); // FIXME: Throttle hack as without it many things subtly break at higher framerates (default: 10; lowered to 5 for testing)
-      update_time = st_get_ticks();
+      update_time = Ticks::get();
     }
 #endif
 

@@ -22,8 +22,8 @@
 #include "defines.h"
 #include "timer.h"
 
-// Global variables to manage the game's pause state.
-Uint32 st_pause_ticks = 0, st_pause_count = 0;
+// Static member definitions for the Ticks class.
+Uint32 Ticks::pause_ticks = 0, Ticks::pause_count = 0;
 
 /**
  * Get the current game time in ticks, accounting for any time the game has been paused.
@@ -32,22 +32,19 @@ Uint32 st_pause_ticks = 0, st_pause_count = 0;
  * when a menu is opened or the game is paused.
  * @return The adjusted number of ticks, as if the game was never paused.
  */
-Uint32 st_get_ticks(void)
+Uint32 Ticks::get(void)
 {
-  if (st_pause_count != 0)
+  if (Ticks::pause_count != 0)
   {
-    // If the game is currently paused (st_pause_count is non-zero), the flow of
-    // game time is frozen. We return a constant value representing the exact moment
-    // the game was paused. This is calculated as the timestamp when the pause began
-    // (st_pause_count) minus the total duration of all *previous* pauses (st_pause_ticks).
-    return st_pause_count - st_pause_ticks;
+    // If the game is currently paused, the flow of game time is frozen.
+    // Return a constant value representing the moment the pause began.
+    return Ticks::pause_count - Ticks::pause_ticks;
   }
   else
   {
     // If the game is running, the total elapsed game time is the current raw
-    // hardware time (from SDL_GetTicks) minus the total accumulated duration
-    // of all previous pause sessions.
-    return SDL_GetTicks() - st_pause_ticks;
+    // hardware time minus the total accumulated duration of all previous pauses.
+    return SDL_GetTicks() - Ticks::pause_ticks;
   }
 }
 
@@ -55,83 +52,77 @@ Uint32 st_get_ticks(void)
  * Initializes or resets the global pause timer variables. This should be called
  * once at game startup to ensure the pause system starts in a clean state.
  */
-void st_pause_ticks_init(void)
+void Ticks::pause_init(void)
 {
-  st_pause_ticks = 0;
-  st_pause_count = 0;
+  Ticks::pause_ticks = 0;
+  Ticks::pause_count = 0;
 }
 
 /**
  * Starts a pause session. This function is called whenever the game enters a
- * state where game time should stop advancing (e.g., opening the main menu).
+ * state where game time should stop advancing (e.g., opening a menu).
  * It records the current time as the moment the pause began.
- * It does nothing if the game is already in a paused state.
  */
-void st_pause_ticks_start(void)
+void Ticks::pause_start(void)
 {
-  if (st_pause_count == 0)
+  if (Ticks::pause_count == 0)
   {
-    st_pause_count = SDL_GetTicks();
+    Ticks::pause_count = SDL_GetTicks();
   }
 }
 
 /**
  * Stops a pause session and updates the total accumulated pause time. This is
- * called when the game resumes (e.g., closing a menu). It calculates the
- * duration of the pause that just ended and adds it to our total.
+ * called when the game resumes (e.g., closing a menu).
  */
-void st_pause_ticks_stop(void)
+void Ticks::pause_stop(void)
 {
-  if (st_pause_count == 0)
+  if (Ticks::pause_count == 0)
   {
-    // Can't stop a pause that hasn't started, so we do nothing.
+    // Can't stop a pause that hasn't started.
     return;
   }
 
-  // Add the duration of this pause session (current time minus start time)
-  // to the total accumulator for paused time.
-  st_pause_ticks += SDL_GetTicks() - st_pause_count;
+  // Add the duration of this pause session to the total accumulator.
+  Ticks::pause_ticks += SDL_GetTicks() - Ticks::pause_count;
 
-  // Reset st_pause_count to 0. This non-zero check is how the rest of the
-  // system knows that the game is no longer paused.
-  st_pause_count = 0;
+  // Reset pause_count to 0 to indicate the game is no longer paused.
+  Ticks::pause_count = 0;
 }
 
 /**
  * Checks if the game is currently in a paused state.
  * @return True if the game is paused, false otherwise.
  */
-bool st_pause_ticks_started(void)
+bool Ticks::pause_started(void)
 {
-  return st_pause_count != 0;
+  return Ticks::pause_count != 0;
 }
 
 /**
  * Constructor for the Timer class.
- * Initializes the timer to a stopped, default state. By default, it's configured
- * to use the pausable game clock (st_get_ticks).
+ * Initializes the timer to a stopped, default state.
  */
 Timer::Timer()
-: period(0), time(0), use_st_ticks(true)
+: period(0), time(0), use_game_ticks(true)
 {
-  // All members are initialized in the initializer list above for efficiency.
+  // All members are initialized in the initializer list.
 }
 
 /**
  * Initialize or re-initialize the timer, setting its timing mode.
- * @param st_ticks If true, the timer will use the pausable game clock (st_get_ticks).
- *                 If false, it will use the raw, unpausable hardware clock (SDL_GetTicks).
+ * @param game_ticks If true, the timer will use the pausable game clock (Ticks::get).
+ *                   If false, it will use the raw, unpausable hardware clock (SDL_GetTicks).
  */
-void Timer::init(bool st_ticks)
+void Timer::init(bool game_ticks)
 {
   period = 0;
   time = 0;
-  use_st_ticks = st_ticks;
+  use_game_ticks = game_ticks;
 }
 
 /**
- * Starts the timer with a given period. This records the current time and sets
- * the duration for which the timer should run.
+ * Starts the timer with a given period.
  * @param period_ The duration for which the timer should run, in milliseconds.
  */
 void Timer::start(Uint32 period_)
@@ -142,9 +133,6 @@ void Timer::start(Uint32 period_)
 
 /**
  * Stops the timer immediately.
- * This simply resets the timer's internal state to its initial, non-running values,
- * making it inactive until it is started again. This is more efficient than the
- * previous implementation that called init().
  */
 void Timer::stop()
 {
@@ -154,22 +142,17 @@ void Timer::stop()
 
 /**
  * Checks if the timer is still running and has time remaining.
- * @return True if the timer was started and its period has not yet elapsed.
- *         Returns false and stops the timer if it has expired. This is useful for
- *         one-shot timer checks in loops.
+ * @return True if the timer is active and has not yet expired.
  */
 bool Timer::check()
 {
-  // A timer is running if its 'time' is not zero.
   if (time != 0 && (time + period > get_current_ticks()))
   {
-    // The timer is active and has time remaining.
     return true;
   }
   else
   {
-    // The timer has expired or was never started.
-    time = 0; // Ensure the timer is now considered stopped.
+    time = 0; // Ensure the timer is now considered stopped if expired.
     return false;
   }
 }
@@ -177,7 +160,6 @@ bool Timer::check()
 /**
  * Checks if the timer has been started, without modifying its state.
  * @return True if the timer has been started (even if it has since expired).
- *         Returns false only if the timer is stopped or has never been started.
  */
 bool Timer::started() const
 {
@@ -186,17 +168,14 @@ bool Timer::started() const
 
 /**
  * Gets the time remaining on the timer before it expires.
- * @return The time left in milliseconds. This value can be negative if the timer
- *         has already expired.
+ * @return The time left in milliseconds (can be negative).
  */
 int Timer::get_left() const
 {
   if (time == 0)
   {
-    return 0; // If the timer is not running, there is no time left.
+    return 0;
   }
-
-  // The time remaining is the total period minus the time that has passed so far.
   return period - (get_current_ticks() - time);
 }
 
@@ -208,24 +187,19 @@ int Timer::get_gone() const
 {
   if (time == 0)
   {
-    return 0; // If the timer is not running, no time has gone by.
+    return 0;
   }
   return get_current_ticks() - time;
 }
 
 /**
- * Saves the timer's current state to a file for use in savegames.
+ * Saves the timer's current state to a file.
  * @param fi The file pointer to write to.
  */
 void Timer::fwrite(FILE* fi) const
 {
-  // It is unsafe to save the absolute 'time' timestamp, as it would be invalid
-  // when the game is loaded later. Instead, we save the amount of time that
-  // has already passed ('diff_ticks').
   Uint32 diff_ticks = (time != 0) ? (get_current_ticks() - time) : 0;
-
-  // We must also save whether the timer uses the pausable clock or the real-time clock.
-  Uint32 tick_mode = use_st_ticks ? 1 : 0;
+  Uint32 tick_mode = use_game_ticks ? 1 : 0;
 
   ::fwrite(&period, sizeof(Uint32), 1, fi);
   ::fwrite(&diff_ticks, sizeof(Uint32), 1, fi);
@@ -233,7 +207,7 @@ void Timer::fwrite(FILE* fi) const
 }
 
 /**
- * Loads the timer's state from a file, correctly resuming its countdown.
+ * Loads the timer's state from a file.
  * @param fi The file pointer to read from.
  */
 void Timer::fread(FILE* fi)
@@ -245,10 +219,8 @@ void Timer::fread(FILE* fi)
   ::fread(&diff_ticks, sizeof(Uint32), 1, fi);
   ::fread(&tick_mode, sizeof(Uint32), 1, fi);
 
-  use_st_ticks = (tick_mode != 0);
+  use_game_ticks = (tick_mode != 0);
 
-  // To correctly resume the timer, we reconstruct the original start 'time'
-  // by taking the current time and subtracting the elapsed time that was saved.
   if (diff_ticks != 0)
   {
     time = get_current_ticks() - diff_ticks;

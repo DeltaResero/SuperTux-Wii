@@ -32,6 +32,7 @@
 #include "worldmap.h"
 #include "resources.h"
 #include "level.h"
+#include "timer.h"
 
 #define DISPLAY_MAP_MESSAGE_TIME 2800
 
@@ -1311,7 +1312,7 @@ void WorldMap::display()
   unsigned int last_update_time;
   unsigned int update_time;
 
-  last_update_time = update_time = st_get_ticks();
+  last_update_time = update_time = Ticks::get();
 
   while (!quit)
   {
@@ -1325,7 +1326,7 @@ void WorldMap::display()
     }
 
     last_update_time = update_time;
-    update_time = st_get_ticks();
+    update_time = Ticks::get();
 
     Point tux_pos = tux->get_pos();
     if (1)

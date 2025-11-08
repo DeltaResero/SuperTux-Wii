@@ -382,7 +382,7 @@ void title(void)
 
   walking = true;
 
-  st_pause_ticks_init();
+  Ticks::pause_init();
 
   // Create the demo session
   createDemo();
@@ -428,7 +428,7 @@ void title(void)
 
   // Set the frame counter and start the random timer
   frame = 0;
-  update_time = st_get_ticks();
+  update_time = Ticks::get();
   random_timer.start(rand() % 2000 + 2000);
 
   // Set the current menu to the main menu
@@ -443,7 +443,7 @@ void title(void)
     // Check if too much time has passed since the last update
     if ((update_time - last_update_time) > 1000)
     {
-      update_time = last_update_time = st_get_ticks();
+      update_time = last_update_time = Ticks::get();
     }
 
     // Calculate the frame ratio for animation timing
@@ -569,7 +569,7 @@ void title(void)
           // reset tux
           scroll_x = 0;
           //titletux.level_begin();
-          update_time = st_get_ticks();
+          update_time = Ticks::get();
         }
       }
       else if (menu == contrib_menu)
@@ -590,7 +590,7 @@ void title(void)
 
     // Set the time of the last update and the time of the current update
     last_update_time = update_time;
-    update_time = st_get_ticks();
+    update_time = Ticks::get();
 
     // Pause the loop for a short duration
     frame++;

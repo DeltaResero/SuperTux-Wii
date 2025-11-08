@@ -24,14 +24,16 @@
 #include "SDL.h"
 #include <stdio.h>
 
-// Global variables used to track the total amount of time the game has been paused.
-extern Uint32 st_pause_ticks, st_pause_count;
-
-Uint32 st_get_ticks(void);
-void st_pause_ticks_init(void);
-void st_pause_ticks_start(void);
-void st_pause_ticks_stop(void);
-bool st_pause_ticks_started(void);
+class Ticks {
+public:
+  static Uint32 get(void);
+  static void pause_init(void);
+  static void pause_start(void);
+  static void pause_stop(void);
+  static bool pause_started(void);
+private:
+  static Uint32 pause_ticks, pause_count;
+};
 
 // A general-purpose timer for managing time-based events.
 class Timer
@@ -43,20 +45,20 @@ private:
   // The timestamp (in ticks) when the timer was started.
   Uint32 time;
 
-  // If true, the timer will pause along with the game (using st_get_ticks).
+  // If true, the timer will pause along with the game (using Ticks::get).
   // If false, it uses the raw SDL hardware timer and will not pause.
-  bool use_st_ticks;
+  bool use_game_ticks; // Renamed for clarity
 
   // An inline helper function to get the current time from the correct source.
   inline Uint32 get_current_ticks() const
   {
-    return use_st_ticks ? st_get_ticks() : SDL_GetTicks();
+    return use_game_ticks ? Ticks::get() : SDL_GetTicks();
   }
 
 public:
   Timer();
 
-  void init(bool st_ticks);
+  void init(bool game_ticks);
   void start(Uint32 period);
   void stop();
 
