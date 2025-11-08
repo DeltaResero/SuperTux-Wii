@@ -34,6 +34,7 @@ class Sprite
   int y_hotspot;                 // Y coordinate of the hotspot
   float fps;                     // Frames per second for animation
   float frame_delay;             // Frame duration in seconds
+  int m_frame_delay_ms;        // Frame duration in milliseconds
   float time;                    // Time elapsed for current animation
   std::vector<Surface*> surfaces; // Surfaces representing sprite frames
 

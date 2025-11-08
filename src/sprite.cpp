@@ -51,6 +51,7 @@ Sprite::Sprite(lisp_object_t* cur)
   }
 
   frame_delay = 1000.0f / fps;
+  m_frame_delay_ms = static_cast<int>(frame_delay);
 }
 
 /**
@@ -74,6 +75,7 @@ void Sprite::init_defaults()
   fps = 10;
   time = 0;
   frame_delay = 1000.0f / fps;
+  m_frame_delay_ms = static_cast<int>(frame_delay);
 }
 
 /**
@@ -137,8 +139,19 @@ void Sprite::reset()
  */
 int Sprite::get_current_frame() const
 {
-  unsigned int frame = static_cast<int>(std::fmod(time, surfaces.size() * frame_delay) / frame_delay);
-  return frame % surfaces.size();
+  // Ensure we don't divide by zero if a sprite has no frames or no delay
+  if (surfaces.empty() || m_frame_delay_ms <= 0) {
+    return 0;
+  }
+
+  int total_duration_ms = surfaces.size() * m_frame_delay_ms;
+  if (total_duration_ms <= 0) {
+      return 0;
+  }
+
+  // Use fast integer-only math
+  int current_time_in_cycle = static_cast<unsigned int>(time) % total_duration_ms;
+  return current_time_in_cycle / m_frame_delay_ms;
 }
 
 /**
