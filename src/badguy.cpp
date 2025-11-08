@@ -1276,6 +1276,14 @@ void BadGuy::collision(void* p_c_object, int c_object, CollisionType type)
       // When enemies run into each other, make them change directions
       else
       {
+        // If the other bad guy is a kicked ice block, we are the one being hit.
+        // We do nothing and let the ice block's collision handler take care of it.
+        // This prevents us from turning around just before we get killed.
+        if (pbad_c->kind == BAD_MRICEBLOCK && pbad_c->mode == KICK)
+        {
+          return;
+        }
+
         // Jumpy, fish, flame, stalactites are exceptions
         if (pbad_c->kind == BAD_JUMPY || pbad_c->kind == BAD_FLAME || pbad_c->kind == BAD_STALACTITE || pbad_c->kind == BAD_FISH)
           break;
