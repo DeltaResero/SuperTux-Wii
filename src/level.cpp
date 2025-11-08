@@ -21,6 +21,7 @@
 #include <map>
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include "globals.h"
 #include "setup.h"
 #include "screen.h"
@@ -961,6 +962,48 @@ void Level::draw_bg()
   {
     drawgradient(bkgd_top, bkgd_bottom);
   }
+}
+
+/**
+ * A lightweight "peek" function that reads just enough of a level file
+ * to extract its title, avoiding a full parse. This is much faster than
+ * loading the entire level just to display its name in a menu.
+ * @param level_filename The full path to the .stl file.
+ * @return The title of the level.
+ */
+std::string Level::get_level_title_fast(const std::string& level_filename)
+{
+  std::ifstream file(level_filename);
+  if (!file.is_open())
+  {
+    return "Invalid Level";
+  }
+
+  std::string line;
+  // Search only the first 20 lines for performance. The name
+  // is always in the properties section near the top.
+  for (int i = 0; i < 20 && std::getline(file, line); ++i)
+  {
+    // Find the line containing "(name"
+    size_t pos = line.find("(name");
+    if (pos != std::string::npos)
+    {
+      // Find the first quote after "(name"
+      size_t start_quote = line.find('"', pos);
+      if (start_quote != std::string::npos)
+      {
+        // Find the second quote that closes the string
+        size_t end_quote = line.find('"', start_quote + 1);
+        if (end_quote != std::string::npos)
+        {
+          // We found the title! Extract it and return immediately.
+          return line.substr(start_quote + 1, end_quote - start_quote - 1);
+        }
+      }
+    }
+  }
+
+  return "Untitled Level"; // Fallback title
 }
 
 // EOF

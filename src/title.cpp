@@ -257,10 +257,16 @@ void check_contrib_menu()
 
     for (int i = 0; i < subset.levels; ++i)
     {
-      // This is still slow as it loads the full level just for the name.
-      Level level;
-      level.load(subset.name, i + 1);
-      contrib_subset_menu->additem(MN_ACTION, level.name, 0, nullptr, i + 1);
+      // Construct the level filename, checking both st_dir and datadir
+      std::string level_path = (fs::path(st_dir) / "levels" / subset.name / ("level" + std::to_string(i + 1) + ".stl")).string();
+      if (!faccessible(level_path.c_str()))
+      {
+        level_path = (fs::path(datadir) / "levels" / subset.name / ("level" + std::to_string(i + 1) + ".stl")).string();
+      }
+
+      // Use the new fast function to get the title
+      std::string level_title = Level::get_level_title_fast(level_path);
+      contrib_subset_menu->additem(MN_ACTION, level_title, 0, nullptr, i + 1);
     }
 
     contrib_subset_menu->additem(MN_HL, "", 0, nullptr);

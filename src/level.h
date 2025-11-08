@@ -111,6 +111,9 @@ public:
   unsigned int get_tile_at(int x, int y) const;
   void draw_bg();
 
+  // A lightweight "peek" function to read just the title from a level file.
+  static std::string get_level_title_fast(const std::string& level_filename);
+
 private:
   MusicRef level_song;
   MusicRef level_song_fast;

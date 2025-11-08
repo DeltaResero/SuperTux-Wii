@@ -31,6 +31,7 @@
 #include "setup.h"
 #include "worldmap.h"
 #include "resources.h"
+#include "level.h"
 
 #define DISPLAY_MAP_MESSAGE_TIME 2800
 
@@ -684,33 +685,12 @@ void WorldMap::get_level_title(Levels::pointer level)
   /** Get level's title */
   level->title = "<no title>";
 
-  FILE* fi;
-  lisp_object_t* root_obj = 0;
-  fi = fopen((datadir + "/levels/" + level->name).c_str(), "r");
-  if (fi == NULL)
-  {
-    perror((datadir + "/levels/" + level->name).c_str());
-    return;
-  }
+  // Construct the full path to the level file.
+  std::string level_path = datadir + "/levels/" + level->name;
 
-  lisp_stream_t stream;
-  lisp_stream_init_file(&stream, fi);
-  root_obj = lisp_read(&stream);
-
-  if (root_obj->type == LISP_TYPE_EOF || root_obj->type == LISP_TYPE_PARSE_ERROR)
-  {
-    printf("World: Parse Error in file %s", level->name.c_str());
-  }
-
-  if (strcmp(lisp_symbol(lisp_car(root_obj)), "supertux-level") == 0)
-  {
-    LispReader reader(lisp_cdr(root_obj));
-    reader.read_string("name", &level->title);
-  }
-
-  fclose(fi);
+  // Use the fast title reader instead of parsing the whole file.
+  level->title = ::Level::get_level_title_fast(level_path);
 }
-
 /**
  * Handles pressing the Escape key to show or hide the menu.
  */
