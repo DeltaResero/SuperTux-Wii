@@ -37,6 +37,11 @@ struct Color
   Color() : red(0), green(0), blue(0) {}
   Color(int red_, int green_, int blue_) : red(red_), green(green_), blue(blue_) {}
 
+  bool operator==(const Color& other) const
+  {
+    return red == other.red && green == other.green && blue == other.blue;
+  }
+
   int red, green, blue;
 };
 

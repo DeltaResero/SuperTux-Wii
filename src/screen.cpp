@@ -165,14 +165,21 @@ void drawgradient(Color top_clr, Color bot_clr)
     return;
   }
 #endif
-  for (float y = 0; y < 480; y += 2)
+  // If colors are the same, draw a single solid rectangle.
+  if (top_clr == bot_clr)
   {
-    // Linear interpolation to calculate the color at each line
-    fillrect(0, static_cast<int>(y), 640, 2,
-             static_cast<int>(((top_clr.red - bot_clr.red) / -480.0f) * y + top_clr.red),
-             static_cast<int>(((top_clr.green - bot_clr.green) / -480.0f) * y + top_clr.green),
-             static_cast<int>(((top_clr.blue - bot_clr.blue) / -480.0f) * y + top_clr.blue),
-             255);
+    fillrect(0, 0, 640, 480, top_clr.red, top_clr.green, top_clr.blue, 255);
+  }
+  else // Otherwise, draw the gradient line by line.
+  {
+    for (float y = 0; y < 480; y += 2)
+    {
+      // Linear interpolation to calculate the color at each line
+      fillrect(0, static_cast<int>(y), 640, 2,
+               static_cast<int>(((top_clr.red - bot_clr.red) / -480.0f) * y + top_clr.red),
+               static_cast<int>(((top_clr.green - bot_clr.green) / -480.0f) * y + top_clr.green),
+               static_cast<int>(((top_clr.blue - bot_clr.blue) / -480.0f) * y + top_clr.blue), 255);
+    }
   }
 }
 
