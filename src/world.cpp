@@ -379,83 +379,128 @@ void World::action(float elapsed_time)
 
   // Clean up all removable objects
   // All cleanup now happens at the very end of the frame, using safe backward iteration.
-  for (int i = bouncy_distros.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < bouncy_distros.size(); )
   {
     if (bouncy_distros[i]->removable)
     {
       delete bouncy_distros[i];
-      bouncy_distros.erase(bouncy_distros.begin() + i);
+      bouncy_distros[i] = bouncy_distros.back();
+      bouncy_distros.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
-  for (int i = broken_bricks.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < broken_bricks.size(); )
   {
     if (broken_bricks[i]->removable)
     {
       delete broken_bricks[i];
-      broken_bricks.erase(broken_bricks.begin() + i);
+      broken_bricks[i] = broken_bricks.back();
+      broken_bricks.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
-  for (int i = bouncy_bricks.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < bouncy_bricks.size(); )
   {
     if (bouncy_bricks[i]->removable)
     {
       delete bouncy_bricks[i];
-      bouncy_bricks.erase(bouncy_bricks.begin() + i);
+      bouncy_bricks[i] = bouncy_bricks.back();
+      bouncy_bricks.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
-  for (int i = floating_scores.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < floating_scores.size(); )
   {
     if (floating_scores[i]->removable)
     {
       delete floating_scores[i];
-      floating_scores.erase(floating_scores.begin() + i);
+      floating_scores[i] = floating_scores.back();
+      floating_scores.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
-  for (int i = bullets.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < bullets.size(); )
   {
     if (bullets[i].removable)
     {
-      bullets.erase(bullets.begin() + i);
+      bullets[i] = bullets.back();
+      bullets.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
-  for (int i = upgrades.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < upgrades.size(); )
   {
     if (upgrades[i].removable)
     {
-      upgrades.erase(upgrades.begin() + i);
+      upgrades[i] = upgrades.back();
+      upgrades.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
   // Use the same safe backward loop for bad_guys.
-  for (int i = bad_guys.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < bad_guys.size(); )
   {
     if (bad_guys[i]->is_removable())
     {
       delete bad_guys[i];
-      bad_guys.erase(bad_guys.begin() + i);
+      bad_guys[i] = bad_guys.back();
+      bad_guys.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
   // Also clean up the collision lists.
   // We don't need to delete the objects here, just remove the pointers.
-  for (int i = normal_colliders.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < normal_colliders.size(); )
   {
     if (normal_colliders[i]->is_removable())
     {
-      normal_colliders.erase(normal_colliders.begin() + i);
+      normal_colliders[i] = normal_colliders.back();
+      normal_colliders.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 
-  for (int i = special_colliders.size() - 1; i >= 0; --i)
+  for (size_t i = 0; i < special_colliders.size(); )
   {
     if (special_colliders[i]->is_removable())
     {
-      special_colliders.erase(special_colliders.begin() + i);
+      special_colliders[i] = special_colliders.back();
+      special_colliders.pop_back();
+    }
+    else
+    {
+      ++i;
     }
   }
 }
