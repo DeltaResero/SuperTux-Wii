@@ -53,6 +53,7 @@ std::string badguykind_to_string(BadGuyKind kind);
 void load_badguy_gfx();
 
 class Player;
+class SpriteBatcher;
 
 /* Badguy type: */
 class BadGuy : public GameObject
@@ -106,7 +107,8 @@ public:
   BadGuy(float x, float y, BadGuyKind kind, bool stay_on_platform);
 
   void action(double frame_ratio);
-  void draw();
+  void draw() override;
+  void draw(SpriteBatcher* batcher);
   std::string type() { return "BadGuy"; };
 
   void explode(BadGuy* badguy);

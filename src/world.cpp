@@ -33,6 +33,7 @@
 #include "level.h"
 #include "tile.h"
 #include "resources.h"
+#include "sprite_batcher.h"
 
 World* World::current_ = 0;
 
@@ -55,6 +56,7 @@ World::World(const std::string& filename)
   apply_bonuses();
 
   scrolling_timer.init(true);
+  m_spriteBatcher = new SpriteBatcher();
 }
 
 World::World(const std::string& subset, int level_nr)
@@ -75,6 +77,7 @@ World::World(const std::string& subset, int level_nr)
   apply_bonuses();
 
   scrolling_timer.init(true);
+  m_spriteBatcher = new SpriteBatcher();
 }
 
 void World::apply_bonuses()
@@ -103,6 +106,7 @@ World::~World()
   deactivate_world();
 
   delete level;
+  delete m_spriteBatcher;
 }
 
 void World::activate_world()
@@ -208,10 +212,11 @@ void World::draw()
   }
 
   int current_width = level->width;
+
   // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
   int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f)) - 12;
 
-  /* Draw background: */
+  /* Draw background tiles: */
   for (y = 0; y < 15; ++y)
   {
     // Loop 34 times to cover the screen plus the wide buffer.
@@ -263,45 +268,53 @@ void World::draw()
     }
   }
 
-  /* (Bouncy bricks): */
+  // Single unified rendering loop - works for both SDL and OpenGL!
+  SpriteBatcher* batcher = use_gl ? m_spriteBatcher : nullptr;
+
   for (unsigned int i = 0; i < bouncy_bricks.size(); ++i)
   {
-    bouncy_bricks[i]->draw();
+    bouncy_bricks[i]->draw(batcher);
   }
 
   for (auto* badguy : bad_guys)
   {
-    badguy->draw();
+    badguy->draw(batcher);
   }
 
-  tux.draw();
+  tux.draw(batcher);
 
   for (unsigned int i = 0; i < bullets.size(); ++i)
   {
-    bullets[i].draw();
-  }
-
-  for (unsigned int i = 0; i < floating_scores.size(); ++i)
-  {
-    floating_scores[i]->draw();
+    bullets[i].draw(batcher);
   }
 
   for (unsigned int i = 0; i < upgrades.size(); ++i)
   {
-    upgrades[i].draw();
+    upgrades[i].draw(batcher);
   }
 
   for (unsigned int i = 0; i < bouncy_distros.size(); ++i)
   {
-    bouncy_distros[i]->draw();
+    bouncy_distros[i]->draw(batcher);
   }
 
   for (unsigned int i = 0; i < broken_bricks.size(); ++i)
   {
-    broken_bricks[i]->draw();
+    broken_bricks[i]->draw(batcher);
   }
 
-  /* Draw foreground: */
+  // Flush if using OpenGL
+  if (use_gl)
+  {
+    m_spriteBatcher->flush();
+  }
+
+  for (unsigned int i = 0; i < floating_scores.size(); ++i)
+  {
+    floating_scores[i]->draw(batcher);
+  }
+
+  /* Draw foreground tiles: */
   for (y = 0; y < 15; ++y)
   {
     // Loop 34 times to cover the screen plus the wide buffer.
@@ -311,7 +324,6 @@ void World::draw()
       if (map_tile_x >= 0 && map_tile_x < current_width)
       {
         float tile_world_x = map_tile_x * 32.0f;
-
         unsigned int fg_tile_id = level->fg_tiles[y * current_width + map_tile_x];
         Tile::draw(tile_world_x - scroll_x, y * 32.0f, fg_tile_id);
       }

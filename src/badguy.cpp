@@ -36,6 +36,7 @@
 #include "resources.h"
 #include "utils.h"
 #include "sprite_manager.h"
+#include "sprite_batcher.h"
 
 // Define bad guy sprites globally
 Sprite* img_mriceblock_flat_left;
@@ -939,10 +940,18 @@ void BadGuy::action(double frame_ratio)
 }
 
 /**
- * Draws the bad guy on the screen.
- * Ensures that the bad guy is only drawn if it is within the visible area of the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void BadGuy::draw()
+{
+  draw(nullptr);
+}
+
+/**
+ * Draws the bad guy on the screen.
+ * @param batcher Optional SpriteBatcher for OpenGL rendering. If nullptr, uses SDL.
+ */
+void BadGuy::draw(SpriteBatcher* batcher)
 {
   // Don't try to draw stuff that is outside of the screen
   if (base.x <= scroll_x - base.width || base.x >= scroll_x + screen->w)
@@ -952,7 +961,11 @@ void BadGuy::draw()
     return;
 
   Sprite* sprite = (dir == LEFT) ? sprite_left : sprite_right;
-  sprite->draw(base.x, base.y);
+
+  if (batcher)
+    sprite->draw(*batcher, base.x, base.y);
+  else
+    sprite->draw(base.x, base.y);
 
   if (debug_mode)
     fillrect(base.x, base.y, base.width, base.height, 75, 0, 75, 150);

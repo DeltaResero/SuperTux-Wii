@@ -30,6 +30,7 @@
 #include "player.h"
 #include "sprite_manager.h"
 #include "resources.h"
+#include "sprite_batcher.h"
 
 Sprite* img_bullet;
 Sprite* img_star;
@@ -116,14 +117,28 @@ void Bullet::action(double frame_ratio)
 }
 
 /**
- * Draws the bullet on the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void Bullet::draw()
 {
-  if (base.x >= scroll_x - base.width &&
-      base.x <= scroll_x + screen->w)
+  draw(nullptr);
+}
+
+/**
+ * Draws the bullet on the screen.
+ */
+void Bullet::draw(SpriteBatcher* batcher)
+{
+  if (base.x >= scroll_x - base.width && base.x <= scroll_x + screen->w)
   {
-    img_bullet->draw(base.x, base.y);
+    if (batcher)
+    {
+      img_bullet->draw(*batcher, base.x, base.y);
+    }
+    else
+    {
+      img_bullet->draw(base.x, base.y);
+    }
   }
 }
 
@@ -269,53 +284,61 @@ void Upgrade::action(double frame_ratio)
 }
 
 /**
- * Draws the upgrade on the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void Upgrade::draw()
 {
-  SDL_Rect dest;
+  draw(nullptr);
+}
+
+/**
+ * Draws the upgrade on the screen.
+ */
+void Upgrade::draw(SpriteBatcher* batcher)
+{
+  Sprite* sprite_to_draw = nullptr;
+  if (kind == UPGRADE_GROWUP)
+  {
+    sprite_to_draw = img_growup;
+  }
+  else if (kind == UPGRADE_ICEFLOWER)
+  {
+    sprite_to_draw = img_iceflower;
+  }
+  else if (kind == UPGRADE_HERRING)
+  {
+    sprite_to_draw = img_star;
+  }
+  else if (kind == UPGRADE_1UP)
+  {
+    sprite_to_draw = img_1up;
+  }
+
+  if (!sprite_to_draw)
+  {
+    return;
+  }
+
   if (base.height < 32)
   {
-    /* Rising up... */
-    dest.x = (int)(base.x - scroll_x);
-    dest.y = (int)(base.y + 32 - base.height);
-    dest.w = 32;
-    dest.h = (int)base.height;
-
-    if (kind == UPGRADE_GROWUP)
+    if (batcher)
     {
-      img_growup->draw_part(0, 0, dest.x, dest.y, dest.w, dest.h);
+      sprite_to_draw->draw_part(*batcher, 0, 0, base.x, base.y + 32 - base.height, 32, base.height);
     }
-    else if (kind == UPGRADE_ICEFLOWER)
+    else
     {
-      img_iceflower->draw_part(0, 0, dest.x, dest.y, dest.w, dest.h);
-    }
-    else if (kind == UPGRADE_HERRING)
-    {
-      img_star->draw_part(0, 0, dest.x, dest.y, dest.w, dest.h);
-    }
-    else if (kind == UPGRADE_1UP)
-    {
-      img_1up->draw_part(0, 0, dest.x, dest.y, dest.w, dest.h);
+      sprite_to_draw->draw_part(0, 0, base.x - scroll_x, base.y + 32 - base.height, 32, base.height);
     }
   }
   else
   {
-    if (kind == UPGRADE_GROWUP)
+    if (batcher)
     {
-      img_growup->draw(base.x, base.y);
+      sprite_to_draw->draw(*batcher, base.x, base.y);
     }
-    else if (kind == UPGRADE_ICEFLOWER)
+    else
     {
-      img_iceflower->draw(base.x, base.y);
-    }
-    else if (kind == UPGRADE_HERRING)
-    {
-      img_star->draw(base.x, base.y);
-    }
-    else if (kind == UPGRADE_1UP)
-    {
-      img_1up->draw(base.x, base.y);
+      sprite_to_draw->draw(base.x, base.y);
     }
   }
 }

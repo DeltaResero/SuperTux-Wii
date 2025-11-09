@@ -26,6 +26,7 @@
 #include "tile.h"
 #include "sprite.h"
 #include "screen.h"
+#include "sprite_batcher.h"
 
 #define AUTOSCROLL_DEAD_INTERVAL 300
 
@@ -593,87 +594,110 @@ void Player::grabdistros()
 }
 
 /**
- * Draws the player sprite on the screen.
+ * Helper function to select the appropriate sprite based on player state.
+ */
+Sprite* Player::select_sprite(PlayerSprite* sprite_set)
+{
+  if (duck && size != SMALL)
+  {
+    return (dir == RIGHT) ? sprite_set->duck_right : sprite_set->duck_left;
+  }
+  else if (skidding_timer.started())
+  {
+    return (dir == RIGHT) ? sprite_set->skid_right : sprite_set->skid_left;
+  }
+  else if (kick_timer.started())
+  {
+    return (dir == RIGHT) ? sprite_set->kick_right : sprite_set->kick_left;
+  }
+  else if (physic.get_velocity_y() != 0)
+  {
+    return (dir == RIGHT) ? sprite_set->jump_right : sprite_set->jump_left;
+  }
+  else if (fabsf(physic.get_velocity_x()) < 1.0f)
+  {
+    return (dir == RIGHT) ? sprite_set->stand_right : sprite_set->stand_left;
+  }
+  else
+  {
+    return (dir == RIGHT) ? sprite_set->walk_right : sprite_set->walk_left;
+  }
+}
+
+/**
+ * Implements the pure virtual draw() from GameObject.
  */
 void Player::draw()
 {
-  // Only draw if not invisible from taking damage
+  draw(nullptr);
+}
+
+/**
+ * Draws the player sprite on the screen.
+ * @param batcher Optional SpriteBatcher for OpenGL rendering. If nullptr, uses SDL.
+ */
+void Player::draw(SpriteBatcher* batcher)
+{
   if (!safe_timer.started() || (global_frame_counter % 2) == 0)
   {
     if (dying == DYING_SQUISHED)
     {
-      smalltux_gameover->draw(base.x, base.y);
+      if (batcher)
+      {
+        smalltux_gameover->draw(*batcher, base.x, base.y);
+      }
+      else
+      {
+        smalltux_gameover->draw(base.x, base.y);
+      }
     }
     else
     {
-      PlayerSprite* sprite = nullptr;
+      PlayerSprite* sprite_set = (size == SMALL) ? &smalltux : (got_coffee ? &firetux : &largetux);
+      Sprite* sprite_to_draw = select_sprite(sprite_set);
 
-      if (size == SMALL)
+      // Draw main body sprite
+      if (sprite_to_draw)
       {
-        sprite = &smalltux;
-      }
-      else if (got_coffee)
-      {
-        sprite = &firetux;
-      }
-      else
-      {
-        sprite = &largetux;
-      }
-
-      // Select the correct sprite based on player's current action
-      if (duck && size != SMALL)
-      {
-        if (dir == RIGHT) sprite->duck_right->draw(base.x, base.y);
-        else sprite->duck_left->draw(base.x, base.y);
-      }
-      else if (skidding_timer.started())
-      {
-        if (dir == RIGHT) sprite->skid_right->draw(base.x, base.y);
-        else sprite->skid_left->draw(base.x, base.y);
-      }
-      else if (kick_timer.started())
-      {
-        if (dir == RIGHT) sprite->kick_right->draw(base.x, base.y);
-        else sprite->kick_left->draw(base.x, base.y);
-      }
-      else if (physic.get_velocity_y() != 0)
-      {
-        if (dir == RIGHT) sprite->jump_right->draw(base.x, base.y);
-        else sprite->jump_left->draw(base.x, base.y);
-      }
-      else
-      {
-        if (fabsf(physic.get_velocity_x()) < 1.0f) // Standing still
+        if (batcher)
         {
-          if (dir == RIGHT) sprite->stand_right->draw(base.x, base.y);
-          else sprite->stand_left->draw(base.x, base.y);
+          sprite_to_draw->draw(*batcher, base.x, base.y);
         }
-        else // Moving
+        else
         {
-          if (dir == RIGHT) sprite->walk_right->draw(base.x, base.y);
-          else sprite->walk_left->draw(base.x, base.y);
+          sprite_to_draw->draw(base.x, base.y);
         }
       }
 
       // Draw arm overlay if holding an object
       if (holding_something && physic.get_velocity_y() == 0 && !duck)
       {
-        if (dir == RIGHT) sprite->grab_right->draw(base.x, base.y);
-        else sprite->grab_left->draw(base.x, base.y);
+        Sprite* grab_sprite = (dir == RIGHT) ? sprite_set->grab_right : sprite_set->grab_left;
+        if (grab_sprite)
+        {
+          if (batcher)
+          {
+            grab_sprite->draw(*batcher, base.x, base.y);
+          }
+          else
+          {
+            grab_sprite->draw(base.x, base.y);
+          }
+        }
       }
 
       // Draw blinking star overlay when invincible
       if (invincible_timer.started() &&
-        (invincible_timer.get_left() > TUX_INVINCIBLE_TIME_WARNING || global_frame_counter % 3))
+         (invincible_timer.get_left() > TUX_INVINCIBLE_TIME_WARNING || global_frame_counter % 3))
       {
-        if (size == SMALL || duck)
+        Sprite* star_sprite = (size == SMALL || duck) ? smalltux_star : largetux_star;
+        if (batcher)
         {
-          smalltux_star->draw(base.x, base.y);
+          star_sprite->draw(*batcher, base.x, base.y);
         }
         else
         {
-          largetux_star->draw(base.x, base.y);
+          star_sprite->draw(base.x, base.y);
         }
       }
     }

@@ -73,6 +73,7 @@ void player_input_init(player_input_type* pplayer_input);
 // Forward declarations for classes
 class Sprite;
 class BadGuy;
+class SpriteBatcher;
 
 // External declarations for globally used player sprites
 extern Surface* tux_life;
@@ -141,7 +142,8 @@ public:
   void action(double frame_ratio);          // Main update function, called once per frame
   void handle_input();                      // Main input handler, dispatches to sub-handlers
   void grabdistros();                       // Checks for and collects distros (coins)
-  void draw();                              // Draws the player sprite
+  void draw() override;                     // Overrides pure virtual from GameObject
+  void draw(SpriteBatcher* batcher);        // Draws the player sprite (unified for SDL/OpenGL)
   void collision(void* p_c_object, int c_object); // Handles collisions with other objects
   void kill(HurtMode mode);                 // Kills or shrinks the player
   void is_dying();                          // Resets the player's dying state
@@ -158,6 +160,7 @@ private:
   void handle_horizontal_input();           // Handles left/right input.
   void handle_vertical_input();             // Handles jump/duck input.
   void remove_powerups();                   // Internal implementation for removing powerups.
+  Sprite* select_sprite(PlayerSprite* sprite_set); // Helper to select appropriate sprite
 };
 
 #endif /*SUPERTUX_PLAYER_H*/

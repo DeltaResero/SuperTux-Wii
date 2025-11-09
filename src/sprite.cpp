@@ -22,6 +22,7 @@
 #include "globals.h"
 #include "sprite.h"
 #include "setup.h"
+#include "sprite_batcher.h"
 
 /**
  * Constructs a Sprite object.
@@ -90,7 +91,7 @@ void Sprite::update(float /*delta*/)
 }
 
 /**
- * Draws the sprite at the specified coordinates.
+ * Draws the sprite at the specified coordinates. (SDL Path)
  * The sprite is drawn based on the current frame, adjusted by the hotspot coordinates.
  * @param x The x-coordinate to draw the sprite.
  * @param y The y-coordinate to draw the sprite.
@@ -105,7 +106,24 @@ void Sprite::draw(float x, float y)
 }
 
 /**
- * Draws a portion of the sprite at the specified coordinates.
+ * Adds the sprite to the batch for drawing. (OpenGL Path)
+ * @param batcher The SpriteBatcher to add the sprite data to.
+ * @param x The x-coordinate to draw the sprite.
+ * @param y The y-coordinate to draw the sprite.
+ */
+void Sprite::draw(SpriteBatcher& batcher, float x, float y)
+{
+  time = SDL_GetTicks();
+  unsigned int frame = get_current_frame();
+
+  if (frame < surfaces.size())
+  {
+    batcher.add(surfaces[frame], x, y, x_hotspot, y_hotspot);
+  }
+}
+
+/**
+ * Draws a portion of the sprite at the specified coordinates. (SDL Path)
  * This function draws a specific part of the sprite, useful for animations or spritesheets.
  * @param sx The source x-coordinate within the sprite.
  * @param sy The source y-coordinate within the sprite.
@@ -121,6 +139,27 @@ void Sprite::draw_part(float sx, float sy, float x, float y, float w, float h)
 
   if (frame < surfaces.size())
     surfaces[frame]->draw_part(sx, sy, x - x_hotspot, y - y_hotspot, w, h);
+}
+
+/**
+ * Adds a portion of the sprite to the batch for drawing. (OpenGL Path)
+ * @param batcher The SpriteBatcher to add the sprite data to.
+ * @param sx The source x-coordinate within the sprite.
+ * @param sy The source y-coordinate within the sprite.
+ * @param x The destination x-coordinate to draw the sprite.
+ * @param y The destination y-coordinate to draw the sprite.
+ * @param w The width of the portion to draw.
+ * @param h The height of the portion to draw.
+ */
+void Sprite::draw_part(SpriteBatcher& batcher, float sx, float sy, float x, float y, float w, float h)
+{
+  time = SDL_GetTicks();
+  unsigned int frame = get_current_frame();
+
+  if (frame < surfaces.size())
+  {
+    batcher.add_part(surfaces[frame], sx, sy, x, y, w, h, x_hotspot, y_hotspot);
+  }
 }
 
 /**

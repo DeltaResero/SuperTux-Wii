@@ -32,6 +32,7 @@
 #include "gameobjs.h"
 
 class Level;
+class SpriteBatcher;
 
 /** The World class holds a level and all the game objects (badguys,
     bouncy distros, etc) that are needed to run a game. */
@@ -50,6 +51,7 @@ private:
   int currentmusic;
 
   static World* current_;
+  SpriteBatcher* m_spriteBatcher;
 public:
   BadGuys bad_guys;
   BadGuys normal_colliders;

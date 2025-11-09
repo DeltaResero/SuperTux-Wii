@@ -26,6 +26,7 @@
 #include "tile.h"
 #include "gameloop.h"
 #include "gameobjs.h"
+#include "sprite_batcher.h"
 
 /**
  * Initializes a BouncyDistro object.
@@ -56,11 +57,22 @@ void BouncyDistro::action(double frame_ratio)
 }
 
 /**
- * Draws the BouncyDistro on the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void BouncyDistro::draw()
 {
-  img_distro[0]->draw(base.x - scroll_x, base.y);
+  draw(nullptr);
+}
+
+/**
+ * Draws the BouncyDistro on the screen.
+ */
+void BouncyDistro::draw(SpriteBatcher* batcher)
+{
+  if (batcher)
+    batcher->add(img_distro[0], base.x, base.y, 0, 0);
+  else
+    img_distro[0]->draw(base.x - scroll_x, base.y);
 }
 
 /**
@@ -105,24 +117,38 @@ void BrokenBrick::action(double frame_ratio)
 }
 
 /**
- * Draws the BrokenBrick on the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void BrokenBrick::draw()
 {
-  SDL_Rect src, dest;
-  src.x = random_offset_x; // Use cached value for x offset
-  src.y = random_offset_y; // Use cached value for y offset
-  src.w = 16;
-  src.h = 16;
+  draw(nullptr);
+}
 
-  dest.x = static_cast<int>(base.x - scroll_x);
-  dest.y = static_cast<int>(base.y);
-  dest.w = 16;
-  dest.h = 16;
-
+/**
+ * Draws the BrokenBrick on the screen.
+ */
+void BrokenBrick::draw(SpriteBatcher* batcher)
+{
   if (!tile->images.empty())
   {
-    tile->images[0]->draw_part(src.x, src.y, dest.x, dest.y, dest.w, dest.h);
+    if (batcher)
+    {
+      batcher->add_part(tile->images[0], random_offset_x, random_offset_y,
+                        base.x, base.y, 16, 16, 0, 0);
+    }
+    else
+    {
+      SDL_Rect src, dest;
+      src.x = random_offset_x; // Use cached value for x offset
+      src.y = random_offset_y; // Use cached value for y offset
+      src.w = 16;
+      src.h = 16;
+      dest.x = static_cast<int>(base.x - scroll_x);
+      dest.y = static_cast<int>(base.y);
+      dest.w = 16;
+      dest.h = 16;
+      tile->images[0]->draw_part(src.x, src.y, dest.x, dest.y, dest.w, dest.h);
+    }
   }
 }
 
@@ -163,11 +189,19 @@ void BouncyBrick::action(double frame_ratio)
 }
 
 /**
- * Draws the BouncyBrick on the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void BouncyBrick::draw()
 {
-  // Only draw if the brick is on screen.
+  draw(nullptr);
+}
+
+/**
+ * Draws the BouncyBrick on the screen.
+ */
+void BouncyBrick::draw(SpriteBatcher* batcher)
+{
+  // BouncyBrick uses Tile system - same for both paths
   if (base.x >= scroll_x - 32 && base.x <= scroll_x + screen->w)
   {
     // Simply draw the tile at its current animated position (No more erasing!)
@@ -207,10 +241,19 @@ void FloatingScore::action(double frame_ratio)
 }
 
 /**
- * Draws the FloatingScore on the screen.
+ * Implements the pure virtual draw() from GameObject.
  */
 void FloatingScore::draw()
 {
+  draw(nullptr);
+}
+
+/**
+ * Draws the FloatingScore on the screen.
+ */
+void FloatingScore::draw(SpriteBatcher* batcher)
+{
+  // FloatingScore uses Text system - same for both paths
   std::string score_str = std::to_string(value);
   // Apply the scroll offset at draw time, just like everything else.
   int x_pos = static_cast<int>(base.x - scroll_x + 16 - score_str.length() * 8);

@@ -25,6 +25,8 @@
 #include "lispreader.h"
 #include "texture.h"
 
+class SpriteBatcher;
+
 // Represents a 2D sprite with animation
 class Sprite
 {
@@ -51,8 +53,10 @@ class Sprite
   void reset();                  // Resets animation timer
   void update(float delta);      // Updates the animation
 
-  void draw(float x, float y);   // Draws the sprite at coordinates
-  void draw_part(float sx, float sy, float x, float y, float w, float h); // Draws part of the sprite
+  void draw(float x, float y);   // Draws the sprite at coordinates (SDL path)
+  void draw(SpriteBatcher& batcher, float x, float y); // Draws the sprite (OpenGL path)
+  void draw_part(float sx, float sy, float x, float y, float w, float h); // Draws part of the sprite (SDL path)
+  void draw_part(SpriteBatcher& batcher, float sx, float sy, float x, float y, float w, float h); // Draws part (OpenGL path)
 
   int get_current_frame() const; // Gets the current frame index
 

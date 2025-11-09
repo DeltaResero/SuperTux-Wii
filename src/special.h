@@ -37,6 +37,8 @@ enum UpgradeKind {
 
 void load_special_gfx();
 
+class SpriteBatcher;
+
 class Upgrade : public GameObject
 {
 public:
@@ -47,7 +49,8 @@ public:
 
   void init(float x, float y, Direction dir, UpgradeKind kind);
   void action(double frame_ratio);
-  void draw();
+  void draw() override;
+  void draw(SpriteBatcher* batcher);
   void collision(void* p_c_object, int c_object, CollisionType type);
   std::string type() { return "Upgrade"; };
 
@@ -64,7 +67,8 @@ class Bullet : public GameObject
 
   void init(float x, float y, float xm, Direction dir);
   void action(double frame_ratio);
-  void draw();
+  void draw() override;
+  void draw(SpriteBatcher* batcher);
   void collision(int c_object);
   std::string type() { return "Bullet"; };
 };

@@ -31,6 +31,8 @@
 #define NO_BOUNCE 0
 #define BOUNCE 1
 
+class SpriteBatcher;
+
 class BouncyDistro: public GameObject
 {
   public:
@@ -38,7 +40,8 @@ class BouncyDistro: public GameObject
 
     void init(float x, float y);
     void action(double frame_ratio);
-    void draw();
+    void draw() override;
+    void draw(SpriteBatcher* batcher);
     std::string type()
     {
       return "BouncyDistro";
@@ -65,7 +68,8 @@ class BrokenBrick: public GameObject
 
     void init(Tile* tile, float x, float y, float xm, float ym);
     void action(double frame_ratio);
-    void draw();
+    void draw() override;
+    void draw(SpriteBatcher* batcher);
     std::string type()
     {
       return "BrokenBrick";
@@ -82,7 +86,8 @@ class BouncyBrick: public GameObject
 
     void init(float x, float y);
     void action(double frame_ratio);
-    void draw();
+    void draw() override;
+    void draw(SpriteBatcher* batcher);
     std::string type()
     {
       return "BouncyBrick";
@@ -98,7 +103,8 @@ class FloatingScore: public GameObject
 
     void init(float x, float y, int s);
     void action(double frame_ratio);
-    void draw();
+    void draw() override;
+    void draw(SpriteBatcher* batcher);
     std::string type()
     {
       return "FloatingScore";

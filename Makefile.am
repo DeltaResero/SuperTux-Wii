@@ -48,6 +48,7 @@ if !ENABLE_WII
     src/resources.cpp src/resources.h \
     src/gameobjs.cpp src/gameobjs.h \
     src/sprite.cpp src/sprite.h \
+    src/sprite_batcher.cpp src/sprite_batcher.h \
     src/sprite_manager.cpp src/sprite_manager.h \
     src/music_manager.cpp src/music_manager.h \
     src/musicref.cpp src/musicref.h
