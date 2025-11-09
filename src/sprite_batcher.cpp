@@ -17,8 +17,11 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include "sprite_batcher.h"
 #include "globals.h"
+
+#ifndef NOOPENGL
+
+#include "sprite_batcher.h"
 
 /**
  * Constructs a new SpriteBatcher object.
@@ -150,5 +153,7 @@ void SpriteBatcher::flush()
 
   m_batches.clear();
 }
+
+#endif // NOOPENGL
 
 // EOF

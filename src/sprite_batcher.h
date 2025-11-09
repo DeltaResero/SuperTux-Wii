@@ -20,6 +20,8 @@
 #ifndef SUPERTUX_SPRITE_BATCHER_H
 #define SUPERTUX_SPRITE_BATCHER_H
 
+#ifndef NOOPENGL
+
 #include <vector>
 #include "texture.h"
 
@@ -55,6 +57,21 @@ private:
   // Sequential list of batches - preserves draw order!
   std::vector<SpriteBatch> m_batches;
 };
+
+#else // NOOPENGL is defined. Provide a dummy class for non-OpenGL builds.
+
+class Surface; // Forward declaration is sufficient here.
+
+class SpriteBatcher
+{
+public:
+  SpriteBatcher() {}
+  void add(Surface* , float , float , int , int ) {}
+  void add_part(Surface* , float , float , float , float , float , float , int , int ) {}
+  void flush() {}
+};
+
+#endif // NOOPENGL
 
 #endif // SUPERTUX_SPRITE_BATCHER_H
 
