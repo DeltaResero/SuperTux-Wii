@@ -20,10 +20,22 @@
 #include "sprite_batcher.h"
 #include "globals.h"
 
+/**
+ * Constructs a new SpriteBatcher object.
+ */
 SpriteBatcher::SpriteBatcher()
 {
 }
 
+/**
+ * Adds a complete sprite surface to the batch for rendering.
+ * This is a convenience wrapper around the add_part method.
+ * @param surface The Surface containing the texture to be drawn.
+ * @param x The destination world x-coordinate.
+ * @param y The destination world y-coordinate.
+ * @param x_hotspot The x-offset from the coordinates to the sprite's origin.
+ * @param y_hotspot The y-offset from the coordinates to the sprite's origin.
+ */
 void SpriteBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y_hotspot)
 {
   if (!surface)
@@ -31,46 +43,26 @@ void SpriteBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y
     return;
   }
 
-  SurfaceOpenGL* gl_surface = dynamic_cast<SurfaceOpenGL*>(surface->impl);
-  if (!gl_surface)
-  {
-    return;
-  }
-
-  GLuint tex_id = gl_surface->gl_texture;
-  float draw_x = x - x_hotspot - scroll_x;
-  float draw_y = y - y_hotspot;
-  float width = surface->w;
-  float height = surface->h;
-
-  float u1 = 0.0f;
-  float v1 = 0.0f;
-  float u2 = width / gl_surface->tex_w_pow2;
-  float v2 = height / gl_surface->tex_h_pow2;
-
-  // Try to add to the LAST batch if it has the same texture
-  if (!m_batches.empty() && m_batches.back().texture_id == tex_id)
-  {
-    // Append to existing batch
-    std::vector<VertexData>& vertices = m_batches.back().vertices;
-    vertices.push_back({draw_x, draw_y, u1, v1});
-    vertices.push_back({draw_x + width, draw_y, u2, v1});
-    vertices.push_back({draw_x + width, draw_y + height, u2, v2});
-    vertices.push_back({draw_x, draw_y + height, u1, v2});
-  }
-  else
-  {
-    // Create new batch
-    SpriteBatch new_batch;
-    new_batch.texture_id = tex_id;
-    new_batch.vertices.push_back({draw_x, draw_y, u1, v1});
-    new_batch.vertices.push_back({draw_x + width, draw_y, u2, v1});
-    new_batch.vertices.push_back({draw_x + width, draw_y + height, u2, v2});
-    new_batch.vertices.push_back({draw_x, draw_y + height, u1, v2});
-    m_batches.push_back(new_batch);
-  }
+  // This function is now a simple wrapper around add_part.
+  // It adds the *full* surface by specifying a source rectangle
+  // at (0,0) with the surface's full width and height.
+  add_part(surface, 0.0f, 0.0f, x, y, surface->w, surface->h, x_hotspot, y_hotspot);
 }
 
+/**
+ * Adds a rectangular portion of a surface to the appropriate batch.
+ * This is the core function that finds or creates a batch for the given
+ * texture and adds the four vertices of the sprite's quad to it.
+ * @param surface The Surface containing the texture to be drawn.
+ * @param sx The source x-coordinate of the rectangle within the texture.
+ * @param sy The source y-coordinate of the rectangle within the texture.
+ * @param x The destination world x-coordinate.
+ * @param y The destination world y-coordinate.
+ * @param w The width of the portion to draw.
+ * @param h The height of the portion to draw.
+ * @param x_hotspot The x-offset from the coordinates to the sprite's origin.
+ * @param y_hotspot The y-offset from the coordinates to the sprite's origin.
+ */
 void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h, int x_hotspot, int y_hotspot)
 {
   if (!surface)
@@ -114,6 +106,12 @@ void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
   }
 }
 
+/**
+ * Renders all collected sprite batches to the screen.
+ * This function sets up the necessary OpenGL state, iterates through each
+ * batch, issues a single draw call per batch, and then clears the batch
+ * list to prepare for the next frame.
+ */
 void SpriteBatcher::flush()
 {
   if (m_batches.empty())
