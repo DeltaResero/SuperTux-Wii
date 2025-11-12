@@ -63,24 +63,24 @@ void Physic::set_velocity_x(float nvx)
 
 /**
  * Sets the vertical velocity.
- * Note: This function uses a "Y-up" coordinate system where a positive
- * value means upward movement, which is inverted for internal storage.
+ * Note: This function uses a "Y-down" coordinate system where a positive
+ * value means downward movement.
  * @param nvy The new vertical velocity.
  */
 void Physic::set_velocity_y(float nvy)
 {
-  vy = -nvy;
+  vy = nvy;
 }
 
 /**
  * Sets both the horizontal and vertical velocity.
  * @param nvx The new horizontal velocity.
- * @param nvy The new vertical velocity (Y-up).
+ * @param nvy The new vertical velocity (Y-down).
  */
 void Physic::set_velocity(float nvx, float nvy)
 {
   vx = nvx;
-  vy = -nvy;
+  vy = nvy;
 }
 
 /**
@@ -110,11 +110,11 @@ float Physic::get_velocity_x()
 
 /**
  * Gets the current vertical velocity.
- * @return The vertical velocity in a "Y-up" coordinate system.
+ * @return The vertical velocity in a "Y-down" coordinate system.
  */
 float Physic::get_velocity_y()
 {
-  return -vy;
+  return vy;
 }
 
 /**
@@ -128,23 +128,23 @@ void Physic::set_acceleration_x(float nax)
 
 /**
  * Sets the vertical acceleration.
- * Note: This function uses a "Y-up" coordinate system.
+ * Note: This function uses a "Y-down" coordinate system.
  * @param nay The new vertical acceleration.
  */
 void Physic::set_acceleration_y(float nay)
 {
-  ay = -nay;
+  ay = nay;
 }
 
 /**
  * Sets both the horizontal and vertical acceleration.
  * @param nax The new horizontal acceleration.
- * @param nay The new vertical acceleration (Y-up).
+ * @param nay The new vertical acceleration (Y-down).
  */
 void Physic::set_acceleration(float nax, float nay)
 {
   ax = nax;
-  ay = -nay;
+  ay = nay;
 }
 
 /**
@@ -158,11 +158,11 @@ float Physic::get_acceleration_x()
 
 /**
  * Gets the current vertical acceleration.
- * @return The vertical acceleration in a "Y-up" coordinate system.
+ * @return The vertical acceleration in a "Y-down" coordinate system.
  */
 float Physic::get_acceleration_y()
 {
-  return -ay;
+  return ay;
 }
 
 /**

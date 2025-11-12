@@ -154,7 +154,7 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
 
   if (kind == UPGRADE_1UP || kind == UPGRADE_HERRING)
   {
-    physic.set_velocity(dir == LEFT ? -1 : 1, 4);
+    physic.set_velocity(dir == LEFT ? -1 : 1, -4);
     physic.enable_gravity(true);
     base.height = 32;
   }
@@ -229,7 +229,7 @@ void Upgrade::action(double frame_ratio)
         }
         else if (kind == UPGRADE_HERRING)
         {
-          physic.set_velocity(dir == LEFT ? -2 : 2, 3);
+          physic.set_velocity(dir == LEFT ? -2 : 2, -3);
         }
       }
     }
@@ -278,7 +278,7 @@ void Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
     {
       return;
     }
-    physic.set_velocity(-physic.get_velocity_x(), 3);
+    physic.set_velocity(-physic.get_velocity_x(), -3);
     dir = dir == LEFT ? RIGHT : LEFT;
     physic.enable_gravity(true);
     return;

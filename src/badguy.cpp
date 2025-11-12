@@ -459,7 +459,7 @@ void BadGuy::fall()
     else
     {
       /* Land: */
-      if (physic.get_velocity_y() < 0)
+      if (physic.get_velocity_y() > 0)
       {
         base.y = static_cast<int>((base.y + base.height) / 32) * 32 - base.height;
         physic.set_velocity_y(0);
@@ -526,7 +526,7 @@ void BadGuy::action_jumpy(double frame_ratio)
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
   {
-    physic.set_velocity_y(JUMPV);
+    physic.set_velocity_y(-JUMPV);
     physic.enable_gravity(true);
     mode = JUMPY_JUMP;
   }
@@ -714,7 +714,7 @@ void BadGuy::action_fish(double frame_ratio)
   if (dying == DYING_NOT
       && gettile(base.x, base.y + base.height)
       && gettile(base.x, base.y + base.height)->water
-      && physic.get_velocity_y() <= 0 && mode == NORMAL)
+      && physic.get_velocity_y() >= 0 && mode == NORMAL)
   {
     mode = FISH_WAIT;
     set_sprite(nullptr, nullptr);
@@ -727,7 +727,7 @@ void BadGuy::action_fish(double frame_ratio)
     // Jump again
     set_sprite(img_fish, img_fish);
     mode = NORMAL;
-    physic.set_velocity(0, JUMPV);
+    physic.set_velocity(0, -JUMPV);
     physic.enable_gravity(true);
   }
 
@@ -735,7 +735,7 @@ void BadGuy::action_fish(double frame_ratio)
   if (dying == DYING_NOT)
     collision_swept_object_map(&old_base, &base);
 
-  if (physic.get_velocity_y() < 0)
+  if (physic.get_velocity_y() > 0)
     set_sprite(img_fish_down, img_fish_down);
 }
 
@@ -753,7 +753,7 @@ void BadGuy::action_bouncingsnowball(double frame_ratio)
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
   {
-    physic.set_velocity_y(JUMPV);
+    physic.set_velocity_y(-JUMPV);
     physic.enable_gravity(true);
   }
   else
@@ -791,7 +791,7 @@ void BadGuy::action_flyingsnowball(double frame_ratio)
   if (dying == DYING_NOT && mode == NORMAL)
   {
     mode = FLY_UP;
-    physic.set_velocity_y(FLYINGSPEED);
+    physic.set_velocity_y(-FLYINGSPEED);
     timer.start(DIRCHANGETIME / 2);
   }
 
@@ -800,12 +800,12 @@ void BadGuy::action_flyingsnowball(double frame_ratio)
     if (mode == FLY_UP)
     {
       mode = FLY_DOWN;
-      physic.set_velocity_y(-FLYINGSPEED);
+      physic.set_velocity_y(FLYINGSPEED);
     }
     else if (mode == FLY_DOWN)
     {
       mode = FLY_UP;
-      physic.set_velocity_y(FLYINGSPEED);
+      physic.set_velocity_y(-FLYINGSPEED);
     }
     timer.start(DIRCHANGETIME);
   }
@@ -1031,7 +1031,7 @@ void BadGuy::bump()
   if (kind == BAD_FLAME || kind == BAD_BOMB || kind == BAD_FISH || kind == BAD_FLYINGSNOWBALL)
     return;
 
-  physic.set_velocity_y(3.0f);
+  physic.set_velocity_y(-3.0f);
   kill_me(25);
 }
 
@@ -1134,7 +1134,7 @@ void BadGuy::squish(Player* player)
   else if (kind == BAD_FISH)
   {
     // Fish can only be killed when falling down
-    if (physic.get_velocity_y() >= 0)
+    if (physic.get_velocity_y() <= 0)
       return;
 
     player->jump_of_badguy(this);
@@ -1307,12 +1307,12 @@ void BadGuy::collision(void* p_c_object, int c_object, CollisionType type)
           if (pbad_c->dir == LEFT)
           {
             dir = RIGHT;
-            physic.set_velocity(std::fabs(physic.get_velocity_x()), 2);
+            physic.set_velocity(std::fabs(physic.get_velocity_x()), -2);
           }
           else if (pbad_c->dir == RIGHT)
           {
             dir = LEFT;
-            physic.set_velocity(-std::fabs(physic.get_velocity_x()), 2);
+            physic.set_velocity(-std::fabs(physic.get_velocity_x()), -2);
           }
           break;
         }

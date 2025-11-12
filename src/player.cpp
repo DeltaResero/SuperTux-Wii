@@ -241,9 +241,9 @@ void Player::action(double frame_ratio)
     }
     else
     {
-      // If the player was previously falling (negative y-velocity in our coordinate system)
+      // If the player was previously falling (positive y-velocity in our coordinate system)
       // and is now on the ground, it means they have just landed.
-      if (physic.get_velocity_y() < 0)
+      if (physic.get_velocity_y() > 0)
       {
         // Snap the player's FEET to the top of the tile grid to ensure they are perfectly aligned.
         // This prevents jittering and falling through thin platforms.
@@ -424,11 +424,11 @@ void Player::handle_vertical_input()
     // Jump higher if running
     if (fabs(physic.get_velocity_x()) > MAX_WALK_XM)
     {
-      physic.set_velocity_y(5.8f);
+      physic.set_velocity_y(-5.8f);
     }
     else
     {
-      physic.set_velocity_y(5.2f);
+      physic.set_velocity_y(-5.2f);
     }
 
     --base.y; // Nudge up to unstick from the ground
@@ -448,7 +448,7 @@ void Player::handle_vertical_input()
   else if (input.up == UP && jumping)
   {
     jumping = false;
-    if (physic.get_velocity_y() > 0) // If moving up
+    if (physic.get_velocity_y() < 0) // If moving up
     {
       physic.set_velocity_y(0); // Kill upward velocity
     }
@@ -553,11 +553,11 @@ void Player::jump_of_badguy(BadGuy* badguy)
 {
   if (input.up)
   {
-    physic.set_velocity_y(5.2f);
+    physic.set_velocity_y(-5.2f);
   }
   else
   {
-    physic.set_velocity_y(2.0f);
+    physic.set_velocity_y(-2.0f);
   }
   base.y = badguy->base.y - base.height - 2;
 }
@@ -790,7 +790,7 @@ void Player::kill(HurtMode mode)
   {
     physic.enable_gravity(true);
     physic.set_acceleration(0, 0);
-    physic.set_velocity(0, 7);
+    physic.set_velocity(0, -7);
     if (dying != DYING_SQUISHED)
     {
       --player_status.lives;
