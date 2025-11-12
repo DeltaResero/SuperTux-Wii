@@ -116,31 +116,7 @@ void Bullet::action(double frame_ratio)
   }
 }
 
-/**
- * Implements the pure virtual draw() from GameObject.
- */
-void Bullet::draw()
-{
-  draw(nullptr);
-}
-
-/**
- * Draws the bullet on the screen.
- */
-void Bullet::draw(SpriteBatcher* batcher)
-{
-  if (base.x >= scroll_x - base.width && base.x <= scroll_x + screen->w)
-  {
-    if (batcher)
-    {
-      img_bullet->draw(*batcher, base.x, base.y);
-    }
-    else
-    {
-      img_bullet->draw(base.x, base.y);
-    }
-  }
-}
+// Bullet::draw() removed. Logic moved to World::draw()
 
 /**
  * Handles bullet collision with other objects.
@@ -283,65 +259,7 @@ void Upgrade::action(double frame_ratio)
   }
 }
 
-/**
- * Implements the pure virtual draw() from GameObject.
- */
-void Upgrade::draw()
-{
-  draw(nullptr);
-}
-
-/**
- * Draws the upgrade on the screen.
- */
-void Upgrade::draw(SpriteBatcher* batcher)
-{
-  Sprite* sprite_to_draw = nullptr;
-  if (kind == UPGRADE_GROWUP)
-  {
-    sprite_to_draw = img_growup;
-  }
-  else if (kind == UPGRADE_ICEFLOWER)
-  {
-    sprite_to_draw = img_iceflower;
-  }
-  else if (kind == UPGRADE_HERRING)
-  {
-    sprite_to_draw = img_star;
-  }
-  else if (kind == UPGRADE_1UP)
-  {
-    sprite_to_draw = img_1up;
-  }
-
-  if (!sprite_to_draw)
-  {
-    return;
-  }
-
-  if (base.height < 32)
-  {
-    if (batcher)
-    {
-      sprite_to_draw->draw_part(*batcher, 0, 0, base.x, base.y + 32 - base.height, 32, base.height);
-    }
-    else
-    {
-      sprite_to_draw->draw_part(0, 0, base.x - scroll_x, base.y + 32 - base.height, 32, base.height);
-    }
-  }
-  else
-  {
-    if (batcher)
-    {
-      sprite_to_draw->draw(*batcher, base.x, base.y);
-    }
-    else
-    {
-      sprite_to_draw->draw(base.x, base.y);
-    }
-  }
-}
+// Upgrade::draw() removed. Logic moved to World::draw()
 
 /**
  * Handles upgrade collisions with other objects.

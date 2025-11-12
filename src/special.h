@@ -49,8 +49,7 @@ public:
 
   void init(float x, float y, Direction dir, UpgradeKind kind);
   void action(double frame_ratio);
-  void draw() override;
-  void draw(SpriteBatcher* batcher);
+  void draw() override {}
   void collision(void* p_c_object, int c_object, CollisionType type);
   std::string type() { return "Upgrade"; };
 
@@ -62,15 +61,16 @@ class Bullet : public GameObject
  public:
   bool removable;
   int life_count;
-  base_type base;
+  // base_type is already part of GameObject, no need to redeclare
   base_type old_base;
 
   void init(float x, float y, float xm, Direction dir);
   void action(double frame_ratio);
-  void draw() override;
-  void draw(SpriteBatcher* batcher);
+  void draw() override {}
   void collision(int c_object);
   std::string type() { return "Bullet"; };
 };
 
 #endif /*SUPERTUX_SPECIAL_H*/
+
+// EOF

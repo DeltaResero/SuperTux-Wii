@@ -40,8 +40,7 @@ class BouncyDistro: public GameObject
 
     void init(float x, float y);
     void action(double frame_ratio);
-    void draw() override;
-    void draw(SpriteBatcher* batcher);
+    void draw() override {}
     std::string type()
     {
       return "BouncyDistro";
@@ -68,8 +67,7 @@ class BrokenBrick: public GameObject
 
     void init(Tile* tile, float x, float y, float xm, float ym);
     void action(double frame_ratio);
-    void draw() override;
-    void draw(SpriteBatcher* batcher);
+    void draw() override {}
     std::string type()
     {
       return "BrokenBrick";
@@ -103,8 +101,7 @@ class FloatingScore: public GameObject
 
     void init(float x, float y, int s);
     void action(double frame_ratio);
-    void draw() override;
-    void draw(SpriteBatcher* batcher);
+    void draw() override {}
     std::string type()
     {
       return "FloatingScore";

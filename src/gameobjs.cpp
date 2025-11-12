@@ -56,24 +56,7 @@ void BouncyDistro::action(double frame_ratio)
   }
 }
 
-/**
- * Implements the pure virtual draw() from GameObject.
- */
-void BouncyDistro::draw()
-{
-  draw(nullptr);
-}
-
-/**
- * Draws the BouncyDistro on the screen.
- */
-void BouncyDistro::draw(SpriteBatcher* batcher)
-{
-  if (batcher)
-    batcher->add(img_distro[0], base.x, base.y, 0, 0);
-  else
-    img_distro[0]->draw(base.x - scroll_x, base.y);
-}
+// BouncyDistro::draw() removed. Logic moved to World::draw()
 
 /**
  * Initializes a BrokenBrick object.
@@ -116,41 +99,7 @@ void BrokenBrick::action(double frame_ratio)
   }
 }
 
-/**
- * Implements the pure virtual draw() from GameObject.
- */
-void BrokenBrick::draw()
-{
-  draw(nullptr);
-}
-
-/**
- * Draws the BrokenBrick on the screen.
- */
-void BrokenBrick::draw(SpriteBatcher* batcher)
-{
-  if (!tile->images.empty())
-  {
-    if (batcher)
-    {
-      batcher->add_part(tile->images[0], random_offset_x, random_offset_y,
-                        base.x, base.y, 16, 16, 0, 0);
-    }
-    else
-    {
-      SDL_Rect src, dest;
-      src.x = random_offset_x; // Use cached value for x offset
-      src.y = random_offset_y; // Use cached value for y offset
-      src.w = 16;
-      src.h = 16;
-      dest.x = static_cast<int>(base.x - scroll_x);
-      dest.y = static_cast<int>(base.y);
-      dest.w = 16;
-      dest.h = 16;
-      tile->images[0]->draw_part(src.x, src.y, dest.x, dest.y, dest.w, dest.h);
-    }
-  }
-}
+// BrokenBrick::draw() removed. Logic moved to World::draw()
 
 /**
  * Initializes a BouncyBrick object.
@@ -240,24 +189,6 @@ void FloatingScore::action(double frame_ratio)
   }
 }
 
-/**
- * Implements the pure virtual draw() from GameObject.
- */
-void FloatingScore::draw()
-{
-  draw(nullptr);
-}
-
-/**
- * Draws the FloatingScore on the screen.
- */
-void FloatingScore::draw(SpriteBatcher* batcher)
-{
-  // FloatingScore uses Text system - same for both paths
-  std::string score_str = std::to_string(value);
-  // Apply the scroll offset at draw time, just like everything else.
-  int x_pos = static_cast<int>(base.x - scroll_x + 16 - score_str.length() * 8);
-  gold_text->draw(score_str, x_pos, static_cast<int>(base.y), 1);
-}
+// FloatingScore::draw() removed. Logic moved to World::draw()
 
 // EOF

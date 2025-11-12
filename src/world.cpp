@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <string>
 #include "globals.h"
 #include "scene.h"
 #include "screen.h"
@@ -34,10 +35,27 @@
 #include "tile.h"
 #include "resources.h"
 #include "sprite_batcher.h"
+#include "text.h"
+#include "sound.h"
+
+// Extern sprite declarations needed for monolithic draw loops
+extern Sprite* img_bullet;
+extern Sprite* img_star;
+extern Sprite* img_growup;
+extern Sprite* img_iceflower;
+extern Sprite* img_1up;
+extern Surface* img_distro[4];
 
 World* World::current_ = 0;
 
 World::World(const std::string& filename)
+  // Initialize all object pools with their fixed sizes.
+  // This pre-allocates all memory needed for these objects upfront.
+  : bouncy_distros(32),
+    broken_bricks(64),
+    floating_scores(32),
+    bullets(8),
+    upgrades(16)
 {
   // FIXME: Move this to action and draw and everywhere else where the
   // world calls child functions
@@ -60,6 +78,12 @@ World::World(const std::string& filename)
 }
 
 World::World(const std::string& subset, int level_nr)
+  // Initialize all object pools with their fixed sizes.
+  : bouncy_distros(32),
+    broken_bricks(64),
+    floating_scores(32),
+    bullets(8),
+    upgrades(16)
 {
   // FIXME: Move this to action and draw and everywhere else where the
   // world calls child functions
@@ -131,27 +155,17 @@ void World::deactivate_world()
     delete *i;
   particle_systems.clear();
 
-  for (std::vector<BouncyDistro*>::iterator i = bouncy_distros.begin();
-       i != bouncy_distros.end(); ++i)
-    delete *i;
+  // Reset all object pools, returning all objects to the free list.
   bouncy_distros.clear();
-
-  for (std::vector<BrokenBrick*>::iterator i = broken_bricks.begin();
-       i != broken_bricks.end(); ++i)
-    delete *i;
   broken_bricks.clear();
+  floating_scores.clear();
+  bullets.clear();
+  upgrades.clear();
 
   for (std::vector<BouncyBrick*>::iterator i = bouncy_bricks.begin();
        i != bouncy_bricks.end(); ++i)
     delete *i;
   bouncy_bricks.clear();
-
-  for (std::vector<FloatingScore*>::iterator i = floating_scores.begin();
-       i != floating_scores.end(); ++i)
-    delete *i;
-  floating_scores.clear();
-
-  upgrades.clear();
 }
 
 void World::set_defaults()
@@ -283,24 +297,108 @@ void World::draw()
 
   tux.draw(batcher);
 
-  for (unsigned int i = 0; i < bullets.size(); ++i)
+  // --- MONOLITHIC DRAW LOOPS (CACHE-FRIENDLY) ---
+  // This pattern is the key: we get a pointer to the contiguous data array once,
+  // then loop through the small list of active indices. This guarantees
+  // sequential memory access and avoids cache misses.
+
+  // Draw Bullets
+  const auto& bullet_pool_data = bullets.get_pool_data();
+  for (size_t index : bullets.get_active_indices())
   {
-    bullets[i].draw(batcher);
+    const auto& bullet = bullet_pool_data[index];
+    if (bullet.base.x >= scroll_x - bullet.base.width && bullet.base.x <= scroll_x + screen->w)
+    {
+      if (batcher)
+      {
+        img_bullet->draw(*batcher, bullet.base.x, bullet.base.y);
+      }
+      else
+      {
+        img_bullet->draw(bullet.base.x, bullet.base.y);
+      }
+    }
   }
 
-  for (unsigned int i = 0; i < upgrades.size(); ++i)
+  // Draw Upgrades
+  const auto& upgrade_pool_data = upgrades.get_pool_data();
+  for (size_t index : upgrades.get_active_indices())
   {
-    upgrades[i].draw(batcher);
+    const auto& upgrade = upgrade_pool_data[index];
+    Sprite* sprite_to_draw = nullptr;
+    if (upgrade.kind == UPGRADE_GROWUP)
+    {
+      sprite_to_draw = img_growup;
+    }
+    else if (upgrade.kind == UPGRADE_ICEFLOWER)
+    {
+      sprite_to_draw = img_iceflower;
+    }
+    else if (upgrade.kind == UPGRADE_HERRING)
+    {
+      sprite_to_draw = img_star;
+    }
+    else if (upgrade.kind == UPGRADE_1UP)
+    {
+      sprite_to_draw = img_1up;
+    }
+
+    if (sprite_to_draw)
+    {
+      if (upgrade.base.height < 32)
+      {
+        if (batcher)
+        {
+          sprite_to_draw->draw_part(*batcher, 0, 0, upgrade.base.x, upgrade.base.y + 32 - upgrade.base.height, 32, upgrade.base.height);
+        }
+        else
+        {
+          sprite_to_draw->draw_part(0, 0, upgrade.base.x - scroll_x, upgrade.base.y + 32 - upgrade.base.height, 32, upgrade.base.height);
+        }
+      }
+      else
+      {
+        if (batcher)
+        {
+          sprite_to_draw->draw(*batcher, upgrade.base.x, upgrade.base.y);
+        }
+        else
+        {
+          sprite_to_draw->draw(upgrade.base.x, upgrade.base.y);
+        }
+      }
+    }
   }
 
-  for (unsigned int i = 0; i < bouncy_distros.size(); ++i)
+  // Draw Bouncy Distros
+  const auto& distro_pool_data = bouncy_distros.get_pool_data();
+  for (size_t index : bouncy_distros.get_active_indices())
   {
-    bouncy_distros[i]->draw(batcher);
+    const auto& distro = distro_pool_data[index];
+    if (batcher)
+      batcher->add(img_distro[0], distro.base.x, distro.base.y, 0, 0);
+    else
+      img_distro[0]->draw(distro.base.x - scroll_x, distro.base.y);
   }
 
-  for (unsigned int i = 0; i < broken_bricks.size(); ++i)
+  // Draw Broken Bricks
+  const auto& brick_pool_data = broken_bricks.get_pool_data();
+  for (size_t index : broken_bricks.get_active_indices())
   {
-    broken_bricks[i]->draw(batcher);
+    const auto& brick = brick_pool_data[index];
+    if (!brick.tile->images.empty())
+    {
+      if (batcher)
+      {
+        batcher->add_part(brick.tile->images[0], brick.random_offset_x, brick.random_offset_y,
+                          brick.base.x, brick.base.y, 16, 16, 0, 0);
+      }
+      else
+      {
+        brick.tile->images[0]->draw_part(brick.random_offset_x, brick.random_offset_y,
+                                          brick.base.x - scroll_x, brick.base.y, 16, 16);
+      }
+    }
   }
 
   // Flush if using OpenGL
@@ -309,9 +407,14 @@ void World::draw()
     m_spriteBatcher->flush();
   }
 
-  for (unsigned int i = 0; i < floating_scores.size(); ++i)
+  // Draw Floating Scores (Text-based, drawn AFTER flush)
+  const auto& score_pool_data = floating_scores.get_pool_data();
+  for (size_t index : floating_scores.get_active_indices())
   {
-    floating_scores[i]->draw(batcher);
+    const auto& score = score_pool_data[index];
+    std::string score_str = std::to_string(score.value);
+    int x_pos = static_cast<int>(score.base.x - scroll_x + 16 - score_str.length() * 8);
+    gold_text->draw(score_str, x_pos, static_cast<int>(score.base.y), 1);
   }
 
   /* Draw foreground tiles: */
@@ -344,36 +447,17 @@ void World::action(float elapsed_time)
   tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
   scrolling(elapsed_time);
 
-  // Update all game objects using simple forward loops.
-  // No removal happens in this phase.
-  for (auto* distro : bouncy_distros)
-  {
-    distro->action(elapsed_time);
-  }
+  // Update all pooled objects with automatic cleanup
+  bouncy_distros.updateAndCleanup(elapsed_time);
+  broken_bricks.updateAndCleanup(elapsed_time);
+  floating_scores.updateAndCleanup(elapsed_time);
+  bullets.updateAndCleanup(elapsed_time);
+  upgrades.updateAndCleanup(elapsed_time);
 
-  for (auto* brick : broken_bricks)
-  {
-    brick->action(elapsed_time);
-  }
-
+  // Update other game objects
   for (auto* brick : bouncy_bricks)
   {
     brick->action(elapsed_time);
-  }
-
-  for (auto* score : floating_scores)
-  {
-    score->action(elapsed_time);
-  }
-
-  for (auto& bullet : bullets)
-  {
-    bullet.action(elapsed_time);
-  }
-
-  for (auto& upgrade : upgrades)
-  {
-    upgrade.action(elapsed_time);
   }
 
   for (auto* badguy : bad_guys)
@@ -389,36 +473,7 @@ void World::action(float elapsed_time)
   // Handle all collisions
   collision_handler();
 
-  // Clean up all removable objects
-  // All cleanup now happens at the very end of the frame, using safe backward iteration.
-  for (size_t i = 0; i < bouncy_distros.size(); )
-  {
-    if (bouncy_distros[i]->removable)
-    {
-      delete bouncy_distros[i];
-      bouncy_distros[i] = bouncy_distros.back();
-      bouncy_distros.pop_back();
-    }
-    else
-    {
-      ++i;
-    }
-  }
-
-  for (size_t i = 0; i < broken_bricks.size(); )
-  {
-    if (broken_bricks[i]->removable)
-    {
-      delete broken_bricks[i];
-      broken_bricks[i] = broken_bricks.back();
-      broken_bricks.pop_back();
-    }
-    else
-    {
-      ++i;
-    }
-  }
-
+  // Clean up all removable non-pooled objects
   for (size_t i = 0; i < bouncy_bricks.size(); )
   {
     if (bouncy_bricks[i]->removable)
@@ -426,46 +481,6 @@ void World::action(float elapsed_time)
       delete bouncy_bricks[i];
       bouncy_bricks[i] = bouncy_bricks.back();
       bouncy_bricks.pop_back();
-    }
-    else
-    {
-      ++i;
-    }
-  }
-
-  for (size_t i = 0; i < floating_scores.size(); )
-  {
-    if (floating_scores[i]->removable)
-    {
-      delete floating_scores[i];
-      floating_scores[i] = floating_scores.back();
-      floating_scores.pop_back();
-    }
-    else
-    {
-      ++i;
-    }
-  }
-
-  for (size_t i = 0; i < bullets.size(); )
-  {
-    if (bullets[i].removable)
-    {
-      bullets[i] = bullets.back();
-      bullets.pop_back();
-    }
-    else
-    {
-      ++i;
-    }
-  }
-
-  for (size_t i = 0; i < upgrades.size(); )
-  {
-    if (upgrades[i].removable)
-    {
-      upgrades[i] = upgrades.back();
-      upgrades.pop_back();
     }
     else
     {
@@ -580,16 +595,17 @@ void World::collision_handler()
 
   // --- BULLET vs BADGUY ---
   // Only check active bullets against visible enemies.
-  for (auto& bullet : bullets)
+  for (size_t index : bullets.get_active_indices())
   {
+    Bullet* bullet = bullets.get_object_at(index);
     // If a bullet has already been marked for removal, skip it.
-    if (bullet.removable)
+    if (bullet->removable)
     {
         continue;
     }
 
     // Skip collision checks for this bullet if it is outside the active area.
-    if (bullet.base.x + bullet.base.width < screen_x_start || bullet.base.x > screen_x_end)
+    if (bullet->base.x + bullet->base.width < screen_x_start || bullet->base.x > screen_x_end)
     {
       continue;
     }
@@ -609,16 +625,16 @@ void World::collision_handler()
         continue;
       }
 
-      if (rectcollision(bullet.base, badguy->base))
+      if (rectcollision(bullet->base, badguy->base))
       {
         badguy->collision(0, CO_BULLET);
-        bullet.collision(CO_BADGUY);
+        bullet->collision(CO_BADGUY);
         break; // A bullet can only hit one enemy.
       }
     }
 
     // If the bullet hit a normal_collider, it is now inactive. Skip special_colliders.
-    if (bullet.removable)
+    if (bullet->removable)
     {
         continue;
     }
@@ -632,10 +648,10 @@ void World::collision_handler()
             continue;
         }
 
-        if (rectcollision(bullet.base, badguy->base))
+        if (rectcollision(bullet->base, badguy->base))
         {
             badguy->collision(0, CO_BULLET);
-            bullet.collision(CO_BADGUY);
+            bullet->collision(CO_BADGUY);
             break; // A bullet can only hit one enemy.
         }
     }
@@ -790,18 +806,19 @@ void World::collision_handler()
 
   /* --- CO_UPGRADE & CO_PLAYER check --- */
   // Upgrades can only be collected by the player, so we only need to check for them near the player
-  for (unsigned int i = 0; i < upgrades.size(); ++i)
+  for (size_t index : upgrades.get_active_indices())
   {
+    Upgrade* upgrade = upgrades.get_object_at(index);
     // Skip any upgrade that is not within a 64-pixel buffer around Tux
-    if (upgrades[i].base.x + upgrades[i].base.width < tux.base.x - 64.0f ||
-        upgrades[i].base.x > tux.base.x + tux.base.width + 64.0f)
+    if (upgrade->base.x + upgrade->base.width < tux.base.x - 64.0f ||
+        upgrade->base.x > tux.base.x + tux.base.width + 64.0f)
     {
       continue;
     }
 
-    if (rectcollision(upgrades[i].base, tux.base))
+    if (rectcollision(upgrade->base, tux.base))
     {
-      upgrades[i].collision(&tux, CO_PLAYER, COLLISION_NORMAL);
+      upgrade->collision(&tux, CO_PLAYER, COLLISION_NORMAL);
     }
   }
 }
@@ -810,18 +827,20 @@ void World::add_score(float x, float y, int s)
 {
   player_status.score += s;
 
-  FloatingScore* new_floating_score = new FloatingScore();
-  // Pass world coordinates (x, y) without subtracting scroll_x
-  // FloatingScore::draw() in gameobjs.cpp doesn't use scroll_x
-  new_floating_score->init(x, y, s);
-  floating_scores.push_back(new_floating_score);
+  FloatingScore* score = floating_scores.acquire();
+  if (score)
+  {
+    score->init(x, y, s);
+  }
 }
 
 void World::add_bouncy_distro(float x, float y)
 {
-  BouncyDistro* new_bouncy_distro = new BouncyDistro();
-  new_bouncy_distro->init(x,y);
-  bouncy_distros.push_back(new_bouncy_distro);
+  BouncyDistro* distro = bouncy_distros.acquire();
+  if (distro)
+  {
+    distro->init(x, y);
+  }
 }
 
 void World::add_broken_brick(Tile* tile, float x, float y)
@@ -835,9 +854,11 @@ void World::add_broken_brick(Tile* tile, float x, float y)
 
 void World::add_broken_brick_piece(Tile* tile, float x, float y, float xm, float ym)
 {
-  BrokenBrick* new_broken_brick = new BrokenBrick();
-  new_broken_brick->init(tile, x, y, xm, ym);
-  broken_bricks.push_back(new_broken_brick);
+  BrokenBrick* brick = broken_bricks.acquire();
+  if (brick)
+  {
+    brick->init(tile, x, y, xm, ym);
+  }
 }
 
 void World::add_bouncy_brick(float x, float y)
@@ -858,21 +879,21 @@ World::add_bad_guy(float x, float y, BadGuyKind kind, bool stay_on_platform)
 
 void World::add_upgrade(float x, float y, Direction dir, UpgradeKind kind)
 {
-  Upgrade new_upgrade;
-  new_upgrade.init(x,y,dir,kind);
-  upgrades.push_back(new_upgrade);
+  Upgrade* new_upgrade = upgrades.acquire();
+  if (new_upgrade)
+  {
+    new_upgrade->init(x, y, dir, kind);
+  }
 }
 
 void World::add_bullet(float x, float y, float xm, Direction dir)
 {
-  if(bullets.size() > MAX_BULLETS-1)
-    return;
-
-  Bullet new_bullet;
-  new_bullet.init(x,y,xm,dir);
-  bullets.push_back(new_bullet);
-
-  play_sound(sounds[SND_SHOOT], SOUND_CENTER_SPEAKER);
+  Bullet* new_bullet = bullets.acquire();
+  if (new_bullet)
+  {
+    new_bullet->init(x, y, xm, dir);
+    play_sound(sounds[SND_SHOOT], SOUND_CENTER_SPEAKER);
+  }
 }
 
 // Moves a bad guy between the normal and special collision lists.
@@ -903,7 +924,8 @@ void World::set_badguy_collision_state(BadGuy* bg, bool is_special)
 void World::play_music(int musictype)
 {
   currentmusic = musictype;
-  switch(currentmusic) {
+  switch(currentmusic)
+  {
     case HURRYUP_MUSIC:
       music_manager->play_music(get_level()->get_level_music_fast());
       break;
@@ -931,51 +953,54 @@ void World::trybreakbrick(float x, float y, bool small, Direction col_side)
 
   Tile* tile = gettile(x, y);
   if (tile->brick)
+  {
+    if (tile->data > 0)
     {
-      if (tile->data > 0)
-        {
-          /* Get a distro from it: */
-          add_bouncy_distro(((int)(x + 1) / 32) * 32,
-                                  (int)(y / 32) * 32);
+      /* Get a distro from it: */
+      add_bouncy_distro(((int)(x + 1) / 32) * 32,
+                         (int)(y / 32) * 32);
 
-          // TODO: don't handle this in a global way but per-tile...
-          if (!counting_distros)
-            {
-              counting_distros = true;
-              distro_counter = 5;
-            }
-          else
-            {
-              distro_counter--;
-            }
+      // TODO: don't handle this in a global way but per-tile...
+      if (!counting_distros)
+      {
+        counting_distros = true;
+        distro_counter = 5;
+      }
+      else
+      {
+        distro_counter--;
+      }
 
-          if (distro_counter <= 0)
-            {
-              counting_distros = false;
-              plevel->change(x, y, TM_IA, tile->next_tile);
-            }
+      if (distro_counter <= 0)
+      {
+        counting_distros = false;
+        plevel->change(x, y, TM_IA, tile->next_tile);
+      }
 
-          play_sound(sounds[SND_DISTRO], SOUND_CENTER_SPEAKER);
-          player_status.score = player_status.score + SCORE_DISTRO;
-          player_status.distros++;
-        }
-      else if (!small)
-        {
-          /* Get rid of it: */
-          plevel->change(x, y, TM_IA, tile->next_tile);
-
-          /* Replace it with broken bits: */
-          add_broken_brick(tile,
-                                 ((int)(x + 1) / 32) * 32,
-                                 (int)(y / 32) * 32);
-
-          /* Get some score: */
-          play_sound(sounds[SND_BRICK], SOUND_CENTER_SPEAKER);
-          player_status.score = player_status.score + SCORE_BRICK;
-        }
+      play_sound(sounds[SND_DISTRO], SOUND_CENTER_SPEAKER);
+      player_status.score = player_status.score + SCORE_DISTRO;
+      player_status.distros++;
     }
+
+    else if (!small)
+    {
+      /* Get rid of it: */
+      plevel->change(x, y, TM_IA, tile->next_tile);
+
+      /* Replace it with broken bits: */
+      add_broken_brick(tile, ((int)(x + 1) / 32) * 32,
+                              (int)(y / 32) * 32);
+
+      /* Get some score: */
+      play_sound(sounds[SND_BRICK], SOUND_CENTER_SPEAKER);
+      player_status.score = player_status.score + SCORE_BRICK;
+    }
+  }
+
   else if(tile->fullbox)
+  {
     tryemptybox(x, y, col_side);
+  }
 }
 
 /* Empty a box: */
@@ -987,14 +1012,18 @@ void World::tryemptybox(float x, float y, Direction col_side)
 
   // according to the collision side, set the upgrade direction
   if(col_side == LEFT)
+  {
     col_side = RIGHT;
+  }
   else
+  {
     col_side = LEFT;
+  }
 
   int posx = ((int)(x+1) / 32) * 32;
   int posy = (int)(y/32) * 32 - 32;
   switch(tile->data)
-    {
+  {
     case 1: // Box with a distro!
       add_bouncy_distro(posx, posy);
       play_sound(sounds[SND_DISTRO], SOUND_CENTER_SPEAKER);
@@ -1019,7 +1048,7 @@ void World::tryemptybox(float x, float y, Direction col_side)
       break;
     default:
       break;
-    }
+  }
 
   /* Empty the box: */
   level->change(x, y, TM_IA, tile->next_tile);
@@ -1030,19 +1059,19 @@ void World::trygrabdistro(float x, float y, int bounciness)
 {
   Tile* tile = gettile(x, y);
   if (tile && tile->distro)
+  {
+    level->change(x, y, TM_IA, tile->next_tile);
+    play_sound(sounds[SND_DISTRO], SOUND_CENTER_SPEAKER);
+
+    if (bounciness == BOUNCE)
     {
-      level->change(x, y, TM_IA, tile->next_tile);
-      play_sound(sounds[SND_DISTRO], SOUND_CENTER_SPEAKER);
-
-      if (bounciness == BOUNCE)
-        {
-          add_bouncy_distro(((int)(x + 1) / 32) * 32,
-                                  (int)(y / 32) * 32);
-        }
-
-      player_status.score = player_status.score + SCORE_DISTRO;
-      player_status.distros++;
+      add_bouncy_distro(((int)(x + 1) / 32) * 32,
+                         (int)(y / 32) * 32);
     }
+
+    player_status.score = player_status.score + SCORE_DISTRO;
+    player_status.distros++;
+  }
 }
 
 /* Try to bump a bad guy from below: */
@@ -1069,13 +1098,14 @@ void World::trybumpbadguy(float x, float y)
   }
 
   // Upgrades:
-  for (unsigned int i = 0; i < upgrades.size(); i++)
+  for (size_t index : upgrades.get_active_indices())
   {
-    if (upgrades[i].base.height == 32 &&
-        upgrades[i].base.x >= x - 32 && upgrades[i].base.x <= x + 32 &&
-        upgrades[i].base.y >= y - 16 && upgrades[i].base.y <= y + 16)
+    Upgrade* upgrade = upgrades.get_object_at(index);
+    if (upgrade->base.height == 32 &&
+        upgrade->base.x >= x - 32 && upgrade->base.x <= x + 32 &&
+        upgrade->base.y >= y - 16 && upgrade->base.y <= y + 16)
     {
-      upgrades[i].collision(&tux, CO_PLAYER, COLLISION_BUMP);
+      upgrade->collision(&tux, CO_PLAYER, COLLISION_BUMP);
     }
   }
 }

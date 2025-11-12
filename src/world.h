@@ -23,6 +23,7 @@
 #define SUPERTUX_WORLD_H
 
 #include <vector>
+#include <string> // For std::string
 #include <SDL.h>
 #include "type.h"
 #include "scene.h"
@@ -30,6 +31,7 @@
 #include "badguy.h"
 #include "particlesystem.h"
 #include "gameobjs.h"
+#include "object_pool.h" // Now includes the template
 
 class Level;
 class SpriteBatcher;
@@ -52,17 +54,22 @@ private:
 
   static World* current_;
   SpriteBatcher* m_spriteBatcher;
+
 public:
   BadGuys bad_guys;
   BadGuys normal_colliders;
   BadGuys special_colliders;
-  std::vector<BouncyDistro*> bouncy_distros;
-  std::vector<BrokenBrick*>  broken_bricks;
-  std::vector<BouncyBrick*>  bouncy_bricks;
-  std::vector<FloatingScore*> floating_scores;
 
-  std::vector<Upgrade> upgrades;
-  std::vector<Bullet> bullets;
+  // Use the new generic ObjectPool template for all pooled objects
+  ObjectPool<BouncyDistro> bouncy_distros;
+  ObjectPool<BrokenBrick> broken_bricks;
+  ObjectPool<FloatingScore> floating_scores;
+  ObjectPool<Bullet> bullets;
+  ObjectPool<Upgrade> upgrades;
+
+  // BouncyBrick is infrequent and can remain a simple vector for now
+  std::vector<BouncyBrick*> bouncy_bricks;
+
   typedef std::vector<ParticleSystem*> ParticleSystems;
   ParticleSystems particle_systems;
 
@@ -72,7 +79,14 @@ public:
 
   World(const std::string& filename);
   World(const std::string& subset, int level_nr);
-  World() {};
+
+  World()
+    : bouncy_distros(32),
+      broken_bricks(64),
+      floating_scores(32),
+      bullets(8),
+      upgrades(16)
+  {};
   ~World();
 
   void activate_world();
