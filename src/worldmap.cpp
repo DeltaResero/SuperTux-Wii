@@ -834,7 +834,8 @@ void WorldMap::get_input()
 
         case SDL_JOYBUTTONDOWN:
         {
-          if (event.jbutton.button == 3) // (2)
+          // A button (0) or 2 button (3) will enter level
+          if (event.jbutton.button == 0 || event.jbutton.button == 3)
           {
             enter_level = true;
           }

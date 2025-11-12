@@ -62,6 +62,7 @@ Menu* contrib_subset_menu   = 0;
 
 std::vector<Menu*> Menu::last_menus;
 Menu* Menu::current_ = 0;
+bool Menu::ignore_mouse_click = false;
 #pragma endregion
 
 #pragma region DialogAndMenuNavigation
@@ -787,10 +788,13 @@ void Menu::event(SDL_Event& event)
       // CANCEL action on Wii Remote 'B' (1) and '1' (2)
       else if (event.jbutton.button == 1 || event.jbutton.button == 2)
       {
-        // On the main menu, these buttons do nothing.
-        if (this != main_menu)
+        // On the main menu or top-level pause menus, these buttons do nothing.
+        if (this != main_menu && this != game_menu && this != worldmap_menu)
         {
+          // Set a flag to ignore the next, spurious mouse click.
+          ignore_mouse_click = true;
           Menu::pop_current();
+          return; // Exit event processing immediately.
         }
       }
       // HOME button always functions as a back/exit key
@@ -803,11 +807,32 @@ void Menu::event(SDL_Event& event)
     }
 
     case SDL_MOUSEBUTTONDOWN:
-      x = event.button.x;
-      y = event.button.y;
-      if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+      // If the ignore flag is set, this is a spurious click.
+      // Reset the flag and ignore the event.
+      if (ignore_mouse_click)
       {
-        menuaction = MENU_ACTION_HIT;
+        ignore_mouse_click = false;
+        return;
+      }
+
+      // Process LEFT mouse clicks for selection.
+      if (event.button.button == SDL_BUTTON_LEFT)
+      {
+        x = event.button.x;
+        y = event.button.y;
+        if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
+        {
+          menuaction = MENU_ACTION_HIT;
+        }
+      }
+      // Process RIGHT mouse clicks for going back.
+      else if (event.button.button == SDL_BUTTON_RIGHT)
+      {
+        // On the main menu or top-level pause menus, this does nothing.
+        if (this != main_menu && this != game_menu && this != worldmap_menu)
+        {
+          Menu::pop_current();
+        }
       }
       break;
 

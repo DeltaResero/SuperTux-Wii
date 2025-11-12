@@ -26,6 +26,7 @@ if !ENABLE_WII
     src/level.cpp src/level.h \
     src/lispreader.cpp src/lispreader.h \
     src/menu.cpp src/menu.h \
+    src/object_pool.h \
     src/particlesystem.cpp src/particlesystem.h \
     src/physic.cpp src/physic.h \
     src/player.cpp src/player.h \

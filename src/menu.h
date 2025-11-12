@@ -126,6 +126,9 @@ private:
    */
   static Menu* current_;
 
+  /** A static flag to handle the Wii B button sending a spurious mouse click. */
+  static bool ignore_mouse_click;
+
 private:
   /**
    * Defines the internal actions the user can perform on a menu,
