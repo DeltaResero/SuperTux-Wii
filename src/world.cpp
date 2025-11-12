@@ -48,6 +48,19 @@ extern Surface* img_distro[4];
 
 World* World::current_ = 0;
 
+void World::common_setup()
+{
+  tux.init();
+  set_defaults();
+  get_level()->load_gfx();
+  activate_bad_guys();
+  activate_particle_systems();
+  get_level()->load_song();
+  apply_bonuses();
+  scrolling_timer.init(true);
+  m_spriteBatcher = new SpriteBatcher();
+}
+
 World::World(const std::string& filename)
   // Initialize all object pools with their fixed sizes.
   // This pre-allocates all memory needed for these objects upfront.
@@ -62,19 +75,7 @@ World::World(const std::string& filename)
   current_ = this;
 
   level = new Level(filename);
-  tux.init();
-
-  set_defaults();
-
-  get_level()->load_gfx();
-  activate_bad_guys();
-  activate_particle_systems();
-  get_level()->load_song();
-
-  apply_bonuses();
-
-  scrolling_timer.init(true);
-  m_spriteBatcher = new SpriteBatcher();
+  common_setup();
 }
 
 World::World(const std::string& subset, int level_nr)
@@ -90,25 +91,14 @@ World::World(const std::string& subset, int level_nr)
   current_ = this;
 
   level = new Level(subset, level_nr);
-  tux.init();
-
-  set_defaults();
-
-  get_level()->load_gfx();
-  activate_world();
-  get_level()->load_song();
-
-  apply_bonuses();
-
-  scrolling_timer.init(true);
-  m_spriteBatcher = new SpriteBatcher();
+  common_setup();
 }
 
 void World::apply_bonuses()
 {
   // Apply bonuses from former levels
   switch (player_status.bonus)
-    {
+  {
     case PlayerStatus::NO_BONUS:
       break;
 
@@ -122,7 +112,7 @@ void World::apply_bonuses()
       tux.base.height = 64;
       tux.base.y -= 32;
       break;
-    }
+  }
 }
 
 World::~World()
@@ -187,28 +177,28 @@ void World::activate_bad_guys()
   for (std::vector<BadGuyData>::iterator i = level->badguy_data.begin();
        i != level->badguy_data.end();
        ++i)
-    {
+  {
 #ifdef DEBUG
-      printf("add bad guy %d\n", i->kind);
+     printf("add bad guy %d\n", i->kind);
 #endif
-      add_bad_guy(i->x, i->y, i->kind, i->stay_on_platform);
-    }
+     add_bad_guy(i->x, i->y, i->kind, i->stay_on_platform);
+  }
 }
 
 void World::activate_particle_systems()
 {
   if (level->particle_system == "clouds")
-    {
-      particle_systems.push_back(new CloudParticleSystem);
-    }
+  {
+    particle_systems.push_back(new CloudParticleSystem);
+  }
   else if (level->particle_system == "snow")
-    {
-      particle_systems.push_back(new SnowParticleSystem);
-    }
+  {
+    particle_systems.push_back(new SnowParticleSystem);
+  }
   else if (level->particle_system != "")
-    {
-      st_abort("unknown particle system specified in level", "");
-    }
+  {
+    st_abort("unknown particle system specified in level", "");
+  }
 }
 
 void World::draw()
@@ -297,16 +287,8 @@ void World::draw()
 
   tux.draw(batcher);
 
-  // --- MONOLITHIC DRAW LOOPS (CACHE-FRIENDLY) ---
-  // This pattern is the key: we get a pointer to the contiguous data array once,
-  // then loop through the small list of active indices. This guarantees
-  // sequential memory access and avoids cache misses.
-
   // Draw Bullets
-  const auto& bullet_pool_data = bullets.get_pool_data();
-  for (size_t index : bullets.get_active_indices())
-  {
-    const auto& bullet = bullet_pool_data[index];
+  draw_pooled_objects(bullets, [&](const Bullet& bullet) {
     if (bullet.base.x >= scroll_x - bullet.base.width && bullet.base.x <= scroll_x + screen->w)
     {
       if (batcher)
@@ -318,13 +300,10 @@ void World::draw()
         img_bullet->draw(bullet.base.x, bullet.base.y);
       }
     }
-  }
+  });
 
   // Draw Upgrades
-  const auto& upgrade_pool_data = upgrades.get_pool_data();
-  for (size_t index : upgrades.get_active_indices())
-  {
-    const auto& upgrade = upgrade_pool_data[index];
+  draw_pooled_objects(upgrades, [&](const Upgrade& upgrade) {
     Sprite* sprite_to_draw = nullptr;
     if (upgrade.kind == UPGRADE_GROWUP)
     {
@@ -368,24 +347,22 @@ void World::draw()
         }
       }
     }
-  }
+  });
 
   // Draw Bouncy Distros
-  const auto& distro_pool_data = bouncy_distros.get_pool_data();
-  for (size_t index : bouncy_distros.get_active_indices())
-  {
-    const auto& distro = distro_pool_data[index];
+  draw_pooled_objects(bouncy_distros, [&](const BouncyDistro& distro) {
     if (batcher)
+    {
       batcher->add(img_distro[0], distro.base.x, distro.base.y, 0, 0);
+    }
     else
+    {
       img_distro[0]->draw(distro.base.x - scroll_x, distro.base.y);
-  }
+    }
+  });
 
   // Draw Broken Bricks
-  const auto& brick_pool_data = broken_bricks.get_pool_data();
-  for (size_t index : broken_bricks.get_active_indices())
-  {
-    const auto& brick = brick_pool_data[index];
+  draw_pooled_objects(broken_bricks, [&](const BrokenBrick& brick) {
     if (!brick.tile->images.empty())
     {
       if (batcher)
@@ -399,7 +376,7 @@ void World::draw()
                                           brick.base.x - scroll_x, brick.base.y, 16, 16);
       }
     }
-  }
+  });
 
   // Flush if using OpenGL
   if (use_gl)
@@ -408,14 +385,11 @@ void World::draw()
   }
 
   // Draw Floating Scores (Text-based, drawn AFTER flush)
-  const auto& score_pool_data = floating_scores.get_pool_data();
-  for (size_t index : floating_scores.get_active_indices())
-  {
-    const auto& score = score_pool_data[index];
+  draw_pooled_objects(floating_scores, [&](const FloatingScore& score) {
     std::string score_str = std::to_string(score.value);
     int x_pos = static_cast<int>(score.base.x - scroll_x + 16 - score_str.length() * 8);
     gold_text->draw(score_str, x_pos, static_cast<int>(score.base.y), 1);
-  }
+  });
 
   /* Draw foreground tiles: */
   for (y = 0; y < 15; ++y)
@@ -888,6 +862,12 @@ void World::add_upgrade(float x, float y, Direction dir, UpgradeKind kind)
 
 void World::add_bullet(float x, float y, float xm, Direction dir)
 {
+  // Check the number of *active* bullets.
+  if (bullets.get_active_indices().size() >= MAX_BULLETS)
+  {
+    return;
+  }
+
   Bullet* new_bullet = bullets.acquire();
   if (new_bullet)
   {

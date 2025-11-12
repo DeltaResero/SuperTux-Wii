@@ -55,6 +55,18 @@ private:
   static World* current_;
   SpriteBatcher* m_spriteBatcher;
 
+  void common_setup();
+
+  template<typename T, typename Func>
+  void draw_pooled_objects(ObjectPool<T>& pool, Func draw_lambda)
+  {
+    const auto& pool_data = pool.get_pool_data();
+    for (size_t index : pool.get_active_indices())
+    {
+      draw_lambda(pool_data[index]);
+    }
+  }
+
 public:
   BadGuys bad_guys;
   BadGuys normal_colliders;
