@@ -188,8 +188,6 @@ void Player::level_begin()
  */
 void Player::action(double frame_ratio)
 {
-  bool jumped_in_solid = false;
-
   if (input.fire == UP)
   {
     holding_something = false;
@@ -204,8 +202,25 @@ void Player::action(double frame_ratio)
     handle_input();
   }
 
+  updatePhysics(frame_ratio);
+
+  // Update timers
+  skidding_timer.check();
+  invincible_timer.check();
+  safe_timer.check();
+  kick_timer.check();
+}
+
+/**
+ * Encapsulates the physics simulation and collision response for the Player.
+ * @param deltaTime The time delta for the current frame.
+ */
+void Player::updatePhysics(double deltaTime)
+{
+  bool jumped_in_solid = false;
+
   // Apply physics simulation to get a new potential position
-  physic.apply(frame_ratio, base.x, base.y);
+  physic.apply(deltaTime, base.x, base.y);
 
   if (dying == DYING_NOT)
   {
@@ -223,7 +238,7 @@ void Player::action(double frame_ratio)
     // Exception for when Tux is stuck under a tile while unducking
     if (!duck && on_ground() && old_base.x == base.x && old_base.y == base.y && collision_object_map(base))
     {
-      base.x += frame_ratio * WALK_SPEED * (dir ? 1 : -1);
+      base.x += deltaTime * WALK_SPEED * (dir ? 1 : -1);
       previous_base = old_base = base;
     }
 
@@ -293,12 +308,6 @@ void Player::action(double frame_ratio)
       }
     }
   }
-
-  // Update timers
-  skidding_timer.check();
-  invincible_timer.check();
-  safe_timer.check();
-  kick_timer.check();
 }
 
 /**

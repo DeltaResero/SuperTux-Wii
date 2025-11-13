@@ -140,6 +140,7 @@ public:
   int key_event(SDLKey key, int state);     // Processes a keyboard event
   void level_begin();                       // Resets player state for a level loop (e.g., in menu demo)
   void action(double frame_ratio);          // Main update function, called once per frame
+  void updatePhysics(double deltaTime);
   void handle_input();                      // Main input handler, dispatches to sub-handlers
   void grabdistros();                       // Checks for and collects distros (coins)
   void draw() override;                     // Overrides pure virtual from GameObject

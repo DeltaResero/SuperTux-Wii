@@ -79,12 +79,31 @@ void Bullet::init(float x, float y, float xm, Direction dir)
  */
 void Bullet::action(double frame_ratio)
 {
-  frame_ratio *= 0.5f;
+  updatePhysics(frame_ratio);
+
+  if (base.x < scroll_x ||
+      base.x > scroll_x + screen->w ||
+      base.y > screen->h ||
+      issolid(base.x + 4, base.y + 2) ||
+      issolid(base.x, base.y + 2) ||
+      life_count <= 0)
+  {
+    removable = true;
+  }
+}
+
+/**
+ * Encapsulates the physics simulation and collision response for the Bullet.
+ * @param deltaTime The time delta for the current frame.
+ */
+void Bullet::updatePhysics(double deltaTime)
+{
+  deltaTime *= 0.5f;
 
   float old_y = base.y;
 
-  base.x = base.x + base.xm * frame_ratio;
-  base.y = base.y + base.ym * frame_ratio;
+  base.x = base.x + base.xm * deltaTime;
+  base.y = base.y + base.ym * deltaTime;
 
   collision_swept_object_map(&old_base, &base);
 
@@ -103,18 +122,9 @@ void Bullet::action(double frame_ratio)
     life_count -= 1;
   }
 
-  base.ym = base.ym + 0.5 * frame_ratio;
-
-  if (base.x < scroll_x ||
-      base.x > scroll_x + screen->w ||
-      base.y > screen->h ||
-      issolid(base.x + 4, base.y + 2) ||
-      issolid(base.x, base.y + 2) ||
-      life_count <= 0)
-  {
-    removable = true;
-  }
+  base.ym = base.ym + 0.5 * deltaTime;
 }
+
 
 // Bullet::draw() removed. Logic moved to World::draw()
 
@@ -205,13 +215,7 @@ void Upgrade::action(double frame_ratio)
     return;
   }
 
-  /* Apply physics and move the upgrade */
-  physic.apply(frame_ratio, base.x, base.y);
-
-  if (kind == UPGRADE_GROWUP || kind == UPGRADE_HERRING)
-  {
-    collision_swept_object_map(&old_base, &base);
-  }
+  updatePhysics(frame_ratio);
 
   // Handle falling
   if (kind == UPGRADE_GROWUP || kind == UPGRADE_HERRING)
@@ -256,6 +260,21 @@ void Upgrade::action(double frame_ratio)
       physic.set_velocity(-physic.get_velocity_x(), physic.get_velocity_y());
       dir = dir == LEFT ? RIGHT : LEFT;
     }
+  }
+}
+
+/**
+ * Encapsulates the physics simulation and collision response for the Upgrade.
+ * @param deltaTime The time delta for the current frame.
+ */
+void Upgrade::updatePhysics(double deltaTime)
+{
+  /* Apply physics and move the upgrade */
+  physic.apply(deltaTime, base.x, base.y);
+
+  if (kind == UPGRADE_GROWUP || kind == UPGRADE_HERRING)
+  {
+    collision_swept_object_map(&old_base, &base);
   }
 }
 

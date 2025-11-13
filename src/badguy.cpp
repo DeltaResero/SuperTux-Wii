@@ -269,11 +269,7 @@ void BadGuy::action_mriceblock(double frame_ratio)
   if (mode != HELD)
   {
     // Apply physics to move the block based on its current velocity.
-    physic.apply(frame_ratio, base.x, base.y);
-    if (dying != DYING_FALLING)
-    {
-      collision_swept_object_map(&old_base, &base);
-    }
+    updatePhysics(frame_ratio, dying != DYING_FALLING);
   }
   else if (mode == HELD)
   {
@@ -549,11 +545,7 @@ void BadGuy::action_jumpy(double frame_ratio)
   }
 
   // Move
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying == DYING_NOT)
-  {
-    collision_swept_object_map(&old_base, &base);
-  }
+  updatePhysics(frame_ratio, dying == DYING_NOT);
 }
 
 /**
@@ -568,9 +560,7 @@ void BadGuy::action_mrbomb(double frame_ratio)
 
   fall();
 
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying != DYING_FALLING)
-    collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, dying != DYING_FALLING);
 }
 
 /**
@@ -615,8 +605,7 @@ void BadGuy::action_bomb(double frame_ratio)
   }
 
   // Move
-  physic.apply(frame_ratio, base.x, base.y);
-  collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, true);
 }
 
 /**
@@ -666,7 +655,7 @@ void BadGuy::action_stalactite(double frame_ratio)
   }
 
   // Move
-  physic.apply(frame_ratio, base.x, base.y);
+  updatePhysics(frame_ratio, false);
 
   if (dying == DYING_SQUISHED && !timer.check())
     remove_me();
@@ -731,9 +720,7 @@ void BadGuy::action_fish(double frame_ratio)
     physic.enable_gravity(true);
   }
 
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying == DYING_NOT)
-    collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, dying == DYING_NOT);
 
   if (physic.get_velocity_y() > 0)
     set_sprite(img_fish_down, img_fish_down);
@@ -764,9 +751,7 @@ void BadGuy::action_bouncingsnowball(double frame_ratio)
   // Check for right/left collisions
   check_horizontal_bump();
 
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying == DYING_NOT)
-    collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, dying == DYING_NOT);
 
   // Handle dying timer:
   if (dying == DYING_SQUISHED && !timer.check())
@@ -813,9 +798,7 @@ void BadGuy::action_flyingsnowball(double frame_ratio)
   if (dying != DYING_NOT)
     physic.enable_gravity(true);
 
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying == DYING_NOT || dying == DYING_SQUISHED)
-    collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, dying == DYING_NOT || dying == DYING_SQUISHED);
 
   // Handle dying timer:
   if (dying == DYING_SQUISHED && !timer.check())
@@ -838,9 +821,7 @@ void BadGuy::action_spiky(double frame_ratio)
 
   fall();
 
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying != DYING_FALLING)
-    collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, dying != DYING_FALLING);
 }
 
 /**
@@ -855,9 +836,7 @@ void BadGuy::action_snowball(double frame_ratio)
 
   fall();
 
-  physic.apply(frame_ratio, base.x, base.y);
-  if (dying != DYING_FALLING)
-    collision_swept_object_map(&old_base, &base);
+  updatePhysics(frame_ratio, dying != DYING_FALLING);
 }
 
 /**
@@ -936,6 +915,20 @@ void BadGuy::action(double frame_ratio)
 
     default:
       break;
+  }
+}
+
+/**
+ * Encapsulates the physics simulation and collision response for the BadGuy.
+ * @param deltaTime The time delta for the current frame.
+ * @param performCollision Whether to perform collision detection.
+ */
+void BadGuy::updatePhysics(double deltaTime, bool performCollision)
+{
+  physic.apply(deltaTime, base.x, base.y);
+  if (performCollision)
+  {
+    collision_swept_object_map(&old_base, &base);
   }
 }
 

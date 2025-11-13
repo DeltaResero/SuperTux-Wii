@@ -107,6 +107,7 @@ public:
   BadGuy(float x, float y, BadGuyKind kind, bool stay_on_platform);
 
   void action(double frame_ratio);
+  void updatePhysics(double deltaTime, bool performCollision);
   void draw() override;
   void draw(SpriteBatcher* batcher);
   std::string type() { return "BadGuy"; };
