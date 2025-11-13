@@ -13,7 +13,6 @@
 //  This program is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
@@ -60,6 +59,12 @@ private:
 
   void common_setup();
   void resolvePlayerPhysics(Player* player);
+
+  // Helper function to draw a layer of tiles (bg, ia, or fg)
+  void draw_tile_layer(const unsigned int* tile_data, bool is_interactive_layer = false);
+
+  // Helper function to clean up all objects marked for removal
+  void cleanup_dead_objects();
 
   template<typename T, typename Func>
   void draw_pooled_objects(ObjectPool<T>& pool, Func draw_lambda)

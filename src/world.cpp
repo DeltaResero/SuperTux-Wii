@@ -206,76 +206,67 @@ void World::activate_particle_systems()
   }
 }
 
-void World::draw()
+/**
+ * Helper function to draw a layer of tiles.
+ * This consolidates the repetitive loop logic used for drawing the background,
+ * interactive, and foreground tile layers.
+ */
+void World::draw_tile_layer(const unsigned int* tile_data, bool is_interactive_layer)
 {
-  int y,x;
-
-  /* Draw the real background */
-  level->draw_bg();
-
-  /* Draw particle systems (background) */
-  std::vector<ParticleSystem*>::iterator p;
-  for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
-  {
-    (*p)->draw(scroll_x, 0, 0);
-  }
-
-  int current_width = level->width;
-
+  const int current_width = level->width;
   // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
-  int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f)) - 12;
+  const int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f)) - 12;
 
-  /* Draw background tiles: */
-  for (y = 0; y < 15; ++y)
+  for (int y = 0; y < 15; ++y)
   {
     // Loop 34 times to cover the screen plus the wide buffer.
-    for (x = 0; x < 34; ++x)
-    {
-      int map_tile_x = first_tile_x + x;
-      if (map_tile_x >= 0 && map_tile_x < current_width)
-      {
-        // Calculate the tile's absolute world position.
-        float tile_world_x = map_tile_x * 32.0f;
-
-        // Draw using the consistent formula: world_position - scroll_position.
-        unsigned int bg_tile_id = level->bg_tiles[y * current_width + map_tile_x];
-        Tile::draw(tile_world_x - scroll_x, y * 32.0f, bg_tile_id);
-      }
-    }
-  }
-
-  /* Draw interactive tiles: */
-  for (y = 0; y < 15; ++y)
-  {
-    // Loop 34 times to cover the screen plus the wide buffer.
-    for (x = 0; x < 34; ++x)
+    for (int x = 0; x < 34; ++x)
     {
       int map_tile_x = first_tile_x + x;
       if (map_tile_x >= 0 && map_tile_x < current_width)
       {
         bool should_draw_tile = true;
 
-        // Check if there is an active bouncy brick at this tile's location.
-        for (const auto* brick : bouncy_bricks)
+        // Special check for the interactive layer to avoid drawing a static
+        // tile where a bouncy brick is currently active.
+        if (is_interactive_layer)
         {
-          // Compare integer grid coordinates to avoid float precision issues.
-          if (static_cast<int>(brick->base.x) / 32 == map_tile_x &&
-              static_cast<int>(brick->base.y) / 32 == y)
+          for (const auto* brick : bouncy_bricks)
           {
-            should_draw_tile = false; // A brick is bouncing here, so don't draw the static tile.
-            break;
+            if (static_cast<int>(brick->base.x) / 32 == map_tile_x &&
+                static_cast<int>(brick->base.y) / 32 == y)
+            {
+              should_draw_tile = false;
+              break;
+            }
           }
         }
 
         if (should_draw_tile)
         {
           float tile_world_x = map_tile_x * 32.0f;
-          unsigned int ia_tile_id = level->ia_tiles[y * current_width + map_tile_x];
-          Tile::draw(tile_world_x - scroll_x, y * 32.0f, ia_tile_id);
+          unsigned int tile_id = tile_data[y * current_width + map_tile_x];
+          Tile::draw(tile_world_x - scroll_x, y * 32.0f, tile_id);
         }
       }
     }
   }
+}
+
+void World::draw()
+{
+  /* Draw the real background */
+  level->draw_bg();
+
+  /* Draw particle systems (background) */
+  for(auto* p : particle_systems)
+  {
+    p->draw(scroll_x, 0, 0);
+  }
+
+  /* Draw background, interactive, and foreground tiles using the helper */
+  draw_tile_layer(level->bg_tiles.data());
+  draw_tile_layer(level->ia_tiles.data(), true);
 
   // Single unified rendering loop - works for both SDL and OpenGL!
   SpriteBatcher* batcher = use_gl ? m_spriteBatcher : nullptr;
@@ -397,25 +388,12 @@ void World::draw()
   });
 
   /* Draw foreground tiles: */
-  for (y = 0; y < 15; ++y)
-  {
-    // Loop 34 times to cover the screen plus the wide buffer.
-    for (x = 0; x < 34; ++x)
-    {
-      int map_tile_x = first_tile_x + x;
-      if (map_tile_x >= 0 && map_tile_x < current_width)
-      {
-        float tile_world_x = map_tile_x * 32.0f;
-        unsigned int fg_tile_id = level->fg_tiles[y * current_width + map_tile_x];
-        Tile::draw(tile_world_x - scroll_x, y * 32.0f, fg_tile_id);
-      }
-    }
-  }
+  draw_tile_layer(level->fg_tiles.data());
 
   /* Draw particle systems (foreground) */
-  for(p = particle_systems.begin(); p != particle_systems.end(); ++p)
+  for(auto* p : particle_systems)
   {
-    (*p)->draw(scroll_x, 0, 1);
+    p->draw(scroll_x, 0, 1);
   }
 }
 
@@ -498,45 +476,14 @@ void World::resolvePlayerPhysics(Player* player)
     }
 }
 
-void World::action(float elapsed_time)
+/**
+ * Helper function to clean up all game objects that are marked for removal.
+ * This includes BouncyBricks and all BadGuys from their various lists.
+ * This uses the efficient swap-and-pop idiom to remove elements.
+ */
+void World::cleanup_dead_objects()
 {
-  m_elapsed_time = elapsed_time;
-
-  // Update all game logic
-  tux.action(elapsed_time);
-  tux.updatePhysics(elapsed_time);
-  resolvePlayerPhysics(&tux);
-
-  tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
-  scrolling(elapsed_time);
-
-  // Update all pooled objects with automatic cleanup
-  bouncy_distros.updateAndCleanup(elapsed_time);
-  broken_bricks.updateAndCleanup(elapsed_time);
-  floating_scores.updateAndCleanup(elapsed_time);
-  bullets.updateAndCleanup(elapsed_time);
-  upgrades.updateAndCleanup(elapsed_time);
-
-  // Update other game objects
-  for (auto* brick : bouncy_bricks)
-  {
-    brick->action(elapsed_time);
-  }
-
-  for (auto* badguy : bad_guys)
-  {
-    badguy->action(elapsed_time);
-  }
-
-  for(auto* p : particle_systems)
-  {
-    p->simulate(elapsed_time);
-  }
-
-  // Handle all collisions
-  collision_handler();
-
-  // Clean up all removable non-pooled objects
+  // Clean up removable non-pooled objects
   for (size_t i = 0; i < bouncy_bricks.size(); )
   {
     if (bouncy_bricks[i]->removable)
@@ -593,6 +540,48 @@ void World::action(float elapsed_time)
       ++i;
     }
   }
+}
+
+void World::action(float elapsed_time)
+{
+  m_elapsed_time = elapsed_time;
+
+  // Update all game logic
+  tux.action(elapsed_time);
+  tux.updatePhysics(elapsed_time);
+  resolvePlayerPhysics(&tux);
+
+  tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
+  scrolling(elapsed_time);
+
+  // Update all pooled objects with automatic cleanup
+  bouncy_distros.updateAndCleanup(elapsed_time);
+  broken_bricks.updateAndCleanup(elapsed_time);
+  floating_scores.updateAndCleanup(elapsed_time);
+  bullets.updateAndCleanup(elapsed_time);
+  upgrades.updateAndCleanup(elapsed_time);
+
+  // Update other game objects
+  for (auto* brick : bouncy_bricks)
+  {
+    brick->action(elapsed_time);
+  }
+
+  for (auto* badguy : bad_guys)
+  {
+    badguy->action(elapsed_time);
+  }
+
+  for(auto* p : particle_systems)
+  {
+    p->simulate(elapsed_time);
+  }
+
+  // Handle all collisions
+  collision_handler();
+
+  // Clean up all objects marked for removal
+  cleanup_dead_objects();
 }
 
 // the space that it takes for the screen to start scrolling, regarding
