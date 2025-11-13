@@ -159,10 +159,12 @@ public:
   std::string type() { return "Player"; };  // Returns the object type as a string
 
 private:
-  void handle_horizontal_input();           // Handles left/right input.
-  void handle_vertical_input();             // Handles jump/duck input.
-  void remove_powerups();                   // Internal implementation for removing powerups.
-  Sprite* select_sprite(PlayerSprite* sprite_set); // Helper to select appropriate sprite
+  // Private Helper Methods
+  void handleHorizontalMovement();
+  void handleVerticalMovement();
+  void handleActions();
+  Sprite* selectSprite();
+  Sprite* getSpriteFromSet(PlayerSprite* sprite_set);
 };
 
 #endif /*SUPERTUX_PLAYER_H*/

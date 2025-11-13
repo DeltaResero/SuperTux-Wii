@@ -30,6 +30,26 @@
 
 #define AUTOSCROLL_DEAD_INTERVAL 300
 
+// Gameplay tuning constants to replace "magic numbers"
+namespace PlayerConstants
+{
+// Jump velocities
+static const float JUMP_VELOCITY_HIGH = -5.8f; // For running jumps
+static const float JUMP_VELOCITY_LOW  = -5.2f; // For standing jumps
+
+// Enemy bounce velocities
+static const float ENEMY_BOUNCE_VELOCITY_HIGH = -5.2f; // Bouncing off enemy while holding jump
+static const float ENEMY_BOUNCE_VELOCITY_LOW  = -2.0f; // Bouncing off enemy without holding jump
+
+// Skid and friction constants
+static const float SKID_ACCELERATION_MULTIPLIER = 2.5f;
+static const float TURN_ACCELERATION_MULTIPLIER = 2.0f;
+static const float FRICTION_MULTIPLIER          = 1.5f;
+
+// Death constants
+static const float DEATH_BOUNCE_VELOCITY = -7.0f;
+}
+
 // Global surfaces and sprites for the player
 Surface* tux_life;
 Sprite* smalltux_gameover;
@@ -50,11 +70,11 @@ PlayerKeymap keymap;
  */
 PlayerKeymap::PlayerKeymap()
 {
-  keymap.jump  = SDLK_SPACE;
-  keymap.duck  = SDLK_DOWN;
-  keymap.left  = SDLK_LEFT;
-  keymap.right = SDLK_RIGHT;
-  keymap.fire  = SDLK_LCTRL;
+  jump  = SDLK_SPACE;
+  duck  = SDLK_DOWN;
+  left  = SDLK_LEFT;
+  right = SDLK_RIGHT;
+  fire  = SDLK_LCTRL;
 }
 
 /**
@@ -251,17 +271,30 @@ bool Player::under_solid()
 }
 
 /**
+ * Main input handler, called once per frame.
+ * Dispatches to horizontal, vertical, and action handlers.
+ */
+void Player::handle_input()
+{
+  handleHorizontalMovement();
+  handleVerticalMovement();
+  handleActions();
+}
+
+/**
  * Handles left and right movement input.
  * This function calculates the desired acceleration and velocity based on player
  * input and state (walking, running, skidding) and applies it to the physics component.
  */
-void Player::handle_horizontal_input()
+void Player::handleHorizontalMovement()
 {
   float vx = physic.get_velocity_x();
   float ax = 0; // Start with no acceleration
   float dirsign = 0;
 
   // Determine direction based on input
+  /** NOTE: physic.get_velocity_y() != 0 is a failsafe for allowing movement while
+    *       ducking inside a wall to get unstuck. */
   if (input.left == DOWN && input.right == UP && (!duck || physic.get_velocity_y() != 0))
   {
     dir = LEFT;
@@ -288,7 +321,7 @@ void Player::handle_horizontal_input()
   }
 
   // Provide a minimum walking speed if starting from a standstill
-  if (dirsign != 0 && fabs(vx) < WALK_SPEED)
+  if (dirsign != 0 && fabsf(vx) < WALK_SPEED)
   {
     vx = dirsign * WALK_SPEED;
   }
@@ -296,33 +329,33 @@ void Player::handle_horizontal_input()
   // Apply skidding physics when changing direction abruptly
   if (on_ground() && ((vx < 0 && dirsign > 0) || (vx > 0 && dirsign < 0)))
   {
-    if (fabs(vx) > SKID_XM && !skidding_timer.check())
+    if (fabsf(vx) > SKID_XM && !skidding_timer.check())
     {
       skidding_timer.start(SKID_TIME);
       play_sound(sounds[SND_SKID], SOUND_CENTER_SPEAKER);
-      ax *= 2.5f;
+      ax *= PlayerConstants::SKID_ACCELERATION_MULTIPLIER;
     }
     else
     {
-      ax *= 2.0f;
+      ax *= PlayerConstants::TURN_ACCELERATION_MULTIPLIER;
     }
   }
 
   // Apply friction/drag when no horizontal input is given
   if (dirsign == 0)
   {
-    if (fabs(vx) < WALK_SPEED)
+    if (fabsf(vx) < WALK_SPEED)
     {
       vx = 0;
       ax = 0;
     }
     else if (vx < 0)
     {
-      ax = WALK_ACCELERATION_X * 1.5f;
+      ax = WALK_ACCELERATION_X * PlayerConstants::FRICTION_MULTIPLIER;
     }
     else
     {
-      ax = -WALK_ACCELERATION_X * 1.5f;
+      ax = -WALK_ACCELERATION_X * PlayerConstants::FRICTION_MULTIPLIER;
     }
   }
 
@@ -331,7 +364,7 @@ void Player::handle_horizontal_input()
   {
     if (ax != 0)
     {
-      ax *= 1.0f / fabs(vx);
+      ax *= 1.0f / fabsf(vx);
     }
   }
 
@@ -341,21 +374,27 @@ void Player::handle_horizontal_input()
 }
 
 /**
- * Handles vertical movement input for jumping and ducking.
+ * Handles vertical movement input for jumping.
  */
-void Player::handle_vertical_input()
+void Player::handleVerticalMovement()
 {
+  // Re-enable jumping if on the ground and jump key is released
+  if (on_ground() && input.up == UP)
+  {
+    can_jump = true;
+  }
+
   // Handle jump press
   if (input.up == DOWN && can_jump && on_ground())
   {
     // Jump higher if running
-    if (fabs(physic.get_velocity_x()) > MAX_WALK_XM)
+    if (fabsf(physic.get_velocity_x()) > MAX_WALK_XM)
     {
-      physic.set_velocity_y(-5.8f);
+      physic.set_velocity_y(PlayerConstants::JUMP_VELOCITY_HIGH);
     }
     else
     {
-      physic.set_velocity_y(-5.2f);
+      physic.set_velocity_y(PlayerConstants::JUMP_VELOCITY_LOW);
     }
 
     --base.y; // Nudge up to unstick from the ground
@@ -392,22 +431,10 @@ void Player::handle_vertical_input()
 }
 
 /**
- * Main input handler, called once per frame.
- * Dispatches to horizontal, vertical, and other input handlers.
+ * Handles actions like shooting, ducking, and animation updates.
  */
-void Player::handle_input()
+void Player::handleActions()
 {
-  handle_horizontal_input();
-
-  if (on_ground() && input.up == UP)
-  {
-    can_jump = true;
-  }
-  if (input.up == DOWN || (input.up == UP && jumping))
-  {
-    handle_vertical_input();
-  }
-
   // Handle shooting
   if (input.fire == DOWN && input.old_fire == UP && got_coffee)
   {
@@ -426,6 +453,7 @@ void Player::handle_input()
     }
     else
     {
+      // Running animation speed is tied to the fire button
       if ((input.fire == DOWN && (global_frame_counter % 2) == 0) || (global_frame_counter % 4) == 0)
       {
         frame_main = (frame_main + 1) % 4;
@@ -480,11 +508,11 @@ void Player::jump_of_badguy(BadGuy* badguy)
 {
   if (input.up)
   {
-    physic.set_velocity_y(-5.2f);
+    physic.set_velocity_y(PlayerConstants::ENEMY_BOUNCE_VELOCITY_HIGH);
   }
   else
   {
-    physic.set_velocity_y(-2.0f);
+    physic.set_velocity_y(PlayerConstants::ENEMY_BOUNCE_VELOCITY_LOW);
   }
   base.y = badguy->base.y - base.height - 2;
 }
@@ -521,9 +549,11 @@ void Player::grabdistros()
 }
 
 /**
- * Helper function to select the appropriate sprite based on player state.
+ * Selects the appropriate sprite from a given PlayerSprite set based on player state.
+ * @param sprite_set The collection of sprites (e.g., smalltux, largetux) to choose from.
+ * @return The specific sprite to be drawn.
  */
-Sprite* Player::select_sprite(PlayerSprite* sprite_set)
+Sprite* Player::getSpriteFromSet(PlayerSprite* sprite_set)
 {
   if (duck && size != SMALL)
   {
@@ -552,6 +582,21 @@ Sprite* Player::select_sprite(PlayerSprite* sprite_set)
 }
 
 /**
+ * Top-level helper to select the correct sprite based on the player's overall state.
+ * This function determines which sprite set to use (small, large, fire) and then
+ * calls a sub-helper to get the specific animation frame.
+ * @return The final sprite to be drawn.
+ */
+Sprite* Player::selectSprite()
+{
+    PlayerSprite* sprite_set = &smalltux; // Default to small tux
+    if (size == BIG) {
+        sprite_set = got_coffee ? &firetux : &largetux;
+    }
+    return getSpriteFromSet(sprite_set);
+}
+
+/**
  * Implements the pure virtual draw() from GameObject.
  */
 void Player::draw()
@@ -565,51 +610,41 @@ void Player::draw()
  */
 void Player::draw(SpriteBatcher* batcher)
 {
+  // Only draw if not invisible from damage, or if blinking allows it
   if (!safe_timer.started() || (global_frame_counter % 2) == 0)
   {
     if (dying == DYING_SQUISHED)
     {
       if (batcher)
-      {
         smalltux_gameover->draw(*batcher, base.x, base.y);
-      }
       else
-      {
         smalltux_gameover->draw(base.x, base.y);
-      }
     }
     else
     {
-      PlayerSprite* sprite_set = (size == SMALL) ? &smalltux : (got_coffee ? &firetux : &largetux);
-      Sprite* sprite_to_draw = select_sprite(sprite_set);
+      // Use the new helper function to get the correct sprite
+      Sprite* sprite_to_draw = selectSprite();
 
       // Draw main body sprite
       if (sprite_to_draw)
       {
         if (batcher)
-        {
           sprite_to_draw->draw(*batcher, base.x, base.y);
-        }
         else
-        {
           sprite_to_draw->draw(base.x, base.y);
-        }
       }
 
       // Draw arm overlay if holding an object
-      if (holding_something && physic.get_velocity_y() == 0 && !duck)
+      if (holding_something && on_ground() && !duck)
       {
+        PlayerSprite* sprite_set = (size == SMALL) ? &smalltux : (got_coffee ? &firetux : &largetux);
         Sprite* grab_sprite = (dir == RIGHT) ? sprite_set->grab_right : sprite_set->grab_left;
         if (grab_sprite)
         {
           if (batcher)
-          {
             grab_sprite->draw(*batcher, base.x, base.y);
-          }
           else
-          {
             grab_sprite->draw(base.x, base.y);
-          }
         }
       }
 
@@ -717,7 +752,7 @@ void Player::kill(HurtMode mode)
   {
     physic.enable_gravity(true);
     physic.set_acceleration(0, 0);
-    physic.set_velocity(0, -7);
+    physic.set_velocity(0, PlayerConstants::DEATH_BOUNCE_VELOCITY);
     if (dying != DYING_SQUISHED)
     {
       --player_status.lives;
@@ -731,7 +766,7 @@ void Player::kill(HurtMode mode)
  */
 void Player::is_dying()
 {
-  remove_powerups();
+  player_remove_powerups();
   dying = DYING_NOT;
 }
 
@@ -754,7 +789,7 @@ bool Player::is_dead()
 /**
  * Removes all of Tux's power-ups.
  */
-void Player::remove_powerups()
+void Player::player_remove_powerups()
 {
   got_coffee = false;
   size = SMALL;
