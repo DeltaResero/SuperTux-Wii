@@ -202,8 +202,6 @@ void Player::action(double frame_ratio)
     handle_input();
   }
 
-  updatePhysics(frame_ratio);
-
   // Update timers
   skidding_timer.check();
   invincible_timer.check();
@@ -217,96 +215,14 @@ void Player::action(double frame_ratio)
  */
 void Player::updatePhysics(double deltaTime)
 {
-  bool jumped_in_solid = false;
-
   // Apply physics simulation to get a new potential position
   physic.apply(deltaTime, base.x, base.y);
 
   if (dying == DYING_NOT)
   {
-    base_type target = base;
-
+    post_physics_base = base; // Store the pre-collision position
     // Resolve collision with the map, adjusting 'base' to a valid position
     collision_swept_object_map(&old_base, &base);
-
-    // If collision stopped horizontal movement, kill horizontal velocity
-    if (target.x != base.x)
-    {
-      physic.set_velocity_x(0);
-    }
-
-    // Exception for when Tux is stuck under a tile while unducking
-    if (!duck && on_ground() && old_base.x == base.x && old_base.y == base.y && collision_object_map(base))
-    {
-      base.x += deltaTime * WALK_SPEED * (dir ? 1 : -1);
-      previous_base = old_base = base;
-    }
-
-    // Handle gravity and landing logic
-    if (!on_ground())
-    {
-      // If we are in the air, gravity should be active.
-      physic.enable_gravity(true);
-      if (under_solid())
-      {
-        // If we hit a ceiling, stop all upward velocity.
-        physic.set_velocity_y(0);
-        jumped_in_solid = true; // Flag that we hit a ceiling this frame.
-      }
-    }
-    else
-    {
-      // If the player was previously falling (positive y-velocity in our coordinate system)
-      // and is now on the ground, it means they have just landed.
-      if (physic.get_velocity_y() > 0)
-      {
-        // Snap the player's FEET to the top of the tile grid to ensure they are perfectly aligned.
-        // This prevents jittering and falling through thin platforms.
-        base.y = (int)((base.y + base.height) / 32) * 32 - base.height;
-        physic.set_velocity_y(0);
-      }
-
-      // Since we are on the ground, gravity should be disabled to prevent accumulating downward velocity.
-      physic.enable_gravity(false);
-      player_status.score_multiplier = 1; // Reset score multiplier (for multi-hits)
-    }
-
-    // Handle interactions when bonking a block from below
-    if (jumped_in_solid)
-    {
-      if (isbrick(base.x, base.y) || isfullbox(base.x, base.y))
-      {
-        World::current()->trygrabdistro(base.x, base.y - 32, BOUNCE);
-        World::current()->trybumpbadguy(base.x, base.y - 64);
-        World::current()->trybreakbrick(base.x, base.y, size == SMALL, RIGHT);
-        bumpbrick(base.x, base.y);
-        World::current()->tryemptybox(base.x, base.y, RIGHT);
-      }
-
-      if (isbrick(base.x + 31, base.y) || isfullbox(base.x + 31, base.y))
-      {
-        World::current()->trygrabdistro(base.x + 31, base.y - 32, BOUNCE);
-        World::current()->trybumpbadguy(base.x + 31, base.y - 64);
-        if (size == BIG)
-        {
-          World::current()->trybreakbrick(base.x + 31, base.y, size == SMALL, LEFT);
-        }
-        bumpbrick(base.x + 31, base.y);
-        World::current()->tryemptybox(base.x + 31, base.y, LEFT);
-      }
-    }
-    grabdistros();
-
-    // Make sure Tux doesn't try to stick to solid roofs
-    if (jumped_in_solid)
-    {
-      ++base.y;
-      ++old_base.y;
-      if (on_ground())
-      {
-        jumping = false;
-      }
-    }
   }
 }
 

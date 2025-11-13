@@ -37,6 +37,8 @@
 #include "sprite_batcher.h"
 #include "text.h"
 #include "sound.h"
+#include "player.h"
+#include "collision.h"
 
 // Extern sprite declarations needed for monolithic draw loops
 extern Sprite* img_bullet;
@@ -45,6 +47,9 @@ extern Sprite* img_growup;
 extern Sprite* img_iceflower;
 extern Sprite* img_1up;
 extern Surface* img_distro[4];
+
+// Extern declaration for bumpbrick if it is not in a header
+extern void bumpbrick(float x, float y);
 
 World* World::current_ = 0;
 
@@ -414,10 +419,94 @@ void World::draw()
   }
 }
 
+void World::resolvePlayerPhysics(Player* player)
+{
+    if (player->dying != DYING_NOT) return;
+
+    bool jumped_in_solid = false;
+
+    // If collision stopped horizontal movement, kill horizontal velocity
+    if (player->post_physics_base.x != player->base.x)
+    {
+      player->physic.set_velocity_x(0);
+    }
+
+    // Exception for when Tux is stuck under a tile while unducking
+    if (!player->duck && player->on_ground() && player->old_base.x == player->base.x && player->old_base.y == player->base.y && collision_object_map(player->base))
+    {
+      player->base.x += m_elapsed_time * WALK_SPEED * (player->dir ? 1 : -1);
+      player->previous_base = player->old_base = player->base;
+    }
+
+    // Handle gravity and landing logic
+    if (!player->on_ground())
+    {
+      // If we are in the air, gravity should be active.
+      player->physic.enable_gravity(true);
+      if (player->under_solid())
+      {
+        // If we hit a ceiling, stop all upward velocity.
+        player->physic.set_velocity_y(0);
+        jumped_in_solid = true; // Flag that we hit a ceiling this frame.
+      }
+    }
+    else
+    {
+      // If the player was previously falling (positive y-velocity in our coordinate system)
+      // and is now on the ground, it means they have just landed.
+      if (player->physic.get_velocity_y() > 0)
+      {
+        // Snap the player's FEET to the top of the tile grid to ensure they are perfectly aligned.
+        // This prevents jittering and falling through thin platforms.
+        player->base.y = (int)((player->base.y + player->base.height) / 32) * 32 - player->base.height;
+        player->physic.set_velocity_y(0);
+      }
+
+      // Since we are on the ground, gravity should be disabled to prevent accumulating downward velocity.
+      player->physic.enable_gravity(false);
+      player_status.score_multiplier = 1; // Reset score multiplier (for multi-hits)
+    }
+
+    // Handle interactions when bonking a block from below
+    if (jumped_in_solid)
+    {
+      if (isbrick(player->base.x, player->base.y) || isfullbox(player->base.x, player->base.y))
+      {
+        trygrabdistro(player->base.x, player->base.y - 32, BOUNCE);
+        trybumpbadguy(player->base.x, player->base.y - 64);
+        trybreakbrick(player->base.x, player->base.y, player->size == SMALL, RIGHT);
+        bumpbrick(player->base.x, player->base.y);
+        tryemptybox(player->base.x, player->base.y, RIGHT);
+      }
+      if (isbrick(player->base.x + 31, player->base.y) || isfullbox(player->base.x + 31, player->base.y))
+      {
+        trygrabdistro(player->base.x + 31, player->base.y - 32, BOUNCE);
+        trybumpbadguy(player->base.x + 31, player->base.y - 64);
+        if (player->size == BIG) { trybreakbrick(player->base.x + 31, player->base.y, player->size == SMALL, LEFT); }
+        bumpbrick(player->base.x + 31, player->base.y);
+        tryemptybox(player->base.x + 31, player->base.y, LEFT);
+      }
+    }
+    player->grabdistros();
+
+    // Make sure Tux doesn't try to stick to solid roofs
+    if (jumped_in_solid)
+    {
+      ++player->base.y;
+      ++player->old_base.y;
+      if (player->on_ground()) { player->jumping = false; }
+    }
+}
+
 void World::action(float elapsed_time)
 {
+  m_elapsed_time = elapsed_time;
+
   // Update all game logic
   tux.action(elapsed_time);
+  tux.updatePhysics(elapsed_time);
+  resolvePlayerPhysics(&tux);
+
   tux.check_bounds(level->back_scrolling, (bool)level->hor_autoscroll_speed);
   scrolling(elapsed_time);
 

@@ -23,7 +23,7 @@
 #define SUPERTUX_WORLD_H
 
 #include <vector>
-#include <string> // For std::string
+#include <string>
 #include <SDL.h>
 #include "type.h"
 #include "scene.h"
@@ -31,10 +31,11 @@
 #include "badguy.h"
 #include "particlesystem.h"
 #include "gameobjs.h"
-#include "object_pool.h" // Now includes the template
+#include "object_pool.h"
 
 class Level;
 class SpriteBatcher;
+class Player;
 
 /** The World class holds a level and all the game objects (badguys,
     bouncy distros, etc) that are needed to run a game. */
@@ -55,7 +56,10 @@ private:
   static World* current_;
   SpriteBatcher* m_spriteBatcher;
 
+  float m_elapsed_time;
+
   void common_setup();
+  void resolvePlayerPhysics(Player* player);
 
   template<typename T, typename Func>
   void draw_pooled_objects(ObjectPool<T>& pool, Func draw_lambda)

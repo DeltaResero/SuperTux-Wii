@@ -124,6 +124,7 @@ public:
   int frame_;                               // Sub-frame for animation sequences
   int frame_main;                           // Main frame for animation sequences
   base_type previous_base;                  // Position at the start of the current frame (for collision)
+  base_type post_physics_base;
 
   // Timers for various player states.
   Timer invincible_timer;
