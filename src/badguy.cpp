@@ -38,6 +38,9 @@
 #include "sprite_manager.h"
 #include "sprite_batcher.h"
 
+// Gameplay Constants
+static const float BADGUY_WALK_SPEED = 0.8f;
+
 // Define bad guy sprites globally
 Sprite* img_mriceblock_flat_left;
 Sprite* img_mriceblock_flat_right;
@@ -70,8 +73,6 @@ Sprite* img_snowball_right;
 Sprite* img_snowball_squished_left;
 Sprite* img_snowball_squished_right;
 
-#define BADGUY_WALK_SPEED 0.8f
-
 /**
  * Converts a string to a BadGuyKind enumeration.
  * This function is used to map string identifiers from level data to specific bad guy types.
@@ -81,7 +82,8 @@ Sprite* img_snowball_squished_right;
 BadGuyKind badguykind_from_string(const std::string& str)
 {
   // Create a static map that is initialized only once on the first call
-  static const std::unordered_map<std::string, BadGuyKind> kind_map = {
+  static const std::unordered_map<std::string, BadGuyKind> kind_map =
+  {
     {"money", BAD_JUMPY},                        // was money in old maps
     {"jumpy", BAD_JUMPY},
     {"laptop", BAD_MRICEBLOCK},                  // was laptop in old maps
@@ -242,7 +244,7 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
   if (kind != BAD_FLAME && kind != BAD_FISH && collision_object_map(base))
   {
     std::cerr << "Warning: BadGuy started in wall: kind: " << badguykind_to_string(kind)
-          << " pos: (" << base.x << ", " << base.y << ")" << std::endl;
+              << " pos: (" << base.x << ", " << base.y << ")" << std::endl;
     while (collision_object_map(base))
     {
       --base.y;
@@ -258,6 +260,7 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
 void BadGuy::action_mriceblock(double frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
+  static const float KICK_VELOCITY = 3.5f;
 
   /* Move left/right: */
   if (mode != HELD)
@@ -306,7 +309,7 @@ void BadGuy::action_mriceblock(double frame_ratio)
       set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
 
       // Set the initial sliding velocity.
-      float initial_velocity = (dir == LEFT) ? -3.5f : 3.5f;
+      float initial_velocity = (dir == LEFT) ? -KICK_VELOCITY : KICK_VELOCITY;
       physic.set_velocity_x(initial_velocity);
 
       // Check for an immediate collision caused by spawning next to a wall.
@@ -366,7 +369,7 @@ void BadGuy::action_mriceblock(double frame_ratio)
     {
       mode = NORMAL;
       set_sprite(img_mriceblock_left, img_mriceblock_right);
-      physic.set_velocity((dir == LEFT) ? -0.8f : 0.8f, 0);
+      physic.set_velocity((dir == LEFT) ? -BADGUY_WALK_SPEED : BADGUY_WALK_SPEED, 0);
 
       // Mr. Ice Block has recovered. Tell the world he is a normal collider.
       World::current()->set_badguy_collision_state(this, false);
@@ -501,20 +504,26 @@ void BadGuy::action_jumpy(double frame_ratio)
 
   // These tests *should* use location from ground, not velocity
   if (std::fabs(vy) > 5.6f)
+  {
     set_sprite(img_jumpy_left_down, img_jumpy_left_down);
+  }
   else if (std::fabs(vy) > 5.3f)
+  {
     set_sprite(img_jumpy_left_middle, img_jumpy_left_middle);
+  }
   else
+  {
     set_sprite(img_jumpy_left_up, img_jumpy_left_up);
+  }
 
   Player& tux = *World::current()->get_tux();
 
-  static const float JUMPV = 6.0f;
+  static const float JUMP_VELOCITY = 6.0f;
 
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
   {
-    physic.set_velocity_y(-JUMPV);
+    physic.set_velocity_y(-JUMP_VELOCITY);
     physic.enable_gravity(true);
     mode = JUMPY_JUMP;
   }
@@ -541,16 +550,29 @@ void BadGuy::action_jumpy(double frame_ratio)
 }
 
 /**
+ * A common action for simple walking enemies.
+ * This function handles horizontal collision checks, falling, and physics updates.
+ * @param frame_ratio The frame ratio used to adjust movement based on frame time.
+ * @param check_cliff Whether to check for cliffs.
+ */
+void BadGuy::action_walk_and_fall(double frame_ratio, bool check_cliff)
+{
+  if (dying == DYING_NOT)
+  {
+    check_horizontal_bump(check_cliff);
+  }
+  fall();
+  updatePhysics(frame_ratio, dying != DYING_FALLING);
+}
+
+/**
  * Handles the movement and actions of MrBomb bad guy.
  * This includes walking and collision detection.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
 void BadGuy::action_mrbomb(double frame_ratio)
 {
-  if (dying == DYING_NOT)
-    check_horizontal_bump(true);
-
-  updatePhysics(frame_ratio, dying != DYING_FALLING);
+  action_walk_and_fall(frame_ratio, true);
 }
 
 /**
@@ -560,13 +582,13 @@ void BadGuy::action_mrbomb(double frame_ratio)
  */
 void BadGuy::action_bomb(double frame_ratio)
 {
-  static const int TICKINGTIME = 1000;
-  static const int EXPLODETIME = 1000;
+  static const int TICKING_TIME = 1000;
+  static const int EXPLODE_TIME = 1000;
 
   if (mode == NORMAL)
   {
     mode = BOMB_TICKING;
-    timer.start(TICKINGTIME);
+    timer.start(TICKING_TIME);
   }
   else if (!timer.check())
   {
@@ -575,15 +597,21 @@ void BadGuy::action_bomb(double frame_ratio)
       mode = BOMB_EXPLODE;
       set_sprite(img_mrbomb_explosion, img_mrbomb_explosion);
       dying = DYING_NOT; // Now the bomb hurts
-      timer.start(EXPLODETIME);
+      timer.start(EXPLODE_TIME);
 
       // Play explosion sound
       if (base.x < scroll_x + screen->w / 2 - 10)
+      {
         play_sound(sounds[SND_EXPLODE], SOUND_LEFT_SPEAKER);
+      }
       else if (base.x > scroll_x + screen->w / 2 + 10)
+      {
         play_sound(sounds[SND_EXPLODE], SOUND_RIGHT_SPEAKER);
+      }
       else
+      {
         play_sound(sounds[SND_EXPLODE], SOUND_CENTER_SPEAKER);
+      }
     }
     else if (mode == BOMB_EXPLODE)
     {
@@ -605,15 +633,15 @@ void BadGuy::action_stalactite(double frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
 
-  static const int SHAKETIME = 800;
-  static const int RANGE = 40;
+  static const int SHAKE_TIME = 800;
+  static const int SHAKE_RANGE = 40;
 
   if (mode == NORMAL)
   {
     // Start shaking when Tux is below the stalactite and at least 40 pixels near
-    if (tux.base.x + 32 > base.x - RANGE && tux.base.x < base.x + 32 + RANGE && tux.base.y + tux.base.height > base.y)
+    if (tux.base.x + 32 > base.x - SHAKE_RANGE && tux.base.x < base.x + 32 + SHAKE_RANGE && tux.base.y + tux.base.height > base.y)
     {
-      timer.start(SHAKETIME);
+      timer.start(SHAKE_TIME);
       mode = STALACTITE_SHAKING;
     }
   }
@@ -641,7 +669,9 @@ void BadGuy::action_stalactite(double frame_ratio)
   updatePhysics(frame_ratio, false);
 
   if (dying == DYING_SQUISHED && !timer.check())
+  {
     remove_me();
+  }
 }
 
 /**
@@ -651,19 +681,19 @@ void BadGuy::action_stalactite(double frame_ratio)
  */
 void BadGuy::action_flame(double frame_ratio)
 {
-  static const float radius = 100;
+  static const float FLAME_RADIUS = 100.0f;
   // Adjust speed to work with our integer angle indices (0.82 gives nearly the same original speed)
-  static const float speed = 0.82f;
+  static const float FLAME_SPEED = 0.82f;
 
   // Get the current angle as an integer index
   int current_angle = static_cast<int>(base.ym);
 
   // Use the fast lookup functions instead of std::cos and std::sin
-  base.x = old_base.x + Trig::fast_cos(current_angle) * radius;
-  base.y = old_base.y + Trig::fast_sin(current_angle) * radius;
+  base.x = old_base.x + Trig::fast_cos(current_angle) * FLAME_RADIUS;
+  base.y = old_base.y + Trig::fast_sin(current_angle) * FLAME_RADIUS;
 
   // Increment the angle index
-  base.ym += frame_ratio * speed;
+  base.ym += frame_ratio * FLAME_SPEED;
 
   // Wrap the angle back to 0 if it completes a circle
   if (base.ym >= Trig::ANGLE_COUNT)
@@ -679,8 +709,8 @@ void BadGuy::action_flame(double frame_ratio)
  */
 void BadGuy::action_fish(double frame_ratio)
 {
-  static const float JUMPV = 6.0f;
-  static const int WAITTIME = 1000;
+  static const float FISH_JUMP_VELOCITY = 6.0f;
+  static const int FISH_WAIT_TIME = 1000;
 
   // Go in wait mode when back in water
   if (dying == DYING_NOT
@@ -692,21 +722,23 @@ void BadGuy::action_fish(double frame_ratio)
     set_sprite(nullptr, nullptr);
     physic.set_velocity(0, 0);
     physic.enable_gravity(false);
-    timer.start(WAITTIME);
+    timer.start(FISH_WAIT_TIME);
   }
   else if (mode == FISH_WAIT && !timer.check())
   {
     // Jump again
     set_sprite(img_fish, img_fish);
     mode = NORMAL;
-    physic.set_velocity(0, -JUMPV);
+    physic.set_velocity(0, -FISH_JUMP_VELOCITY);
     physic.enable_gravity(true);
   }
 
   updatePhysics(frame_ratio, dying == DYING_NOT);
 
   if (physic.get_velocity_y() > 0)
+  {
     set_sprite(img_fish_down, img_fish_down);
+  }
 }
 
 /**
@@ -716,12 +748,12 @@ void BadGuy::action_fish(double frame_ratio)
  */
 void BadGuy::action_bouncingsnowball(double frame_ratio)
 {
-  static const float JUMPV = 4.5f;
+  static const float SNOWBALL_JUMP_VELOCITY = 4.5f;
 
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
   {
-    physic.set_velocity_y(-JUMPV);
+    physic.set_velocity_y(-SNOWBALL_JUMP_VELOCITY);
     physic.enable_gravity(true);
   }
   else
@@ -750,15 +782,15 @@ void BadGuy::action_bouncingsnowball(double frame_ratio)
  */
 void BadGuy::action_flyingsnowball(double frame_ratio)
 {
-  static const float FLYINGSPEED = 1.0f;
-  static const int DIRCHANGETIME = 1000;
+  static const float FLYING_SNOWBALL_SPEED = 1.0f;
+  static const int DIRECTION_CHANGE_TIME = 1000;
 
   // Go into fly up mode if none specified yet
   if (dying == DYING_NOT && mode == NORMAL)
   {
     mode = FLY_UP;
-    physic.set_velocity_y(-FLYINGSPEED);
-    timer.start(DIRCHANGETIME / 2);
+    physic.set_velocity_y(-FLYING_SNOWBALL_SPEED);
+    timer.start(DIRECTION_CHANGE_TIME / 2);
   }
 
   if (dying == DYING_NOT && !timer.check())
@@ -766,18 +798,20 @@ void BadGuy::action_flyingsnowball(double frame_ratio)
     if (mode == FLY_UP)
     {
       mode = FLY_DOWN;
-      physic.set_velocity_y(FLYINGSPEED);
+      physic.set_velocity_y(FLYING_SNOWBALL_SPEED);
     }
     else if (mode == FLY_DOWN)
     {
       mode = FLY_UP;
-      physic.set_velocity_y(-FLYINGSPEED);
+      physic.set_velocity_y(-FLYING_SNOWBALL_SPEED);
     }
-    timer.start(DIRCHANGETIME);
+    timer.start(DIRECTION_CHANGE_TIME);
   }
 
   if (dying != DYING_NOT)
+  {
     physic.enable_gravity(true);
+  }
 
   updatePhysics(frame_ratio, dying == DYING_NOT || dying == DYING_SQUISHED);
 
@@ -797,10 +831,7 @@ void BadGuy::action_flyingsnowball(double frame_ratio)
  */
 void BadGuy::action_spiky(double frame_ratio)
 {
-  if (dying == DYING_NOT)
-    check_horizontal_bump();
-
-  updatePhysics(frame_ratio, dying != DYING_FALLING);
+  action_walk_and_fall(frame_ratio, false);
 }
 
 /**
@@ -810,10 +841,7 @@ void BadGuy::action_spiky(double frame_ratio)
  */
 void BadGuy::action_snowball(double frame_ratio)
 {
-  if (dying == DYING_NOT)
-    check_horizontal_bump();
-
-  updatePhysics(frame_ratio, dying != DYING_FALLING);
+  action_walk_and_fall(frame_ratio, false);
 }
 
 /**
@@ -839,17 +867,23 @@ void BadGuy::action(double frame_ratio)
 
   // Once it's on screen, it's activated
   if (base.x <= scroll_x + screen->w + OFFSCREEN_DISTANCE)
+  {
     seen = true;
+  }
 
   if (!seen)
+  {
     return;
+  }
 
   switch (kind)
   {
     case BAD_MRICEBLOCK:
       action_mriceblock(frame_ratio);
       if (mode != HELD)
+      {
         fall();
+      }
       break;
 
     case BAD_JUMPY:
@@ -859,7 +893,6 @@ void BadGuy::action(double frame_ratio)
 
     case BAD_MRBOMB:
       action_mrbomb(frame_ratio);
-      fall();
       break;
 
     case BAD_BOMB:
@@ -894,12 +927,10 @@ void BadGuy::action(double frame_ratio)
 
     case BAD_SPIKY:
       action_spiky(frame_ratio);
-      fall();
       break;
 
     case BAD_SNOWBALL:
       action_snowball(frame_ratio);
-      fall();
       break;
 
     default:
@@ -937,20 +968,30 @@ void BadGuy::draw(SpriteBatcher* batcher)
 {
   // Don't try to draw stuff that is outside of the screen
   if (base.x <= scroll_x - base.width || base.x >= scroll_x + screen->w)
+  {
     return;
+  }
 
   if (sprite_left == nullptr || sprite_right == nullptr)
+  {
     return;
+  }
 
   Sprite* sprite = (dir == LEFT) ? sprite_left : sprite_right;
 
   if (batcher)
+  {
     sprite->draw(*batcher, base.x, base.y);
+  }
   else
+  {
     sprite->draw(base.x, base.y);
+  }
 
   if (debug_mode)
+  {
     fillrect(base.x, base.y, base.width, base.height, 75, 0, 75, 150);
+  }
 }
 
 /**
@@ -1011,7 +1052,9 @@ void BadGuy::bump()
 
   // These can't be bumped
   if (kind == BAD_FLAME || kind == BAD_BOMB || kind == BAD_FISH || kind == BAD_FLYINGSNOWBALL)
+  {
     return;
+  }
 
   physic.set_velocity_y(-3.0f);
   kill_me(25);
@@ -1117,7 +1160,9 @@ void BadGuy::squish(Player* player)
   {
     // Fish can only be killed when falling down
     if (physic.get_velocity_y() <= 0)
+    {
       return;
+    }
 
     player->jump_of_badguy(this);
 
@@ -1128,22 +1173,24 @@ void BadGuy::squish(Player* player)
     remove_me();
     return;
   }
-  else if (kind == BAD_BOUNCINGSNOWBALL)
+  else if (kind == BAD_BOUNCINGSNOWBALL || kind == BAD_FLYINGSNOWBALL || kind == BAD_SNOWBALL)
   {
     squish_me(player);
-    set_sprite(img_bouncingsnowball_squished, img_bouncingsnowball_squished);
-    return;
-  }
-  else if (kind == BAD_FLYINGSNOWBALL)
-  {
-    squish_me(player);
-    set_sprite(img_flyingsnowball_squished, img_flyingsnowball_squished);
-    return;
-  }
-  else if (kind == BAD_SNOWBALL)
-  {
-    squish_me(player);
-    set_sprite(img_snowball_squished_left, img_snowball_squished_right);
+    switch (kind)
+    {
+      case BAD_BOUNCINGSNOWBALL:
+        set_sprite(img_bouncingsnowball_squished, img_bouncingsnowball_squished);
+        break;
+      case BAD_FLYINGSNOWBALL:
+        set_sprite(img_flyingsnowball_squished, img_flyingsnowball_squished);
+        break;
+      case BAD_SNOWBALL:
+        set_sprite(img_snowball_squished_left, img_snowball_squished_right);
+        break;
+      default:
+        // Should not happen
+        break;
+    }
     return;
   }
 }
@@ -1156,7 +1203,9 @@ void BadGuy::squish(Player* player)
 void BadGuy::kill_me(int score)
 {
   if (kind == BAD_BOMB || kind == BAD_STALACTITE || kind == BAD_FLAME)
+  {
     return;
+  }
 
   dying = DYING_FALLING;
   if (kind == BAD_MRICEBLOCK)
@@ -1192,6 +1241,146 @@ void BadGuy::explode(BadGuy* badguy)
 }
 
 /**
+ * Handles collision with a bullet.
+ */
+void BadGuy::handleCollisionWithBullet()
+{
+  kill_me(10);
+}
+
+/**
+ * Handles collision with another bad guy.
+ * @param other Pointer to the other bad guy.
+ */
+void BadGuy::handleCollisionWithBadGuy(BadGuy* other)
+{
+  // If we're a kicked MrIceBlock, kill any bad guys we hit
+  if (kind == BAD_MRICEBLOCK && mode == KICK)
+  {
+    other->kill_me(25);
+  }
+  // A held MrIceBlock kills the enemy too but falls to ground then
+  else if (kind == BAD_MRICEBLOCK && mode == HELD)
+  {
+    other->kill_me(25);
+    kill_me(0);
+  }
+  // Kill bad guys that run into an exploding bomb
+  else if (kind == BAD_BOMB && dying == DYING_NOT)
+  {
+    if (other->kind == BAD_MRBOMB)
+    {
+      // MrBomb transforms into a bomb now
+      explode(other);
+    }
+    else
+    {
+      other->kill_me(50);
+    }
+  }
+  // Kill any bad guys that get hit by a stalactite
+  else if (kind == BAD_STALACTITE && dying == DYING_NOT)
+  {
+    if (other->kind == BAD_MRBOMB)
+    {
+      // MrBomb transforms into a bomb now
+      explode(other);
+    }
+    else
+    {
+      other->kill_me(50);
+    }
+  }
+  // When enemies run into each other, make them change directions
+  else
+  {
+    // If the other bad guy is a kicked ice block, we are the one being hit.
+    // We do nothing and let the ice block's collision handler take care of it.
+    // This prevents us from turning around just before we get killed.
+    if (other->kind == BAD_MRICEBLOCK && other->mode == KICK)
+    {
+      return;
+    }
+
+    // Jumpy, fish, flame, stalactites are exceptions
+    if (other->kind == BAD_JUMPY || other->kind == BAD_FLAME || other->kind == BAD_STALACTITE || other->kind == BAD_FISH)
+    {
+      return;
+    }
+
+    // Bounce off of other bad guy if we land on top of him
+    if (base.y + base.height < other->base.y + other->base.height)
+    {
+      if (other->dir == LEFT)
+      {
+        dir = RIGHT;
+        physic.set_velocity(std::fabs(physic.get_velocity_x()), -2);
+      }
+      else if (other->dir == RIGHT)
+      {
+        dir = LEFT;
+        physic.set_velocity(-std::fabs(physic.get_velocity_x()), -2);
+      }
+      return;
+    }
+    else if (base.y + base.height > other->base.y + other->base.height)
+    {
+      return;
+    }
+
+    if (other->kind != BAD_FLAME)
+    {
+      if (dir == LEFT)
+      {
+        dir = RIGHT;
+        physic.set_velocity_x(std::fabs(physic.get_velocity_x()));
+
+        // in case badguys get "jammed"
+        if (physic.get_velocity_x() != 0)
+        {
+          base.x = other->base.x + other->base.width;
+        }
+      }
+      else if (dir == RIGHT)
+      {
+        dir = LEFT;
+        physic.set_velocity_x(-std::fabs(physic.get_velocity_x()));
+      }
+    }
+  }
+}
+
+/**
+ * Handles collision with the player.
+ * @param player Pointer to the player.
+ */
+void BadGuy::handleCollisionWithPlayer(Player* player)
+{
+  // Get kicked if flat
+  if (mode == FLAT && !dying)
+  {
+    play_sound(sounds[SND_KICK], SOUND_CENTER_SPEAKER);
+
+    // Hit from the left side
+    if (player->base.x < base.x)
+    {
+      physic.set_velocity_x(5);
+      dir = RIGHT;
+    }
+    // Hit from the right side
+    else
+    {
+      physic.set_velocity_x(-5);
+      dir = LEFT;
+    }
+
+    mode = KICK;
+    player->kick_timer.start(KICKING_TIME);
+    set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
+  }
+}
+
+/**
  * Handles collisions between the bad guy and other objects or players.
  * This function determines the appropriate response based on the type of collision.
  * @param p_c_object Pointer to the colliding object or player.
@@ -1200,8 +1389,6 @@ void BadGuy::explode(BadGuy* badguy)
  */
 void BadGuy::collision(void* p_c_object, int c_object, CollisionType type)
 {
-  BadGuy* pbad_c = nullptr;
-
   if (type == COLLISION_BUMP)
   {
     bump();
@@ -1219,134 +1406,15 @@ void BadGuy::collision(void* p_c_object, int c_object, CollisionType type)
   switch (c_object)
   {
     case CO_BULLET:
-      kill_me(10);
+      handleCollisionWithBullet();
       break;
 
     case CO_BADGUY:
-      pbad_c = static_cast<BadGuy*>(p_c_object);
-
-      // If we're a kicked MrIceBlock, kill any bad guys we hit
-      if (kind == BAD_MRICEBLOCK && mode == KICK)
-      {
-        pbad_c->kill_me(25);
-      }
-
-      // A held MrIceBlock kills the enemy too but falls to ground then
-      else if (kind == BAD_MRICEBLOCK && mode == HELD)
-      {
-        pbad_c->kill_me(25);
-        kill_me(0);
-      }
-
-      // Kill bad guys that run into an exploding bomb
-      else if (kind == BAD_BOMB && dying == DYING_NOT)
-      {
-        if (pbad_c->kind == BAD_MRBOMB)
-        {
-          // MrBomb transforms into a bomb now
-          explode(pbad_c);
-          return;
-        }
-        else
-        {
-          pbad_c->kill_me(50);
-        }
-      }
-
-      // Kill any bad guys that get hit by a stalactite
-      else if (kind == BAD_STALACTITE && dying == DYING_NOT)
-      {
-        if (pbad_c->kind == BAD_MRBOMB)
-        {
-          // MrBomb transforms into a bomb now
-          explode(pbad_c);
-          return;
-        }
-        else
-        {
-          pbad_c->kill_me(50);
-        }
-      }
-
-      // When enemies run into each other, make them change directions
-      else
-      {
-        // If the other bad guy is a kicked ice block, we are the one being hit.
-        // We do nothing and let the ice block's collision handler take care of it.
-        // This prevents us from turning around just before we get killed.
-        if (pbad_c->kind == BAD_MRICEBLOCK && pbad_c->mode == KICK)
-        {
-          return;
-        }
-
-        // Jumpy, fish, flame, stalactites are exceptions
-        if (pbad_c->kind == BAD_JUMPY || pbad_c->kind == BAD_FLAME || pbad_c->kind == BAD_STALACTITE || pbad_c->kind == BAD_FISH)
-          break;
-
-        // Bounce off of other bad guy if we land on top of him
-        if (base.y + base.height < pbad_c->base.y + pbad_c->base.height)
-        {
-          if (pbad_c->dir == LEFT)
-          {
-            dir = RIGHT;
-            physic.set_velocity(std::fabs(physic.get_velocity_x()), -2);
-          }
-          else if (pbad_c->dir == RIGHT)
-          {
-            dir = LEFT;
-            physic.set_velocity(-std::fabs(physic.get_velocity_x()), -2);
-          }
-          break;
-        }
-        else if (base.y + base.height > pbad_c->base.y + pbad_c->base.height)
-          break;
-
-        if (pbad_c->kind != BAD_FLAME)
-        {
-          if (dir == LEFT)
-          {
-            dir = RIGHT;
-            physic.set_velocity_x(std::fabs(physic.get_velocity_x()));
-
-            // in case badguys get "jammed"
-            if (physic.get_velocity_x() != 0)
-            {
-              base.x = pbad_c->base.x + pbad_c->base.width;
-            }
-          }
-          else if (dir == RIGHT)
-          {
-            dir = LEFT;
-            physic.set_velocity_x(-std::fabs(physic.get_velocity_x()));
-          }
-        }
-      }
+      handleCollisionWithBadGuy(static_cast<BadGuy*>(p_c_object));
       break;
 
     case CO_PLAYER:
-      Player* player = static_cast<Player*>(p_c_object);
-      // Get kicked if flat
-      if (mode == FLAT && !dying)
-      {
-        play_sound(sounds[SND_KICK], SOUND_CENTER_SPEAKER);
-
-        // Hit from the left side
-        if (player->base.x < base.x)
-        {
-          physic.set_velocity_x(5);
-          dir = RIGHT;
-        }
-        // Hit from the right side
-        else
-        {
-          physic.set_velocity_x(-5);
-          dir = LEFT;
-        }
-
-        mode = KICK;
-        player->kick_timer.start(KICKING_TIME);
-        set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
-      }
+      handleCollisionWithPlayer(static_cast<Player*>(p_c_object));
       break;
   }
 }

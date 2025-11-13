@@ -33,7 +33,8 @@
 #include "sprite.h"
 
 /* Bad guy kinds: */
-enum BadGuyKind {
+enum BadGuyKind
+{
   BAD_MRICEBLOCK,
   BAD_JUMPY,
   BAD_MRBOMB,
@@ -60,7 +61,8 @@ class BadGuy : public GameObject
 {
 public:
   /* Enemy modes: */
-  enum BadGuyMode {
+  enum BadGuyMode
+  {
     NORMAL=0,
     FLAT,
     KICK,
@@ -110,7 +112,10 @@ public:
   void updatePhysics(double deltaTime, bool performCollision);
   void draw() override;
   void draw(SpriteBatcher* batcher);
-  std::string type() { return "BadGuy"; };
+  std::string type()
+  {
+    return "BadGuy";
+  };
 
   void explode(BadGuy* badguy);
 
@@ -127,7 +132,10 @@ public:
    * this.
    */
   void remove_me();
-  bool is_removable() const { return removable; }
+  bool is_removable() const
+  {
+    return removable;
+  }
 
 private:
   void action_mriceblock(double frame_ratio);
@@ -141,6 +149,9 @@ private:
   void action_flyingsnowball(double frame_ratio);
   void action_spiky(double frame_ratio);
   void action_snowball(double frame_ratio);
+
+  // Common behavior function for walking enemies
+  void action_walk_and_fall(double frame_ratio, bool check_cliff);
 
   /** handles falling down. disables gravity calculation when we're back on
    * ground */
@@ -161,6 +172,11 @@ private:
   void squish_me(Player* player);
   /** set image of the badguy */
   void set_sprite(Sprite* left, Sprite* right);
+
+  // Decomposed collision handlers
+  void handleCollisionWithBadGuy(BadGuy* other);
+  void handleCollisionWithPlayer(Player* player);
+  void handleCollisionWithBullet();
 };
 
 struct BadGuyData
