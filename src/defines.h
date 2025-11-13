@@ -93,7 +93,7 @@ enum DyingType
 #define KICKING_TIME 200      // Kicking duration (ms)
 
 /* Scroll speeds */
-#define SCROLL_SPEED_CREDITS 1.2   // Scroll speed for credits
+#define SCROLL_SPEED_CREDITS 1.4   // Scroll speed for credits
 #define SCROLL_SPEED_MESSAGE 1.0   // Scroll speed for messages
 
 /* Debugging */
