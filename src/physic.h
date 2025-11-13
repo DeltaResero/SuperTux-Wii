@@ -21,53 +21,155 @@
 #ifndef SUPERTUX_PHYSIC_H
 #define SUPERTUX_PHYSIC_H
 
-/** This is a very simplistic physics engine handling accelerated and constant
-  * movement along with gravity.
-  */
+/**
+ * @class Physic
+ * @brief A very simplistic physics engine handling accelerated and constant
+ *        movement along with gravity.
+ *
+ * This class is designed to be a "dumb" simulator. It only applies the
+ * mathematical rules of motion and contains no game-specific logic. Its
+ * methods are lightweight and suitable for frequent calls within a game loop.
+ */
 class Physic
 {
 public:
-  Physic();
-  ~Physic();
+  // Use the default constructor and destructor.
+  // In-class initializers set the default state.
+  Physic() = default;
+  ~Physic() = default;
 
-  /** resets all velocities and accelerations to 0 */
-  void reset();
+  /** Resets all velocities and accelerations to 0 and re-enables gravity. */
+  inline void reset();
 
-  /** sets velocity to a fixed value */
-  void set_velocity(float vx, float vy);
+  /** Sets velocity to a fixed value. */
+  inline void set_velocity(float vx, float vy);
 
-  void set_velocity_x(float vx);
-  void set_velocity_y(float vy);
+  /** Sets the horizontal velocity. */
+  inline void set_velocity_x(float vx);
 
-  /** velocities invertion */
-  void inverse_velocity_x();
-  void inverse_velocity_y();
+  /** Sets the vertical velocity. */
+  inline void set_velocity_y(float vy);
 
-  float get_velocity_x();
-  float get_velocity_y();
+  /** Inverts the horizontal velocity. */
+  inline void inverse_velocity_x();
 
-  /** sets acceleration applied to the object. (Note that gravity is
-    * eventually added to the vertical acceleration)
-    */
-  void set_acceleration(float ax, float ay);
+  /** Inverts the vertical velocity. */
+  inline void inverse_velocity_y();
 
-  void set_acceleration_x(float ax);
-  void set_acceleration_y(float ay);
+  /** Gets the current horizontal velocity. */
+  inline float get_velocity_x() const;
 
-  float get_acceleration_x();
-  float get_acceleration_y();
+  /** Gets the current vertical velocity. */
+  inline float get_velocity_y() const;
 
-  /** enables or disables handling of gravity */
-  void enable_gravity(bool gravity_enabled);
+  /** Sets acceleration applied to the object. */
+  inline void set_acceleration(float ax, float ay);
 
-  /** applies the physical simulation to given x and y coordinates */
+  /** Sets the horizontal acceleration. */
+  inline void set_acceleration_x(float ax);
+
+  /** Sets the vertical acceleration. */
+  inline void set_acceleration_y(float ay);
+
+  /** Gets the current horizontal acceleration. */
+  inline float get_acceleration_x() const;
+
+  /** Gets the current vertical acceleration. */
+  inline float get_acceleration_y() const;
+
+  /** Enables or disables handling of gravity. */
+  inline void enable_gravity(bool is_gravity_enabled);
+
+  /**
+   * Applies the physical simulation to given x and y coordinates.
+   * This is the only function not inlined due to its complexity and dependency
+   * on the World state.
+   */
   void apply(float frame_ratio, float &x, float &y);
 
 private:
-  float ax, ay;          // horizontal and vertical acceleration
-  float vx, vy;          // horizontal and vertical velocity
-  bool gravity_enabled;  // should we respect gravity in out calculations?
+  // Use C++11 in-class member initializers to define the default state.
+  float ax{0.0f};          // horizontal acceleration
+  float ay{0.0f};          // vertical acceleration
+  float vx{0.0f};          // horizontal velocity
+  float vy{0.0f};          // vertical velocity
+  bool gravity_enabled{true}; // should we respect gravity in our calculations?
 };
+
+// Inlined function implementations for performance
+
+inline void Physic::reset()
+{
+  ax = ay = vx = vy = 0.0f;
+  gravity_enabled = true;
+}
+
+inline void Physic::set_velocity(float nvx, float nvy)
+{
+  vx = nvx;
+  vy = nvy;
+}
+
+inline void Physic::set_velocity_x(float nvx)
+{
+  vx = nvx;
+}
+
+inline void Physic::set_velocity_y(float nvy)
+{
+  vy = nvy;
+}
+
+inline void Physic::inverse_velocity_x()
+{
+  vx = -vx;
+}
+
+inline void Physic::inverse_velocity_y()
+{
+  vy = -vy;
+}
+
+inline float Physic::get_velocity_x() const
+{
+  return vx;
+}
+
+inline float Physic::get_velocity_y() const
+{
+  return vy;
+}
+
+inline void Physic::set_acceleration(float nax, float nay)
+{
+  ax = nax;
+  ay = nay;
+}
+
+inline void Physic::set_acceleration_x(float nax)
+{
+  ax = nax;
+}
+
+inline void Physic::set_acceleration_y(float nay)
+{
+  ay = nay;
+}
+
+inline float Physic::get_acceleration_x() const
+{
+  return ax;
+}
+
+inline float Physic::get_acceleration_y() const
+{
+  return ay;
+}
+
+inline void Physic::enable_gravity(bool is_gravity_enabled)
+{
+  gravity_enabled = is_gravity_enabled;
+}
 
 #endif /*SUPERTUX_PHYSIC_H*/
 

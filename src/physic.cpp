@@ -18,161 +18,12 @@
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //  02111-1307, USA.
 
-#include <stdio.h>
-
-#include "scene.h"
-#include "defines.h"
 #include "physic.h"
-#include "timer.h"
 #include "world.h"
 #include "level.h"
 
-/**
- * Constructs a Physic object.
- * Initializes all physical properties to zero or default values.
- */
-Physic::Physic()
-: ax(0), ay(0), vx(0), vy(0), gravity_enabled(true)
-{
-}
-
-/**
- * Destructor for the Physic object.
- */
-Physic::~Physic()
-{
-}
-
-/**
- * Resets all velocities and accelerations to 0 and re-enables gravity.
- */
-void Physic::reset()
-{
-  ax = ay = vx = vy = 0;
-  gravity_enabled = true;
-}
-
-/**
- * Sets the horizontal velocity.
- * @param nvx The new horizontal velocity.
- */
-void Physic::set_velocity_x(float nvx)
-{
-  vx = nvx;
-}
-
-/**
- * Sets the vertical velocity.
- * Note: This function uses a "Y-down" coordinate system where a positive
- * value means downward movement.
- * @param nvy The new vertical velocity.
- */
-void Physic::set_velocity_y(float nvy)
-{
-  vy = nvy;
-}
-
-/**
- * Sets both the horizontal and vertical velocity.
- * @param nvx The new horizontal velocity.
- * @param nvy The new vertical velocity (Y-down).
- */
-void Physic::set_velocity(float nvx, float nvy)
-{
-  vx = nvx;
-  vy = nvy;
-}
-
-/**
- * Inverts the horizontal velocity.
- */
-void Physic::inverse_velocity_x()
-{
-  vx = -vx;
-}
-
-/**
- * Inverts the vertical velocity.
- */
-void Physic::inverse_velocity_y()
-{
-  vy = -vy;
-}
-
-/**
- * Gets the current horizontal velocity.
- * @return The horizontal velocity.
- */
-float Physic::get_velocity_x()
-{
-  return vx;
-}
-
-/**
- * Gets the current vertical velocity.
- * @return The vertical velocity in a "Y-down" coordinate system.
- */
-float Physic::get_velocity_y()
-{
-  return vy;
-}
-
-/**
- * Sets the horizontal acceleration.
- * @param nax The new horizontal acceleration.
- */
-void Physic::set_acceleration_x(float nax)
-{
-  ax = nax;
-}
-
-/**
- * Sets the vertical acceleration.
- * Note: This function uses a "Y-down" coordinate system.
- * @param nay The new vertical acceleration.
- */
-void Physic::set_acceleration_y(float nay)
-{
-  ay = nay;
-}
-
-/**
- * Sets both the horizontal and vertical acceleration.
- * @param nax The new horizontal acceleration.
- * @param nay The new vertical acceleration (Y-down).
- */
-void Physic::set_acceleration(float nax, float nay)
-{
-  ax = nax;
-  ay = nay;
-}
-
-/**
- * Gets the current horizontal acceleration.
- * @return The horizontal acceleration.
- */
-float Physic::get_acceleration_x()
-{
-  return ax;
-}
-
-/**
- * Gets the current vertical acceleration.
- * @return The vertical acceleration in a "Y-down" coordinate system.
- */
-float Physic::get_acceleration_y()
-{
-  return ay;
-}
-
-/**
- * Enables or disables the effect of gravity on this object.
- * @param enable_gravity True to enable gravity, false to disable.
- */
-void Physic::enable_gravity(bool enable_gravity)
-{
-  gravity_enabled = enable_gravity;
-}
+// The constructor and destructor are defaulted in the header file.
+// All simple getters and setters have been inlined for performance.
 
 /**
  * Applies the physical simulation to an object's coordinates.
@@ -185,24 +36,17 @@ void Physic::enable_gravity(bool enable_gravity)
 void Physic::apply(float frame_ratio, float &x, float &y)
 {
   // Determine the gravitational force for this frame.
-  float gravity = World::current()->get_level()->gravity;
-  float grav;
-  if (gravity_enabled)
-  {
-    grav = gravity / 100.0f;
-  }
-  else
-  {
-    grav = 0;
-  }
+  // Note: This logic is unchanged to maintain behavioral equivalence.
+  const float gravity = World::current()->get_level()->gravity;
+  const float grav = gravity_enabled ? (gravity / 100.0f) : 0.0f;
 
-  // Update the object's position based on its current velocity and acceleration.
-  // This uses a semi-implicit Euler integration method
+  // Update velocity based on acceleration and gravity.
+  // This uses a semi-implicit Euler integration method.
   vx += ax * frame_ratio;
   vy += (ay + grav) * frame_ratio;
 
-  // Update position using the *newly calculated* velocity
-  // This is more stable than using the velocity from the previous frame
+  // Update position using the *newly calculated* velocity.
+  // This is more stable than using the velocity from the previous frame.
   x += vx * frame_ratio;
   y += vy * frame_ratio;
 }
