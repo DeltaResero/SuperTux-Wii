@@ -259,12 +259,6 @@ void BadGuy::action_mriceblock(double frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
 
-  // Apply gravity and landing logic unless the block is being held by the player.
-  if (mode != HELD)
-  {
-    fall();
-  }
-
   /* Move left/right: */
   if (mode != HELD)
   {
@@ -517,8 +511,6 @@ void BadGuy::action_jumpy(double frame_ratio)
 
   static const float JUMPV = 6.0f;
 
-  fall();
-
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
   {
@@ -558,8 +550,6 @@ void BadGuy::action_mrbomb(double frame_ratio)
   if (dying == DYING_NOT)
     check_horizontal_bump(true);
 
-  fall();
-
   updatePhysics(frame_ratio, dying != DYING_FALLING);
 }
 
@@ -572,8 +562,6 @@ void BadGuy::action_bomb(double frame_ratio)
 {
   static const int TICKINGTIME = 1000;
   static const int EXPLODETIME = 1000;
-
-  fall();
 
   if (mode == NORMAL)
   {
@@ -639,7 +627,6 @@ void BadGuy::action_stalactite(double frame_ratio)
   }
   else if (mode == STALACTITE_FALL)
   {
-    fall();
     // Destroy if we collide with land
     if (issolid(base.x + base.width / 2, base.y + base.height))
     {
@@ -648,10 +635,6 @@ void BadGuy::action_stalactite(double frame_ratio)
       mode = FLAT;
       set_sprite(img_stalactite_broken, img_stalactite_broken);
     }
-  }
-  else if (mode == FLAT)
-  {
-    fall();
   }
 
   // Move
@@ -735,8 +718,6 @@ void BadGuy::action_bouncingsnowball(double frame_ratio)
 {
   static const float JUMPV = 4.5f;
 
-  fall();
-
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
   {
@@ -819,8 +800,6 @@ void BadGuy::action_spiky(double frame_ratio)
   if (dying == DYING_NOT)
     check_horizontal_bump();
 
-  fall();
-
   updatePhysics(frame_ratio, dying != DYING_FALLING);
 }
 
@@ -833,8 +812,6 @@ void BadGuy::action_snowball(double frame_ratio)
 {
   if (dying == DYING_NOT)
     check_horizontal_bump();
-
-  fall();
 
   updatePhysics(frame_ratio, dying != DYING_FALLING);
 }
@@ -871,22 +848,31 @@ void BadGuy::action(double frame_ratio)
   {
     case BAD_MRICEBLOCK:
       action_mriceblock(frame_ratio);
+      if (mode != HELD)
+        fall();
       break;
 
     case BAD_JUMPY:
       action_jumpy(frame_ratio);
+      fall();
       break;
 
     case BAD_MRBOMB:
       action_mrbomb(frame_ratio);
+      fall();
       break;
 
     case BAD_BOMB:
       action_bomb(frame_ratio);
+      fall();
       break;
 
     case BAD_STALACTITE:
       action_stalactite(frame_ratio);
+      if (mode == STALACTITE_FALL || mode == FLAT)
+      {
+        fall();
+      }
       break;
 
     case BAD_FLAME:
@@ -899,6 +885,7 @@ void BadGuy::action(double frame_ratio)
 
     case BAD_BOUNCINGSNOWBALL:
       action_bouncingsnowball(frame_ratio);
+      fall();
       break;
 
     case BAD_FLYINGSNOWBALL:
@@ -907,10 +894,12 @@ void BadGuy::action(double frame_ratio)
 
     case BAD_SPIKY:
       action_spiky(frame_ratio);
+      fall();
       break;
 
     case BAD_SNOWBALL:
       action_snowball(frame_ratio);
+      fall();
       break;
 
     default:
