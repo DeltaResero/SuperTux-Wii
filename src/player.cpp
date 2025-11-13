@@ -243,9 +243,11 @@ bool Player::on_ground()
  */
 bool Player::under_solid()
 {
+  // A 3-pixel inset is added to prevent corner snags from triggering a head-bonk.
+  const float corner_inset = 3.0f;
   return (issolid(base.x + base.width / 2, base.y) ||
-          issolid(base.x + 1, base.y) ||
-          issolid(base.x + base.width - 1, base.y));
+          issolid(base.x + corner_inset, base.y) ||
+          issolid(base.x + base.width - corner_inset, base.y));
 }
 
 /**
@@ -535,7 +537,7 @@ Sprite* Player::select_sprite(PlayerSprite* sprite_set)
   {
     return (dir == RIGHT) ? sprite_set->kick_right : sprite_set->kick_left;
   }
-  else if (physic.get_velocity_y() != 0)
+  else if (!on_ground())
   {
     return (dir == RIGHT) ? sprite_set->jump_right : sprite_set->jump_left;
   }
