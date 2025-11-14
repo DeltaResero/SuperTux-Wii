@@ -21,6 +21,7 @@
 #define SUPERTUX_COLLISION_H
 
 #include "type.h"
+#include <functional>
 
 class Tile;
 class World;
@@ -50,9 +51,9 @@ bool isice(float x, float y); // Checks if the tile is ice
 bool isfullbox(float x, float y); // Checks if the tile is a full box
 bool isdistro(float x, float y); // Checks if the tile contains a distro
 
-typedef void* (*tiletestfunction)(Tile* tile);
+// The predicate should return a pointer to the tile on a successful test, or nullptr otherwise.
+Tile* collision_func(const base_type& base, std::function<Tile*(Tile*)> predicate);
 
-void* collision_func(const base_type& base, tiletestfunction function); // Tests tiles for collision and invokes the function
 Tile* collision_goal(const base_type& base); // Checks if an object collides with a goal tile
 
 #endif /* SUPERTUX_COLLISION_H */
