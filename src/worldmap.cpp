@@ -21,7 +21,7 @@
 #include <fstream>
 #include <vector>
 #include <cstring>
-#include <assert.h>
+#include <cassert>
 #include <unistd.h>
 #include "globals.h"
 #include "texture.h"
@@ -33,10 +33,12 @@
 #include "resources.h"
 #include "level.h"
 #include "timer.h"
+#include "player.h"
 
 #define DISPLAY_MAP_MESSAGE_TIME 2800
 
-namespace WorldMapNS {
+namespace WorldMapNS
+{
 
 /**
  * Reverses the given direction.
@@ -620,16 +622,16 @@ void WorldMap::load_map()
       }
       else if (strcmp(lisp_symbol(lisp_car(element)), "levels") == 0)
       {
-        lisp_object_t* cur = lisp_cdr(element);
+        lisp_object_t* cur_level = lisp_cdr(element);
 
-        while (!lisp_nil_p(cur))
+        while (!lisp_nil_p(cur_level))
         {
-          lisp_object_t* element = lisp_car(cur);
+          lisp_object_t* level_element = lisp_car(cur_level);
 
-          if (strcmp(lisp_symbol(lisp_car(element)), "level") == 0)
+          if (strcmp(lisp_symbol(lisp_car(level_element)), "level") == 0)
           {
             Level level;
-            LispReader reader(lisp_cdr(element));
+            LispReader reader(lisp_cdr(level_element));
             level.solved = false;
 
             level.north = true;
@@ -666,7 +668,7 @@ void WorldMap::load_map()
             levels.push_back(level);
           }
 
-          cur = lisp_cdr(cur);
+          cur_level = lisp_cdr(cur_level);
         }
       }
 
@@ -709,7 +711,140 @@ void WorldMap::on_escape_press()
 }
 
 /**
- * Processes player input, including keyboard, joystick, and mouse events.
+ * Handles keyboard-specific input events.
+ * @param event The SDL_Event for the key press.
+ */
+void WorldMap::handleKeyboardInput(const SDL_Event& event)
+{
+  if (event.type == SDL_KEYDOWN)
+  {
+    switch (event.key.keysym.sym)
+    {
+      case SDLK_ESCAPE:
+      {
+        on_escape_press();
+        break;
+      }
+      case SDLK_SPACE: // added for wii mote
+      case SDLK_LCTRL:
+      case SDLK_RETURN:
+      {
+        enter_level = true;
+        break;
+      }
+      default:
+      {
+        break;
+      }
+    }
+  }
+}
+
+#ifdef TSCONTROL
+/**
+ * Handles mouse-specific input events.
+ * @param event The SDL_Event for the mouse action.
+ */
+void WorldMap::handleMouseInput(const SDL_Event& event)
+{
+  if (event.type == SDL_MOUSEBUTTONDOWN)
+  {
+    if (event.motion.y < screen->h / 4)
+    {
+      input_direction = D_NORTH;
+    }
+    else if (event.motion.y > 3 * screen->h / 4)
+    {
+      input_direction = D_SOUTH;
+    }
+    else if (event.motion.x < screen->w / 4)
+    {
+      input_direction = D_WEST;
+    }
+    else if (event.motion.x > 3 * screen->w / 4)
+    {
+      input_direction = D_EAST;
+    }
+    else
+    {
+      enter_level = true;
+    }
+  }
+}
+#endif
+
+/**
+ * Handles joystick-specific input events.
+ * @param event The SDL_Event for the joystick action.
+ */
+void WorldMap::handleJoystickInput(const SDL_Event& event)
+{
+  switch (event.type)
+  {
+    case SDL_JOYAXISMOTION:
+    {
+      if (event.jaxis.axis == joystick_keymap.x_axis)
+      {
+        if (event.jaxis.value < -joystick_keymap.dead_zone)
+        {
+          input_direction = D_WEST;
+        }
+        else if (event.jaxis.value > joystick_keymap.dead_zone)
+        {
+          input_direction = D_EAST;
+        }
+      }
+      else if (event.jaxis.axis == joystick_keymap.y_axis)
+      {
+        if (event.jaxis.value > joystick_keymap.dead_zone)
+        {
+          input_direction = D_SOUTH;
+        }
+        else if (event.jaxis.value < -joystick_keymap.dead_zone)
+        {
+          input_direction = D_NORTH;
+        }
+      }
+      break;
+    }
+    case SDL_JOYHATMOTION:
+    {
+      if (event.jhat.value == SDL_HAT_UP)
+      {
+        input_direction = D_NORTH;
+      }
+      else if (event.jhat.value == SDL_HAT_DOWN)
+      {
+        input_direction = D_SOUTH;
+      }
+      else if (event.jhat.value == SDL_HAT_LEFT)
+      {
+        input_direction = D_WEST;
+      }
+      else if (event.jhat.value == SDL_HAT_RIGHT)
+      {
+        input_direction = D_EAST;
+      }
+      break;
+    }
+    case SDL_JOYBUTTONDOWN:
+    {
+      // A button (0) or 2 button (3) will enter level
+      if (event.jbutton.button == 0 || event.jbutton.button == 3)
+      {
+        enter_level = true;
+      }
+      else if (event.jbutton.button == 6) // mote home
+      {
+        on_escape_press();
+      }
+      break;
+    }
+  }
+}
+
+/**
+ * Processes player input by polling for events and dispatching to handlers.
  */
 void WorldMap::get_input()
 {
@@ -732,120 +867,25 @@ void WorldMap::get_input()
           st_abort("Received window close", "");
           break;
         }
-
         case SDL_KEYDOWN:
         {
-          switch (event.key.keysym.sym)
-          {
-            case SDLK_ESCAPE:
-            {
-              on_escape_press();
-              break;
-            }
-            case SDLK_SPACE: // added for wii mote
-            case SDLK_LCTRL:
-            case SDLK_RETURN:
-            {
-              enter_level = true;
-              break;
-            }
-            default:
-            {
-              break;
-            }
-          }
+          handleKeyboardInput(event);
           break;
         }
-
 #ifdef TSCONTROL
         case SDL_MOUSEBUTTONDOWN:
         {
-          if (event.motion.y < screen->h / 4)
-          {
-            input_direction = D_NORTH;
-          }
-          else if (event.motion.y > 3 * screen->h / 4)
-          {
-            input_direction = D_SOUTH;
-          }
-          else if (event.motion.x < screen->w / 4)
-          {
-            input_direction = D_WEST;
-          }
-          else if (event.motion.x > 3 * screen->w / 4)
-          {
-            input_direction = D_EAST;
-          }
-          else
-          {
-            enter_level = true;
-          }
+          handleMouseInput(event);
           break;
         }
 #endif
-
         case SDL_JOYAXISMOTION:
-        {
-          if (event.jaxis.axis == joystick_keymap.x_axis)
-          {
-            if (event.jaxis.value < -joystick_keymap.dead_zone)
-            {
-              input_direction = D_WEST;
-            }
-            else if (event.jaxis.value > joystick_keymap.dead_zone)
-            {
-              input_direction = D_EAST;
-            }
-          }
-          else if (event.jaxis.axis == joystick_keymap.y_axis)
-          {
-            if (event.jaxis.value > joystick_keymap.dead_zone)
-            {
-              input_direction = D_SOUTH;
-            }
-            else if (event.jaxis.value < -joystick_keymap.dead_zone)
-            {
-              input_direction = D_NORTH;
-            }
-          }
-          break;
-        }
-
         case SDL_JOYHATMOTION:
-        {
-          if (event.jhat.value == SDL_HAT_UP)
-          {
-            input_direction = D_NORTH;
-          }
-          else if (event.jhat.value == SDL_HAT_DOWN)
-          {
-            input_direction = D_SOUTH;
-          }
-          else if (event.jhat.value == SDL_HAT_LEFT)
-          {
-            input_direction = D_WEST;
-          }
-          else if (event.jhat.value == SDL_HAT_RIGHT)
-          {
-            input_direction = D_EAST;
-          }
-          break;
-        }
-
         case SDL_JOYBUTTONDOWN:
         {
-          // A button (0) or 2 button (3) will enter level
-          if (event.jbutton.button == 0 || event.jbutton.button == 3)
-          {
-            enter_level = true;
-          }
-          else if (event.jbutton.button == 6) // mote home
-          {
-            on_escape_press();
-          }
+          handleJoystickInput(event);
           break;
         }
-
         default:
         {
           break;
@@ -971,6 +1011,127 @@ bool WorldMap::path_ok(Direction direction, Point old_pos, Point* new_pos)
 }
 
 /**
+ * Handles the logic for what happens after a level is completed.
+ * @param result The exit status from the GameSession.
+ * @param coffee Whether Tux had the coffee power-up.
+ * @param big Whether Tux was big.
+ * @param level A pointer to the level that was just played.
+ */
+void WorldMap::handleLevelCompletion(GameSession::ExitStatus result, bool coffee, bool big, Level* level)
+{
+  switch (result)
+  {
+    case GameSession::ES_LEVEL_FINISHED:
+    {
+      bool old_level_state = level->solved;
+      level->solved = true;
+
+      if (coffee)
+      {
+        player_status.bonus = PlayerStatus::FLOWER_BONUS;
+      }
+      else if (big)
+      {
+        player_status.bonus = PlayerStatus::GROWUP_BONUS;
+      }
+      else
+      {
+        player_status.bonus = PlayerStatus::NO_BONUS;
+      }
+
+      if (old_level_state != level->solved && level->auto_path)
+      { // Try to detect the next direction to which we should walk
+        // FIXME: Mostly a hack
+        Direction dir = D_NONE;
+        Tile* tile = at(tux->get_tile_pos());
+
+        if (tile->north && tux->back_direction != D_NORTH)
+        {
+          dir = D_NORTH;
+        }
+        else if (tile->south && tux->back_direction != D_SOUTH)
+        {
+          dir = D_SOUTH;
+        }
+        else if (tile->east && tux->back_direction != D_EAST)
+        {
+          dir = D_EAST;
+        }
+        else if (tile->west && tux->back_direction != D_WEST)
+        {
+          dir = D_WEST;
+        }
+
+        if (dir != D_NONE)
+        {
+          tux->set_direction(dir);
+        }
+#ifdef DEBUG
+        std::cout << "Walk to dir: " << dir << std::endl;
+#endif
+      }
+
+      if (!level->extro_filename.empty())
+      {
+        unloadsounds();
+        MusicRef theme = music_manager->load_music(datadir + "/music/theme.mod");
+        MusicRef credits = music_manager->load_music(datadir + "/music/credits.ogg");
+        music_manager->play_music(theme);
+
+        // Display final credits and go back to the main menu
+        display_text_file(level->extro_filename, "/images/background/extro.jpg", SCROLL_SPEED_MESSAGE);
+        music_manager->play_music(credits, 0);
+        display_text_file("CREDITS", "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
+        music_manager->play_music(theme);
+        quit = true;
+      }
+      break;
+    }
+    case GameSession::ES_LEVEL_ABORT:
+    {
+      // Reseting the player_status might be a worthy
+      // consideration, but I don't think we need it
+      // 'cause only the bad players will use it to
+      // 'cheat' a few items and that isn't necesarry a
+      // bad thing (ie. better they continue that way,
+      // then stop playing the game all together since it
+      // is to hard)
+      break;
+    }
+    case GameSession::ES_GAME_OVER:
+    {
+      /* draw an end screen
+       * In the future, this should make a dialog a la SuperMario, asking if the
+       * player wants to restart the world map with no score and from level 1
+       */
+      char str[80];
+      drawgradient(Color(0, 255, 0), Color(255, 0, 255));
+
+      blue_text->drawf("GAMEOVER", 0, 200, A_HMIDDLE, A_TOP, 1);
+
+      snprintf(str, sizeof(str), "SCORE: %d", player_status.score);
+      gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
+
+      snprintf(str, sizeof(str), "COINS: %d", player_status.distros);
+      gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
+
+      flipscreen();
+
+      SDL_Event event;
+      wait_for_event(event, 2000, 5000, true);
+
+      quit = true;
+      player_status.reset();
+      break;
+    }
+    case GameSession::ES_NONE:
+    {
+      break;
+    }
+  }
+}
+
+/**
  * Updates the world map and manages level interactions.
  * @param delta Time delta for frame update.
  */
@@ -998,116 +1159,7 @@ void WorldMap::update(float delta)
         delete session;
         session = 0;
 
-        switch (result)
-        {
-          case GameSession::ES_LEVEL_FINISHED:
-          {
-            bool old_level_state = level->solved;
-            level->solved = true;
-
-            if (coffee)
-            {
-              player_status.bonus = PlayerStatus::FLOWER_BONUS;
-            }
-            else if (big)
-            {
-              player_status.bonus = PlayerStatus::GROWUP_BONUS;
-            }
-            else
-            {
-              player_status.bonus = PlayerStatus::NO_BONUS;
-            }
-
-            if (old_level_state != level->solved && level->auto_path)
-            { // Try to detect the next direction to which we should walk
-              // FIXME: Mostly a hack
-              Direction dir = D_NONE;
-              Tile* tile = at(tux->get_tile_pos());
-
-              if (tile->north && tux->back_direction != D_NORTH)
-              {
-                dir = D_NORTH;
-              }
-              else if (tile->south && tux->back_direction != D_SOUTH)
-              {
-                dir = D_SOUTH;
-              }
-              else if (tile->east && tux->back_direction != D_EAST)
-              {
-                dir = D_EAST;
-              }
-              else if (tile->west && tux->back_direction != D_WEST)
-              {
-                dir = D_WEST;
-              }
-
-              if (dir != D_NONE)
-              {
-                tux->set_direction(dir);
-                //tux->update(delta);
-              }
-#ifdef DEBUG
-              std::cout << "Walk to dir: " << dir << std::endl;
-#endif
-            }
-
-            if (!level->extro_filename.empty())
-            {
-              unloadsounds();
-              MusicRef theme = music_manager->load_music(datadir + "/music/theme.mod");
-              MusicRef credits = music_manager->load_music(datadir + "/music/credits.ogg");
-              music_manager->play_music(theme);
-
-              // Display final credits and go back to the main menu
-              display_text_file(level->extro_filename, "/images/background/extro.jpg", SCROLL_SPEED_MESSAGE);
-              music_manager->play_music(credits, 0);
-              display_text_file("CREDITS", "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
-              music_manager->play_music(theme);
-              quit = true;
-            }
-          }
-          break;
-
-          case GameSession::ES_LEVEL_ABORT:
-            // Reseting the player_status might be a worthy
-            // consideration, but I don't think we need it
-            // 'cause only the bad players will use it to
-            // 'cheat' a few items and that isn't necesarry a
-            // bad thing (ie. better they continue that way,
-            // then stop playing the game all together since it
-            // is to hard)
-            break;
-
-          case GameSession::ES_GAME_OVER:
-          {
-           /* draw an end screen
-            * In the future, this should make a dialog a la SuperMario, asking if the
-            * player wants to restart the world map with no score and from level 1
-            */
-            char str[80];
-            drawgradient(Color(0, 255, 0), Color(255, 0, 255));
-
-            blue_text->drawf("GAMEOVER", 0, 200, A_HMIDDLE, A_TOP, 1);
-
-            snprintf(str, sizeof(str), "SCORE: %d", player_status.score);
-            gold_text->drawf(str, 0, 224, A_HMIDDLE, A_TOP, 1);
-
-            snprintf(str, sizeof(str), "COINS: %d", player_status.distros);
-            gold_text->drawf(str, 0, 256, A_HMIDDLE, A_TOP, 1);
-
-            flipscreen();
-
-            SDL_Event event;
-            wait_for_event(event, 2000, 5000, true);
-
-            quit = true;
-            player_status.reset();
-          }
-          break;
-
-          case GameSession::ES_NONE:
-            break;
-        }
+        handleLevelCompletion(result, coffee, big, level);
 
         unloadsounds();
         loadSprites();
@@ -1299,82 +1351,98 @@ void WorldMap::draw_status()
 }
 
 /**
+ * Handles all input processing for a single frame.
+ */
+void WorldMap::processInput()
+{
+  get_input();
+}
+
+/**
+ * Handles all scene update logic for a single frame.
+ * @param deltaTime The time elapsed since the last frame.
+ */
+void WorldMap::updateScene(float deltaTime)
+{
+  update(deltaTime);
+}
+
+/**
+ * Handles all rendering for a single frame.
+ */
+void WorldMap::renderScene()
+{
+  Point tux_pos = tux->get_pos();
+  offset.x = -tux_pos.x + screen->w / 2;
+  offset.y = -tux_pos.y + screen->h / 2;
+
+  if (offset.x > 0)
+  {
+    offset.x = 0;
+  }
+  if (offset.y > 0)
+  {
+    offset.y = 0;
+  }
+
+  if (offset.x < screen->w - width * 32)
+  {
+    offset.x = screen->w - width * 32;
+  }
+  if (offset.y < screen->h - height * 32)
+  {
+    offset.y = screen->h - height * 32;
+  }
+
+  draw(offset);
+
+#ifndef TSCONTROL
+  if (Menu::current())
+  {
+    Menu::current()->draw();
+    mouse_cursor->draw();
+  }
+#else
+  if (Menu::current())
+  {
+    Menu::current()->draw();
+  }
+  if (show_mouse)
+  {
+    mouse_cursor->draw();
+  }
+#endif
+  flipscreen();
+}
+
+/**
  * Displays the world map and handles the main update loop.
  */
 void WorldMap::display()
 {
   Menu::set_current(0);
-
   quit = false;
 
   song = music_manager->load_music(datadir + "/music/" + music);
   music_manager->play_music(song);
 
-  unsigned int last_update_time;
-  unsigned int update_time;
-
-  last_update_time = update_time = Ticks::get();
+  unsigned int last_update_time = Ticks::get();
 
   while (!quit)
   {
-    float delta = ((float)(update_time - last_update_time)) / 100.0;
-
+    unsigned int update_time = Ticks::get();
+    float delta = ((float)(update_time - last_update_time)) / 100.0f;
     delta *= 1.3f;
 
     if (delta > 10.0f)
     {
       delta = 0.3f;
     }
-
     last_update_time = update_time;
-    update_time = Ticks::get();
 
-    Point tux_pos = tux->get_pos();
-    if (1)
-    {
-      offset.x = -tux_pos.x + screen->w / 2;
-      offset.y = -tux_pos.y + screen->h / 2;
-
-      if (offset.x > 0)
-      {
-        offset.x = 0;
-      }
-      if (offset.y > 0)
-      {
-        offset.y = 0;
-      }
-
-      if (offset.x < screen->w - width * 32)
-      {
-        offset.x = screen->w - width * 32;
-      }
-      if (offset.y < screen->h - height * 32)
-      {
-        offset.y = screen->h - height * 32;
-      }
-    }
-
-    draw(offset);
-    get_input();
-    update(delta);
-
-#ifndef TSCONTROL
-    if (Menu::current())
-    {
-      Menu::current()->draw();
-      mouse_cursor->draw();
-    }
-#else
-    if (Menu::current())
-    {
-      Menu::current()->draw();
-    }
-    if (show_mouse)
-    {
-      mouse_cursor->draw();
-    }
-#endif
-    flipscreen();
+    processInput();
+    updateScene(delta);
+    renderScene();
   }
 }
 
@@ -1448,6 +1516,7 @@ void WorldMap::loadgame(const std::string& filename)
 
   if (strcmp(lisp_symbol(lisp_car(cur)), "supertux-savegame") != 0)
   {
+    lisp_free(savegame);
     return;
   }
 
@@ -1534,7 +1603,7 @@ void WorldMap::loadmap(const std::string& filename)
  */
 std::string WorldMap::get_world_title_fast(const std::string& mapfile_path)
 {
-  std::ifstream file(mapfile_path);
+  std::ifstream file(mapfile_path.c_str());
   if (!file.is_open())
   {
     return "Invalid Worldmap";

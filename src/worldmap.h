@@ -24,8 +24,14 @@
 #include <string>
 
 #include "musicref.h"
+#include "gameloop.h" // For GameSession::ExitStatus
 
-namespace WorldMapNS {
+// Forward declare SDL_Event to avoid including SDL.h in the header
+// Corrected from 'struct' to 'union' to match the actual SDL definition.
+union SDL_Event;
+
+namespace WorldMapNS
+{
 
 struct Point
 {
@@ -35,9 +41,11 @@ struct Point
     : x(pos.x), y(pos.y) {}
 
   Point& operator=(const Point& pos)
-  { x = pos.x;
-    y = pos.y; 
-    return *this; }
+  {
+    x = pos.x;
+    y = pos.y;
+    return *this;
+  }
 
   Point(int x_, int y_)
     : x(x_), y(y_) {}
@@ -47,13 +55,14 @@ struct Point
 };
 
 // For one way tiles
-enum {
+enum
+{
   BOTH_WAYS,
   NORTH_SOUTH_WAY,
   SOUTH_NORTH_WAY,
   EAST_WEST_WAY,
   WEST_EAST_WAY
-  };
+};
 
 class Tile
 {
@@ -120,7 +129,7 @@ private:
   bool  moving;
 
   void stop();
-public: 
+public:
   Tux(WorldMap* worldmap_);
   ~Tux();
 
@@ -130,39 +139,29 @@ public:
   void draw(const Point& offset);
   void update(float delta);
 
-  void set_direction(Direction d) { input_direction = d; }
+  void set_direction(Direction d)
+  {
+    input_direction = d;
+  }
 
-  bool is_moving() const { return moving; }
+  bool is_moving() const
+  {
+    return moving;
+  }
   Point get_pos();
-  Point get_tile_pos() const { return tile_pos; } 
-  void  set_tile_pos(Point p) { tile_pos = p; } 
+  Point get_tile_pos() const
+  {
+    return tile_pos;
+  }
+  void  set_tile_pos(Point p)
+  {
+    tile_pos = p;
+  }
 };
 
 /** */
 class WorldMap
 {
-private:
-  Tux* tux;
-
-  bool quit;
-
-  Surface* level_sprite;
-  Surface* leveldot_green;
-  Surface* leveldot_red;
-  Surface* leveldot_teleporter;
-
-  std::string name;
-  std::string music;
-
-  std::vector<int> tilemap;
-  int width;
-  int height;
-
-  int start_x;
-  int start_y;
-
-  TileManager* tile_manager;
-
 public:
   struct Level
   {
@@ -209,23 +208,6 @@ public:
   /** A lightweight function to get a worldmap's title without a full load */
   static std::string get_world_title_fast(const std::string& mapfile_path);
 
-private:
-  typedef std::vector<Level> Levels;
-  Levels levels;
-
-  MusicRef song;
-
-  Direction input_direction;
-  bool enter_level;
-
-  Point offset;
-  std::string savegame_file;
-  std::string map_file;
-
-  void get_level_title(Levels::pointer level);
-
-  void draw_status();
-public:
   WorldMap();
   ~WorldMap();
 
@@ -260,22 +242,81 @@ public:
   void loadmap(const std::string& filename);
 
   const std::string& get_world_title() const
-    { return name; }
+  {
+    return name;
+  }
 
   const int& get_start_x() const
-    { return start_x; }
+  {
+    return start_x;
+  }
 
   const int& get_start_y() const
-    { return start_y; }
+  {
+    return start_y;
+  }
 
   /** This functions should be call by contrib menu to set
      all levels as played, since their state is not saved. */
   void set_levels_as_solved()
-    { for(Levels::iterator i = levels.begin(); i != levels.end(); ++i)
-        i->solved = true;  }
+  {
+    for(Levels::iterator i = levels.begin(); i != levels.end(); ++i)
+      i->solved = true;
+  }
 
 private:
+  // Moved typedef to before its first use.
+  typedef std::vector<Level> Levels;
+
+  // Refactored main loop components
+  void processInput();
+  void updateScene(float deltaTime);
+  void renderScene();
+
+  // Refactored input handlers
+  void handleKeyboardInput(const SDL_Event& event);
+  void handleJoystickInput(const SDL_Event& event);
+#ifdef TSCONTROL
+  void handleMouseInput(const SDL_Event& event);
+#endif
+
+  // Refactored update logic
+  void handleLevelCompletion(GameSession::ExitStatus result, bool coffee, bool big, Level* level);
+
+  void get_level_title(Levels::pointer level);
+  void draw_status();
   void on_escape_press();
+
+  Tux* tux;
+  bool quit;
+
+  Surface* level_sprite;
+  Surface* leveldot_green;
+  Surface* leveldot_red;
+  Surface* leveldot_teleporter;
+
+  std::string name;
+  std::string music;
+
+  std::vector<int> tilemap;
+  int width;
+  int height;
+
+  int start_x;
+  int start_y;
+
+  TileManager* tile_manager;
+
+  Levels levels;
+
+  MusicRef song;
+
+  Direction input_direction;
+  bool enter_level;
+
+  Point offset;
+  std::string savegame_file;
+  std::string map_file;
 };
 
 } // namespace WorldMapNS
