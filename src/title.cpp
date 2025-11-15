@@ -371,6 +371,151 @@ void draw_demo(GameSession* session, double frame_ratio)
   world->draw();
 }
 
+static void processTitleInput();
+static void handleMenuActions();
+static void renderTitleScene(double frame_ratio);
+
+static void processTitleInput()
+{
+  SDL_Event event;
+  while (SDL_PollEvent(&event))
+  {
+    // First, check for our custom delete action if the load game menu is active.
+    if (Menu::current() == load_game_menu &&
+        ((event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DELETE) ||
+         (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 4))) // 4 is the Wii Remote Minus button
+    {
+      int slot = load_game_menu->get_active_item_id();
+
+      // Call the dialog, passing the correct background surface.
+      Surface* dialog_background = new Surface(datadir + "/images/title/background.jpg", false);
+      if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", dialog_background))
+      {
+        remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
+      }
+      delete dialog_background; // Clean up the temporary surface.
+
+      // After the action, refresh the save list and return to the main menu.
+      update_load_save_game_menu(load_game_menu);
+      Menu::set_current(main_menu);
+      Menu::push_current(load_game_menu);
+      continue; // Skip passing this event to the generic handler.
+    }
+
+    // If it wasn't our special delete action, let the current menu handle it.
+    if (Menu::current())
+    {
+      Menu::current()->event(event);
+    }
+
+    // FIXME: QUIT signal should be handled more generically, not locally
+    if (event.type == SDL_QUIT)
+    {
+      Menu::set_current(0);
+    }
+  }
+}
+
+static void handleMenuActions()
+{
+  Menu* menu = Menu::current();
+  if (menu)
+  {
+    menu->action();
+
+    if (menu == main_menu)
+    {
+      MusicRef menu_song;
+      switch (main_menu->check())
+      {
+        case MNID_STARTGAME:
+          // Start Game, go to the slots menu
+          update_load_save_game_menu(load_game_menu);
+          break;
+        case MNID_CONTRIB:
+          // The menu is pre-generated, so we do nothing here on hover/click.
+          // The menu system will automatically handle the GOTO action.
+          break;
+        case MNID_CREDITS:
+          menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
+          music_manager->halt_music();
+          music_manager->play_music(menu_song, 0);
+
+          if (!credits_background)
+          {
+            credits_background = new Surface(datadir + "/images/title/background.jpg", false);
+          }
+          display_text_file("CREDITS", credits_background, SCROLL_SPEED_CREDITS);
+
+          music_manager->halt_music();
+          session->get_world()->play_music(LEVEL_MUSIC); // FIXME:Check if needed
+          Menu::set_current(main_menu);
+          break;
+        case MNID_QUITMAINMENU:
+          Menu::set_current(0);
+          break;
+      }
+    }
+    else if (menu == options_menu)
+    {
+      process_options_menu();
+    }
+    else if (menu == load_game_menu)
+    {
+      if (process_load_game_menu())
+      {
+        createDemo();
+        loadsounds();
+#ifdef DEBUG
+        printf("loaded demo, load sounds\n");
+#endif
+        // FIXME: shouldn't be needed if GameSession doesn't relay on global variables
+        // reset tux
+        scroll_x = 0;
+        //titletux.level_begin();
+        update_time = Ticks::get();
+      }
+    }
+    else if (menu == contrib_menu)
+    {
+      check_contrib_menu();
+    }
+    else if (menu == contrib_subset_menu)
+    {
+      check_contrib_subset_menu();
+    }
+  }
+}
+
+static void renderTitleScene(double frame_ratio)
+{
+  // Draw the logo if on the main menu
+  if (Menu::current() == main_menu)
+  {
+    logo->draw(160, 30);
+  }
+
+  // Draw text and handle menu actions
+  white_small_text->draw("SuperTux " VERSION "\n"
+                         "Copyright (c) 2003 SuperTux Devel Team\n"
+                         "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
+                         "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
+                         "for details.\n",
+                         white_small_text->w, (420 - offset_y), 0);
+
+  Menu* menu = Menu::current();
+  if (menu)
+  {
+    menu->draw();
+  }
+
+  // Draw the mouse cursor
+  mouse_cursor->draw();
+
+  // Update the screen
+  flipscreen();
+}
+
 /**
  * Main function for the title screen.
  * Initializes the demo session, handles menu navigation, and renders the title screen.
@@ -454,139 +599,15 @@ void title(void)
     }
     frame_ratio /= 2;
 
-    // Handle SDL events (input)
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-      // First, check for our custom delete action if the load game menu is active.
-      if (Menu::current() == load_game_menu &&
-          ((event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_DELETE) ||
-           (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 4))) // 4 is the Wii Remote Minus button
-      {
-        int slot = load_game_menu->get_active_item_id();
+    processTitleInput();
 
-        // Call the dialog, passing the correct background surface.
-        Surface* dialog_background = new Surface(datadir + "/images/title/background.jpg", false);
-        if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", dialog_background))
-        {
-          remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
-        }
-        delete dialog_background; // Clean up the temporary surface.
-
-        // After the action, refresh the save list and return to the main menu.
-        update_load_save_game_menu(load_game_menu);
-        Menu::set_current(main_menu);
-        Menu::push_current(load_game_menu);
-        continue; // Skip passing this event to the generic handler.
-      }
-
-      // If it wasn't our special delete action, let the current menu handle it.
-      if (Menu::current())
-      {
-        Menu::current()->event(event);
-      }
-
-      // FIXME: QUIT signal should be handled more generically, not locally
-      if (event.type == SDL_QUIT)
-      {
-        Menu::set_current(0);
-      }
-    }
-
-    // Explicitly draw the background owned by title().
+    // Draw the background and demo BEFORE handling menu actions
     bkg_title->draw_bg();
-
-    // Draw the demo session on top of the background
     draw_demo(session, frame_ratio);
 
-    // Draw the logo if on the main menu
-    if (Menu::current() == main_menu)
-    {
-      logo->draw(160, 30);
-    }
+    handleMenuActions();
 
-    // Draw text and handle menu actions
-    white_small_text->draw("SuperTux " VERSION "\n"
-                           "Copyright (c) 2003 SuperTux Devel Team\n"
-                           "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
-                           "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
-                           "for details.\n",
-                           white_small_text->w, (420 - offset_y), 0);
-
-    Menu* menu = Menu::current();
-    if (menu)
-    {
-      menu->draw();
-      menu->action();
-
-      if (menu == main_menu)
-      {
-        MusicRef menu_song;
-        switch (main_menu->check())
-        {
-          case MNID_STARTGAME:
-            // Start Game, go to the slots menu
-            update_load_save_game_menu(load_game_menu);
-            break;
-          case MNID_CONTRIB:
-            // The menu is pre-generated, so we do nothing here on hover/click.
-            // The menu system will automatically handle the GOTO action.
-            break;
-          case MNID_CREDITS:
-            menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
-            music_manager->halt_music();
-            music_manager->play_music(menu_song, 0);
-
-            if (!credits_background)
-            {
-              credits_background = new Surface(datadir + "/images/title/background.jpg", false);
-            }
-            display_text_file("CREDITS", credits_background, SCROLL_SPEED_CREDITS);
-
-            music_manager->halt_music();
-            session->get_world()->play_music(LEVEL_MUSIC); // FIXME:Check if needed
-            Menu::set_current(main_menu);
-            break;
-          case MNID_QUITMAINMENU:
-            Menu::set_current(0);
-            break;
-        }
-      }
-      else if (menu == options_menu)
-      {
-        process_options_menu();
-      }
-      else if (menu == load_game_menu)
-      {
-        if (process_load_game_menu())
-        {
-          createDemo();
-          loadsounds();
-#ifdef DEBUG
-          printf("loaded demo, load sounds\n");
-#endif
-          // FIXME: shouldn't be needed if GameSession doesn't relay on global variables
-          // reset tux
-          scroll_x = 0;
-          //titletux.level_begin();
-          update_time = Ticks::get();
-        }
-      }
-      else if (menu == contrib_menu)
-      {
-        check_contrib_menu();
-      }
-      else if (menu == contrib_subset_menu)
-      {
-        check_contrib_subset_menu();
-      }
-    }
-
-    // Draw the mouse cursor
-    mouse_cursor->draw();
-
-    // Update the screen
-    flipscreen();
+    renderTitleScene(frame_ratio); // Pass frame_ratio to the render function
 
     // Set the time of the last update and the time of the current update
     last_update_time = update_time;
