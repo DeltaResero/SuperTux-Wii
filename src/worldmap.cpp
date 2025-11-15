@@ -41,6 +41,9 @@
 namespace WorldMapNS
 {
 
+// Initialize the static instance pointer
+WorldMap* WorldMap::current_ = nullptr;
+
 /**
  * Reverses the given direction.
  * @param direction The direction to reverse.
@@ -513,6 +516,7 @@ Tile::~Tile()
  */
 WorldMap::WorldMap()
 {
+  current_ = this;
   tile_manager = new TileManager();
 
   width = (int)(20);
@@ -539,6 +543,7 @@ WorldMap::WorldMap()
  */
 WorldMap::~WorldMap()
 {
+  if (current_ == this) current_ = nullptr;
   delete tux;
   delete tile_manager;
 
@@ -1202,19 +1207,7 @@ void WorldMap::update(float delta)
   {
     menu->action();
 
-    if (menu == worldmap_menu)
-    {
-      switch (worldmap_menu->check())
-      {
-        case MNID_RETURNWORLDMAP:  // Return to game
-          break;
-
-        case MNID_QUITWORLDMAP:  // Quit Worldmap
-          quit = true;
-          break;
-      }
-    }
-    else if (menu == options_menu)
+    if (menu == options_menu)
     {
       process_options_menu();
     }

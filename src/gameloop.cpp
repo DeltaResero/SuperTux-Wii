@@ -799,20 +799,7 @@ void GameSession::process_menu()
   {
     menu->action();
 
-    if (menu == game_menu)
-    {
-      switch (game_menu->check())
-      {
-        case MNID_CONTINUE:
-          Ticks::pause_stop();
-          break;
-        case MNID_ABORTLEVEL:
-          Ticks::pause_stop();
-          exit_status = ES_LEVEL_ABORT;
-          break;
-      }
-    }
-    else if (menu == options_menu)
+    if (menu == options_menu)
     {
       process_options_menu();
     }

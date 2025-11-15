@@ -112,6 +112,8 @@ class GameSession
     {
       return current_;
     }
+
+    void abort_level() { exit_status = ES_LEVEL_ABORT; }
   private:
     static GameSession* current_;
 

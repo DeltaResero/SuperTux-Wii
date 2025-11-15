@@ -23,6 +23,7 @@
 #include <SDL.h>
 #include <vector>
 #include <string>
+#include <functional>
 #include "texture.h"
 #include "timer.h"
 #include "type.h"
@@ -102,6 +103,7 @@ public:
   StringList list;
   int list_active_item;
   Menu* target_menu;
+  std::function<void()> action_callback;
 
   MenuItem();
 
@@ -181,6 +183,7 @@ public:
 
   void additem(const MenuItem& pmenu_item);
   void additem(MenuItemKind kind, const std::string& text, int init_toggle, Menu* target_menu, int id = -1, int *int_p = nullptr);
+  void additem(MenuItemKind kind, const std::string& text, std::function<void()> callback);
 
   void action();
 

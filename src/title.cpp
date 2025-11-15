@@ -426,17 +426,15 @@ static void handleMenuActions()
     if (menu == main_menu)
     {
       MusicRef menu_song;
-      switch (main_menu->check())
+      int checked_id = main_menu->check(); // Check only once
+
+      if (checked_id == MNID_STARTGAME)
       {
-        case MNID_STARTGAME:
           // Start Game, go to the slots menu
           update_load_save_game_menu(load_game_menu);
-          break;
-        case MNID_CONTRIB:
-          // The menu is pre-generated, so we do nothing here on hover/click.
-          // The menu system will automatically handle the GOTO action.
-          break;
-        case MNID_CREDITS:
+      }
+      else if (checked_id == MNID_CREDITS)
+      {
           menu_song = music_manager->load_music(datadir + "/music/credits.ogg");
           music_manager->halt_music();
           music_manager->play_music(menu_song, 0);
@@ -450,10 +448,6 @@ static void handleMenuActions()
           music_manager->halt_music();
           session->get_world()->play_music(LEVEL_MUSIC); // FIXME:Check if needed
           Menu::set_current(main_menu);
-          break;
-        case MNID_QUITMAINMENU:
-          Menu::set_current(0);
-          break;
       }
     }
     else if (menu == options_menu)

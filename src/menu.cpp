@@ -361,6 +361,15 @@ void Menu::additem(MenuItemKind kind, const std::string& text, int toggle, Menu*
   item.push_back(new_item);
 }
 
+void Menu::additem(MenuItemKind kind, const std::string& text, std::function<void()> callback)
+{
+  MenuItem new_item;
+  new_item.kind = kind;
+  new_item.text = text;
+  new_item.action_callback = callback;
+  item.push_back(new_item);
+}
+
 /**
  * Adds a pre-existing menu item to the menu
  * @param pmenu_item A MenuItem object to add
@@ -433,8 +442,15 @@ void Menu::action()
           item[active_item].toggled = !item[active_item].toggled;
           break;
         case MN_ACTION:
-          Menu::set_current(nullptr);
-          item[active_item].toggled = true;
+          if (item[active_item].action_callback)
+          {
+            item[active_item].action_callback();
+          }
+          else // Fallback for old items that still use IDs
+          {
+            Menu::set_current(nullptr);
+            item[active_item].toggled = true;
+          }
           break;
         case MN_CONTROLFIELD:
           // When a control field is 'hit', move to the next item automatically.

@@ -163,6 +163,9 @@ public:
 class WorldMap
 {
 public:
+  static WorldMap* current() { return current_; }
+  void quit_map() { quit = true; }
+public:
   struct Level
   {
     int x;
@@ -317,6 +320,9 @@ private:
   Point offset;
   std::string savegame_file;
   std::string map_file;
+
+private:
+  static WorldMap* current_;
 };
 
 } // namespace WorldMapNS

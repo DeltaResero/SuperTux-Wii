@@ -440,7 +440,7 @@ void st_menu(void)
   main_menu->additem(MN_GOTO, "Bonus Levels", 0, contrib_menu, MNID_CONTRIB);
   main_menu->additem(MN_GOTO, "Options", 0, options_menu, MNID_OPTIONMENU);
   main_menu->additem(MN_ACTION, "Credits", 0, nullptr, MNID_CREDITS);
-  main_menu->additem(MN_ACTION, "Quit", 0, nullptr, MNID_QUITMAINMENU);
+  main_menu->additem(MN_ACTION, "Quit", [](){ Menu::set_current(nullptr); });
 
   options_menu->additem(MN_LABEL, "Options", 0, nullptr);
   options_menu->additem(MN_HL, "", 0, nullptr);
@@ -523,17 +523,17 @@ void st_menu(void)
 
   game_menu->additem(MN_LABEL, "Pause", 0, nullptr);
   game_menu->additem(MN_HL, "", 0, nullptr);
-  game_menu->additem(MN_ACTION, "Continue", 0, nullptr, MNID_CONTINUE);
+  game_menu->additem(MN_ACTION, "Continue", [](){ Ticks::pause_stop(); });
   game_menu->additem(MN_GOTO, "Options", 0, options_menu);
   game_menu->additem(MN_HL, "", 0, nullptr);
-  game_menu->additem(MN_ACTION, "Abort Level", 0, nullptr, MNID_ABORTLEVEL);
+  game_menu->additem(MN_ACTION, "Abort Level", [](){ Ticks::pause_stop(); GameSession::current()->abort_level(); });
 
   worldmap_menu->additem(MN_LABEL, "Pause", 0, nullptr);
   worldmap_menu->additem(MN_HL, "", 0, nullptr);
-  worldmap_menu->additem(MN_ACTION, "Continue", 0, nullptr, MNID_RETURNWORLDMAP);
+  worldmap_menu->additem(MN_ACTION, "Continue", [](){ Menu::set_current(0); });
   worldmap_menu->additem(MN_GOTO, "Options", 0, options_menu);
   worldmap_menu->additem(MN_HL, "", 0, nullptr);
-  worldmap_menu->additem(MN_ACTION, "Quit Game", 0, nullptr, MNID_QUITWORLDMAP);
+  worldmap_menu->additem(MN_ACTION, "Quit Game", [](){ WorldMapNS::WorldMap::current()->quit_map(); });
 }
 
 void update_load_save_game_menu(Menu* pmenu)
