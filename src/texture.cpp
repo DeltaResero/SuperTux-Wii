@@ -685,6 +685,36 @@ void SurfaceOpenGL::teardown_gl_state()
 }
 
 /**
+ * Helper function to render a textured quad with OpenGL.
+ * This eliminates code duplication between draw() and draw_stretched().
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ * @param width The width of the quad to render.
+ * @param height The height of the quad to render.
+ * @param tex_w The actual texture width (for UV calculation).
+ * @param tex_h The actual texture height (for UV calculation).
+ * @param pw The power-of-two texture width.
+ * @param ph The power-of-two texture height.
+ */
+static inline void render_textured_quad(float x, float y, float width, float height,
+                                        float tex_w, float tex_h, float pw, float ph)
+{
+  float u_max = tex_w / pw;
+  float v_max = tex_h / ph;
+
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0);
+  glVertex2f(x, y);
+  glTexCoord2f(u_max, 0);
+  glVertex2f(x + width, y);
+  glTexCoord2f(u_max, v_max);
+  glVertex2f(x + width, y + height);
+  glTexCoord2f(0, v_max);
+  glVertex2f(x, y + height);
+  glEnd();
+}
+
+/**
  * Draws the OpenGL surface at the specified coordinates.
  * @param x The x-coordinate.
  * @param y The y-coordinate.
@@ -697,22 +727,10 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
   x = floorf(x + 0.5f);
   y = floorf(y + 0.5f);
 
-  float pw = tex_w_pow2;
-  float ph = tex_h_pow2;
-
   setup_gl_state(alpha);
-
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0);
-  glVertex2f(x, y);
-  glTexCoord2f(static_cast<float>(this->w) / pw, 0);
-  glVertex2f(static_cast<float>(this->w) + x, y);
-  glTexCoord2f(static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph);
-  glVertex2f(static_cast<float>(this->w) + x, static_cast<float>(this->h) + y);
-  glTexCoord2f(0, static_cast<float>(this->h) / ph);
-  glVertex2f(x, static_cast<float>(this->h) + y);
-  glEnd();
-
+  render_textured_quad(x, y, static_cast<float>(this->w), static_cast<float>(this->h),
+                       static_cast<float>(this->w), static_cast<float>(this->h),
+                       tex_w_pow2, tex_h_pow2);
   teardown_gl_state();
 
   (void)update;  // avoid compiler warning
@@ -805,22 +823,10 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
  */
 int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update)
 {
-  float pw = tex_w_pow2;
-  float ph = tex_h_pow2;
-
   setup_gl_state(alpha);
-
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0);
-  glVertex2f(x, y);
-  glTexCoord2f(static_cast<float>(this->w) / pw, 0);
-  glVertex2f(sw + x, y);
-  glTexCoord2f(static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph);
-  glVertex2f(sw + x, sh + y);
-  glTexCoord2f(0, static_cast<float>(this->h) / ph);
-  glVertex2f(x, sh + y);
-  glEnd();
-
+  render_textured_quad(x, y, static_cast<float>(sw), static_cast<float>(sh),
+                       static_cast<float>(this->w), static_cast<float>(this->h),
+                       tex_w_pow2, tex_h_pow2);
   teardown_gl_state();
 
   (void)update;  // avoid warnings
