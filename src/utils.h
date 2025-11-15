@@ -23,6 +23,7 @@
 
 #include <cmath>   // For M_PI, sin, cos
 #include <cstring> // For memcpy and strlen
+#include <string>  // For std::string
 
 
 // A namespace for pre-calculated trigonometry tables
@@ -49,6 +50,17 @@ namespace Trig
     return cos_table[angle_index & (ANGLE_COUNT - 1)];
   }
 } // namespace Trig
+
+/**
+ * A lightweight "peek" function that reads just enough of a lisp-like file
+ * to extract its title, avoiding a full parse.
+ * @param path The full path to the file.
+ * @param invalid_fallback The string to return if the file can't be opened.
+ * @param untitled_fallback The string to return if the title isn't found.
+ * @return The title of the file.
+ */
+std::string get_title_from_lisp_file(const std::string& path, const std::string& invalid_fallback, const std::string& untitled_fallback);
+
 
 #endif // UTILS_H
 

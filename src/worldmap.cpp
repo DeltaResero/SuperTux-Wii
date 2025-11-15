@@ -34,6 +34,7 @@
 #include "level.h"
 #include "timer.h"
 #include "player.h"
+#include "utils.h"
 
 #define DISPLAY_MAP_MESSAGE_TIME 2800
 
@@ -1603,37 +1604,7 @@ void WorldMap::loadmap(const std::string& filename)
  */
 std::string WorldMap::get_world_title_fast(const std::string& mapfile_path)
 {
-  std::ifstream file(mapfile_path.c_str());
-  if (!file.is_open())
-  {
-    return "Invalid Worldmap";
-  }
-
-  std::string line;
-  // Search only the first 20 lines for performance. The worldmap's name
-  // is defined in the 'properties' section, which is always near the top.
-  for(int i = 0; i < 20 && std::getline(file, line); ++i)
-  {
-    // Find the line containing "(name"
-    size_t pos = line.find("(name");
-    if (pos != std::string::npos)
-    {
-      // Find the first quote after "(name"
-      size_t start_quote = line.find('"', pos);
-      if (start_quote != std::string::npos)
-      {
-        // Find the second quote that closes the string
-        size_t end_quote = line.find('"', start_quote + 1);
-        if (end_quote != std::string::npos)
-        {
-          // We found the title! Extract it and return immediately.
-          return line.substr(start_quote + 1, end_quote - start_quote - 1);
-        }
-      }
-    }
-  }
-
-  return "Untitled Worldmap"; // Fallback title if not found
+  return get_title_from_lisp_file(mapfile_path, "Invalid Worldmap", "Untitled Worldmap");
 }
 
 } // namespace WorldMapNS

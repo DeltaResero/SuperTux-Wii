@@ -32,6 +32,7 @@
 #include "lispreader.h"
 #include "resources.h"
 #include "music_manager.h"
+#include "utils.h"
 
 namespace fs = std::filesystem;  // Alias for ease of use
 using namespace std;
@@ -334,285 +335,243 @@ int Level::load(const std::string& filename)
     return -1;
   }
 
-  vector<int> ia_tm;
-  vector<int> bg_tm;
-  vector<int> fg_tm;
-
-  int version = 0;
   if (strcmp(lisp_symbol(lisp_car(root_obj)), "supertux-level") == 0)
   {
     LispReader reader(lisp_cdr(root_obj));
-    version = 0;
+    int version = 0;
     reader.read_int("version", &version);
-    if (!reader.read_int("width", &width))
+
+    parseProperties(reader);
+    parseTilemaps(reader, version);
+    parseObjects(reader);
+  }
+
+  return 0;
+}
+
+/**
+ * Parses the general properties of the level from the Lisp data.
+ * @param reader The LispReader instance to use for parsing.
+ */
+void Level::parseProperties(LispReader& reader)
+{
+  if (!reader.read_int("width", &width))
+  {
+    st_abort("No width specified for level.", "");
+  }
+
+  if (!reader.read_int("start_pos_x", &start_pos_x))
+  {
+    start_pos_x = 100;
+  }
+  if (!reader.read_int("start_pos_y", &start_pos_y))
+  {
+    start_pos_y = 170;
+  }
+
+  time_left = 500;
+  if (!reader.read_int("time", &time_left))
+  {
+    printf("Warning no time specified for level.\n");
+  }
+
+  back_scrolling = false;
+  reader.read_bool("back_scrolling", &back_scrolling);
+
+  hor_autoscroll_speed = 0;
+  reader.read_float("hor_autoscroll_speed", &hor_autoscroll_speed);
+
+  bkgd_speed = 50;
+  reader.read_int("bkgd_speed", &bkgd_speed);
+
+  bkgd_top.red = bkgd_top.green = bkgd_top.blue = 0;
+  reader.read_int("bkgd_red_top", &bkgd_top.red);
+  reader.read_int("bkgd_green_top", &bkgd_top.green);
+  reader.read_int("bkgd_blue_top", &bkgd_top.blue);
+
+  bkgd_bottom.red = bkgd_bottom.green = bkgd_bottom.blue = 0;
+  reader.read_int("bkgd_red_bottom", &bkgd_bottom.red);
+  reader.read_int("bkgd_green_bottom", &bkgd_bottom.green);
+  reader.read_int("bkgd_blue_bottom", &bkgd_bottom.blue);
+
+  gravity = 10;
+  reader.read_float("gravity", &gravity);
+  name = "Noname";
+  reader.read_string("name", &name);
+  author = "unknown author";
+  reader.read_string("author", &author);
+  song_title = "";
+  reader.read_string("music", &song_title);
+  bkgd_image = "";
+  reader.read_string("background", &bkgd_image);
+  particle_system = "";
+  reader.read_string("particle_system", &particle_system);
+}
+
+/**
+ * Parses the tilemaps (background, interactive, foreground) from the Lisp data.
+ * @param reader The LispReader instance to use for parsing.
+ * @param version The version of the level file, used for compatibility.
+ */
+void Level::parseTilemaps(LispReader& reader, int version)
+{
+  vector<int> ia_tm, bg_tm, fg_tm;
+  const int total_tiles = width * 15;
+
+  // Reserve memory to prevent reallocations
+  ia_tm.reserve(total_tiles);
+  bg_tm.reserve(total_tiles);
+  fg_tm.reserve(total_tiles);
+
+  reader.read_int_vector("background-tm", &bg_tm);
+  if (!reader.read_int_vector("interactive-tm", &ia_tm))
+  {
+    reader.read_int_vector("tilemap", &ia_tm);
+  }
+  reader.read_int_vector("foreground-tm", &fg_tm);
+
+  // Convert old levels to the new tile numbers
+  if (version == 0)
+  {
+    std::map<char, int> transtable;
+    transtable['.'] = 0; transtable['x'] = 104; transtable['X'] = 77;
+    transtable['y'] = 78; transtable['Y'] = 105; transtable['A'] = 83;
+    transtable['B'] = 102; transtable['!'] = 103; transtable['a'] = 84;
+    transtable['C'] = 85; transtable['D'] = 86; transtable['E'] = 87;
+    transtable['F'] = 88; transtable['c'] = 89; transtable['d'] = 90;
+    transtable['e'] = 91; transtable['f'] = 92; transtable['G'] = 93;
+    transtable['H'] = 94; transtable['I'] = 95; transtable['J'] = 96;
+    transtable['g'] = 97; transtable['h'] = 98; transtable['i'] = 99;
+    transtable['j'] = 100; transtable['#'] = 11; transtable['['] = 13;
+    transtable['='] = 14; transtable[']'] = 15; transtable['$'] = 82;
+    transtable['^'] = 76; transtable['*'] = 80; transtable['|'] = 79;
+    transtable['\\'] = 81; transtable['&'] = 75;
+
+    int x = 0, y = 0;
+    for (auto& tile : ia_tm)
     {
-      st_abort("No width specified for level.", "");
-    }
-
-    // Reserve memory now that we know the width, preventing reallocations
-    const int total_tiles = width * 15;
-    ia_tm.reserve(total_tiles);
-    bg_tm.reserve(total_tiles);
-    fg_tm.reserve(total_tiles);
-    if (!reader.read_int("start_pos_x", &start_pos_x)) start_pos_x = 100;
-    if (!reader.read_int("start_pos_y", &start_pos_y)) start_pos_y = 170;
-    time_left = 500;
-    if (!reader.read_int("time", &time_left))
-    {
-      printf("Warning no time specified for level.\n");
-    }
-
-    back_scrolling = false;
-    reader.read_bool("back_scrolling", &back_scrolling);
-
-    hor_autoscroll_speed = 0;
-    reader.read_float("hor_autoscroll_speed", &hor_autoscroll_speed);
-
-    bkgd_speed = 50;
-    reader.read_int("bkgd_speed", &bkgd_speed);
-
-    bkgd_top.red = bkgd_top.green = bkgd_top.blue = 0;
-    reader.read_int("bkgd_red_top", &bkgd_top.red);
-    reader.read_int("bkgd_green_top", &bkgd_top.green);
-    reader.read_int("bkgd_blue_top", &bkgd_top.blue);
-
-    bkgd_bottom.red = bkgd_bottom.green = bkgd_bottom.blue = 0;
-    reader.read_int("bkgd_red_bottom", &bkgd_bottom.red);
-    reader.read_int("bkgd_green_bottom", &bkgd_bottom.green);
-    reader.read_int("bkgd_blue_bottom", &bkgd_bottom.blue);
-
-    gravity = 10;
-    reader.read_float("gravity", &gravity);
-    name = "Noname";
-    reader.read_string("name", &name);
-    author = "unknown author";
-    reader.read_string("author", &author);
-    song_title = "";
-    reader.read_string("music", &song_title);
-    bkgd_image = "";
-    reader.read_string("background", &bkgd_image);
-    particle_system = "";
-    reader.read_string("particle_system", &particle_system);
-
-    reader.read_int_vector("background-tm", &bg_tm);
-
-    if (!reader.read_int_vector("interactive-tm", &ia_tm))
-    {
-      reader.read_int_vector("tilemap", &ia_tm);
-    }
-
-    reader.read_int_vector("foreground-tm", &fg_tm);
-
-    // Read ResetPoints
-    lisp_object_t* reset_points_list = nullptr;
-    if (reader.read_lisp("reset-points", &reset_points_list))
-    {
-      while (!lisp_nil_p(reset_points_list))
+      if (tile >= '0' && tile <= '2')
       {
-        lisp_object_t* data = lisp_car(reset_points_list);
-        lisp_object_t* x_val = lisp_find_value(lisp_cdr(data), "x");
-        lisp_object_t* y_val = lisp_find_value(lisp_cdr(data), "y");
-
-        if (x_val && y_val && lisp_integer_p(lisp_car(x_val)) && lisp_integer_p(lisp_car(y_val)))
-        {
-            reset_points.push_back({lisp_integer(lisp_car(x_val)), lisp_integer(lisp_car(y_val))});
-        }
-        reset_points_list = lisp_cdr(reset_points_list);
+        badguy_data.push_back(BadGuyData(static_cast<BadGuyKind>(tile - '0'), x * 32, y * 32, false));
+        tile = 0;
       }
-    }
-
-    // Read BadGuys
-    lisp_object_t* objects_list = nullptr;
-    if (reader.read_lisp("objects", &objects_list))
-    {
-      while (!lisp_nil_p(objects_list))
+      else
       {
-        lisp_object_t* data = lisp_car(objects_list);
-
-        BadGuyData bg_data;
-        bg_data.kind = badguykind_from_string(lisp_symbol(lisp_car(data)));
-
-        lisp_object_t* val_x = lisp_find_value(lisp_cdr(data), "x");
-        if (val_x) bg_data.x = lisp_integer(lisp_car(val_x));
-
-        lisp_object_t* val_y = lisp_find_value(lisp_cdr(data), "y");
-        if (val_y) bg_data.y = lisp_integer(lisp_car(val_y));
-
-        lisp_object_t* val_stay = lisp_find_value(lisp_cdr(data), "stay-on-platform");
-        if (val_stay) bg_data.stay_on_platform = lisp_boolean(lisp_car(val_stay));
-
-        badguy_data.push_back(bg_data);
-        objects_list = lisp_cdr(objects_list);
+        auto it = transtable.find(tile);
+        tile = (it != transtable.end()) ? it->second : 0;
       }
-    }
-
-    // Convert old levels to the new tile numbers
-    if (version == 0)
-    {
-      std::map<char, int> transtable;
-      transtable['.'] = 0;
-      transtable['x'] = 104;
-      transtable['X'] = 77;
-      transtable['y'] = 78;
-      transtable['Y'] = 105;
-      transtable['A'] = 83;
-      transtable['B'] = 102;
-      transtable['!'] = 103;
-      transtable['a'] = 84;
-      transtable['C'] = 85;
-      transtable['D'] = 86;
-      transtable['E'] = 87;
-      transtable['F'] = 88;
-      transtable['c'] = 89;
-      transtable['d'] = 90;
-      transtable['e'] = 91;
-      transtable['f'] = 92;
-
-      transtable['G'] = 93;
-      transtable['H'] = 94;
-      transtable['I'] = 95;
-      transtable['J'] = 96;
-
-      transtable['g'] = 97;
-      transtable['h'] = 98;
-      transtable['i'] = 99;
-      transtable['j'] = 100;
-      transtable['#'] = 11;
-      transtable['['] = 13;
-      transtable['='] = 14;
-      transtable[']'] = 15;
-      transtable['$'] = 82;
-      transtable['^'] = 76;
-      transtable['*'] = 80;
-      transtable['|'] = 79;
-      transtable['\\'] = 81;
-      transtable['&'] = 75;
-
-      int x = 0;
-      int y = 0;
-      for (auto& tile : ia_tm)
+      if (++x >= width)
       {
-        if (tile == '0' || tile == '1' || tile == '2')
-        {
-          badguy_data.push_back(BadGuyData(static_cast<BadGuyKind>(tile - '0'), x * 32, y * 32, false));
-          tile = 0;
-        }
-        else
-        {
-          auto it = transtable.find(tile);
-          if (it != transtable.end())
-          {
-            tile = it->second;
-          }
-          else
-          {
-            printf("Error: conversion will fail, unsupported char: '%c' (%d)\n", tile, tile);
-          }
-        }
-        ++x;
-        if (x >= width)
-        {
-          x = 0;
-          ++y;
-        }
+        x = 0;
+        ++y;
       }
     }
   }
 
   // Set the final size for our member vectors
-  const int total_tiles = width * 15;
   ia_tiles.resize(total_tiles);
   bg_tiles.resize(total_tiles);
   fg_tiles.resize(total_tiles);
 
   // Place interactive tiles
-  int i = 0;
-  int j = 0;
-  for (const auto& tile : ia_tm)
+  for (int j = 0; j < 15; ++j)
   {
-    if (j >= 15) {
-      std::cerr << "Warning: Level higher than 15 interactive tiles. Ignoring.\n";
-      break;
-    }
-
-    ia_tiles[j * width + i] = tile;
-
-    switch (tile)
+    for (int i = 0; i < width; ++i)
     {
-      case 102:
-      case 103:
-      case 104:
-      case 105:
-      case 128:
-      case 77:
-      case 78:
-      case 26:
-      case 82:
-      case 83:
-      case 44:
-      case 45:
-      case 46:
+      int index = j * width + i;
+      if (static_cast<size_t>(index) >= ia_tm.size())
       {
-        // add this tile as a restorable tile
-        OriginalTileInfo info;
-        info.x = i;
-        info.y = j;
-        info.tile = tile;
-        original_tiles.push_back(info);
+        break;
       }
-      break;
-    }
-
-    ++i;
-    if (i >= width)
-    {
-      i = 0; // Reset i after reaching the end of the width
-      ++j;  // Move to the next row
+      unsigned int tile = ia_tm[index];
+      ia_tiles[index] = tile;
+      switch (tile)
+      {
+        case 102: case 103: case 104: case 105: case 128: case 77:
+        case 78:  case 26:  case 82:  case 83:  case 44:  case 45: case 46:
+          original_tiles.push_back({i, j, tile});
+          break;
+      }
     }
   }
 
-  // Place background tiles
-  i = j = 0;
-  for (auto& tile : bg_tm)
+  // Place background and foreground tiles
+  for (int j = 0; j < 15; ++j)
   {
-    if (j >= 15)
+    for (int i = 0; i < width; ++i)
     {
-      std::cerr << "Warning: Level higher than 15 background tiles."
-                   "Ignoring by cutting tiles.\n";
-      break;
-    }
-
-    bg_tiles[j * width + i] = tile;
-    ++i;
-    if (i >= width)
-    {
-      i = 0; // Reset i after reaching the end of the width
-      ++j;  // Move to the next row
+      int index = j * width + i;
+      if (static_cast<size_t>(index) < bg_tm.size())
+      {
+        bg_tiles[index] = bg_tm[index];
+      }
+      if (static_cast<size_t>(index) < fg_tm.size())
+      {
+        fg_tiles[index] = fg_tm[index];
+      }
     }
   }
-
-  // Place foreground tiles
-  i = j = 0;
-  for (auto& tile : fg_tm)
-  {
-    if (j >= 15)
-    {
-      std::cerr << "Warning: Level higher than 15 foreground tiles."
-                   "Ignoring by cutting tiles.\n";
-      break;
-    }
-
-    fg_tiles[j * width + i] = tile;
-    ++i;
-    if (i >= width)
-    {
-      i = 0; // Reset i after reaching the end of the width
-      ++j;  // Move to the next row
-    }
-  }
-
-  return 0;
 }
+
+/**
+ * Parses game objects like reset points and bad guys from the Lisp data.
+ * @param reader The LispReader instance to use for parsing.
+ */
+void Level::parseObjects(LispReader& reader)
+{
+  // Read ResetPoints
+  lisp_object_t* reset_points_list = nullptr;
+  if (reader.read_lisp("reset-points", &reset_points_list))
+  {
+    while (!lisp_nil_p(reset_points_list))
+    {
+      lisp_object_t* data = lisp_car(reset_points_list);
+      lisp_object_t* x_val = lisp_find_value(lisp_cdr(data), "x");
+      lisp_object_t* y_val = lisp_find_value(lisp_cdr(data), "y");
+
+      if (x_val && y_val && lisp_integer_p(lisp_car(x_val)) && lisp_integer_p(lisp_car(y_val)))
+      {
+          reset_points.push_back({lisp_integer(lisp_car(x_val)), lisp_integer(lisp_car(y_val))});
+      }
+      reset_points_list = lisp_cdr(reset_points_list);
+    }
+  }
+
+  // Read BadGuys
+  lisp_object_t* objects_list = nullptr;
+  if (reader.read_lisp("objects", &objects_list))
+  {
+    while (!lisp_nil_p(objects_list))
+    {
+      lisp_object_t* data = lisp_car(objects_list);
+
+      BadGuyData bg_data;
+      bg_data.kind = badguykind_from_string(lisp_symbol(lisp_car(data)));
+
+      lisp_object_t* val_x = lisp_find_value(lisp_cdr(data), "x");
+      if (val_x)
+      {
+        bg_data.x = lisp_integer(lisp_car(val_x));
+      }
+
+      lisp_object_t* val_y = lisp_find_value(lisp_cdr(data), "y");
+      if (val_y)
+      {
+        bg_data.y = lisp_integer(lisp_car(val_y));
+      }
+
+      lisp_object_t* val_stay = lisp_find_value(lisp_cdr(data), "stay-on-platform");
+      if (val_stay)
+      {
+        bg_data.stay_on_platform = lisp_boolean(lisp_car(val_stay));
+      }
+
+      badguy_data.push_back(bg_data);
+      objects_list = lisp_cdr(objects_list);
+    }
+  }
+}
+
 
 /**
  * Reloads bricks and coins in the level.
@@ -620,7 +579,7 @@ int Level::load(const std::string& filename)
  */
 void Level::reload_bricks_and_coins()
 {
-  for (auto& tile_info : original_tiles)
+  for (const auto& tile_info : original_tiles)
   {
     if (tile_info.y >= 0 && tile_info.y < 15 && tile_info.x >= 0 && tile_info.x < width)
     {
@@ -714,7 +673,7 @@ void Level::save(const std::string& subset, int level)
   fprintf(fi, ")\n");
 
   fprintf(fi, "(reset-points\n");
-  for (auto& reset_point : reset_points)
+  for (const auto& reset_point : reset_points)
   {
     fprintf(fi, "(point (x %d) (y %d))\n", reset_point.x, reset_point.y);
   }
@@ -722,7 +681,7 @@ void Level::save(const std::string& subset, int level)
 
   fprintf(fi, "(objects\n");
 
-  for (auto& badguy : badguy_data)
+  for (const auto& badguy : badguy_data)
   {
     fprintf(fi, "(%s (x %d) (y %d) (stay-on-platform %s))\n",
       badguykind_to_string(badguy.kind).c_str(),
@@ -816,8 +775,10 @@ void Level::change_size(int new_width)
 
   int min_width = (new_width < width) ? new_width : width;
 
-  for (int y = 0; y < 15; ++y) {
-    for (int x = 0; x < min_width; ++x) {
+  for (int y = 0; y < 15; ++y)
+  {
+    for (int x = 0; x < min_width; ++x)
+    {
       new_ia_tiles[y * new_width + x] = ia_tiles[y * width + x];
       new_bg_tiles[y * new_width + x] = bg_tiles[y * width + x];
       new_fg_tiles[y * new_width + x] = fg_tiles[y * width + x];
@@ -950,7 +911,7 @@ unsigned int Level::get_tile_at(int x, int y) const
  * Chooses between drawing a background image with parallax scrolling
  * or a color gradient.
  */
-void Level::draw_bg()
+void Level::draw_bg() const
 {
   if (img_bkgd)
   {
@@ -973,37 +934,7 @@ void Level::draw_bg()
  */
 std::string Level::get_level_title_fast(const std::string& level_filename)
 {
-  std::ifstream file(level_filename);
-  if (!file.is_open())
-  {
-    return "Invalid Level";
-  }
-
-  std::string line;
-  // Search only the first 20 lines for performance. The name
-  // is always in the properties section near the top.
-  for (int i = 0; i < 20 && std::getline(file, line); ++i)
-  {
-    // Find the line containing "(name"
-    size_t pos = line.find("(name");
-    if (pos != std::string::npos)
-    {
-      // Find the first quote after "(name"
-      size_t start_quote = line.find('"', pos);
-      if (start_quote != std::string::npos)
-      {
-        // Find the second quote that closes the string
-        size_t end_quote = line.find('"', start_quote + 1);
-        if (end_quote != std::string::npos)
-        {
-          // We found the title! Extract it and return immediately.
-          return line.substr(start_quote + 1, end_quote - start_quote - 1);
-        }
-      }
-    }
-  }
-
-  return "Untitled Level"; // Fallback title
+    return get_title_from_lisp_file(level_filename, "Invalid Level", "Untitled Level");
 }
 
 // EOF

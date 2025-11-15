@@ -109,7 +109,7 @@ public:
   MusicRef get_level_music_fast() const;
   unsigned int gettileid(float x, float y) const;
   unsigned int get_tile_at(int x, int y) const;
-  void draw_bg();
+  void draw_bg() const;
 
   // A lightweight "peek" function to read just the title from a level file.
   static std::string get_level_title_fast(const std::string& level_filename);
@@ -117,6 +117,11 @@ public:
 private:
   MusicRef level_song;
   MusicRef level_song_fast;
+
+  // Helper functions for loading
+  void parseProperties(LispReader& reader);
+  void parseTilemaps(LispReader& reader, int version);
+  void parseObjects(LispReader& reader);
 };
 
 #endif /*SUPERTUX_LEVEL_H*/
