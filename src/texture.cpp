@@ -208,7 +208,7 @@ inline int power_of_two(int input)
  */
 void Surface::init_impl()
 {
-  impl = data.create();
+  impl.reset(data.create());
   if (impl)
   {
     w = impl->w;
@@ -259,8 +259,7 @@ Surface::Surface(const std::string& file, int x, int y, int w, int h, bool use_a
  */
 void Surface::reload()
 {
-  delete impl;
-  impl = data.create();
+  impl.reset(data.create());
   if (impl)
   {
     w = impl->w;
@@ -289,7 +288,6 @@ Surface::~Surface()
   }
 #endif
   surfaces.remove(this);
-  delete impl;
 }
 
 /**

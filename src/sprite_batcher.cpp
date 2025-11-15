@@ -73,7 +73,7 @@ void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
     return;
   }
 
-  SurfaceOpenGL* gl_surface = dynamic_cast<SurfaceOpenGL*>(surface->impl);
+  SurfaceOpenGL* gl_surface = dynamic_cast<SurfaceOpenGL*>(surface->impl.get());
   if (!gl_surface)
   {
     return;

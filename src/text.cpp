@@ -104,7 +104,7 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
 
   // Cache the result of the (potentially expensive) dynamic_cast now,
   // rather than in the hot loop of the draw function.
-  opengl_chars = use_gl ? dynamic_cast<SurfaceOpenGL*>(chars->impl) : nullptr;
+  opengl_chars = use_gl ? dynamic_cast<SurfaceOpenGL*>(chars->impl.get()) : nullptr;
   opengl_shadow_chars = nullptr; // Initialize to null
 #endif
 
@@ -127,7 +127,7 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
 #ifndef NOOPENGL
   if (use_gl)
   {
-    opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl);
+    opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl.get());
   }
 #endif
 
@@ -163,8 +163,8 @@ void Text::recache_opengl_pointers()
   // Re-run the dynamic_cast to get the new, valid pointers.
   if (use_gl)
   {
-    opengl_chars = dynamic_cast<SurfaceOpenGL*>(chars->impl);
-    opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl);
+    opengl_chars = dynamic_cast<SurfaceOpenGL*>(chars->impl.get());
+    opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl.get());
   }
   else
   {
@@ -248,7 +248,7 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
   CharVertex* vertices = vertex_buffer;
   int vertex_count = 0;
 
-  SurfaceImpl* impl = pchars->impl;
+  SurfaceImpl* impl = pchars->impl.get();
   if (!impl)
   {
     return;

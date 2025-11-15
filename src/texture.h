@@ -22,6 +22,7 @@
 
 #include <SDL.h>
 #include <string>
+#include <memory>
 #ifndef NOOPENGL
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -79,7 +80,7 @@ class Surface
 {
 public:
   SurfaceData data;
-  SurfaceImpl* impl;
+  std::unique_ptr<SurfaceImpl> impl;
   int w;
   int h;
 
@@ -148,10 +149,10 @@ public:
   SurfaceOpenGL(const std::string& file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceOpenGL();
 
-  int draw(float x, float y, Uint8 alpha, bool update);
-  int draw_bg(Uint8 alpha, bool update);
-  int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update);
-  int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update);
+  int draw(float x, float y, Uint8 alpha, bool update) override;
+  int draw_bg(Uint8 alpha, bool update) override;
+  int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update) override;
+  int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 
 private:
   void create_gl(SDL_Surface* surf, GLuint* tex);
@@ -170,10 +171,10 @@ public:
   SurfaceSDL(const std::string& file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceSDL();
 
-  int draw(float x, float y, Uint8 alpha, bool update);
-  int draw_bg(Uint8 alpha, bool update);
-  int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update);
-  int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update);
+  int draw(float x, float y, Uint8 alpha, bool update) override;
+  int draw_bg(Uint8 alpha, bool update) override;
+  int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update) override;
+  int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 };
 
 #endif /*SUPERTUX_TEXTURE_H*/
