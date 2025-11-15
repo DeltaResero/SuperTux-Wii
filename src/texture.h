@@ -104,6 +104,9 @@ public:
 
   static void reload_all();
   static void debug_check();
+
+private:
+  void init_impl();
 };
 
 // Base class for surface implementations
@@ -152,6 +155,8 @@ public:
 
 private:
   void create_gl(SDL_Surface* surf, GLuint* tex);
+  void setup_gl_state(Uint8 alpha);
+  void teardown_gl_state();
 };
 
 #endif

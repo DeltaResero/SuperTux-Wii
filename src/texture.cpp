@@ -31,6 +31,44 @@
 Surface::Surfaces Surface::surfaces;
 
 /**
+ * Helper function to finalize a newly created SDL_Surface.
+ * This function converts the surface to the display format, handles alpha settings,
+ * checks for errors, and frees the temporary input surface.
+ * @param temp The temporary SDL_Surface to process.
+ * @param use_alpha Whether to use alpha transparency.
+ * @param error_context A string (like a filename) to use in error messages.
+ * @return A pointer to the finalized SDL_Surface.
+ */
+static SDL_Surface* finalize_surface(SDL_Surface* temp, bool use_alpha, const std::string& error_context)
+{
+  SDL_Surface* final_surface;
+
+  if (!use_alpha && !use_gl)
+  {
+    final_surface = SDL_DisplayFormat(temp);
+  }
+  else
+  {
+    final_surface = SDL_DisplayFormatAlpha(temp);
+  }
+
+  if (final_surface == NULL)
+  {
+    st_abort("Can't convert to display format", error_context);
+  }
+
+  if (!use_alpha && !use_gl)
+  {
+    SDL_SetAlpha(final_surface, 0, 0);
+  }
+
+  SDL_FreeSurface(temp);
+
+  return final_surface;
+}
+
+
+/**
  * Constructor for SurfaceData.
  * @param temp SDL_Surface to copy.
  * @param use_alpha Whether to use alpha transparency.
@@ -165,12 +203,10 @@ inline int power_of_two(int input)
 #endif
 
 /**
- * Constructor for Surface.
- * @param surf The SDL_Surface to wrap.
- * @param use_alpha Whether to use alpha transparency.
+ * Private helper to initialize the implementation details of a Surface.
+ * This extracts the common logic from the constructors.
  */
-Surface::Surface(SDL_Surface* surf, bool use_alpha)
-  : data(surf, use_alpha), w(0), h(0)
+void Surface::init_impl()
 {
   impl = data.create();
   if (impl)
@@ -183,19 +219,24 @@ Surface::Surface(SDL_Surface* surf, bool use_alpha)
 
 /**
  * Constructor for Surface.
+ * @param surf The SDL_Surface to wrap.
+ * @param use_alpha Whether to use alpha transparency.
+ */
+Surface::Surface(SDL_Surface* surf, bool use_alpha)
+  : data(surf, use_alpha), w(0), h(0)
+{
+  init_impl();
+}
+
+/**
+ * Constructor for Surface.
  * @param file The path to the image file.
  * @param use_alpha Whether to use alpha transparency.
  */
 Surface::Surface(const std::string& file, bool use_alpha)
   : data(file, use_alpha), w(0), h(0)
 {
-  impl = data.create();
-  if (impl)
-  {
-    w = impl->w;
-    h = impl->h;
-  }
-  surfaces.push_back(this);
+  init_impl();
 }
 
 /**
@@ -210,13 +251,7 @@ Surface::Surface(const std::string& file, bool use_alpha)
 Surface::Surface(const std::string& file, int x, int y, int w, int h, bool use_alpha)
   : data(file, x, y, w, h, use_alpha), w(0), h(0)
 {
-  impl = data.create();
-  if (impl)
-  {
-    w = impl->w;
-    h = impl->h;
-  }
-  surfaces.push_back(this);
+  init_impl();
 }
 
 /**
@@ -385,56 +420,30 @@ void Surface::resize(int w_, int h_)
  */
 SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, bool use_alpha)
 {
-  SDL_Rect src;
-  SDL_Surface* sdl_surface;
-  SDL_Surface* temp;
-  SDL_Surface* conv;
-
-  temp = IMG_Load(file.c_str());
-
+  SDL_Surface* temp = IMG_Load(file.c_str());
   if (temp == NULL)
   {
     st_abort("Can't load", file);
   }
 
   /* Set source rectangle for conv: */
+  SDL_Rect src;
   src.x = x;
   src.y = y;
   src.w = w;
   src.h = h;
 
-  conv = SDL_CreateRGBSurface(temp->flags, w, h, temp->format->BitsPerPixel,
+  SDL_Surface* conv = SDL_CreateRGBSurface(temp->flags, w, h, temp->format->BitsPerPixel,
                               temp->format->Rmask,
                               temp->format->Gmask,
                               temp->format->Bmask,
                               temp->format->Amask);
 
   SDL_SetAlpha(temp, 0, 0);
-
   SDL_BlitSurface(temp, &src, conv, NULL);
-  if (!use_alpha && !use_gl)
-  {
-    sdl_surface = SDL_DisplayFormat(conv);
-  }
-  else
-  {
-    sdl_surface = SDL_DisplayFormatAlpha(conv);
-  }
-
-  if (sdl_surface == NULL)
-  {
-    st_abort("Can't convert to display format (part)", file);
-  }
-
-  if (!use_alpha && !use_gl)
-  {
-    SDL_SetAlpha(sdl_surface, 0, 0);
-  }
-
   SDL_FreeSurface(temp);
-  SDL_FreeSurface(conv);
 
-  return sdl_surface;
+  return finalize_surface(conv, use_alpha, file);
 }
 
 /**
@@ -445,38 +454,13 @@ SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, i
  */
 SDL_Surface* sdl_surface_from_file(const std::string& file, bool use_alpha)
 {
-  SDL_Surface* sdl_surface;
-  SDL_Surface* temp;
-
-  temp = IMG_Load(file.c_str());
-
+  SDL_Surface* temp = IMG_Load(file.c_str());
   if (temp == NULL)
   {
     st_abort("Can't load", file);
   }
 
-  if (!use_alpha && !use_gl)
-  {
-    sdl_surface = SDL_DisplayFormat(temp);
-  }
-  else
-  {
-    sdl_surface = SDL_DisplayFormatAlpha(temp);
-  }
-
-  if (sdl_surface == NULL)
-  {
-    st_abort("Can't convert to display format", file);
-  }
-
-  if (!use_alpha && !use_gl)
-  {
-    SDL_SetAlpha(sdl_surface, 0, 0);
-  }
-
-  SDL_FreeSurface(temp);
-
-  return sdl_surface;
+  return finalize_surface(temp, use_alpha, file);
 }
 
 /**
@@ -681,6 +665,28 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
 }
 
 /**
+ * Sets up the common OpenGL state for drawing.
+ * @param alpha The alpha transparency value.
+ */
+void SurfaceOpenGL::setup_gl_state(Uint8 alpha)
+{
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glColor4ub(alpha, alpha, alpha, alpha);
+  glBindTexture(GL_TEXTURE_2D, gl_texture);
+}
+
+/**
+ * Tears down the common OpenGL state after drawing.
+ */
+void SurfaceOpenGL::teardown_gl_state()
+{
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_BLEND);
+}
+
+/**
  * Draws the OpenGL surface at the specified coordinates.
  * @param x The x-coordinate.
  * @param y The y-coordinate.
@@ -696,13 +702,7 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
   float pw = tex_w_pow2;
   float ph = tex_h_pow2;
 
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  glColor4ub(alpha, alpha, alpha, alpha);
-
-  glBindTexture(GL_TEXTURE_2D, gl_texture);
+  setup_gl_state(alpha);
 
   glBegin(GL_QUADS);
   glTexCoord2f(0, 0);
@@ -715,8 +715,7 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
   glVertex2f(x, static_cast<float>(this->h) + y);
   glEnd();
 
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
+  teardown_gl_state();
 
   (void)update;  // avoid compiler warning
 
@@ -777,14 +776,7 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
   float pw = tex_w_pow2;
   float ph = tex_h_pow2;
 
-  glBindTexture(GL_TEXTURE_2D, gl_texture);
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  glColor4ub(alpha, alpha, alpha, alpha);
-
-  glEnable(GL_TEXTURE_2D);
+  setup_gl_state(alpha);
 
   glBegin(GL_QUADS);
   glTexCoord2f(sx / pw, sy / ph);
@@ -797,8 +789,7 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
   glVertex2f(x, h + y);
   glEnd();
 
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
+  teardown_gl_state();
 
   (void)update;  // avoid warnings
   return 0;
@@ -819,14 +810,7 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
   float pw = tex_w_pow2;
   float ph = tex_h_pow2;
 
-  glBindTexture(GL_TEXTURE_2D, gl_texture);
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  glColor4ub(alpha, alpha, alpha, alpha);
-
-  glEnable(GL_TEXTURE_2D);
+  setup_gl_state(alpha);
 
   glBegin(GL_QUADS);
   glTexCoord2f(0, 0);
@@ -839,8 +823,7 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
   glVertex2f(x, sh + y);
   glEnd();
 
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
+  teardown_gl_state();
 
   (void)update;  // avoid warnings
   return 0;
