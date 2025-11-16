@@ -10,11 +10,12 @@
 Ported by: scanff & Arikado
 Updated by: DeltaResero
 Type: Platform game
-Version: 0.1.4-wii-d.3
+Version: 0.1.4-wii-d.4
 Software license: GPLv2
 ```
 
-[![Github All Releases](https://img.shields.io/github/downloads/DeltaResero/SuperTux-Wii/total.svg?maxAge=2592000)](https://github.com/DeltaResero/SuperTux-Wii)
+[![Latest Release](https://img.shields.io/github/v/release/DeltaResero/SuperTux-Wii?label=Latest%20Release)](https://github.com/DeltaResero/SuperTux-Wii/releases/latest)
+[![View All Releases](https://img.shields.io/badge/Downloads-View_All_Releases-blue)](https://github.com/DeltaResero/SuperTux-Wii/releases)
 [![License](https://img.shields.io/badge/license-GPLv2-blue.svg)](https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f)](
 https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
