@@ -263,9 +263,19 @@ bool Player::on_ground()
  */
 bool Player::under_solid()
 {
-  return (issolid(base.x + base.width / 2, base.y) ||
-          issolid(base.x + 1, base.y) ||
-          issolid(base.x + base.width - 1, base.y));
+  // Check center point (always check this)
+  if (issolid(base.x + base.width / 2, base.y))
+    return true;
+
+  // Only check corners if we're moving upward OR stationary
+  // This prevents corner-catching when falling
+  if (physic.get_velocity_y() <= 0)
+  {
+    return (issolid(base.x + 1, base.y) ||
+            issolid(base.x + base.width - 1, base.y));
+  }
+
+  return false;
 }
 
 /**
