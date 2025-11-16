@@ -219,19 +219,30 @@ void collision_swept_object_map(base_type* old, base_type* current)
         const float safe_x = current->x;
         const float safe_y = current->y;
 
-        // Attempt to slide along the Y-axis (by restoring target X).
+        // Attempt to slide along the X-axis (horizontal movement).
         current->x = target_x;
-        if (collision_object_map(*current))
+        if (!collision_object_map(*current))
         {
-          // Y-slide failed. Revert X and attempt to slide along the X-axis.
-          current->x = safe_x;
-          current->y = target_y;
-          if (collision_object_map(*current))
-          {
-            // X-slide also failed. Revert Y to safe position (corner hit).
-            current->y = safe_y;
-          }
+          // X-slide succeeded, stay here
+          break;
         }
+
+        // X-slide failed. Revert X and attempt to slide along the Y-axis.
+        current->x = safe_x;
+        current->y = target_y;
+        if (!collision_object_map(*current))
+        {
+          // Y-slide succeeded, stay here
+          break;
+        }
+
+        // Both slides failed (corner hit). Need to push away from the wall.
+        current->y = safe_y;
+        while (!collision_object_map(*current))
+        {
+          current->y += y_step;
+        }
+        current->y -= y_step;
       }
       // Collision found and resolved, so we can exit the loop.
       break;
