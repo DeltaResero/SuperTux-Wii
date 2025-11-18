@@ -64,7 +64,7 @@ enum WorldMapMenuIDs
 };
 #pragma endregion
 
-bool confirm_dialog(std::string text, Surface* background);
+bool confirm_dialog(const std::string& text, Surface* background);
 
 /**
  * Defines the different types of items that can exist in a menu.

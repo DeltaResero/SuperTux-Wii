@@ -71,7 +71,7 @@ bool Menu::ignore_mouse_click = false;
  * @param text The text to display in the dialog.
  * @return Returns true if 'Yes' is selected, false if 'No' is selected.
  */
-bool confirm_dialog(std::string text, Surface* background)
+bool confirm_dialog(const std::string& text, Surface* background)
 {
   Menu* dialog = new Menu;
   dialog->additem(MN_DEACTIVE, text, 0, 0);
