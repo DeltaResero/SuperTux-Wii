@@ -38,7 +38,7 @@ JoystickKeymap::JoystickKeymap()
   x_axis = 0;
   y_axis = 1;
 
-  dead_zone = 4096;
+  dead_zone = 8192;
 }
 
 JoystickKeymap joystick_keymap;

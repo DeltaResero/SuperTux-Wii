@@ -786,13 +786,26 @@ void Menu::event(SDL_Event& event)
     case SDL_JOYAXISMOTION:
       if (event.jaxis.axis == joystick_keymap.y_axis)
       {
-        if (event.jaxis.value > 1024)
+        // Static flag to ensure we only move once per press.
+        // The stick must return to the deadzone before moving again.
+        static bool joystick_axis_ready = true;
+
+        if (abs(event.jaxis.value) < joystick_keymap.dead_zone)
         {
-          menuaction = MENU_ACTION_DOWN;
+          joystick_axis_ready = true;
         }
-        else if (event.jaxis.value < -1024)
+        else if (joystick_axis_ready)
         {
-          menuaction = MENU_ACTION_UP;
+          if (event.jaxis.value > joystick_keymap.dead_zone)
+          {
+            menuaction = MENU_ACTION_DOWN;
+            joystick_axis_ready = false;
+          }
+          else if (event.jaxis.value < -joystick_keymap.dead_zone)
+          {
+            menuaction = MENU_ACTION_UP;
+            joystick_axis_ready = false;
+          }
         }
       }
       break;
