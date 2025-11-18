@@ -1141,35 +1141,39 @@ void print_status(const char* st)
   static void* xfb = nullptr;
   static GXRModeObj* rmode = nullptr;
 
-  // Initialise the video system
-  VIDEO_Init();
-
-  // Obtain the preferred video mode from the system
-  rmode = VIDEO_GetPreferredMode(nullptr);
-
-  // Allocate memory for the display in the uncached region
-  xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-
-  // Initialise the console, required for printf
-  console_init(xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight, rmode->fbWidth * VI_DISPLAY_PIX_SZ);
-
-  // Set up the video registers with the chosen mode
-  VIDEO_Configure(rmode);
-
-  // Tell the video hardware where our display memory is
-  VIDEO_SetNextFramebuffer(xfb);
-
-  // Make the display visible
-  VIDEO_SetBlack(FALSE);
-
-  // Flush the video register changes to the hardware
-  VIDEO_Flush();
-
-  // Wait for Video setup to complete
-  VIDEO_WaitVSync();
-  if (rmode->viTVMode & VI_NON_INTERLACE)
+  // Only initialize the console video system once
+  if (xfb == nullptr)
   {
+    // Initialise the video system
+    VIDEO_Init();
+
+    // Obtain the preferred video mode from the system
+    rmode = VIDEO_GetPreferredMode(nullptr);
+
+    // Allocate memory for the display in the uncached region
+    xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
+
+    // Initialise the console, required for printf
+    console_init(xfb, 20, 20, rmode->fbWidth, rmode->xfbHeight, rmode->fbWidth * VI_DISPLAY_PIX_SZ);
+
+    // Set up the video registers with the chosen mode
+    VIDEO_Configure(rmode);
+
+    // Tell the video hardware where our display memory is
+    VIDEO_SetNextFramebuffer(xfb);
+
+    // Make the display visible
+    VIDEO_SetBlack(FALSE);
+
+    // Flush the video register changes to the hardware
+    VIDEO_Flush();
+
+    // Wait for Video setup to complete
     VIDEO_WaitVSync();
+    if (rmode->viTVMode & VI_NON_INTERLACE)
+    {
+      VIDEO_WaitVSync();
+    }
   }
 #endif
   printf("\n\nError!\n%s\n", st);
