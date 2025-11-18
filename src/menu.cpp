@@ -49,19 +49,19 @@ Surface* checkbox;
 Surface* checkbox_checked;
 Surface* back;
 
-Menu* main_menu      = 0;
-Menu* game_menu      = 0;
-Menu* worldmap_menu  = 0;
-Menu* options_menu   = 0;
-Menu* options_keys_menu     = 0;
-Menu* options_joystick_menu = 0;
-Menu* load_game_menu = 0;
-Menu* save_game_menu = 0;
-Menu* contrib_menu   = 0;
-Menu* contrib_subset_menu   = 0;
+Menu* main_menu      = nullptr;
+Menu* game_menu      = nullptr;
+Menu* worldmap_menu  = nullptr;
+Menu* options_menu   = nullptr;
+Menu* options_keys_menu     = nullptr;
+Menu* options_joystick_menu = nullptr;
+Menu* load_game_menu = nullptr;
+Menu* save_game_menu = nullptr;
+Menu* contrib_menu   = nullptr;
+Menu* contrib_subset_menu   = nullptr;
 
 std::vector<Menu*> Menu::last_menus;
-Menu* Menu::current_ = 0;
+Menu* Menu::current_ = nullptr;
 bool Menu::ignore_mouse_click = false;
 #pragma endregion
 
@@ -102,12 +102,12 @@ bool confirm_dialog(const std::string& text, Surface* background)
     switch (dialog->check())
     {
       case true:
-        Menu::set_current(0);
+        Menu::set_current(nullptr);
         delete dialog;
         return true;
         break;
       case false:
-        Menu::set_current(0);
+        Menu::set_current(nullptr);
         delete dialog;
         return false;
         break;
@@ -150,7 +150,7 @@ void Menu::pop_current()
   }
   else
   {
-    current_ = 0;
+    current_ = nullptr;
   }
 }
 
