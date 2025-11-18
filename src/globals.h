@@ -79,6 +79,12 @@ extern std::string st_save_dir;
 extern float game_speed;
 extern SDL_Joystick* js;
 
+// Flag to track Wii Remote controller state
+extern bool is_nunchuk_connected;
+
+// Helper to rotate D-Pad if Nunchuk is missing from Wii Remote
+Uint8 adjust_joystick_hat(Uint8 hat);
+
 int wait_for_event(SDL_Event& event, unsigned int min_delay = 0, unsigned int max_delay = 0, bool empty_events = false);
 
 void draw_player_hud();

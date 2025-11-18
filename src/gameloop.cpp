@@ -542,6 +542,9 @@ void GameSession::process_events()
 
           case SDL_JOYHATMOTION:
           {
+            // Apply rotation if needed
+            event.jhat.value = adjust_joystick_hat(event.jhat.value);
+
             if (event.jhat.value == SDL_HAT_RIGHT || event.jhat.value == SDL_HAT_RIGHTUP)
             {
               tux.input.left  = UP;

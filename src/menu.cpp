@@ -770,6 +770,9 @@ void Menu::event(SDL_Event& event)
       break;
 
     case SDL_JOYHATMOTION:
+      // Apply rotation if needed
+      event.jhat.value = adjust_joystick_hat(event.jhat.value);
+
       if (event.jhat.value == SDL_HAT_UP)
       {
         menuaction = MENU_ACTION_UP;

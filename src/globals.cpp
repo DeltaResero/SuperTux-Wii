@@ -15,12 +15,16 @@
 //
 //  You should have received a copy of the GNU General Public License
 //  along with this program; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-//  02111-1307, USA.
+//  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "globals.h"
 #include "player.h"
 #include "resources.h" // Needed for tux_life sprite
+
+#ifdef _WII_
+#include <gccore.h>
+#include <wiiuse/wpad.h>
+#endif
 
 /** The datadir prefix prepended when loading game data file */
 std::string datadir;
@@ -38,6 +42,7 @@ JoystickKeymap::JoystickKeymap()
 }
 
 JoystickKeymap joystick_keymap;
+bool is_nunchuk_connected = false;
 
 SDL_Surface* screen;
 Text* black_text;
@@ -66,6 +71,51 @@ std::string level_startup_file;
 std::string st_dir, st_save_dir;
 
 SDL_Joystick* js;
+
+/**
+ * Rotates the D-Pad input 90 degrees if the Nunchuk is not connected.
+ * This allows the Wii Remote to be used sideways (NES style).
+ *
+ * Mapping (CCW Rotation):
+ * Physical Up    (Left)  -> Game Left
+ * Physical Down  (Right) -> Game Right
+ * Physical Left  (Down)  -> Game Down (Duck)
+ * Physical Right (Up)    -> Game Up   (Jump)
+ */
+Uint8 adjust_joystick_hat(Uint8 hat)
+{
+#ifdef _WII_
+  // Dynamically check what is plugged into the expansion port.
+  // This handles hot-plugging (plugging/unplugging mid-game).
+  u32 type;
+  if (WPAD_Probe(joystick_num, &type) == WPAD_ERR_NONE)
+  {
+    // If expansion is NONE, we are in horizontal mode.
+    // If expansion is NUNCHUK or CLASSIC, we are in standard mode.
+    is_nunchuk_connected = (type != WPAD_EXP_NONE);
+  }
+#endif
+
+  if (is_nunchuk_connected)
+  {
+    return hat;
+  }
+
+  switch (hat)
+  {
+    case SDL_HAT_UP:        return SDL_HAT_LEFT;
+    case SDL_HAT_DOWN:      return SDL_HAT_RIGHT;
+    case SDL_HAT_LEFT:      return SDL_HAT_DOWN;
+    case SDL_HAT_RIGHT:     return SDL_HAT_UP;
+
+    case SDL_HAT_RIGHTUP:   return SDL_HAT_LEFTUP;    // Right(Up) + Up(Left) -> Up + Left
+    case SDL_HAT_RIGHTDOWN: return SDL_HAT_RIGHTUP;   // Right(Up) + Down(Right) -> Up + Right
+    case SDL_HAT_LEFTUP:    return SDL_HAT_LEFTDOWN;  // Left(Down) + Up(Left) -> Down + Left
+    case SDL_HAT_LEFTDOWN:  return SDL_HAT_RIGHTDOWN; // Left(Down) + Down(Right) -> Down + Right
+
+    default:                return hat;
+  }
+}
 
 /* Returns 1 for every button event, 2 for a quit event and 0 for no event. */
 int wait_for_event(SDL_Event& event, unsigned int min_delay, unsigned int max_delay, bool empty_events)

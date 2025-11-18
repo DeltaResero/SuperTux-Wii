@@ -815,19 +815,22 @@ void WorldMap::handleJoystickInput(const SDL_Event& event)
     }
     case SDL_JOYHATMOTION:
     {
-      if (event.jhat.value == SDL_HAT_UP)
+      // Fix: Use a local variable since 'event' is const
+      Uint8 hat = adjust_joystick_hat(event.jhat.value);
+
+      if (hat == SDL_HAT_UP)
       {
         input_direction = D_NORTH;
       }
-      else if (event.jhat.value == SDL_HAT_DOWN)
+      else if (hat == SDL_HAT_DOWN)
       {
         input_direction = D_SOUTH;
       }
-      else if (event.jhat.value == SDL_HAT_LEFT)
+      else if (hat == SDL_HAT_LEFT)
       {
         input_direction = D_WEST;
       }
-      else if (event.jhat.value == SDL_HAT_RIGHT)
+      else if (hat == SDL_HAT_RIGHT)
       {
         input_direction = D_EAST;
       }

@@ -793,9 +793,11 @@ void st_joystick_setup(void)
         if (SDL_JoystickNumAxes(js) < 2)
         {
           fprintf(stderr, "Warning: Joystick does not have enough axes!\n");
-          use_joystick = false;
+          // We don't disable joystick here anymore because a sideways Wiimote
+          // might report weird axes but still be valid for buttons/dpad.
         }
-        else if (SDL_JoystickNumButtons(js) < 2)
+
+        if (SDL_JoystickNumButtons(js) < 2)
         {
           fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
           use_joystick = false;
