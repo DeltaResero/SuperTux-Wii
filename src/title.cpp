@@ -450,10 +450,6 @@ static void handleMenuActions()
           Menu::set_current(main_menu);
       }
     }
-    else if (menu == options_menu)
-    {
-      process_options_menu();
-    }
     else if (menu == load_game_menu)
     {
       if (process_load_game_menu())

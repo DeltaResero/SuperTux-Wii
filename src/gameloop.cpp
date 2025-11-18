@@ -799,11 +799,7 @@ void GameSession::process_menu()
   {
     menu->action();
 
-    if (menu == options_menu)
-    {
-      process_options_menu();
-    }
-    else if (menu == load_game_menu)
+    if (menu == load_game_menu)
     {
       process_load_game_menu();
     }

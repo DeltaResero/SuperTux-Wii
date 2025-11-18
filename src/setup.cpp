@@ -537,16 +537,6 @@ bool process_load_game_menu()
   }
 }
 
-/*
- * Handle changes made to global settings in the options menu.
- */
-void process_options_menu(void)
-{
-  // This function is now deprecated.
-  // The logic has been moved to Menu::process_options_menu() in menu.cpp
-  // to centralize menu action handling.
-}
-
 /**
  * Set up the visual and input components used throughout the menus and gameplay.
  * This includes loading images, setting up the mouse cursor, and seeding the random number generator.

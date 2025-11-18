@@ -49,7 +49,6 @@ void st_shutdown(void); // Shuts down the game and frees resources
 void st_menu(void); // Displays the main menu
 void st_abort(const std::string& reason, const std::string& details); // Aborts the game with a reason and details
 
-void process_options_menu(void); // Processes the options menu
 bool process_load_game_menu(); // Returns true if the game loop was entered
 void update_load_save_game_menu(Menu* pmenu); // Updates the load/save game menu
 

@@ -1206,11 +1206,6 @@ void WorldMap::update(float delta)
   if (menu)
   {
     menu->action();
-
-    if (menu == options_menu)
-    {
-      process_options_menu();
-    }
   }
 }
 
