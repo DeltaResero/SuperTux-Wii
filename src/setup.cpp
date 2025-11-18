@@ -76,9 +76,6 @@
 #define SCREEN_W 640
 #define SCREEN_H 480
 
-/* Stores whether we're loading from and saving to SD or USB (Wii Only) */
-int selecteddevice;
-
 /* Local function prototypes: */
 void seticon(void);
 void usage(char* prog, int ret);
@@ -253,81 +250,36 @@ StringList dfiles(const char* rel_path, const char* glob, const char* exception_
 #ifdef _WII_
 
 /**
- * Set SuperTux configuration and save directories (HBC Wii specific)
- * This sets up the directory structure, including the save directory.
+ * Set SuperTux configuration and save directories (Wii specific)
+ * Uses the Current Working Directory set by the Homebrew Channel.
  */
 void st_directory_setup(void)
 {
-  bool deviceselection = false;
-  std::FILE* fp = nullptr;
+  char local_path[PATH_MAX];
 
-  // SD Card
-  fp = std::fopen("sd:/apps/supertux/data/supertux.strf", "rb");
-
-  if (fp)
+  // The Homebrew Channel sets the CWD to the folder containing the .dol file.
+  // e.g., "sd:/apps/supertux"
+  if (getcwd(local_path, PATH_MAX))
   {
-    deviceselection = true;
-    datadir = "sd:/apps/supertux/data";
-    st_dir = "sd:/apps/supertux";
-    st_save_dir = st_dir + "/save";
-
-    // Ensure 'save' and 'levels' directories exist
-    fs::create_directories(st_dir.c_str());
-    fs::create_directories(st_save_dir.c_str());
-    fs::create_directories((st_dir + "/levels").c_str());
-
-    selecteddevice = 1;
-    std::fclose(fp);
+    st_dir = local_path;
+  }
+  else
+  {
+    // Fallback if CWD fails (unlikely)
+    st_dir = "/apps/supertux";
   }
 
-  if (!deviceselection)
-  {
-    // USB Flash Drive
-    fp = std::fopen("usb:/apps/supertux/data/supertux.strf", "rb");
+  // Set paths relative to the installation folder
+  datadir = st_dir + "/data";
+  st_save_dir = st_dir + "/save";
 
-    if (fp)
-    {
-      deviceselection = true;
-      datadir = "usb:/apps/supertux/data";
-      st_dir = "usb:/apps/supertux";
-      st_save_dir = st_dir + "/save";
+  // Ensure directories exist
+  fs::create_directories(st_save_dir.c_str());
+  fs::create_directories((st_dir + "/levels").c_str());
 
-      // Ensure 'save' and 'levels' directories exist
-      fs::create_directories(st_dir.c_str());
-      fs::create_directories(st_save_dir.c_str());
-      fs::create_directories((st_dir + "/levels").c_str());
-
-      selecteddevice = 2;
-      std::fclose(fp);
-    }
-  }
-
-  if (!deviceselection)
-  {
-    // Fallback
-    fp = std::fopen("/apps/supertux/data/supertux.strf", "rb");
-
-    if (fp)
-    {
-      deviceselection = true;
-      datadir = "/apps/supertux/data";
-      st_dir = "/apps/supertux";
-      st_save_dir = st_dir + "/save";
-
-      // Ensure 'save' and 'levels' directories exist
-      fs::create_directories(st_dir.c_str());
-      fs::create_directories(st_save_dir.c_str());
-      fs::create_directories((st_dir + "/levels").c_str());
-
-      selecteddevice = 3;
-      std::fclose(fp);
-    }
-  }
-
-  if (!deviceselection)
-  {
-    st_abort("Game data not found", "SD or USB device could not be accessed.");
-  }
+  #ifdef DEBUG
+  printf("Wii Setup: Root=%s\nData=%s\nSave=%s\n", st_dir.c_str(), datadir.c_str(), st_save_dir.c_str());
+  #endif
 }
 
 #else // #ifndef _WII_
@@ -555,23 +507,7 @@ bool process_load_game_menu()
   if (slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
   {
     std::string slotfile;
-
-#ifdef _WII_
-    if (selecteddevice == 1)
-    {
-      slotfile = "sd:/apps/supertux/save/slot" + std::to_string(slot) + ".stsg";
-    }
-    else if (selecteddevice == 2)
-    {
-      slotfile = "usb:/apps/supertux/save/slot" + std::to_string(slot) + ".stsg";
-    }
-    else if (selecteddevice == 3)
-    {
-      slotfile = "/apps/supertux/save/slot" + std::to_string(slot) + ".stsg";
-    }
-#else
     slotfile = st_save_dir + "/slot" + std::to_string(slot) + ".stsg";
-#endif
 
     // Plays intro text when starting a new save file
     if (access(slotfile.c_str(), F_OK) != 0)
