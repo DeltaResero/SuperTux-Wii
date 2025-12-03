@@ -1,37 +1,41 @@
+- Those behind SuperTux Wii -
+=============================
 
-- Those behind SuperTux -
-=========================
+https://github.com/DeltaResero/SuperTux-Wii
 
-http://super-tux.sf.net/
+Last update: December 2025
 
-Last update: April 26, 2004
+Wii Edition Lead Developer
+--------------------------
 
-Project Leader
---------------
+    DeltaResero
+    https://github.com/DeltaResero
 
-    Tobias Glaesser
-    tobi.web@gmx.de
+Original Wii Port
+-----------------
 
-Original author
----------------
+    scanff
+
+    Arikado
+
+Original Game Author
+--------------------
 
     Bill Kendrick
     nbs@sonic.net
     http://www.newbreedsoftware.com/
 
-Programmers
------------
+Original Game Programmers
+-------------------------
 
     Tobias Glaesser
     tobi.web@gmx.de
 
     Ricardo Cruz
     rick2@aeiou.pt
-    http://rpmcruz.planetaclix.pt/
 
     Ingo Ruhnke
     grumbel@gmx.de
-    http://pingus.seul.org/~grumbel/
 
     Duong-Khang NGUYEN
     neoneurone@users.sourceforge.net
@@ -39,19 +43,17 @@ Programmers
     Matthias Braun
     matze@braunis.de
 
-Code contributors
+Code Contributors
 -----------------
 
     Ryan Flegel
     xxdigitalhellxx@hotmail.com
-    http://digitalhell.cjb.net/~ryan/
 
 Graphics
 --------
 
     Ingo Ruhnke
     grumbel@gmx.de
-    http://pingus.seul.org/~grumbel/
 
     Christopher A. Webber
     creat0r@lingocomic.com
@@ -68,19 +70,16 @@ Level Design
 ------------
 
     Marek Moeckel
-    wansti@discarded-ideas.org
-    http://www.discarded-ideas.org/
+    wansti@gmx.de
 
     Ingo Ruhnke
     grumbel@gmx.de
-    http://pingus.seul.org/~grumbel/
 
 Music
 -----
 
     Marek Moeckel
-    wansti@discarded-ideas.org
-    http://www.discarded-ideas.org/
+    wansti@gmx.de
 
     Mystical
 
@@ -94,23 +93,19 @@ Sounds
 More information and contacts
 =============================
 
-Visit our webpage at: http://super-tux.sf.net/
+Visit the project repository at:
+https://github.com/DeltaResero/SuperTux-Wii
 
-Or chat with us directly on IRC:
-#supertux at irc.freenode.net
+Report bugs or suggest features at:
+https://github.com/DeltaResero/SuperTux-Wii/issues
 
-Send your comments, ideas and suggestions
-to our mailing list at:
-super-tux-devel@lists.sourceforge.net
+For information on the original game:
+https://www.supertux.org
 
-You can also register yourself to know what's happening.
-A daily digest mailing is avaible.
-http://sourceforge.net/mail/?group_id=69183
-super-tux-devel is where we talk about SuperTux.
-super-tux-commit is where all changes in cvs are notifying for (only
-usefull for developers)
+The original Milestone 1 source code is archived at:
+https://github.com/SuperTux/supertux/tree/supertux-milestone1
 
 
 Thank you for caring enough for our project to even read this
 file to the end :)
-- The SuperTux team
+- The SuperTux Wii Team

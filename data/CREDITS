@@ -1,49 +1,58 @@
 -- SuperTux Wii Edition -
-	 Milestone 1
+Milestone 1
 
 
 
--Originally developed by
+-Lead Developer
+
+	DeltaResero
+
+
+
+-Original Wii Port
+
+	scanff
+	Arikado
+
+
+
+-Original Game Design
 
 	Bill Kendrick
+
 
 
 -Programming
 
 	Tobias (tobgle) Glaesser
-
 	Ricardo (blacksheep) Cruz
- 
 	Ingo (grumbel) Ruhnke
- 
 	Matthias (MatzeB) Braun
+
 
 
 -Contrib Programming
 
 	Ryan (sik0fewl) Flegel
- 
 	Duong-Khang (neoneurone) NGUYEN
+
 
 
 -Graphics
 
 	Ingo (grumbel) Ruhnke
- 
 	Christopher A. (paroneayea) Webber
-
 	Benjamin P. (litespeed) Jung
-	
 	Nikolaj (unDEFER) Krivchenkov
-
 	Stephen Groundwater
+
 
 
 -Level Design
 
 	Marek (Wansti) Moeckel
- 
 	Ingo (grumbel) Ruhnke
+
 
 
 -Story
@@ -51,13 +60,13 @@
 	Christopher A. (paroneayea) Webber
 
 
+
 -Music
 
 	Marek (Wansti) Moeckel
-
 	Mystical
-
 	Mortimer Twang
+
 
 
 -Sounds
@@ -65,11 +74,6 @@
 	Royalty free sound effects
 	CDROMs and FTP sites
 
--Wii Version Development
-
-	scanff
-
-	Arikado
 
 
 -Thanks to
@@ -81,38 +85,35 @@
  For making such a great gaming experience
  possible in Linux
 
-	devkitPRO and Team Twiizers
+	devkitPRO & Team Twiizers
  For opening up the Wii to developers
 
 
--SuperTux Contact
-
-	Visit our webpage at
-http://supertux.lethargik.org
-
-	Or visit us directly at IRC:
-#supertux at irc.freenode.net
-
-	Comments, ideas and suggestions
-	go to our mailing list
-supertux-devel@lists.lethargik.org
 
 -SuperTux Wii Contact
 
-	Visit the official page at
-http://code.google.com/p/supertux-wii
+github.com/DeltaResero/SuperTux-Wii
+	Report bugs at the Issues page
 
-	Visit developer blogs at
-http://scanff.com
-http://arikadosblog.blogspot.com
 
-	Get assistance at
-http://forum.wiibrew.org
-http://1ntrusion.com
 
-	IRC support at
-#wiihelp and #arikadosblog on EFNET
+-Original Port Archive
 
+code.google.com/archive/p/supertux-wii
+
+
+
+-Original Source Code
+
+github.com/SuperTux/supertux
+	(Milestone 1 Branch)
+
+
+
+-Original SuperTux Contact
+
+	Visit our webpage at
+supertux.org
 
 
 

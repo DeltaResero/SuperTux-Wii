@@ -479,7 +479,7 @@ static void renderTitleScene(float frame_ratio)
 
   // Draw text and handle menu actions
   white_small_text->draw("SuperTux " VERSION "\n"
-                         "Copyright (c) 2003 SuperTux Devel Team\n"
+                         "Copyright (c) 2003-2025 SuperTux Devel Team & DeltaResero\n"
                          "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
                          "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
                          "for details.\n",
