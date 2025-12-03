@@ -11,12 +11,12 @@ Ported by: scanff & Arikado
 Updated by: DeltaResero
 Type: Platform game
 Version: 0.1.4-wii-d.4
-Software license: GPLv2
+Software license: GPLv3+
 ```
 
 [![Latest Release](https://img.shields.io/github/v/release/DeltaResero/SuperTux-Wii?label=Latest%20Release)](https://github.com/DeltaResero/SuperTux-Wii/releases/latest)
 [![View All Releases](https://img.shields.io/badge/Downloads-View_All_Releases-blue)](https://github.com/DeltaResero/SuperTux-Wii/releases)
-[![License](https://img.shields.io/badge/license-GPLv2-blue.svg)](https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f)](
 https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
@@ -160,16 +160,19 @@ included in the `extras` directory as `supertux.desktop`.
 
 ### Disclaimer
 
+### Disclaimer
+
 This is an unofficial port of SuperTux that runs on the Wii via the Homebrew Channel.
 It is not affiliated with, endorsed by, nor sponsored by the creators of the Wii console
 nor the Homebrew Channel. All trademarks and copyrights are the property of their
 respective owners.
 
-This port is distributed under the terms of the GNU General Public License version 2
-(GPLv2). You can redistribute it and/or modify it under the terms of GPLv2 as published
-by the Free Software Foundation.
+This port is distributed under the terms of the GNU General Public License version 3
+(or later). You can redistribute it and/or modify it under the terms of the GNU General
+Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
 
 This project is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**;
 without even the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**.
-See the [GNU General Public License](https://www.gnu.org/licenses/gpl-2.0.en.html) for
+See the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html) for
 more details.
