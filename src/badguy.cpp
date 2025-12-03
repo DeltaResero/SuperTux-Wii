@@ -23,6 +23,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <numbers>
 #include <string>
 #include <unordered_map>
 
@@ -257,7 +258,7 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
  * This includes its logic for being carried, kicked, sliding, and colliding.
  * @param frame_ratio The time delta for the current frame, used for physics calculations.
  */
-void BadGuy::action_mriceblock(double frame_ratio)
+void BadGuy::action_mriceblock(float frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
   static const float KICK_VELOCITY = 3.5f;
@@ -498,7 +499,7 @@ void BadGuy::remove_me()
  * This includes jumping behavior and interactions with the player.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_jumpy(double frame_ratio)
+void BadGuy::action_jumpy(float frame_ratio)
 {
   const float vy = physic.get_velocity_y();
 
@@ -555,7 +556,7 @@ void BadGuy::action_jumpy(double frame_ratio)
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  * @param check_cliff Whether to check for cliffs.
  */
-void BadGuy::action_walk_and_fall(double frame_ratio, bool check_cliff)
+void BadGuy::action_walk_and_fall(float frame_ratio, bool check_cliff)
 {
   if (dying == DYING_NOT)
   {
@@ -570,7 +571,7 @@ void BadGuy::action_walk_and_fall(double frame_ratio, bool check_cliff)
  * This includes walking and collision detection.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_mrbomb(double frame_ratio)
+void BadGuy::action_mrbomb(float frame_ratio)
 {
   action_walk_and_fall(frame_ratio, true);
 }
@@ -580,7 +581,7 @@ void BadGuy::action_mrbomb(double frame_ratio)
  * This function also manages the visual and audio effects of the bomb.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_bomb(double frame_ratio)
+void BadGuy::action_bomb(float frame_ratio)
 {
   static const int TICKING_TIME = 1000;
   static const int EXPLODE_TIME = 1000;
@@ -629,7 +630,7 @@ void BadGuy::action_bomb(double frame_ratio)
  * This includes shaking, falling, and breaking when hitting the ground.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_stalactite(double frame_ratio)
+void BadGuy::action_stalactite(float frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
 
@@ -679,7 +680,7 @@ void BadGuy::action_stalactite(double frame_ratio)
  * The flame moves around a fixed point with a constant speed and radius.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_flame(double frame_ratio)
+void BadGuy::action_flame(float frame_ratio)
 {
   static const float FLAME_RADIUS = 100.0f;
   // Adjust speed to work with our integer angle indices (0.82 gives nearly the same original speed)
@@ -707,7 +708,7 @@ void BadGuy::action_flame(double frame_ratio)
  * This includes jumping out of water and waiting when in water.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_fish(double frame_ratio)
+void BadGuy::action_fish(float frame_ratio)
 {
   static const float FISH_JUMP_VELOCITY = 6.0f;
   static const int FISH_WAIT_TIME = 1000;
@@ -746,7 +747,7 @@ void BadGuy::action_fish(double frame_ratio)
  * This includes bouncing off the ground and checking for collisions.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_bouncingsnowball(double frame_ratio)
+void BadGuy::action_bouncingsnowball(float frame_ratio)
 {
   static const float SNOWBALL_JUMP_VELOCITY = 4.5f;
 
@@ -780,7 +781,7 @@ void BadGuy::action_bouncingsnowball(double frame_ratio)
  * This includes flying up and down and checking for collisions.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_flyingsnowball(double frame_ratio)
+void BadGuy::action_flyingsnowball(float frame_ratio)
 {
   static const float FLYING_SNOWBALL_SPEED = 1.0f;
   static const int DIRECTION_CHANGE_TIME = 1000;
@@ -829,7 +830,7 @@ void BadGuy::action_flyingsnowball(double frame_ratio)
  * This includes checking for collisions and falling behavior.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_spiky(double frame_ratio)
+void BadGuy::action_spiky(float frame_ratio)
 {
   action_walk_and_fall(frame_ratio, false);
 }
@@ -839,7 +840,7 @@ void BadGuy::action_spiky(double frame_ratio)
  * This includes checking for collisions and falling behavior.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action_snowball(double frame_ratio)
+void BadGuy::action_snowball(float frame_ratio)
 {
   action_walk_and_fall(frame_ratio, false);
 }
@@ -849,7 +850,7 @@ void BadGuy::action_snowball(double frame_ratio)
  * This function handles the main game logic for the bad guy, including movement, collisions, and death.
  * @param frame_ratio The frame ratio used to adjust movement based on frame time.
  */
-void BadGuy::action(double frame_ratio)
+void BadGuy::action(float frame_ratio)
 {
   // Remove if it's far off the screen
   if (base.x < scroll_x - OFFSCREEN_DISTANCE)
@@ -943,7 +944,7 @@ void BadGuy::action(double frame_ratio)
  * @param deltaTime The time delta for the current frame.
  * @param performCollision Whether to perform collision detection.
  */
-void BadGuy::updatePhysics(double deltaTime, bool performCollision)
+void BadGuy::updatePhysics(float deltaTime, bool performCollision)
 {
   physic.apply(deltaTime, base.x, base.y);
   if (performCollision)

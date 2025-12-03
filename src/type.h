@@ -44,7 +44,7 @@ class GameObject
 public:
   GameObject() {};
   virtual ~GameObject() {};
-  virtual void action(double frame_ratio) = 0;
+  virtual void action(float frame_ratio) = 0;
   virtual void draw() = 0;
   virtual std::string type() = 0;
   /* Draw ignoring the scroll_x value. FIXME: Hack? Should be discussed. @tobgle*/

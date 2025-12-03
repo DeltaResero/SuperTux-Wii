@@ -45,10 +45,10 @@ void BouncyDistro::init(float x, float y)
  * Updates the position of the BouncyDistro and removes it when it reaches the ground.
  * @param frame_ratio The ratio of the current frame.
  */
-void BouncyDistro::action(double frame_ratio)
+void BouncyDistro::action(float frame_ratio)
 {
   base.y += base.ym * frame_ratio;
-  base.ym += 0.1 * frame_ratio;
+  base.ym += 0.1f * frame_ratio;
 
   if (base.ym >= 0)
   {
@@ -88,7 +88,7 @@ void BrokenBrick::init(Tile* tile_, float x, float y, float xm, float ym)
  * Updates the position of the BrokenBrick and removes it when the timer expires.
  * @param frame_ratio The ratio of the current frame.
  */
-void BrokenBrick::action(double frame_ratio)
+void BrokenBrick::action(float frame_ratio)
 {
   base.x += base.xm * frame_ratio;
   base.y += base.ym * frame_ratio;
@@ -120,7 +120,7 @@ void BouncyBrick::init(float x, float y)
  * Updates the bouncing behavior of the BouncyBrick and removes it when it stops bouncing.
  * @param frame_ratio The ratio of the current frame.
  */
-void BouncyBrick::action(double frame_ratio)
+void BouncyBrick::action(float frame_ratio)
 {
   offset += offset_m * frame_ratio;
 
@@ -179,7 +179,7 @@ void FloatingScore::init(float x, float y, int s)
  * Removes the object from the world when its timer expires.
  * @param frame_ratio Ratio of the current frame.
  */
-void FloatingScore::action(double frame_ratio)
+void FloatingScore::action(float frame_ratio)
 {
   base.y -= 2 * frame_ratio;
 

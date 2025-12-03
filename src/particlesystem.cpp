@@ -53,7 +53,7 @@ SnowParticleSystem::SnowParticleSystem()
   virtual_height = screen->h;
 
   // Pre-allocate memory for all particles at once
-  size_t snowflakecount = static_cast<size_t>(virtual_width / 10.0);
+  size_t snowflakecount = static_cast<size_t>(virtual_width / 10.0f);
   particles.resize(snowflakecount);
 
   // Create some random snowflakes

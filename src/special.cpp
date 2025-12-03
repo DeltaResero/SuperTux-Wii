@@ -77,7 +77,7 @@ void Bullet::init(float x, float y, float xm, Direction dir)
  * Updates the bullet's position and handles collisions.
  * @param frame_ratio Adjusts movement based on frame timing.
  */
-void Bullet::action(double frame_ratio)
+void Bullet::action(float frame_ratio)
 {
   updatePhysics(frame_ratio);
 
@@ -96,7 +96,7 @@ void Bullet::action(double frame_ratio)
  * Encapsulates the physics simulation and collision response for the Bullet.
  * @param deltaTime The time delta for the current frame.
  */
-void Bullet::updatePhysics(double deltaTime)
+void Bullet::updatePhysics(float deltaTime)
 {
   deltaTime *= 0.5f;
 
@@ -122,7 +122,7 @@ void Bullet::updatePhysics(double deltaTime)
     life_count -= 1;
   }
 
-  base.ym = base.ym + 0.5 * deltaTime;
+  base.ym = base.ym + 0.5f * deltaTime;
 }
 
 
@@ -186,14 +186,14 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
  * Updates the upgrade's movement and handles collisions.
  * @param frame_ratio Adjusts movement based on frame timing.
  */
-void Upgrade::action(double frame_ratio)
+void Upgrade::action(float frame_ratio)
 {
   if (kind == UPGRADE_ICEFLOWER || kind == UPGRADE_GROWUP)
   {
     if (base.height < 32)
     {
       /* Rise up! */
-      base.height = base.height + 0.7 * frame_ratio;
+      base.height = base.height + 0.7f * frame_ratio;
       if (base.height > 32)
       {
         base.height = 32;
@@ -267,7 +267,7 @@ void Upgrade::action(double frame_ratio)
  * Encapsulates the physics simulation and collision response for the Upgrade.
  * @param deltaTime The time delta for the current frame.
  */
-void Upgrade::updatePhysics(double deltaTime)
+void Upgrade::updatePhysics(float deltaTime)
 {
   /* Apply physics and move the upgrade */
   physic.apply(deltaTime, base.x, base.y);

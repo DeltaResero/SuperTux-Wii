@@ -48,8 +48,8 @@ public:
   Physic physic;
 
   void init(float x, float y, Direction dir, UpgradeKind kind);
-  void action(double frame_ratio);
-  void updatePhysics(double deltaTime);
+  void action(float frame_ratio);
+  void updatePhysics(float deltaTime);
   void draw() override {}
   void collision(void* p_c_object, int c_object, CollisionType type);
   std::string type() { return "Upgrade"; };
@@ -66,8 +66,8 @@ class Bullet : public GameObject
   base_type old_base;
 
   void init(float x, float y, float xm, Direction dir);
-  void action(double frame_ratio);
-  void updatePhysics(double deltaTime);
+  void action(float frame_ratio);
+  void updatePhysics(float deltaTime);
   void draw() override {}
   void collision(int c_object);
   std::string type() { return "Bullet"; };

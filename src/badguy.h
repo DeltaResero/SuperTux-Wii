@@ -108,8 +108,8 @@ private:
 public:
   BadGuy(float x, float y, BadGuyKind kind, bool stay_on_platform);
 
-  void action(double frame_ratio);
-  void updatePhysics(double deltaTime, bool performCollision);
+  void action(float frame_ratio);
+  void updatePhysics(float deltaTime, bool performCollision);
   void draw() override;
   void draw(SpriteBatcher* batcher);
   std::string type()
@@ -138,20 +138,20 @@ public:
   }
 
 private:
-  void action_mriceblock(double frame_ratio);
-  void action_jumpy(double frame_ratio);
-  void action_bomb(double frame_ratio);
-  void action_mrbomb(double frame_ratio);
-  void action_stalactite(double frame_ratio);
-  void action_flame(double frame_ratio);
-  void action_fish(double frame_ratio);
-  void action_bouncingsnowball(double frame_ratio);
-  void action_flyingsnowball(double frame_ratio);
-  void action_spiky(double frame_ratio);
-  void action_snowball(double frame_ratio);
+  void action_mriceblock(float frame_ratio);
+  void action_jumpy(float frame_ratio);
+  void action_bomb(float frame_ratio);
+  void action_mrbomb(float frame_ratio);
+  void action_stalactite(float frame_ratio);
+  void action_flame(float frame_ratio);
+  void action_fish(float frame_ratio);
+  void action_bouncingsnowball(float frame_ratio);
+  void action_flyingsnowball(float frame_ratio);
+  void action_spiky(float frame_ratio);
+  void action_snowball(float frame_ratio);
 
   // Common behavior function for walking enemies
-  void action_walk_and_fall(double frame_ratio, bool check_cliff);
+  void action_walk_and_fall(float frame_ratio, bool check_cliff);
 
   /** handles falling down. disables gravity calculation when we're back on
    * ground */

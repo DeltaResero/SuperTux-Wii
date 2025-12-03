@@ -83,7 +83,7 @@ public:
     return obj;
   }
 
-  void updateAndCleanup(double elapsed_time)
+  void updateAndCleanup(float elapsed_time)
   {
     for (size_t i = 0; i < m_activeIndices.size(); )
     {

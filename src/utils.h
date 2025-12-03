@@ -21,7 +21,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <cmath>   // For M_PI, sin, cos
+#include <cmath>   // For std::sin, std::cos
 #include <cstring> // For memcpy and strlen
 #include <string>  // For std::string
 

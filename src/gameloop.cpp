@@ -23,7 +23,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
+#include <numbers>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
@@ -730,7 +731,7 @@ void GameSession::check_end_conditions()
  * Updates the world and Tux's state based on the frame ratio.
  * @param frame_ratio The time factor for smooth animation.
  */
-void GameSession::action(double frame_ratio)
+void GameSession::action(float frame_ratio)
 {
   if (exit_status == ES_NONE)
   {
@@ -831,13 +832,13 @@ GameSession::ExitStatus GameSession::run()
   while (exit_status == ES_NONE)
   {
     /* Calculate the movement-factor */
-    double frame_ratio = static_cast<double>(update_time - last_update_time) / FRAME_RATE;
+    float frame_ratio = static_cast<float>(update_time - last_update_time) / static_cast<float>(FRAME_RATE);
 
     // Clamp the frame_ratio to prevent physics explosions on frame rate spikes.
     // This prevents the "bullet through paper" tunneling problem.
-    if (frame_ratio > 2.5)
+    if (frame_ratio > 2.5f)
     {
-        frame_ratio = 2.5;
+        frame_ratio = 2.5f;
     }
 
     if (!frame_timer.check())
@@ -857,7 +858,7 @@ GameSession::ExitStatus GameSession::run()
       check_end_conditions();
       if (end_sequence == ENDSEQUENCE_RUNNING)
       {
-        action(frame_ratio / 2);
+        action(frame_ratio / 2.0f);
       }
       else if (end_sequence == NO_ENDSEQUENCE)
       {

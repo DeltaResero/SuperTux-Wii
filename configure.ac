@@ -42,6 +42,9 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 
+dnl Enforce C++20 standard for <numbers> and math constants
+CXXFLAGS="$CXXFLAGS -std=c++20"
+
 dnl Check if option to enable Wii build was set
 AC_ARG_ENABLE([wii],
   AS_HELP_STRING([--enable-wii], [Build for the Wii platform]),

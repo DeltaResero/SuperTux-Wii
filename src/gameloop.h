@@ -97,7 +97,7 @@ class GameSession
     ExitStatus run();
 
     void draw();
-    void action(double frame_ratio);
+    void action(float frame_ratio);
 
     Level* get_level()
     {

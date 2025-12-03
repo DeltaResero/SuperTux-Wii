@@ -309,7 +309,7 @@ void draw_background()
  * @param session Pointer to the current game session.
  * @param frame_ratio The ratio for frame timing, used to control animations.
  */
-void draw_demo(GameSession* session, double frame_ratio)
+void draw_demo(GameSession* session, float frame_ratio)
 {
   World* world  = session->get_world();
   World::set_current(world);
@@ -373,7 +373,7 @@ void draw_demo(GameSession* session, double frame_ratio)
 
 static void processTitleInput();
 static void handleMenuActions();
-static void renderTitleScene(double frame_ratio);
+static void renderTitleScene(float frame_ratio);
 
 static void processTitleInput()
 {
@@ -477,7 +477,7 @@ static void handleMenuActions()
   }
 }
 
-static void renderTitleScene(double frame_ratio)
+static void renderTitleScene(float frame_ratio)
 {
   // Draw the logo if on the main menu
   if (Menu::current() == main_menu)
@@ -582,12 +582,12 @@ void title(void)
     }
 
     // Calculate the frame ratio for animation timing
-    double frame_ratio = ((double)(update_time - last_update_time)) / ((double)FRAME_RATE);
-    if (frame_ratio > 1.5)
+    float frame_ratio = static_cast<float>(update_time - last_update_time) / static_cast<float>(FRAME_RATE);
+    if (frame_ratio > 1.5f)
     {
-      frame_ratio = 1.5 + (frame_ratio - 1.5) * 0.85;
+      frame_ratio = 1.5f + (frame_ratio - 1.5f) * 0.85f;
     }
-    frame_ratio /= 2;
+    frame_ratio /= 2.0f;
 
     processTitleInput();
 

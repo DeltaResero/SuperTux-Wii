@@ -17,7 +17,7 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include <math.h>
+#include <cmath>
 #include "gameloop.h"
 #include "globals.h"
 #include "player.h"
@@ -206,7 +206,7 @@ void Player::level_begin()
  * The main update function for the Player object, called once per frame.
  * @param frame_ratio The time delta for the current frame.
  */
-void Player::action(double frame_ratio)
+void Player::action(float frame_ratio)
 {
   if (input.fire == UP)
   {
@@ -233,7 +233,7 @@ void Player::action(double frame_ratio)
  * Encapsulates the physics simulation and collision response for the Player.
  * @param deltaTime The time delta for the current frame.
  */
-void Player::updatePhysics(double deltaTime)
+void Player::updatePhysics(float deltaTime)
 {
   // Apply physics simulation to get a new potential position
   physic.apply(deltaTime, base.x, base.y);

@@ -20,13 +20,9 @@
 
 #include "utils.h"
 #include <cstring> // For memcpy, memchr
-#include <cmath>   // For M_PI, sin, cos
+#include <cmath>   // For std::sin, std::cos
+#include <numbers> // For std::numbers::pi_v
 #include <fstream> // For std::ifstream
-
-#ifndef M_PI // Define M_PI if it's not pulled in from <cmath>...
-#define M_PI 3.14159265358979323846
-#endif // ...as apparently M_PI isn't part of the official C++ standard and isn't guaranteed to be here
-
 
 namespace Trig
 {
@@ -40,7 +36,7 @@ namespace Trig
     for (int i = 0; i < ANGLE_COUNT; ++i)
     {
       // Calculate the angle in radians for the current index
-      float angle = (2.0f * M_PI * static_cast<float>(i)) / ANGLE_COUNT;
+      float angle = (2.0f * std::numbers::pi_v<float> * static_cast<float>(i)) / ANGLE_COUNT;
       sin_table[i] = std::sin(angle);
       cos_table[i] = std::cos(angle);
     }
