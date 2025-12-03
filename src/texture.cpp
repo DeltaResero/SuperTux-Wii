@@ -641,7 +641,41 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
     SDL_SetAlpha(surf, 0, 0);
   }
 
+  // Blit the original image
   SDL_BlitSurface(surf, 0, conv, 0);
+
+  // Edge Smearing (Guttering)
+  // Copy the last row and column into the padding area.
+  // This allows GL_LINEAR filtering to work without blending with transparent padding pixels.
+  if (w > surf->w || h > surf->h)
+  {
+    SDL_Rect src_rect;
+    SDL_Rect dst_rect;
+
+    // Smear Right Edge
+    if (w > surf->w) {
+      src_rect.x = surf->w - 1; src_rect.y = 0;
+      src_rect.w = 1;           src_rect.h = surf->h;
+      dst_rect.x = surf->w;     dst_rect.y = 0;
+      SDL_BlitSurface(surf, &src_rect, conv, &dst_rect);
+    }
+
+    // Smear Bottom Edge
+    if (h > surf->h) {
+      src_rect.x = 0;           src_rect.y = surf->h - 1;
+      src_rect.w = surf->w;     src_rect.h = 1;
+      dst_rect.x = 0;           dst_rect.y = surf->h;
+      SDL_BlitSurface(surf, &src_rect, conv, &dst_rect);
+    }
+
+    // Smear Bottom-Right Corner Pixel
+    if (w > surf->w && h > surf->h) {
+      src_rect.x = surf->w - 1; src_rect.y = surf->h - 1;
+      src_rect.w = 1;           src_rect.h = 1;
+      dst_rect.x = surf->w;     dst_rect.y = surf->h;
+      SDL_BlitSurface(surf, &src_rect, conv, &dst_rect);
+    }
+  }
 
   /* Restore the alpha blending attributes */
   if ((saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA)
@@ -651,8 +685,11 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
 
   glGenTextures(1, tex);
   glBindTexture(GL_TEXTURE_2D, *tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  // Use GL_LINEAR for smooth scaling (now safe due to smearing)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, conv->pitch / conv->format->BytesPerPixel);
