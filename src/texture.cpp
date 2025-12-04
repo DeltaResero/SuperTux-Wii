@@ -502,7 +502,7 @@ SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha)
 /**
  * Constructor for SurfaceImpl.
  */
-SurfaceImpl::SurfaceImpl()
+SurfaceImpl::SurfaceImpl() : sdl_surface(nullptr)
 {
 }
 
