@@ -25,6 +25,7 @@
 *.lz4
 *.ko
 *.ko.cmd
+*.map
 *.mod.c
 *.o
 *.o.*
@@ -39,12 +40,38 @@
 *.xz
 
 #
-# GNU Build System (Autotools)
+# Build Directories
+# Catches build/, build_wii/, build_linux/, etc.
+#
+build*/
+obj/
+
+#
+# CMake Build System
+#
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_CPack_Packages/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.ninja
+
+#
+# Wii / Homebrew Specific
+#
+apps/
+*.d
+
+#
+# GNU Build System (Autotools) - Legacy
 #
 aclocal.m4
 autom4te.cache/
 autoscan.log
-build/*
 compile
 config.guess
 config.h
@@ -73,7 +100,6 @@ Makefile.in
 mdate-sh
 missing
 mkinstalldirs
-obj/
 py-compile
 stamp-h?
 symlink-tree
@@ -117,10 +143,13 @@ GSYMS
 GTAGS
 
 #
-# programmer's notepad files
+# IDE / Editor files
 #
 *.pnproj
 *.pnps
+.vscode/
+.idea/
+*.kdev4
 
 #
 # miscellaneous temporary files
