@@ -624,13 +624,32 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   tex_w_allocated = static_cast<float>(w);
   tex_h_allocated = static_cast<float>(h);
 
+  // Check if source has alpha. If not, use 16-bit RGB565.
+  // This saves RAM for backgrounds and opaque tiles.
+  bool has_alpha = (surf->format->Amask != 0);
+  int bpp;
+  Uint32 rmask, gmask, bmask, amask;
+  GLenum gl_format, gl_type;
+
+  if (has_alpha) {
+      bpp = 32;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-  conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, surf->format->BitsPerPixel,
-                              0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+      rmask = 0xff000000; gmask = 0x00ff0000; bmask = 0x0000ff00; amask = 0x000000ff;
 #else
-  conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, surf->format->BitsPerPixel,
-                              0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+      rmask = 0x000000ff; gmask = 0x0000ff00; bmask = 0x00ff0000; amask = 0xff000000;
 #endif
+      gl_format = GL_RGBA;
+      gl_type = GL_UNSIGNED_BYTE;
+  } else {
+      // Use 16-bit RGB565 for opaque textures
+      bpp = 16;
+      rmask = 0xF800; gmask = 0x07E0; bmask = 0x001F; amask = 0x0000;
+      gl_format = GL_RGB;
+      // OpenGX requires this specific enum to trigger the fast-path assembly converter
+      gl_type = GL_UNSIGNED_SHORT_5_6_5;
+  }
+
+  conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, bpp, rmask, gmask, bmask, amask);
 
   /* Save the alpha blending attributes */
   saved_flags = surf->flags & (SDL_SRCALPHA | SDL_RLEACCELOK);
@@ -692,7 +711,8 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, conv->pitch / conv->format->BytesPerPixel);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, conv->pixels);
+  // Use the format/type determined above (GL_RGB/565 or GL_RGBA/BYTE)
+  glTexImage2D(GL_TEXTURE_2D, 0, gl_format, w, h, 0, gl_format, gl_type, conv->pixels);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
   SDL_FreeSurface(conv);
