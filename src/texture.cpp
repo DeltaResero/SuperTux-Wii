@@ -609,13 +609,20 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   int w, h;
   SDL_Surface* conv;
 
+#ifdef _WII_
+  // Wii optimization: Align to 4 pixels instead of full Power-Of-Two.
+  // This saves significant RAM (e.g., a 300px image uses 300px width, not 512px).
+  w = (surf->w + 3) & ~3;
+  h = (surf->h + 3) & ~3;
+#else
   w = power_of_two(surf->w);
   h = power_of_two(surf->h);
+#endif
 
-  // Cache the calculated power-of-two dimensions for later use.
+  // Cache the calculated dimensions for later use.
   // This prevents recalculating them in the hot loop of text rendering.
-  tex_w_pow2 = static_cast<float>(w);
-  tex_h_pow2 = static_cast<float>(h);
+  tex_w_allocated = static_cast<float>(w);
+  tex_h_allocated = static_cast<float>(h);
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
   conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, surf->format->BitsPerPixel,
@@ -722,8 +729,8 @@ void SurfaceOpenGL::teardown_gl_state()
  * @param height The height of the quad to render.
  * @param tex_w The actual texture width (for UV calculation).
  * @param tex_h The actual texture height (for UV calculation).
- * @param pw The power-of-two texture width.
- * @param ph The power-of-two texture height.
+ * @param pw The allocated texture width.
+ * @param ph The allocated texture height.
  */
 static inline void render_textured_quad(float x, float y, float width, float height,
                                         float tex_w, float tex_h, float pw, float ph)
@@ -759,7 +766,7 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
   setup_gl_state(alpha);
   render_textured_quad(x, y, static_cast<float>(this->w), static_cast<float>(this->h),
                        static_cast<float>(this->w), static_cast<float>(this->h),
-                       tex_w_pow2, tex_h_pow2);
+                       tex_w_allocated, tex_h_allocated);
   teardown_gl_state();
 
   (void)update;  // avoid compiler warning
@@ -775,8 +782,8 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
  */
 int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
 {
-  float pw = tex_w_pow2;
-  float ph = tex_h_pow2;
+  float pw = tex_w_allocated;
+  float ph = tex_h_allocated;
 
   glColor3ub(alpha, alpha, alpha);
 
@@ -818,8 +825,8 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
   x = floorf(x + 0.5f);
   y = floorf(y + 0.5f);
 
-  float pw = tex_w_pow2;
-  float ph = tex_h_pow2;
+  float pw = tex_w_allocated;
+  float ph = tex_h_allocated;
 
   setup_gl_state(alpha);
 
@@ -855,7 +862,7 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
   setup_gl_state(alpha);
   render_textured_quad(x, y, static_cast<float>(sw), static_cast<float>(sh),
                        static_cast<float>(this->w), static_cast<float>(this->h),
-                       tex_w_pow2, tex_h_pow2);
+                       tex_w_allocated, tex_h_allocated);
   teardown_gl_state();
 
   (void)update;  // avoid warnings

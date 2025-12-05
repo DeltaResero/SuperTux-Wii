@@ -75,10 +75,10 @@ void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
   float draw_x = x - x_hotspot - scroll_x;
   float draw_y = y - y_hotspot;
 
-  float u1 = sx / gl_surface->tex_w_pow2;
-  float v1 = sy / gl_surface->tex_h_pow2;
-  float u2 = (sx + w) / gl_surface->tex_w_pow2;
-  float v2 = (sy + h) / gl_surface->tex_h_pow2;
+  float u1 = sx / gl_surface->tex_w_allocated;
+  float v1 = sy / gl_surface->tex_h_allocated;
+  float u2 = (sx + w) / gl_surface->tex_w_allocated;
+  float v2 = (sy + h) / gl_surface->tex_h_allocated;
 
   // Try to add to the LAST batch if it has the same texture
   if (!m_batches.empty() && m_batches.back().texture_id == tex_id)

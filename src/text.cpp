@@ -257,9 +257,8 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
     return;
   }
 
-  // Use the pre-calculated power-of-two values from the SurfaceOpenGL object
-  float pw = gl_impl->tex_w_pow2;
-  float ph = gl_impl->tex_h_pow2;
+  float pw = gl_impl->tex_w_allocated;
+  float ph = gl_impl->tex_h_allocated;
 
   int current_x = x;
   int current_y = y;
