@@ -53,56 +53,48 @@ other collectibles along the way.
 ### How to Build: Wii Homebrew Build
 
 If you don't have the devkitPPC toolchain set up yet, see the section
-"devkitPro PowerPC Build System Setup Guide" first. Once devkitPPC is set up
-with all the required ported libraries and libogc, run the following to build
-the game:
+"devkitPro PowerPC Build System Setup Guide" first.
 
-1. Run `autogen.sh` (uses `Configure` to generate the Wii makefile for building)
-   To build with SDL and OpenGL/OpenGX (recommended):
-   ```
-   ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi
-   ```
-   To build with only SDL (not recommended):
-   ```
-   ./autogen.sh --enable-wii --prefix="${DEVKITPRO}/portlibs/ppc" --host=powerpc-eabi --target=powerpc-eabi --disable-opengl
+1. Create a build directory:
+   ```bash
+   mkdir build
+   cd build
    ```
 
-   <br>
+2. Configure the project using CMake and the Wii Toolchain file.
 
-   For configure help:
-   ```
-   ./autogen.sh --help
+   **Option A: Build with OpenGL/OpenGX (Recommended)**
+   ```bash
+   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/WiiToolchain.cmake ..
    ```
 
-2. Use `make` to cross-compile the game executable:
+   **Option B: Build with SDL only (No OpenGL)**
+   ```bash
+   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/WiiToolchain.cmake -DENABLE_OPENGL=OFF ..
    ```
-   make -f Wii
+
+3. Build the game:
+   ```bash
+   make -j$(nproc)
    ```
+
+   This will generate `boot.dol` and a ready-to-deploy folder structure in `build/apps/supertux`.
+
+<br>
 
 ### Installing SuperTux on Wii (Homebrew Channel)
 
-1. Create a folder called `supertux` inside the `apps` folder on your SD/USB device:
+1. The build process automatically creates the necessary folder structure in `build/apps/supertux`.
+
+2. Copy the `supertux` folder from `build/apps/` to the `apps/` folder on your SD/USB device.
    ```
-   apps/supertux
+   SD:/apps/supertux/boot.dol
+   SD:/apps/supertux/data/
+   SD:/apps/supertux/icon.png
+   SD:/apps/supertux/meta.xml
    ```
 
-2. Copy the compiled `.dol` file into the `apps/supertux` folder and rename it to `boot.dol`.
-   ```
-   apps/supertux/boot.dol
-   ```
-
-3. Copy the `icon.png` and `meta.xml` files from the `hbc/apps/supertux/` directory in the repository to your SD/USB device:
-   ```
-   apps/supertux/icon.png
-   apps/supertux/meta.xml
-   ```
-
-4. Copy the `data` folder from the repository into the apps/supertux folder of your SD/USB device.
-   ```
-   apps/supertux/data
-   ```
-
-5. Launch SuperTux from the Homebrew Channel. The game will create a config file and save folder on the first run.
+3. Launch SuperTux from the Homebrew Channel. The game will create a config file and save folder on the first run.
 
 <br>
 
@@ -116,17 +108,25 @@ instructions on the official devkitPro wiki:
 
 After setting up devkitPPC including environment variables, use (dkp-)pacman
 to install the following dependencies:
+
+**Core Libraries (Required):**
 ```
 libogc
 libfat-ogc
-ppc-vorbisidec
-ppc-zlib
 wii-sdl
 wii-sdl_image
 wii-sdl_mixer
 ```
 
-For the OpenGL/OpenGX backend, the following are also additionally required:
+**Audio Codecs (Required for Audio):**
+```
+wii-libmodplug
+ppc-libvorbis
+ppc-libogg
+ppc-libmad
+```
+
+**OpenGL/OpenGX Backend (Optional but Recommended):**
 ```
 wii-freeglut
 wii-glu
@@ -135,30 +135,37 @@ wii-opengx
 
 <br>
 
-### How to Build: Unsupported Standard Build (mostly for testing)
+### How to Build: Desktop Linux (Testing/Unsupported)
 
-Run `autogen.sh`:
-```
-./autogen.sh
-```
-For configure help:
-```
-./autogen.sh --help
-```
+1. Create a build directory:
+   ```bash
+   mkdir build_linux
+   cd build_linux
+   ```
 
-Use `make` to compile the game executable:
-```
-make -C build
-```
+2. Configure for desktop:
+   ```bash
+   cmake ..
+   ```
 
-Note: Installation is untested and not supported nor recommended for unsupported standard builds.
-To test-run, copy the `data` folder to a safe place, then add the `build/supertux` executable
-and `extras/supertux.png` image alongside it. A template `.desktop` entry file has been
-included in the `extras` directory as `supertux.desktop`.
+3. Build:
+   ```bash
+   make -j$(nproc)
+   ```
+
+4. Run (Portable Mode):
+   The build process automatically creates a portable folder named `supertux-wii` inside `build/dist/` containing the executable and data.
+   ```bash
+   cd dist/supertux-wii
+   ./supertux-wii
+   ```
+
+**Important Note on Installation:**
+While `sudo make install` is supported by CMake, it is **not recommended** for this project. Installing
+files directly to your system directories this way without using a package manager makes them very difficult
+to uninstall cleanly later. We strongly recommend using the portable method above for testing.
 
 <br>
-
-### Disclaimer
 
 ### Disclaimer
 
