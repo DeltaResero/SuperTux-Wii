@@ -55,7 +55,7 @@ private:
   void resolvePlayerPhysics(Player* player);
 
   // Helper function to draw a layer of tiles (bg, ia, or fg)
-  void draw_tile_layer(const unsigned int* tile_data, bool is_interactive_layer = false);
+  void draw_tile_layer(SpriteBatcher* batcher, const unsigned int* tile_data, bool is_interactive_layer = false);
 
   // Helper function to clean up all objects marked for removal
   void cleanup_dead_objects();
