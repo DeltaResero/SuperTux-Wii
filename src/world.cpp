@@ -203,7 +203,7 @@ void World::activate_particle_systems()
  * This consolidates the repetitive loop logic used for drawing the background,
  * interactive, and foreground tile layers.
  */
-void World::draw_tile_layer(const unsigned int* tile_data, bool is_interactive_layer)
+void World::draw_tile_layer(SpriteBatcher* batcher, const unsigned int* tile_data, bool is_interactive_layer)
 {
   const int current_width = level->width;
   // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
@@ -238,7 +238,7 @@ void World::draw_tile_layer(const unsigned int* tile_data, bool is_interactive_l
         {
           float tile_world_x = map_tile_x * 32.0f;
           unsigned int tile_id = tile_data[y * current_width + map_tile_x];
-          Tile::draw(tile_world_x - scroll_x, y * 32.0f, tile_id);
+          Tile::draw(batcher, tile_world_x - scroll_x, y * 32.0f, tile_id);
         }
       }
     }
@@ -256,12 +256,16 @@ void World::draw()
     p->draw(scroll_x, 0, 0);
   }
 
-  /* Draw background, interactive, and foreground tiles using the helper */
-  draw_tile_layer(level->bg_tiles.data());
-  draw_tile_layer(level->ia_tiles.data(), true);
-
   // Single unified rendering loop - works for both SDL and OpenGL!
   SpriteBatcher* batcher = use_gl ? m_spriteBatcher : nullptr;
+
+  /* Draw background, interactive, and foreground tiles using the helper */
+  draw_tile_layer(batcher, level->bg_tiles.data());
+  draw_tile_layer(batcher, level->ia_tiles.data(), true);
+
+  if (use_gl) {
+    m_spriteBatcher->flush();
+  }
 
   for (unsigned int i = 0; i < bouncy_bricks.size(); ++i)
   {
@@ -380,7 +384,12 @@ void World::draw()
   });
 
   /* Draw foreground tiles: */
-  draw_tile_layer(level->fg_tiles.data());
+  draw_tile_layer(batcher, level->fg_tiles.data());
+
+  if (use_gl)
+  {
+    m_spriteBatcher->flush();
+  }
 
   /* Draw particle systems (foreground) */
   for(auto* p : particle_systems)

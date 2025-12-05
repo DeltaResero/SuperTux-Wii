@@ -146,7 +146,7 @@ void BouncyBrick::draw(SpriteBatcher* batcher)
   if (base.x >= scroll_x - 32 && base.x <= scroll_x + screen->w)
   {
     // Simply draw the tile at its current animated position (No more erasing!)
-    Tile::draw(base.x - scroll_x, base.y + offset, shape);
+    Tile::draw(batcher, base.x - scroll_x, base.y + offset, shape);
   }
 }
 

@@ -14,6 +14,7 @@
 #ifndef NOOPENGL
 
 #include "sprite_batcher.h"
+#include <cmath>
 
 /**
  * Constructs a new SpriteBatcher object.
@@ -74,6 +75,11 @@ void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
   GLuint tex_id = gl_surface->gl_texture;
   float draw_x = x - x_hotspot - scroll_x;
   float draw_y = y - y_hotspot;
+
+  // Round to nearest integer to match original SDL/OpenGL behavior.
+  // This prevents "breathing" gaps between tiles during scrolling.
+  draw_x = floorf(draw_x + 0.5f);
+  draw_y = floorf(draw_y + 0.5f);
 
   float u1 = sx / gl_surface->tex_w_allocated;
   float v1 = sy / gl_surface->tex_h_allocated;
