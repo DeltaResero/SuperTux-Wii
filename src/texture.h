@@ -131,11 +131,13 @@ class SurfaceOpenGL : public SurfaceImpl
 {
 public:
   unsigned gl_texture;
-  // Cached texture dimensions rounded up to the nearest power of two.
+  // Cached texture dimensions.
+  // On Desktop: Rounded up to the nearest power of two.
+  // On Wii: Aligned to 4 pixels.
   // This is calculated once at texture creation to avoid expensive re-calculation
   // during every batched text draw call.
-  float tex_w_pow2;
-  float tex_h_pow2;
+  float tex_w_allocated;
+  float tex_h_allocated;
 
   SurfaceOpenGL(SDL_Surface* surf, bool use_alpha);
   SurfaceOpenGL(const std::string& file, bool use_alpha);
