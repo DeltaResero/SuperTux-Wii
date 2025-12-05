@@ -733,6 +733,11 @@ void st_video_setup_gl(void)
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
 
+  // Explicitly Disable Z-writes (OpenGX defaults to writing depth values even when testing is off)
+  // Since we are doing 2D rendering with painter's algorithm (back-to-front),
+  // so we don't need the Z-buffer and make sure it's disabled. Writing to it just wastes bandwidth.
+  glDepthMask(GL_FALSE);
+
   glViewport(0, 0, screen->w, screen->h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
