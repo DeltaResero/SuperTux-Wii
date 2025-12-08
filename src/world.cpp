@@ -26,7 +26,7 @@
 #include "level.h"
 #include "tile.h"
 #include "resources.h"
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 #include "text.h"
 #include "sound.h"
 #include "player.h"
@@ -55,7 +55,7 @@ void World::common_setup()
   get_level()->load_song();
   apply_bonuses();
   scrolling_timer.init(true);
-  m_spriteBatcher = new SpriteBatcher();
+  m_renderBatcher = new RenderBatcher();
 }
 
 World::World(const std::string& filename)
@@ -117,7 +117,7 @@ World::~World()
   deactivate_world();
 
   delete level;
-  delete m_spriteBatcher;
+  delete m_renderBatcher;
 }
 
 void World::activate_world()
@@ -203,7 +203,7 @@ void World::activate_particle_systems()
  * This consolidates the repetitive loop logic used for drawing the background,
  * interactive, and foreground tile layers.
  */
-void World::draw_tile_layer(SpriteBatcher* batcher, const unsigned int* tile_data, bool is_interactive_layer)
+void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_data, bool is_interactive_layer)
 {
   const int current_width = level->width;
   // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
@@ -257,14 +257,14 @@ void World::draw()
   }
 
   // Single unified rendering loop - works for both SDL and OpenGL!
-  SpriteBatcher* batcher = use_gl ? m_spriteBatcher : nullptr;
+  RenderBatcher* batcher = use_gl ? m_renderBatcher : nullptr;
 
   /* Draw background, interactive, and foreground tiles using the helper */
   draw_tile_layer(batcher, level->bg_tiles.data());
   draw_tile_layer(batcher, level->ia_tiles.data(), true);
 
   if (use_gl) {
-    m_spriteBatcher->flush();
+    m_renderBatcher->flush();
   }
 
   for (unsigned int i = 0; i < bouncy_bricks.size(); ++i)
@@ -373,7 +373,7 @@ void World::draw()
   // Flush if using OpenGL
   if (use_gl)
   {
-    m_spriteBatcher->flush();
+    m_renderBatcher->flush();
   }
 
   // Draw Floating Scores (Text-based, drawn AFTER flush)
@@ -388,7 +388,7 @@ void World::draw()
 
   if (use_gl)
   {
-    m_spriteBatcher->flush();
+    m_renderBatcher->flush();
   }
 
   /* Draw particle systems (foreground) */

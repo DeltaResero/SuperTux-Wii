@@ -23,7 +23,7 @@
 #include "player.h"
 #include "sprite_manager.h"
 #include "resources.h"
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 
 Sprite* img_bullet;
 Sprite* img_star;

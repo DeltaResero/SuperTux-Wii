@@ -1,4 +1,4 @@
-// src/sprite_batcher.h
+// src/render_batcher.h
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -9,32 +9,32 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#ifndef SUPERTUX_SPRITE_BATCHER_H
-#define SUPERTUX_SPRITE_BATCHER_H
+#ifndef SUPERTUX_RENDER_BATCHER_H
+#define SUPERTUX_RENDER_BATCHER_H
 
 #ifndef NOOPENGL
 
 #include <vector>
 #include "texture.h"
 
-// A simple struct to hold vertex data for one corner of a sprite
+// A simple struct to hold vertex data for one corner of a quad
 struct VertexData
 {
   float x, y; // Position
   float u, v; // Texture Coordinates
 };
 
-// Represents a single sprite batch (all sprites sharing the same texture)
-struct SpriteBatch
+// Represents a single render batch (all geometry sharing the same texture)
+struct RenderBatch
 {
   GLuint texture_id;
   std::vector<VertexData> vertices;
 };
 
-class SpriteBatcher
+class RenderBatcher
 {
 public:
-  SpriteBatcher();
+  RenderBatcher();
 
   // Adds a full surface's data to the batch queue
   void add(Surface* surface, float x, float y, int x_hotspot, int y_hotspot);
@@ -47,17 +47,17 @@ public:
 
 private:
   // Sequential list of batches - preserves draw order!
-  std::vector<SpriteBatch> m_batches;
+  std::vector<RenderBatch> m_batches;
 };
 
 #else // NOOPENGL is defined. Provide a dummy class for non-OpenGL builds.
 
 class Surface; // Forward declaration is sufficient here.
 
-class SpriteBatcher
+class RenderBatcher
 {
 public:
-  SpriteBatcher() {}
+  RenderBatcher() {}
   void add(Surface* , float , float , int , int ) {}
   void add_part(Surface* , float , float , float , float , float , float , int , int ) {}
   void flush() {}
@@ -65,6 +65,6 @@ public:
 
 #endif // NOOPENGL
 
-#endif // SUPERTUX_SPRITE_BATCHER_H
+#endif // SUPERTUX_RENDER_BATCHER_H
 
 // EOF

@@ -66,7 +66,7 @@ void player_input_init(player_input_type* pplayer_input);
 // Forward declarations for classes
 class Sprite;
 class BadGuy;
-class SpriteBatcher;
+class RenderBatcher;
 
 // External declarations for globally used player sprites
 extern Surface* tux_life;
@@ -138,7 +138,7 @@ public:
   void handle_input();                      // Main input handler, dispatches to sub-handlers
   void grabdistros();                       // Checks for and collects distros (coins)
   void draw() override;                     // Overrides pure virtual from GameObject
-  void draw(SpriteBatcher* batcher);        // Draws the player sprite (unified for SDL/OpenGL)
+  void draw(RenderBatcher* batcher);        // Draws the player sprite (unified for SDL/OpenGL)
   void collision(void* p_c_object, int c_object); // Handles collisions with other objects
   void kill(HurtMode mode);                 // Kills or shrinks the player
   void is_dying();                          // Resets the player's dying state

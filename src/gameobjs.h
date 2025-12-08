@@ -23,7 +23,7 @@
 #define NO_BOUNCE 0
 #define BOUNCE 1
 
-class SpriteBatcher;
+class RenderBatcher;
 
 class BouncyDistro: public GameObject
 {
@@ -77,7 +77,7 @@ class BouncyBrick: public GameObject
     void init(float x, float y);
     void action(float frame_ratio);
     void draw() override;
-    void draw(SpriteBatcher* batcher);
+    void draw(RenderBatcher* batcher);
     std::string type()
     {
       return "BouncyBrick";

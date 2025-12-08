@@ -1,4 +1,4 @@
-// src/sprite_batcher.cpp
+// src/render_batcher.cpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -13,13 +13,13 @@
 
 #ifndef NOOPENGL
 
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 #include <cmath>
 
 /**
- * Constructs a new SpriteBatcher object.
+ * Constructs a new RenderBatcher object.
  */
-SpriteBatcher::SpriteBatcher()
+RenderBatcher::RenderBatcher()
 {
 }
 
@@ -32,7 +32,7 @@ SpriteBatcher::SpriteBatcher()
  * @param x_hotspot The x-offset from the coordinates to the sprite's origin.
  * @param y_hotspot The y-offset from the coordinates to the sprite's origin.
  */
-void SpriteBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y_hotspot)
+void RenderBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y_hotspot)
 {
   if (!surface)
   {
@@ -59,7 +59,7 @@ void SpriteBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y
  * @param x_hotspot The x-offset from the coordinates to the sprite's origin.
  * @param y_hotspot The y-offset from the coordinates to the sprite's origin.
  */
-void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h, int x_hotspot, int y_hotspot)
+void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h, int x_hotspot, int y_hotspot)
 {
   if (!surface)
   {
@@ -97,7 +97,7 @@ void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
   }
   else
   {
-    SpriteBatch new_batch;
+    RenderBatch new_batch;
     new_batch.texture_id = tex_id;
     new_batch.vertices.push_back({draw_x, draw_y, u1, v1});
     new_batch.vertices.push_back({draw_x + w, draw_y, u2, v1});
@@ -108,12 +108,12 @@ void SpriteBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
 }
 
 /**
- * Renders all collected sprite batches to the screen.
+ * Renders all collected batches to the screen.
  * This function sets up the necessary OpenGL state, iterates through each
  * batch, issues a single draw call per batch, and then clears the batch
  * list to prepare for the next frame.
  */
-void SpriteBatcher::flush()
+void RenderBatcher::flush()
 {
   if (m_batches.empty())
   {
@@ -129,7 +129,7 @@ void SpriteBatcher::flush()
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
   // Draw batches IN ORDER - this preserves the original draw sequence!
-  for (const SpriteBatch& batch : m_batches)
+  for (const RenderBatch& batch : m_batches)
   {
     if (batch.vertices.empty())
     {

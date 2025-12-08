@@ -18,7 +18,7 @@
 #include "tile.h"
 #include "gameloop.h"
 #include "gameobjs.h"
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 
 /**
  * Initializes a BouncyDistro object.
@@ -47,8 +47,6 @@ void BouncyDistro::action(float frame_ratio)
     removable = true;
   }
 }
-
-// BouncyDistro::draw() removed. Logic moved to World::draw()
 
 /**
  * Initializes a BrokenBrick object.
@@ -90,8 +88,6 @@ void BrokenBrick::action(float frame_ratio)
     removable = true;
   }
 }
-
-// BrokenBrick::draw() removed. Logic moved to World::draw()
 
 /**
  * Initializes a BouncyBrick object.
@@ -140,7 +136,7 @@ void BouncyBrick::draw()
 /**
  * Draws the BouncyBrick on the screen.
  */
-void BouncyBrick::draw(SpriteBatcher* batcher)
+void BouncyBrick::draw(RenderBatcher* batcher)
 {
   // BouncyBrick uses Tile system - same for both paths
   if (base.x >= scroll_x - 32 && base.x <= scroll_x + screen->w)
@@ -180,7 +176,5 @@ void FloatingScore::action(float frame_ratio)
     removable = true;
   }
 }
-
-// FloatingScore::draw() removed. Logic moved to World::draw()
 
 // EOF

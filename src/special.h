@@ -30,7 +30,7 @@ enum UpgradeKind {
 
 void load_special_gfx();
 
-class SpriteBatcher;
+class RenderBatcher;
 
 class Upgrade : public GameObject
 {

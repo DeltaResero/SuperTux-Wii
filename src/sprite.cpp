@@ -15,7 +15,7 @@
 #include "globals.h"
 #include "sprite.h"
 #include "setup.h"
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 
 /**
  * Constructs a Sprite object.
@@ -100,11 +100,11 @@ void Sprite::draw(float x, float y)
 
 /**
  * Adds the sprite to the batch for drawing. (OpenGL Path)
- * @param batcher The SpriteBatcher to add the sprite data to.
+ * @param batcher The RenderBatcher to add the sprite data to.
  * @param x The x-coordinate to draw the sprite.
  * @param y The y-coordinate to draw the sprite.
  */
-void Sprite::draw(SpriteBatcher& batcher, float x, float y)
+void Sprite::draw(RenderBatcher& batcher, float x, float y)
 {
   time = SDL_GetTicks();
   unsigned int frame = get_current_frame();
@@ -136,7 +136,7 @@ void Sprite::draw_part(float sx, float sy, float x, float y, float w, float h)
 
 /**
  * Adds a portion of the sprite to the batch for drawing. (OpenGL Path)
- * @param batcher The SpriteBatcher to add the sprite data to.
+ * @param batcher The RenderBatcher to add the sprite data to.
  * @param sx The source x-coordinate within the sprite.
  * @param sy The source y-coordinate within the sprite.
  * @param x The destination x-coordinate to draw the sprite.
@@ -144,7 +144,7 @@ void Sprite::draw_part(float sx, float sy, float x, float y, float w, float h)
  * @param w The width of the portion to draw.
  * @param h The height of the portion to draw.
  */
-void Sprite::draw_part(SpriteBatcher& batcher, float sx, float sy, float x, float y, float w, float h)
+void Sprite::draw_part(RenderBatcher& batcher, float sx, float sy, float x, float y, float w, float h)
 {
   time = SDL_GetTicks();
   unsigned int frame = get_current_frame();

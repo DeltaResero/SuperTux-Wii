@@ -19,7 +19,7 @@
 #include "tile.h"
 #include "sprite.h"
 #include "screen.h"
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 
 #define AUTOSCROLL_DEAD_INTERVAL 300
 
@@ -607,9 +607,9 @@ void Player::draw()
 
 /**
  * Draws the player sprite on the screen.
- * @param batcher Optional SpriteBatcher for OpenGL rendering. If nullptr, uses SDL.
+ * @param batcher Optional RenderBatcher for OpenGL rendering. If nullptr, uses SDL.
  */
-void Player::draw(SpriteBatcher* batcher)
+void Player::draw(RenderBatcher* batcher)
 {
   // Only draw if not invisible from damage, or if blinking allows it
   if (!safe_timer.started() || (global_frame_counter % 2) == 0)

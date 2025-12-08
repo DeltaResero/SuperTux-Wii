@@ -29,7 +29,7 @@
 #include "resources.h"
 #include "utils.h"
 #include "sprite_manager.h"
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 
 // Gameplay Constants
 static const float BADGUY_WALK_SPEED = 0.8f;
@@ -955,9 +955,9 @@ void BadGuy::draw()
 
 /**
  * Draws the bad guy on the screen.
- * @param batcher Optional SpriteBatcher for OpenGL rendering. If nullptr, uses SDL.
+ * @param batcher Optional RenderBatcher for OpenGL rendering. If nullptr, uses SDL.
  */
-void BadGuy::draw(SpriteBatcher* batcher)
+void BadGuy::draw(RenderBatcher* batcher)
 {
   // Don't try to draw stuff that is outside of the screen
   if (base.x <= scroll_x - base.width || base.x >= scroll_x + screen->w)

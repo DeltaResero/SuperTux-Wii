@@ -15,7 +15,7 @@
 #include "assert.h"
 #include <cstring>
 #include <filesystem>
-#include "sprite_batcher.h"
+#include "render_batcher.h"
 
 // Static member initialization
 TileManager* TileManager::instance_ = nullptr;
@@ -216,7 +216,7 @@ void TileManager::load_tileset(std::string filename)
  * @param c The tile code.
  * @param alpha The alpha transparency value.
  */
-void Tile::draw(SpriteBatcher* batcher, float x, float y, unsigned int c, Uint8 alpha)
+void Tile::draw(RenderBatcher* batcher, float x, float y, unsigned int c, Uint8 alpha)
 {
   if (c == 0)
   {
@@ -234,7 +234,7 @@ void Tile::draw(SpriteBatcher* batcher, float x, float y, unsigned int c, Uint8 
 
   if (batcher)
   {
-      // SpriteBatcher expects World Coordinates (it subtracts scroll_x internally)
+      // RenderBatcher expects World Coordinates (it subtracts scroll_x internally)
       // Tile::draw receives Screen Coordinates (scroll_x already subtracted)
       // We must add scroll_x back to convert Screen -> World for the batcher
       batcher->add(ptile->images[frame_index], x + scroll_x, y, 0, 0);
