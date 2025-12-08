@@ -758,16 +758,30 @@ static inline void render_textured_quad(float x, float y, float width, float hei
   float u_max = tex_w / pw;
   float v_max = tex_h / ph;
 
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0);
-  glVertex2f(x, y);
-  glTexCoord2f(u_max, 0);
-  glVertex2f(x + width, y);
-  glTexCoord2f(u_max, v_max);
-  glVertex2f(x + width, y + height);
-  glTexCoord2f(0, v_max);
-  glVertex2f(x, y + height);
-  glEnd();
+  GLfloat vertices[] = {
+    x, y,
+    x + width, y,
+    x + width, y + height,
+    x, y + height
+  };
+
+  GLfloat texcoords[] = {
+    0.0f, 0.0f,
+    u_max, 0.0f,
+    u_max, v_max,
+    0.0f, v_max
+  };
+
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+  glVertexPointer(2, GL_FLOAT, 0, vertices);
+  glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+
+  glDrawArrays(GL_QUADS, 0, 4);
+
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 /**
@@ -810,16 +824,30 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, gl_texture);
 
-  glBegin(GL_QUADS);
-  glTexCoord2f(0, 0);
-  glVertex2f(0, 0);
-  glTexCoord2f(static_cast<float>(this->w) / pw, 0);
-  glVertex2f(screen->w, 0);
-  glTexCoord2f(static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph);
-  glVertex2f(screen->w, screen->h);
-  glTexCoord2f(0, static_cast<float>(this->h) / ph);
-  glVertex2f(0, screen->h);
-  glEnd();
+  GLfloat vertices[] = {
+    0.0f, 0.0f,
+    (GLfloat)screen->w, 0.0f,
+    (GLfloat)screen->w, (GLfloat)screen->h,
+    0.0f, (GLfloat)screen->h
+  };
+
+  GLfloat texcoords[] = {
+    0.0f, 0.0f,
+    static_cast<float>(this->w) / pw, 0.0f,
+    static_cast<float>(this->w) / pw, static_cast<float>(this->h) / ph,
+    0.0f, static_cast<float>(this->h) / ph
+  };
+
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+  glVertexPointer(2, GL_FLOAT, 0, vertices);
+  glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+
+  glDrawArrays(GL_QUADS, 0, 4);
+
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glDisableClientState(GL_VERTEX_ARRAY);
 
   glDisable(GL_TEXTURE_2D);
 
@@ -850,16 +878,30 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
 
   setup_gl_state(alpha);
 
-  glBegin(GL_QUADS);
-  glTexCoord2f(sx / pw, sy / ph);
-  glVertex2f(x, y);
-  glTexCoord2f((sx + w) / pw, sy / ph);
-  glVertex2f(x + w, y);
-  glTexCoord2f((sx + w) / pw, (sy + h) / ph);
-  glVertex2f(x + w, y + h);
-  glTexCoord2f(sx / pw, (sy + h) / ph);
-  glVertex2f(x, h + y);
-  glEnd();
+  GLfloat vertices[] = {
+    x, y,
+    x + w, y,
+    x + w, y + h,
+    x, y + h
+  };
+
+  GLfloat texcoords[] = {
+    sx / pw, sy / ph,
+    (sx + w) / pw, sy / ph,
+    (sx + w) / pw, (sy + h) / ph,
+    sx / pw, (sy + h) / ph
+  };
+
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+  glVertexPointer(2, GL_FLOAT, 0, vertices);
+  glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
+
+  glDrawArrays(GL_QUADS, 0, 4);
+
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glDisableClientState(GL_VERTEX_ARRAY);
 
   teardown_gl_state();
 
