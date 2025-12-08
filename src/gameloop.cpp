@@ -939,6 +939,8 @@ void bumpbrick(float x, float y)
  */
 void GameSession::drawstatus()
 {
+  static char buffer[64];
+
   // Draw the shared HUD elements
   draw_player_hud();
 
@@ -956,15 +958,15 @@ void GameSession::drawstatus()
   else if (time_left.get_left() > TIME_WARNING || (global_frame_counter % 10) < 5)
   {
     white_text->draw("TIME", 258, offset_y, 1);
-    gold_text->draw(std::to_string(time_left.get_left() / 1000), 342, offset_y, 1);
+    snprintf(buffer, sizeof(buffer), "%d", time_left.get_left() / 1000);
+    gold_text->draw(buffer, 342, offset_y, 1);
   }
 
   if (show_fps)
   {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(1) << fps_fps;
+    snprintf(buffer, sizeof(buffer), "%.1f", fps_fps);
     white_text->draw("FPS", 460, 40 + offset_y, 1);
-    gold_text->draw(ss.str(), 520, 40 + offset_y, 1);
+    gold_text->draw(buffer, 520, 40 + offset_y, 1);
   }
 }
 
