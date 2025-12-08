@@ -19,6 +19,10 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
+#ifndef NOOPENGL
+#include "texture.h"
+#endif
+
 #ifndef WIN32
 #include <sys/types.h>
 #include <ctype.h>
@@ -45,6 +49,8 @@
  */
 void clearOpenGLScreen(float r, float g, float b)
 {
+  // Reset texture state before clearing to ensure no state pollution
+  SurfaceOpenGL::reset_state();
   glClearColor(r, g, b, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -57,6 +63,10 @@ void clearOpenGLScreen(float r, float g, float b)
  */
 void drawOpenGLGradient(const Color& top_clr, const Color& bot_clr)
 {
+  // Raw geometry drawing requires disabling textures.
+  // We call reset_state() to disable GL_TEXTURE_2D and sync the tracker.
+  SurfaceOpenGL::reset_state();
+
   glBegin(GL_QUADS);
   glColor3ub(top_clr.red, top_clr.green, top_clr.blue);
   glVertex2f(0, 0);
@@ -77,6 +87,9 @@ void drawOpenGLGradient(const Color& top_clr, const Color& bot_clr)
  */
 void drawOpenGLLine(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
 {
+  // Ensure untextured rendering
+  SurfaceOpenGL::reset_state();
+
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glColor4ub(r, g, b, a);
@@ -98,6 +111,9 @@ void drawOpenGLLine(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
  */
 void fillOpenGLRect(float x, float y, float w, float h, int r, int g, int b, int a)
 {
+  // Ensure untextured rendering
+  SurfaceOpenGL::reset_state();
+
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glColor4ub(r, g, b, a);
@@ -117,6 +133,10 @@ void fillOpenGLRect(float x, float y, float w, float h, int r, int g, int b, int
  */
 void swapOpenGLBuffers()
 {
+  // On some platforms/drivers, swapping buffers might reset GL state or
+  // context. We reset our tracker here to be safe and ensure the next
+  // frame starts with a known state.
+  SurfaceOpenGL::reset_state();
   SDL_GL_SwapBuffers();
 }
 

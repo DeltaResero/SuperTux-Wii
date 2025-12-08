@@ -21,6 +21,7 @@
 #include "screen.h"
 #include "text.h"
 #include "menu.h"
+#include "texture.h"
 
 Text::Texts Text::texts;
 
@@ -302,6 +303,9 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
   // Render all characters in one batch
   if (vertex_count > 0)
   {
+    // Ensure we start with a clean state known to the tracker
+    SurfaceOpenGL::reset_state();
+
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -320,8 +324,9 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
+
+    // Reset state to sync with the tracker instead of manual glDisable
+    SurfaceOpenGL::reset_state();
   }
 }
 #endif

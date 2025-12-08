@@ -149,10 +149,11 @@ public:
   int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update) override;
   int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 
+  static void reset_state();
+
 private:
   void create_gl(SDL_Surface* surf, GLuint* tex);
   void setup_gl_state(Uint8 alpha);
-  void teardown_gl_state();
 };
 
 #endif

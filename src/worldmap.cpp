@@ -1288,6 +1288,13 @@ void WorldMap::draw(const Point& offset)
 
   tux->draw(offset);
   draw_status();
+
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    SurfaceOpenGL::reset_state();
+  }
+#endif
 }
 
 /**

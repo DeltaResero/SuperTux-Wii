@@ -31,6 +31,7 @@
 #include "sound.h"
 #include "player.h"
 #include "collision.h"
+#include "texture.h"
 
 // Extern sprite declarations needed for monolithic draw loops
 extern Sprite* img_bullet;
@@ -263,9 +264,12 @@ void World::draw()
   draw_tile_layer(batcher, level->bg_tiles.data());
   draw_tile_layer(batcher, level->ia_tiles.data(), true);
 
-  if (use_gl) {
+#ifndef NOOPENGL
+  if (use_gl)
+  {
     m_renderBatcher->flush();
   }
+#endif
 
   for (unsigned int i = 0; i < bouncy_bricks.size(); ++i)
   {
@@ -370,11 +374,12 @@ void World::draw()
     }
   });
 
-  // Flush if using OpenGL
+#ifndef NOOPENGL
   if (use_gl)
   {
     m_renderBatcher->flush();
   }
+#endif
 
   // Draw Floating Scores (Text-based, drawn AFTER flush)
   draw_pooled_objects(floating_scores, [&](const FloatingScore& score) {
@@ -386,16 +391,25 @@ void World::draw()
   /* Draw foreground tiles: */
   draw_tile_layer(batcher, level->fg_tiles.data());
 
+#ifndef NOOPENGL
   if (use_gl)
   {
     m_renderBatcher->flush();
   }
+#endif
 
   /* Draw particle systems (foreground) */
   for(auto* p : particle_systems)
   {
     p->draw(scroll_x, 0, 1);
   }
+
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    SurfaceOpenGL::reset_state();
+  }
+#endif
 }
 
 void World::resolvePlayerPhysics(Player* player)

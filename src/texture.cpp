@@ -20,6 +20,20 @@
 #include "globals.h"
 #include "setup.h"
 
+// ----------------------------------------------------------------------------
+// Internal State Tracking (OpenGL)
+// ----------------------------------------------------------------------------
+
+#ifndef NOOPENGL
+// Static state tracking to reduce redundant GL calls.
+// These persist between function calls to batch drawing operations.
+static GLuint g_current_texture = 0;
+static bool g_texture_enabled = false;
+static bool g_blend_enabled = false;
+#endif
+
+// ----------------------------------------------------------------------------
+
 Surface::Surfaces Surface::surfaces;
 
 /**
@@ -598,6 +612,20 @@ SurfaceOpenGL::~SurfaceOpenGL()
 }
 
 /**
+ * Resets the OpenGL state and internal trackers.
+ * Must be called at the end of the frame or before non-Surface rendering.
+ */
+void SurfaceOpenGL::reset_state()
+{
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_BLEND);
+
+  g_current_texture = 0;
+  g_texture_enabled = false;
+  g_blend_enabled = false;
+}
+
+/**
  * Creates an OpenGL texture from an SDL_Surface.
  * @param surf The source SDL_Surface.
  * @param tex The OpenGL texture ID to create.
@@ -631,22 +659,25 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   Uint32 rmask, gmask, bmask, amask;
   GLenum gl_format, gl_type;
 
-  if (has_alpha) {
-      bpp = 32;
+  if (has_alpha)
+  {
+    bpp = 32;
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-      rmask = 0xff000000; gmask = 0x00ff0000; bmask = 0x0000ff00; amask = 0x000000ff;
+    rmask = 0xff000000; gmask = 0x00ff0000; bmask = 0x0000ff00; amask = 0x000000ff;
 #else
-      rmask = 0x000000ff; gmask = 0x0000ff00; bmask = 0x00ff0000; amask = 0xff000000;
+    rmask = 0x000000ff; gmask = 0x0000ff00; bmask = 0x00ff0000; amask = 0xff000000;
 #endif
-      gl_format = GL_RGBA;
-      gl_type = GL_UNSIGNED_BYTE;
-  } else {
-      // Use 16-bit RGB565 for opaque textures
-      bpp = 16;
-      rmask = 0xF800; gmask = 0x07E0; bmask = 0x001F; amask = 0x0000;
-      gl_format = GL_RGB;
-      // OpenGX requires this specific enum to trigger the fast-path assembly converter
-      gl_type = GL_UNSIGNED_SHORT_5_6_5;
+    gl_format = GL_RGBA;
+    gl_type = GL_UNSIGNED_BYTE;
+  }
+  else
+  {
+    // Use 16-bit RGB565 for opaque textures
+    bpp = 16;
+    rmask = 0xF800; gmask = 0x07E0; bmask = 0x001F; amask = 0x0000;
+    gl_format = GL_RGB;
+    // OpenGX requires this specific enum to trigger the fast-path assembly converter
+    gl_type = GL_UNSIGNED_SHORT_5_6_5;
   }
 
   conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, bpp, rmask, gmask, bmask, amask);
@@ -671,7 +702,8 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
     SDL_Rect dst_rect;
 
     // Smear Right Edge
-    if (w > surf->w) {
+    if (w > surf->w)
+    {
       src_rect.x = surf->w - 1; src_rect.y = 0;
       src_rect.w = 1;           src_rect.h = surf->h;
       dst_rect.x = surf->w;     dst_rect.y = 0;
@@ -679,7 +711,8 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
     }
 
     // Smear Bottom Edge
-    if (h > surf->h) {
+    if (h > surf->h)
+    {
       src_rect.x = 0;           src_rect.y = surf->h - 1;
       src_rect.w = surf->w;     src_rect.h = 1;
       dst_rect.x = 0;           dst_rect.y = surf->h;
@@ -687,7 +720,8 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
     }
 
     // Smear Bottom-Right Corner Pixel
-    if (w > surf->w && h > surf->h) {
+    if (w > surf->w && h > surf->h)
+    {
       src_rect.x = surf->w - 1; src_rect.y = surf->h - 1;
       src_rect.w = 1;           src_rect.h = 1;
       dst_rect.x = surf->w;     dst_rect.y = surf->h;
@@ -724,20 +758,26 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
  */
 void SurfaceOpenGL::setup_gl_state(Uint8 alpha)
 {
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4ub(alpha, alpha, alpha, alpha);
-  glBindTexture(GL_TEXTURE_2D, gl_texture);
-}
+  if (!g_texture_enabled)
+  {
+    glEnable(GL_TEXTURE_2D);
+    g_texture_enabled = true;
+  }
 
-/**
- * Tears down the common OpenGL state after drawing.
- */
-void SurfaceOpenGL::teardown_gl_state()
-{
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
+  if (!g_blend_enabled)
+  {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    g_blend_enabled = true;
+  }
+
+  glColor4ub(alpha, alpha, alpha, alpha);
+
+  if (g_current_texture != gl_texture)
+  {
+    glBindTexture(GL_TEXTURE_2D, gl_texture);
+    g_current_texture = gl_texture;
+  }
 }
 
 /**
@@ -801,9 +841,8 @@ int SurfaceOpenGL::draw(float x, float y, Uint8 alpha, bool update)
   render_textured_quad(x, y, static_cast<float>(this->w), static_cast<float>(this->h),
                        static_cast<float>(this->w), static_cast<float>(this->h),
                        tex_w_allocated, tex_h_allocated);
-  teardown_gl_state();
 
-  (void)update;  // avoid compiler warning
+  (void)update;
 
   return 0;
 }
@@ -849,9 +888,10 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   glDisableClientState(GL_VERTEX_ARRAY);
 
-  glDisable(GL_TEXTURE_2D);
+  // We reset everything here to ensure subsequent draw calls start clean.
+  reset_state();
 
-  (void)update;  // avoid compiler warning
+  (void)update;
 
   return 0;
 }
@@ -903,9 +943,7 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   glDisableClientState(GL_VERTEX_ARRAY);
 
-  teardown_gl_state();
-
-  (void)update;  // avoid warnings
+  (void)update;
   return 0;
 }
 
@@ -925,9 +963,8 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
   render_textured_quad(x, y, static_cast<float>(sw), static_cast<float>(sh),
                        static_cast<float>(this->w), static_cast<float>(this->h),
                        tex_w_allocated, tex_h_allocated);
-  teardown_gl_state();
 
-  (void)update;  // avoid warnings
+  (void)update;
   return 0;
 }
 #endif

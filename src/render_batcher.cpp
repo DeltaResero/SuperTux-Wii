@@ -14,6 +14,7 @@
 #ifndef NOOPENGL
 
 #include "render_batcher.h"
+#include "texture.h"
 #include <cmath>
 
 /**
@@ -120,6 +121,9 @@ void RenderBatcher::flush()
     return;
   }
 
+  // Ensure we start with a clean state known to the tracker
+  SurfaceOpenGL::reset_state();
+
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -146,8 +150,9 @@ void RenderBatcher::flush()
 
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisable(GL_BLEND);
-  glDisable(GL_TEXTURE_2D);
+
+  // Reset state to sync with the tracker instead of manual glDisable
+  SurfaceOpenGL::reset_state();
 
   m_batches.clear();
 }
