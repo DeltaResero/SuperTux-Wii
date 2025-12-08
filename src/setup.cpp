@@ -468,7 +468,7 @@ void st_menu(void)
 
   game_menu->additem(MN_LABEL, "Pause", 0, nullptr);
   game_menu->additem(MN_HL, "", 0, nullptr);
-  game_menu->additem(MN_ACTION, "Continue", [](){ Ticks::pause_stop(); });
+  game_menu->additem(MN_ACTION, "Continue", [](){ Menu::set_current(nullptr); Ticks::pause_stop(); });
   game_menu->additem(MN_GOTO, "Options", 0, options_menu);
   game_menu->additem(MN_HL, "", 0, nullptr);
   game_menu->additem(MN_ACTION, "Abort Level", [](){ Ticks::pause_stop(); GameSession::current()->abort_level(); });
