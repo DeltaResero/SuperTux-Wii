@@ -35,11 +35,12 @@ Text::Texts Text::texts;
 struct CharVertex {
   float x, y;
   float tx, ty;
-};
+} __attribute__((packed));
 
 // A single, static buffer to be reused for all batched text drawing.
 // This completely avoids the expensive 64KB per-call stack allocation.
-static CharVertex vertex_buffer[MAX_TEXT_LEN * 4];
+// Align to 32 bytes for Wii cache line optimization.
+static CharVertex vertex_buffer[MAX_TEXT_LEN * 4] CACHE_LINE_ALIGN;
 
 // --- The Lookup Table (LUT) ---
 // This replaces the entire expensive if/else if chain in the main loop.

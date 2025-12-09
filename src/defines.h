@@ -19,6 +19,17 @@
   #define VERSION "0.1.4-wii-d.4"
 #endif
 
+/* --- Cross-compiler Cache Line Alignment --- */
+/* Provides a portable way to align data structures to a 32-byte boundary, */
+/* which is optimal for the Wii's L1 cache and beneficial on other platforms. */
+#if defined(__GNUC__) || defined(__clang__)
+  #define CACHE_LINE_ALIGN __attribute__((aligned(32)))
+#elif defined(_MSC_VER)
+  #define CACHE_LINE_ALIGN __declspec(align(32))
+#else
+  #define CACHE_LINE_ALIGN
+#endif
+
 /* Memory Optimizations */
 #ifdef _WII_
   // Wii has limited RAM and predictable, short file paths.
