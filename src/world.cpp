@@ -57,6 +57,7 @@ void World::common_setup()
   apply_bonuses();
   scrolling_timer.init(true);
   m_renderBatcher = new RenderBatcher();
+  m_spatial_grid = new SpatialGrid(128);
 }
 
 World::World(const std::string& filename)
@@ -66,12 +67,12 @@ World::World(const std::string& filename)
     broken_bricks(64),
     floating_scores(32),
     bullets(8),
-    upgrades(16)
+    upgrades(16),
+    m_spatial_grid(nullptr)
 {
   // FIXME: Move this to action and draw and everywhere else where the
   // world calls child functions
   current_ = this;
-
   level = new Level(filename);
   common_setup();
 }
@@ -82,12 +83,12 @@ World::World(const std::string& subset, int level_nr)
     broken_bricks(64),
     floating_scores(32),
     bullets(8),
-    upgrades(16)
+    upgrades(16),
+    m_spatial_grid(nullptr)
 {
   // FIXME: Move this to action and draw and everywhere else where the
   // world calls child functions
   current_ = this;
-
   level = new Level(subset, level_nr);
   common_setup();
 }
@@ -116,9 +117,9 @@ void World::apply_bonuses()
 World::~World()
 {
   deactivate_world();
-
   delete level;
   delete m_renderBatcher;
+  delete m_spatial_grid;
 }
 
 void World::activate_world()
@@ -160,12 +161,9 @@ void World::set_defaults()
 {
   // Set defaults:
   scroll_x = 0;
-
   player_status.score_multiplier = 1;
-
   counting_distros = false;
   distro_counter = 0;
-
   /* set current song/music */
   currentmusic = LEVEL_MUSIC;
 }
@@ -594,7 +592,6 @@ void World::action(float elapsed_time)
 
   // Handle all collisions
   collision_handler();
-
   // Clean up all objects marked for removal
   cleanup_dead_objects();
 }
@@ -651,46 +648,51 @@ void World::scrolling(float elapsed_time)
 
 void World::collision_handler()
 {
-  /* --- COLLISION CULLING SETUP --- */
-  // To improve performance, we define an "active" area based on the screen's
-  // current position. Objects outside this area will be culled/skipped from
-  // most collision checks. A 64-pixel buffer is added to each side for safety,
-  // preventing fast-moving objects from tunneling through each other between frames.
-  const float screen_x_start = scroll_x - 64.0f;
-  const float screen_x_end   = scroll_x + screen->w + 64.0f;
+  // Rebuild spatial grid each frame
+  m_spatial_grid->clear();
 
+  // Add all active entities to grid
+  for (auto* badguy : bad_guys)
+  {
+    if (badguy->dying == DYING_NOT)
+    {
+      m_spatial_grid->add_badguy(badguy);
+    }
+  }
 
-  // --- BULLET vs BADGUY ---
-  // Only check active bullets against visible enemies.
   for (size_t index : bullets.get_active_indices())
   {
     Bullet* bullet = bullets.get_object_at(index);
-    // If a bullet has already been marked for removal, skip it.
-    if (bullet->removable)
+    if (bullet && !bullet->removable)
     {
-        continue;
+      m_spatial_grid->add_bullet(bullet);
     }
+  }
 
-    // Skip collision checks for this bullet if it is outside the active area.
-    if (bullet->base.x + bullet->base.width < screen_x_start || bullet->base.x > screen_x_end)
+  for (size_t index : upgrades.get_active_indices())
+  {
+    Upgrade* upgrade = upgrades.get_object_at(index);
+    if (upgrade)
     {
-      continue;
+      m_spatial_grid->add_upgrade(upgrade);
     }
+  }
 
-    // Check against normal colliders
-    for (auto* badguy : normal_colliders)
+  // Bullet vs BadGuy collisions
+  for (size_t index : bullets.get_active_indices())
+  {
+    Bullet* bullet = bullets.get_object_at(index);
+    if (bullet->removable) continue;
+
+    // Query badguys near bullet (bounded query)
+    auto nearby_badguys = m_spatial_grid->query_badguys(
+      bullet->base.x - 32, bullet->base.y - 32,
+      bullet->base.width + 64, bullet->base.height + 64
+    );
+
+    for (auto* badguy : nearby_badguys)
     {
-      // Tux can't kill a dying enemy
-      if (badguy->dying != DYING_NOT)
-      {
-        continue;
-      }
-
-      // Also skip collision checks for any enemy outside the active area.
-      if (badguy->base.x + badguy->base.width < screen_x_start || badguy->base.x > screen_x_end)
-      {
-        continue;
-      }
+      if (badguy->dying != DYING_NOT) continue;
 
       if (rectcollision(bullet->base, badguy->base))
       {
@@ -699,93 +701,63 @@ void World::collision_handler()
         break; // A bullet can only hit one enemy.
       }
     }
-
-    // If the bullet hit a normal_collider, it is now inactive. Skip special_colliders.
-    if (bullet->removable)
-    {
-        continue;
-    }
-
-    // Check against special colliders
-    for (auto* badguy : special_colliders)
-    {
-        // Tux can't kill a dying enemy
-        if (badguy->dying != DYING_NOT)
-        {
-            continue;
-        }
-
-        if (rectcollision(bullet->base, badguy->base))
-        {
-            badguy->collision(0, CO_BULLET);
-            bullet->collision(CO_BADGUY);
-            break; // A bullet can only hit one enemy.
-        }
-    }
   }
 
-
-  /* --- BADGUY vs BADGUY --- */
-
-  // Pass 1: Special vs. Normal (preserves the "off-screen kill" mechanic)
-  // Check every special collider against every normal collider.
+  // Special colliders (Mr. Iceblock case)
   for (auto* special : special_colliders)
   {
-    if (special->dying != DYING_NOT)
+    if (special->dying != DYING_NOT) continue;
+
+    // Mr. Iceblock in KICK mode can hit enemies OFF SCREEN
+    // Use unbounded query (all badguys) to preserve original behavior
+    bool is_kicked_iceblock = (special->kind == BAD_MRICEBLOCK &&
+                               special->mode == BadGuy::KICK);
+
+    if (is_kicked_iceblock)
     {
-      continue;
+      // Check against ALL badguys (original behavior)
+      for (auto* normal : normal_colliders)
+      {
+        if (normal->dying != DYING_NOT) continue;
+
+        if (rectcollision(special->base, normal->base))
+        {
+          normal->collision(special, CO_BADGUY);
+          special->collision(normal, CO_BADGUY);
+        }
+      }
     }
-
-    for (auto* normal : normal_colliders)
+    else
     {
-      if (normal->dying != DYING_NOT)
-      {
-        continue;
-      }
+      // Other special colliders use spatial query
+      auto nearby = m_spatial_grid->query_badguys(
+        special->base.x - 32, special->base.y - 32,
+        special->base.width + 64, special->base.height + 64
+      );
 
-      // Broad-phase AABB check on X-axis.
-      // If the objects are not even close on the X-axis, they can't be colliding.
-      // This avoids the more expensive rectcollision() call for most pairs.
-      if (special->base.x > normal->base.x + normal->base.width ||
-          special->base.x + special->base.width < normal->base.x)
+      for (auto* normal : nearby)
       {
-        continue;
-      }
+        if (normal->dying != DYING_NOT) continue;
 
-      if (rectcollision(special->base, normal->base))
-      {
-        normal->collision(special, CO_BADGUY);
-        special->collision(normal, CO_BADGUY);
+        if (rectcollision(special->base, normal->base))
+        {
+          normal->collision(special, CO_BADGUY);
+          special->collision(normal, CO_BADGUY);
+        }
       }
     }
   }
 
-  // Pass 2: Special vs. Special
-  // Check special colliders against each other.
+  // Special vs Special collisions
   for (size_t i = 0; i < special_colliders.size(); ++i)
   {
     BadGuy* special1 = special_colliders[i];
-    // Skip any enemy that is already dying.
-    if (special1->dying != DYING_NOT)
-    {
-      continue;
-    }
+    if (special1->dying != DYING_NOT) continue;
 
     for (size_t j = i + 1; j < special_colliders.size(); ++j)
     {
       BadGuy* special2 = special_colliders[j];
-      // Skip self-check and dying enemies
-      if (special2->dying != DYING_NOT)
-      {
-        continue;
-      }
-
-      // Broad-phase AABB check on X-axis.
-      if (special1->base.x > special2->base.x + special2->base.width ||
-          special1->base.x + special1->base.width < special2->base.x)
-      {
-        continue;
-      }
+      if (special2->dying != DYING_NOT) continue;
 
       if (rectcollision(special1->base, special2->base))
       {
@@ -795,70 +767,52 @@ void World::collision_handler()
     }
   }
 
-  // Pass 3: Normal vs. Normal
-  // Highly optimized loop that only checks on-screen enemies.
+  // Normal vs Normal (use spatial grid)
+  const float screen_x_start = scroll_x - 64.0f;
+  const float screen_x_end = scroll_x + screen->w + 64.0f;
+
   for (size_t i = 0; i < normal_colliders.size(); ++i)
   {
-    if (normal_colliders[i]->dying != DYING_NOT)
-    {
-      continue;
-    }
-    // Optimization: Cull off-screen enemies immediately.
+    if (normal_colliders[i]->dying != DYING_NOT) continue;
     if (normal_colliders[i]->base.x + normal_colliders[i]->base.width < screen_x_start ||
-        normal_colliders[i]->base.x > screen_x_end)
+        normal_colliders[i]->base.x > screen_x_end) continue;
+
+    auto nearby = m_spatial_grid->query_badguys(
+      normal_colliders[i]->base.x - 32,
+      normal_colliders[i]->base.y - 32,
+      normal_colliders[i]->base.width + 64,
+      normal_colliders[i]->base.height + 64
+    );
+
+    for (auto* other : nearby)
     {
-      continue;
-    }
+      if (other == normal_colliders[i]) continue;
+      if (other->dying != DYING_NOT) continue;
 
-    for (size_t j = i + 1; j < normal_colliders.size(); ++j)
-    {
-      if (normal_colliders[j]->dying != DYING_NOT)
+      if (rectcollision(normal_colliders[i]->base, other->base))
       {
-        continue;
-      }
-
-      // Optimization: Cull the second enemy too.
-      if (normal_colliders[j]->base.x + normal_colliders[j]->base.width < screen_x_start ||
-          normal_colliders[j]->base.x > screen_x_end)
-      {
-        continue;
-      }
-
-      if (rectcollision(normal_colliders[i]->base, normal_colliders[j]->base))
-      {
-        normal_colliders[j]->collision(normal_colliders[i], CO_BADGUY);
-        normal_colliders[i]->collision(normal_colliders[j], CO_BADGUY);
+        other->collision(normal_colliders[i], CO_BADGUY);
+        normal_colliders[i]->collision(other, CO_BADGUY);
       }
     }
   }
 
-  // --- PLAYER COLLISIONS ---
-  // Stop all further collision checking if Tux/player is dying.
-  if(tux.dying != DYING_NOT)
-  {
-    return;
-  }
+  // Player collisions
+  if (tux.dying != DYING_NOT) return;
 
-  // Check against all enemies (both normal and special)
   for (auto* badguy : bad_guys)
   {
-    // Ignore dying enemies
-    if (badguy->dying != DYING_NOT)
-    {
-      continue;
-    }
+    if (badguy->dying != DYING_NOT) continue;
 
-    // Simple culling for player collision
     if (badguy->base.x + badguy->base.width < tux.base.x - 64.0f ||
         badguy->base.x > tux.base.x + tux.base.width + 64.0f)
-    {
       continue;
-    }
 
     if (rectcollision_offset(badguy->base, tux.base, 0, 0))
     {
-      if (tux.previous_base.y < tux.base.y && tux.previous_base.y + tux.previous_base.height <
-        badguy->base.y + badguy->base.height/2 && !tux.invincible_timer.started())
+      if (tux.previous_base.y < tux.base.y &&
+          tux.previous_base.y + tux.previous_base.height < badguy->base.y + badguy->base.height/2 &&
+          !tux.invincible_timer.started())
       {
         badguy->collision(&tux, CO_PLAYER, COLLISION_SQUISH);
       }
@@ -870,13 +824,13 @@ void World::collision_handler()
     }
   }
 
-
-  /* --- CO_UPGRADE & CO_PLAYER check --- */
-  // Upgrades can only be collected by the player, so we only need to check for them near the player
+  // Upgrade collisions
   for (size_t index : upgrades.get_active_indices())
   {
-    Upgrade* upgrade = upgrades.get_object_at(index);
+    // Upgrades can only be collected by the player, so we only need to check for them near the player
     // Skip any upgrade that is not within a 64-pixel buffer around Tux
+    Upgrade* upgrade = upgrades.get_object_at(index);
+
     if (upgrade->base.x + upgrade->base.width < tux.base.x - 64.0f ||
         upgrade->base.x > tux.base.x + tux.base.width + 64.0f)
     {

@@ -25,6 +25,7 @@
 #include "particlesystem.h"
 #include "gameobjs.h"
 #include "object_pool.h"
+#include "spatial_grid.h"
 
 class Level;
 class RenderBatcher;
@@ -88,6 +89,10 @@ public:
   typedef std::vector<ParticleSystem*> ParticleSystems;
   ParticleSystems particle_systems;
 
+private:
+  // Spatial grid is declared last as it's constructed after pools
+  SpatialGrid* m_spatial_grid;
+
 public:
   static World* current() { return current_; }
   static void set_current(World* w) { current_ = w; }
@@ -100,7 +105,8 @@ public:
       broken_bricks(64),
       floating_scores(32),
       bullets(8),
-      upgrades(16)
+      upgrades(16),
+      m_spatial_grid(nullptr)
   {};
   ~World();
 
