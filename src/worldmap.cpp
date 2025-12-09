@@ -28,6 +28,7 @@
 #include "timer.h"
 #include "player.h"
 #include "utils.h"
+#include "render_batcher.h"
 
 #define DISPLAY_MAP_MESSAGE_TIME 2800
 
@@ -300,26 +301,37 @@ void Tux::deleteSprites()
 /**
  * Draws Tux at the given offset.
  * @param offset The point used to offset the drawing.
+ * @param batcher Optional RenderBatcher for OpenGL rendering.
  */
-void Tux::draw(const Point& offset)
+void Tux::draw(const Point& offset, RenderBatcher* batcher)
 {
   Point pos = get_pos();
+  Surface* sprite_to_draw = nullptr;
+
   switch (player_status.bonus)
   {
     case PlayerStatus::GROWUP_BONUS:
-    {
-      largetux_sprite->draw(pos.x + offset.x, pos.y + offset.y - 10);
+      sprite_to_draw = largetux_sprite;
       break;
-    }
     case PlayerStatus::FLOWER_BONUS:
-    {
-      firetux_sprite->draw(pos.x + offset.x, pos.y + offset.y - 10);
+      sprite_to_draw = firetux_sprite;
       break;
-    }
     case PlayerStatus::NO_BONUS:
-    {
-      smalltux_sprite->draw(pos.x + offset.x, pos.y + offset.y - 10);
+      sprite_to_draw = smalltux_sprite;
       break;
+  }
+
+  if (sprite_to_draw)
+  {
+    if (batcher)
+    {
+      // Add to batcher if available. Hotspots are 0, 0.
+      batcher->add(sprite_to_draw, pos.x + offset.x, pos.y + offset.y - 10, 0, 0);
+    }
+    else
+    {
+      // Fallback to immediate draw
+      sprite_to_draw->draw(pos.x + offset.x, pos.y + offset.y - 10);
     }
   }
 }
@@ -511,6 +523,7 @@ WorldMap::WorldMap()
 {
   current_ = this;
   tile_manager = new TileManager();
+  m_renderBatcher = new RenderBatcher();
 
   width = (int)(20);
   height = (int)(15);
@@ -539,6 +552,7 @@ WorldMap::~WorldMap()
   if (current_ == this) current_ = nullptr;
   delete tux;
   delete tile_manager;
+  delete m_renderBatcher;
 
   deleteSprites();
   lisp_reset_pool(); // Free all memory used by the worldmap data
@@ -1166,6 +1180,7 @@ void WorldMap::update(float delta)
         unloadsounds();
         loadSprites();
         tux->loadSprites();
+        scroll_x = 0;  // Reset scroll for worldmap rendering
         music_manager->play_music(song);
         Menu::set_current(0);
         if (!savegame_file.empty())
@@ -1184,6 +1199,7 @@ void WorldMap::update(float delta)
         tux->back_direction = D_NONE;
         tux->set_tile_pos(Point(level->teleport_dest_x, level->teleport_dest_y));
         SDL_Delay(800);  // Delay for visual effect & sound completion before unloading
+        scroll_x = 0;  // Reset scroll for worldmap rendering
         unloadsounds();  // FIXME: ideally should load/unload when loading world maps
       }
     }
@@ -1239,6 +1255,14 @@ WorldMap::Level* WorldMap::at_level()
  */
 void WorldMap::draw(const Point& offset)
 {
+  // Clear the screen to prevent ghosting (essential for OpenGL)
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+#endif
+
   // Determine the range of tiles visible on the screen
   int x_start = -offset.x / 32;
   int y_start = -offset.y / 32;
@@ -1251,6 +1275,8 @@ void WorldMap::draw(const Point& offset)
   if (x_end > width) x_end = width;
   if (y_end > height) y_end = height;
 
+  // Use the batcher if OpenGL is enabled
+  RenderBatcher* batcher = use_gl ? m_renderBatcher : nullptr;
 
   // Only draw the visible tiles
   for (int y = y_start; y < y_end; ++y)
@@ -1258,7 +1284,15 @@ void WorldMap::draw(const Point& offset)
     for (int x = x_start; x < x_end; ++x)
     {
       Tile* tile = at(Point(x, y));
-      tile->sprite->draw(x * 32 + offset.x, y * 32 + offset.y);
+      if (batcher)
+      {
+        // Add to batcher. Hotspots are 0, 0.
+        batcher->add(tile->sprite, x * 32 + offset.x, y * 32 + offset.y, 0, 0);
+      }
+      else
+      {
+        tile->sprite->draw(x * 32 + offset.x, y * 32 + offset.y);
+      }
     }
   }
 
@@ -1268,25 +1302,56 @@ void WorldMap::draw(const Point& offset)
     // Only draw dots within the visible tile range
     if (i->x >= x_start && i->x < x_end && i->y >= y_start && i->y < y_end)
     {
+      Surface* dot_sprite = nullptr;
       if (i->name.empty())
       {
         if ((i->teleport_dest_x != -1) && !i->invisible_teleporter)
         {
-          leveldot_teleporter->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+          dot_sprite = leveldot_teleporter;
         }
       }
       else if (i->solved)
       {
-        leveldot_green->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+        dot_sprite = leveldot_green;
       }
       else
       {
-        leveldot_red->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+        dot_sprite = leveldot_red;
+      }
+
+      if (dot_sprite)
+      {
+        if (batcher)
+        {
+          // Add to batcher. Hotspots are 0, 0.
+          batcher->add(dot_sprite, i->x * 32 + offset.x, i->y * 32 + offset.y, 0, 0);
+        }
+        else
+        {
+          dot_sprite->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+        }
       }
     }
   }
 
-  tux->draw(offset);
+  // Flush the batcher before drawing Tux (who might change texture state)
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    m_renderBatcher->flush();
+  }
+#endif
+
+  tux->draw(offset, batcher);
+
+  // Flush again after Tux
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    m_renderBatcher->flush();
+  }
+#endif
+
   draw_status();
 
 #ifndef NOOPENGL
@@ -1419,6 +1484,9 @@ void WorldMap::display()
   music_manager->play_music(song);
 
   unsigned int last_update_time = Ticks::get();
+
+  // Ensure scroll_x is 0 so RenderBatcher doesn't apply side-scroller offsets
+  scroll_x = 0;
 
   while (!quit)
   {

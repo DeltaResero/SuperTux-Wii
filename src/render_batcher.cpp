@@ -15,6 +15,7 @@
 
 #include "render_batcher.h"
 #include "texture.h"
+#include "scene.h"
 #include <cmath>
 
 /**

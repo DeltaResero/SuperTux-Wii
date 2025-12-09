@@ -17,11 +17,13 @@
 #include <string>
 
 #include "musicref.h"
-#include "gameloop.h" // For GameSession::ExitStatus
+#include "gameloop.h"
 
 // Forward declare SDL_Event to avoid including SDL.h in the header
 // Corrected from 'struct' to 'union' to match the actual SDL definition.
 union SDL_Event;
+
+class RenderBatcher;
 
 namespace WorldMapNS
 {
@@ -129,7 +131,7 @@ public:
   void loadSprites();
   void deleteSprites();
 
-  void draw(const Point& offset);
+  void draw(const Point& offset, RenderBatcher* batcher);
   void update(float delta);
 
   void set_direction(Direction d)
@@ -313,6 +315,8 @@ private:
   Point offset;
   std::string savegame_file;
   std::string map_file;
+
+  RenderBatcher* m_renderBatcher;
 
 private:
   static WorldMap* current_;
