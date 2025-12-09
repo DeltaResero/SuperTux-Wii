@@ -32,16 +32,6 @@ Text::Texts Text::texts;
 #define ITEMS_SPACE  4       // Space between lines of text
 
 #ifndef NOOPENGL
-struct CharVertex {
-  float x, y;
-  float tx, ty;
-} __attribute__((packed));
-
-// A single, static buffer to be reused for all batched text drawing.
-// This completely avoids the expensive 64KB per-call stack allocation.
-// Align to 32 bytes for Wii cache line optimization.
-static CharVertex vertex_buffer[MAX_TEXT_LEN * 4] CACHE_LINE_ALIGN;
-
 // --- The Lookup Table (LUT) ---
 // This replaces the entire expensive if/else if chain in the main loop.
 // It provides an instantaneous, O(1) lookup for character sprite info.
@@ -160,6 +150,12 @@ void Text::recache_opengl_pointers()
   {
     opengl_chars = dynamic_cast<SurfaceOpenGL*>(chars->impl.get());
     opengl_shadow_chars = dynamic_cast<SurfaceOpenGL*>(shadow_chars->impl.get());
+
+    // Invalidate text cache when font textures change
+    for (auto& pair : m_text_cache)
+    {
+      pair.second.dirty = true;
+    }
   }
   else
   {
@@ -224,55 +220,40 @@ void Text::draw(const std::string& text, int x, int y, int shadowsize, int updat
 
 
 #ifndef NOOPENGL
-void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update)
+/**
+ * Build vertex array for a text run and cache it.
+ * NOTE: Vertices are built relative to (0,0) to allow reuse via glTranslate.
+ */
+void Text::build_cached_text(Surface* pchars, const std::string& text, int x, int y, CachedTextRun& run)
 {
-  if (!use_gl || pchars == nullptr || text.empty())
-  {
-    // Fall back to regular drawing for SDL
-    draw_chars(pchars, text, x, y, update);
-    return;
-  }
-
-  size_t len = text.length();
-  if (len > MAX_TEXT_LEN)
-  {
-    len = MAX_TEXT_LEN;
-  }
-
-  // Use the single, pre-allocated static buffer instead of a new 64KB stack array.
-  CharVertex* vertices = vertex_buffer;
-  int vertex_count = 0;
-
-  SurfaceImpl* impl = pchars->impl.get();
-  if (!impl)
-  {
-    return;
-  }
+  run.text = text;
+  run.x = 0; // Always build at origin
+  run.y = 0; // Always build at origin
+  run.vertices.clear();
+  run.vertices.reserve(text.length() * 4); // 4 vertices per character
 
   // Get the correct, pre-cached opengl implementation
   SurfaceOpenGL* gl_impl = (pchars == chars) ? opengl_chars : opengl_shadow_chars;
-
-  // If for some reason the pointer is bad (e.g., non-OpenGL surface), fall back.
   if (!gl_impl)
   {
-    draw_chars(pchars, text, x, y, update);
     return;
   }
 
   float pw = gl_impl->tex_w_allocated;
   float ph = gl_impl->tex_h_allocated;
 
-  int current_x = x;
-  int current_y = y;
+  // Start at 0,0 for relative caching
+  int current_x = 0;
+  int current_y = 0;
 
   // Build the array of vertices for all characters in the string
-  for (size_t i = 0; i < len; ++i)
+  for (size_t i = 0; i < text.length(); ++i)
   {
     unsigned char character = text[i];
     if (character == '\n')
     {
       current_y += h + 2;
-      current_x = x;
+      current_x = 0; // Reset to relative origin
       continue;
     }
 
@@ -293,42 +274,120 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
     float ty2 = (offset_y + h) / ph;
 
     // Add quad vertices (two triangles - Bottom-left, Bottom-right, Top-right, and Top-left)
-    vertices[vertex_count++] = {static_cast<float>(current_x), static_cast<float>(current_y + h), tx1, ty2};
-    vertices[vertex_count++] = {static_cast<float>(current_x + w), static_cast<float>(current_y + h), tx2, ty2};
-    vertices[vertex_count++] = {static_cast<float>(current_x + w), static_cast<float>(current_y), tx2, ty1};
-    vertices[vertex_count++] = {static_cast<float>(current_x), static_cast<float>(current_y), tx1, ty1};
+    run.vertices.push_back({static_cast<float>(current_x), static_cast<float>(current_y + h), tx1, ty2});
+    run.vertices.push_back({static_cast<float>(current_x + w), static_cast<float>(current_y + h), tx2, ty2});
+    run.vertices.push_back({static_cast<float>(current_x + w), static_cast<float>(current_y), tx2, ty1});
+    run.vertices.push_back({static_cast<float>(current_x), static_cast<float>(current_y), tx1, ty1});
 
     current_x += w;
   }
 
-  // Render all characters in one batch
-  if (vertex_count > 0)
+  run.dirty = false;
+}
+
+void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update)
+{
+  if (text.empty())
   {
-    // Ensure we start with a clean state known to the tracker
-    SurfaceOpenGL::reset_state();
-
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4ub(255, 255, 255, 255);
-    glBindTexture(GL_TEXTURE_2D, gl_impl->gl_texture);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    // Interleaved array format: x, y, tx, ty
-    glVertexPointer(2, GL_FLOAT, sizeof(CharVertex), &vertices[0].x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(CharVertex), &vertices[0].tx);
-
-    // Draw all quads at once
-    glDrawArrays(GL_QUADS, 0, vertex_count);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    // Reset state to sync with the tracker instead of manual glDisable
-    SurfaceOpenGL::reset_state();
+    return;
   }
+
+  if (!use_gl || pchars == nullptr)
+  {
+    // Fall back to regular drawing for SDL
+    draw_chars(pchars, text, x, y, update);
+    return;
+  }
+
+  // Use cached vertices directly
+  SurfaceOpenGL* gl_impl = (pchars == chars) ? opengl_chars : opengl_shadow_chars;
+  if (!gl_impl)
+  {
+    return;
+  }
+
+  // --- HEURISTIC: Static vs Volatile Text ---
+  // If the text contains letters (A-Z, a-z), assume it is a label, menu item, or credits.
+  // These are worth caching.
+  // If the text contains ONLY numbers/symbols (0-9, :, space), assume it is a counter (Score, Time).
+  // These change too often to be worth caching and should be drawn immediately.
+  bool is_static_text = false;
+  for (char c : text)
+  {
+    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+    {
+      is_static_text = true;
+      break;
+    }
+  }
+
+  // Pointer to the vertices we will draw (either from cache or volatile buffer)
+  const std::vector<CharVertex>* vertices_to_draw = nullptr;
+
+  // Static buffer for volatile text to avoid heap allocations every frame
+  static CachedTextRun volatile_run;
+
+  if (is_static_text)
+  {
+    // --- CACHED PATH (Menus, Credits, Labels) ---
+
+    // SAFETY VALVE: Prevent unbounded cache growth.
+    // If the cache gets too big, clear it.
+    if (m_text_cache.size() > 250)
+    {
+      m_text_cache.clear();
+    }
+
+    // Use the text itself as the key. Position is handled via glTranslate.
+    const std::string& cache_key = text;
+
+    // Check if we have a cached version
+    auto it = m_text_cache.find(cache_key);
+
+    if (it == m_text_cache.end() || it->second.dirty)
+    {
+      // Cache miss or dirty - rebuild vertices
+      CachedTextRun new_run;
+      build_cached_text(pchars, text, 0, 0, new_run);
+      m_text_cache[cache_key] = std::move(new_run);
+      it = m_text_cache.find(cache_key);
+    }
+
+    vertices_to_draw = &it->second.vertices;
+  }
+  else
+  {
+    // --- VOLATILE PATH (Counters, Timers) ---
+    // Rebuild every frame into a static reusable buffer.
+    // This avoids map lookups and cache management overhead for rapidly changing numbers.
+    build_cached_text(pchars, text, 0, 0, volatile_run);
+    vertices_to_draw = &volatile_run.vertices;
+  }
+
+  if (vertices_to_draw == nullptr || vertices_to_draw->empty())
+  {
+    return;
+  }
+
+  // Ensure we start with a clean state known to the tracker
+  // Use the existing state trackers from texture.cpp
+  gl_impl->setup_gl_state(255); // Sets texture, blend, color, etc. via the tracker
+  SurfaceOpenGL::enable_vertex_arrays(); // Enables vertex arrays via the tracker
+
+  // Translate to the actual draw position
+  glPushMatrix();
+  glTranslatef((GLfloat)x, (GLfloat)y, 0.0f);
+
+  // Point directly to vertex data
+  glVertexPointer(2, GL_FLOAT, sizeof(CharVertex), &(*vertices_to_draw)[0].x);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(CharVertex), &(*vertices_to_draw)[0].tx);
+
+  // Draw all quads at once
+  glDrawArrays(GL_QUADS, 0, vertices_to_draw->size());
+
+  glPopMatrix();
+
+  // DO NOT disable client state here. Let SurfaceOpenGL::reset_state() handle it at the end of the frame.
 }
 #endif
 

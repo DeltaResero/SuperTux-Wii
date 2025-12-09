@@ -15,6 +15,8 @@
 
 #include <string>
 #include <list>
+#include <vector>
+#include <unordered_map>
 #include "texture.h"
 
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed);
@@ -41,6 +43,13 @@ enum TextVAlign
   A_BOTTOM,
 };
 
+#ifndef NOOPENGL
+struct CharVertex {
+  float x, y;
+  float tx, ty;
+} __attribute__((packed));
+#endif
+
 /* Text type */
 class Text
 {
@@ -56,6 +65,22 @@ class Text
     // Cache the result of the expensive dynamic_cast ONCE, instead of on every draw call.
     SurfaceOpenGL* opengl_chars;
     SurfaceOpenGL* opengl_shadow_chars;
+
+    // Cache structure for pre-built text geometry
+    struct CachedTextRun
+    {
+      std::string text;                    // The text string
+      int x, y;                             // Position
+      std::vector<CharVertex> vertices;     // Pre-built vertices
+      bool dirty = true;                    // Needs rebuilding?
+    };
+
+    // Cache for common HUD text (e.g., "SCORE", "COINS", "TIME")
+    // Key: "text@x,y" to handle same text at different positions
+    std::unordered_map<std::string, CachedTextRun> m_text_cache;
+
+    // Helper to build cached text
+    void build_cached_text(Surface* pchars, const std::string& text, int x, int y, CachedTextRun& run);
 #endif
 
   public:

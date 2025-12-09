@@ -150,10 +150,12 @@ public:
   int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 
   static void reset_state();
+  // Expose vertex array state management to other renderers (like Text)
+  static void enable_vertex_arrays();
+  void setup_gl_state(Uint8 alpha);
 
 private:
   void create_gl(SDL_Surface* surf, GLuint* tex);
-  void setup_gl_state(Uint8 alpha);
 };
 
 #endif

@@ -650,7 +650,7 @@ void SurfaceOpenGL::reset_state()
  * Enables client-side vertex arrays if not already enabled.
  * Called before any glDrawArrays() call.
  */
-static inline void enable_vertex_arrays()
+void SurfaceOpenGL::enable_vertex_arrays()
 {
   if (!g_vertex_array_enabled)
   {
@@ -858,7 +858,7 @@ static inline void render_textured_quad(float x, float y, float width, float hei
     0.0f, v_max
   };
 
-  enable_vertex_arrays();
+  SurfaceOpenGL::enable_vertex_arrays();
 
   glVertexPointer(2, GL_FLOAT, 0, vertices);
   glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
@@ -921,7 +921,7 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
     0.0f, static_cast<float>(this->h) / ph
   };
 
-  enable_vertex_arrays();
+  SurfaceOpenGL::enable_vertex_arrays();
 
   glVertexPointer(2, GL_FLOAT, 0, vertices);
   glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
@@ -972,7 +972,7 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
     sx / pw, (sy + h) / ph
   };
 
-  enable_vertex_arrays();
+  SurfaceOpenGL::enable_vertex_arrays();
 
   glVertexPointer(2, GL_FLOAT, 0, vertices);
   glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
