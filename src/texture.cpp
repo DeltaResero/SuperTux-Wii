@@ -30,6 +30,12 @@
 static GLuint g_current_texture = 0;
 static bool g_texture_enabled = false;
 static bool g_blend_enabled = false;
+// NEW: Track client array state
+static bool g_vertex_array_enabled = false;
+static bool g_texcoord_array_enabled = false;
+// NEW: Track blend function state
+static GLenum g_blend_src = GL_ZERO;
+static GLenum g_blend_dst = GL_ZERO;
 #endif
 
 // ----------------------------------------------------------------------------
@@ -617,12 +623,45 @@ SurfaceOpenGL::~SurfaceOpenGL()
  */
 void SurfaceOpenGL::reset_state()
 {
+  // Disable client arrays if they were enabled
+  if (g_vertex_array_enabled)
+  {
+    glDisableClientState(GL_VERTEX_ARRAY);
+    g_vertex_array_enabled = false;
+  }
+  if (g_texcoord_array_enabled)
+  {
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    g_texcoord_array_enabled = false;
+  }
+
+  // Disable standard state
   glDisable(GL_TEXTURE_2D);
   glDisable(GL_BLEND);
 
   g_current_texture = 0;
   g_texture_enabled = false;
   g_blend_enabled = false;
+  g_blend_src = GL_ZERO;
+  g_blend_dst = GL_ZERO;
+}
+
+/**
+ * Enables client-side vertex arrays if not already enabled.
+ * Called before any glDrawArrays() call.
+ */
+static inline void enable_vertex_arrays()
+{
+  if (!g_vertex_array_enabled)
+  {
+    glEnableClientState(GL_VERTEX_ARRAY);
+    g_vertex_array_enabled = true;
+  }
+  if (!g_texcoord_array_enabled)
+  {
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    g_texcoord_array_enabled = true;
+  }
 }
 
 /**
@@ -767,8 +806,15 @@ void SurfaceOpenGL::setup_gl_state(Uint8 alpha)
   if (!g_blend_enabled)
   {
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     g_blend_enabled = true;
+  }
+
+  // Only set blend func if it actually changed
+  if (g_blend_src != GL_SRC_ALPHA || g_blend_dst != GL_ONE_MINUS_SRC_ALPHA)
+  {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    g_blend_src = GL_SRC_ALPHA;
+    g_blend_dst = GL_ONE_MINUS_SRC_ALPHA;
   }
 
   glColor4ub(alpha, alpha, alpha, alpha);
@@ -812,16 +858,14 @@ static inline void render_textured_quad(float x, float y, float width, float hei
     0.0f, v_max
   };
 
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  enable_vertex_arrays();
 
   glVertexPointer(2, GL_FLOAT, 0, vertices);
   glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
 
   glDrawArrays(GL_QUADS, 0, 4);
 
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisableClientState(GL_VERTEX_ARRAY);
+  // DON'T disable here - let reset_state() handle it at frame end
 }
 
 /**
@@ -877,16 +921,12 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
     0.0f, static_cast<float>(this->h) / ph
   };
 
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  enable_vertex_arrays();
 
   glVertexPointer(2, GL_FLOAT, 0, vertices);
   glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
 
   glDrawArrays(GL_QUADS, 0, 4);
-
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisableClientState(GL_VERTEX_ARRAY);
 
   // We reset everything here to ensure subsequent draw calls start clean.
   reset_state();
@@ -932,16 +972,12 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
     sx / pw, (sy + h) / ph
   };
 
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  enable_vertex_arrays();
 
   glVertexPointer(2, GL_FLOAT, 0, vertices);
   glTexCoordPointer(2, GL_FLOAT, 0, texcoords);
 
   glDrawArrays(GL_QUADS, 0, 4);
-
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisableClientState(GL_VERTEX_ARRAY);
 
   (void)update;
   return 0;
