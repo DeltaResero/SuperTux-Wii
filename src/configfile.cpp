@@ -34,7 +34,12 @@ static void defaults()
   audio_device = true;
   use_fullscreen = true;
   show_fps = false;
+#ifdef NOOPENGL
   use_gl = false;
+#else
+  // Default to OpenGL if available as it's typically faster on most platforms
+  use_gl = true;
+#endif
   use_sound = true;
   use_music = true;
 }
@@ -102,9 +107,14 @@ void loadconfig()
   reader.read_string("video", &dummy_video_setting);
 #else
   // When OpenGL is available, read the user's preference from the config.
+  // Only update use_gl if the tag is actually present in the file.
+  // This ensures that if the user deletes their config (or has an old one),
+  // we default to OpenGL (set in defaults()) rather than falling back to SDL.
   std::string video;
-  reader.read_string("video", &video);
-  use_gl = (video == "opengl");
+  if (reader.read_string("video", &video))
+  {
+    use_gl = (video == "opengl");
+  }
 #endif
 
   reader.read_int("joystick", &joystick_num);
