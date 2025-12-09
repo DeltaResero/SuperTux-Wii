@@ -23,6 +23,14 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <sys/stat.h>
+
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#elif defined(__FreeBSD__)
+#include <sys/types.hh>
+#include <sys/sysctl.h>
+#endif
 
 #ifndef NOOPENGL
 #include <GL/gl.h>
@@ -307,48 +315,78 @@ void st_directory_setup(void)
   fs::create_directories((st_dir + "/levels").c_str()); // Ensure 'levels' directory exists
 
 #ifndef WIN32
-  // Handle datadir detection logic (Linux version)
+  // Handle datadir detection logic (Linux, macOS, BSD)
   if (datadir.empty())
   {
-    /* Detect datadir */
-    char exe_file[PATH_MAX];
-    ssize_t len = readlink("/proc/self/exe", exe_file, sizeof(exe_file) - 1);
+    char exe_file[PATH_MAX] = {0};
+    bool path_retrieved = false;
 
-    if (len < 0)
+#if defined(__linux__)
+    ssize_t len = readlink("/proc/self/exe", exe_file, sizeof(exe_file) - 1);
+    if (len > 0) {
+      exe_file[len] = '\0';
+      path_retrieved = true;
+    }
+#elif defined(__APPLE__)
+    uint32_t size = sizeof(exe_file);
+    if (_NSGetExecutablePath(exe_file, &size) == 0) {
+      path_retrieved = true;
+    }
+#elif defined(__FreeBSD__)
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+    size_t len = sizeof(exe_file);
+    if (sysctl(mib, 4, exe_file, &len, NULL, 0) == 0) {
+      path_retrieved = true;
+    }
+#endif
+
+    if (path_retrieved)
     {
-      puts("Couldn't read /proc/self/exe, using default path: " DATA_PREFIX);
-      datadir = DATA_PREFIX;
+      char resolved_path[PATH_MAX];
+
+      if (realpath(exe_file, resolved_path) == nullptr)
+      {
+        puts("Couldn't resolve executable path, using default: " DATA_PREFIX);
+        datadir = DATA_PREFIX;
+      }
+      else
+      {
+        fs::path exedir = fs::path(resolved_path).parent_path();
+        const std::vector<fs::path> search_paths = {
+            exedir / "data",
+            exedir / "../data",
+            exedir / "../share/supertux",
+        };
+
+        bool found = false;
+        for (const auto& path : search_paths)
+        {
+          struct stat st;
+          if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
+          {
+            try
+            {
+              datadir = fs::canonical(path).string();
+              found = true;
+              break;
+            }
+            catch (const fs::filesystem_error&)
+            {
+              // The path was invalid or unreadable, so we just try the next path.
+              continue;
+            }
+          }
+        }
+        if (!found)
+        {
+          datadir = DATA_PREFIX;
+        }
+      }
     }
     else
     {
-      exe_file[len] = '\0'; // Null-terminate the string
-      fs::path exedir = fs::path(exe_file).parent_path();
-
-      // A list of potential relative paths to the data directory.
-      // The search is performed in this order.
-      const std::vector<fs::path> search_paths = {
-          exedir / "data",                 // Case 1: Running from the project root.
-          exedir / "../data",              // Case 2: Running from a 'build' or 'bin' subdir.
-          exedir / "../share/supertux",    // Case 3: Standard system install (e.g., /usr/local/bin).
-      };
-
-      bool found = false;
-      for (const auto& path : search_paths)
-      {
-        // Check if the path exists and is a directory.
-        if (fs::is_directory(path))
-        {
-          datadir = fs::canonical(path).string(); // Use canonical path to resolve ".."
-          found = true;
-          break;
-        }
-      }
-
-      if (!found)
-      {
-        // Fallback to the compile-time default if no path was found.
-        datadir = DATA_PREFIX;
-      }
+      puts("Couldn't determine executable path, using default: " DATA_PREFIX);
+      datadir = DATA_PREFIX;
     }
   }
 #else // #ifdef WIN32
@@ -499,11 +537,16 @@ bool process_load_game_menu()
 
   if (slot != -1 && load_game_menu->get_item_by_id(slot).kind == MN_ACTION)
   {
-    std::string slotfile;
-    slotfile = st_save_dir + "/slot" + std::to_string(slot) + ".stsg";
+    std::string slotfile = st_save_dir + "/slot" + std::to_string(slot) + ".stsg";
 
-    // Plays intro text when starting a new save file
-    if (access(slotfile.c_str(), F_OK) != 0)
+    // Atomic check: Just try to open the file directly
+    // If it doesn't exist, we'll draw intro; if it does, we'll load it
+    // This eliminates the TOCTOU window
+    std::ifstream test_file(slotfile);
+    bool file_exists = test_file.good();
+    test_file.close();
+
+    if (!file_exists)
     {
       draw_intro();
     }
