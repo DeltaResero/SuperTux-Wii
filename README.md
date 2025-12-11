@@ -6,7 +6,7 @@
 
 ### Wii port of the free open source game SuperTux Classic (Milestone 1)
 
-```
+```text
 Ported by: scanff & Arikado
 Updated by: DeltaResero
 Type: Platform game
@@ -14,11 +14,20 @@ Version: 0.1.4-wii-d.4
 Software license: GPLv3+
 ```
 
-[![Latest Release](https://img.shields.io/github/v/release/DeltaResero/SuperTux-Wii?label=Latest%20Release)](https://github.com/DeltaResero/SuperTux-Wii/releases/latest)
-[![View All Releases](https://img.shields.io/badge/Downloads-View_All_Releases-blue)](https://github.com/DeltaResero/SuperTux-Wii/releases)
-[![License](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f)](
-https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Latest Release][release-img]][release-url]
+[![View All Releases][downloads-img]][downloads-url]
+[![License][license-img]][license-url]
+[![Codacy Badge][codacy-img]][codacy-url]
+
+<!-- Link Definitions -->
+[release-img]: https://img.shields.io/github/v/release/DeltaResero/SuperTux-Wii?label=Latest%20Release
+[release-url]: https://github.com/DeltaResero/SuperTux-Wii/releases/latest
+[downloads-img]: https://img.shields.io/badge/Downloads-View_All_Releases-blue
+[downloads-url]: https://github.com/DeltaResero/SuperTux-Wii/releases
+[license-img]: https://img.shields.io/badge/license-GPLv3+-blue.svg
+[license-url]: https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE
+[codacy-img]: https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f
+[codacy-url]: https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
 
 <br>
 
@@ -50,10 +59,58 @@ other collectibles along the way.
 
 <br>
 
-### How to Build: Wii Homebrew Build
+### Setup Guide for devkitPro PowerPC Build System
 
-If you don't have the devkitPPC toolchain set up yet, see the section
-"devkitPro PowerPC Build System Setup Guide" first.
+To set up the devkitPro devkitPPC PowerPC build system, follow the
+instructions on the official devkitPro wiki:
+
+- [Getting Started with devkitPro](https://devkitpro.org/wiki/Getting_Started)
+- [devkitPro Pacman](https://devkitpro.org/wiki/devkitPro_pacman)
+
+After setting up devkitPPC including environment variables, use (dkp-)pacman
+to install the following dependencies:
+
+**Build Tools (Required):**
+```
+wii-cmake
+wii-pkg-config
+```
+
+**Core Libraries (Required):**
+```
+libogc
+libfat-ogc
+wii-sdl
+wii-sdl_image
+wii-sdl_mixer
+```
+
+**Graphics & Compression:**
+```
+ppc-libpng
+ppc-libjpeg-turbo
+ppc-freetype
+ppc-zlib
+```
+
+**Audio Codecs (Required for Audio):**
+```
+wii-libmodplug
+ppc-libvorbis
+ppc-libogg
+ppc-libmad
+```
+
+**OpenGL/OpenGX Backend (Optional but Recommended):**
+```
+wii-freeglut
+wii-glu
+wii-opengx
+```
+
+<br>
+
+### How to Build: Wii Homebrew Build
 
 1. Create a build directory:
    ```bash
@@ -65,12 +122,12 @@ If you don't have the devkitPPC toolchain set up yet, see the section
 
    **Option A: Build with OpenGL/OpenGX (Recommended)**
    ```bash
-   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/WiiToolchain.cmake ..
+   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/Wii.cmake ..
    ```
 
    **Option B: Build with SDL only (No OpenGL)**
    ```bash
-   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/WiiToolchain.cmake -DENABLE_OPENGL=OFF ..
+   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/Wii.cmake -DENABLE_OPENGL=OFF ..
    ```
 
 3. Build the game:
@@ -98,62 +155,53 @@ If you don't have the devkitPPC toolchain set up yet, see the section
 
 <br>
 
-### Setup Guide for devkitPro PowerPC Build System
-
-To set up the devkitPro devkitPPC PowerPC build system, follow the
-instructions on the official devkitPro wiki:
-
-- [Getting Started with devkitPro](https://devkitpro.org/wiki/Getting_Started)
-- [devkitPro Pacman](https://devkitpro.org/wiki/devkitPro_pacman)
-
-After setting up devkitPPC including environment variables, use (dkp-)pacman
-to install the following dependencies:
-
-**Core Libraries (Required):**
-```
-libogc
-libfat-ogc
-wii-sdl
-wii-sdl_image
-wii-sdl_mixer
-```
-
-**Audio Codecs (Required for Audio):**
-```
-wii-libmodplug
-ppc-libvorbis
-ppc-libogg
-ppc-libmad
-```
-
-**OpenGL/OpenGX Backend (Optional but Recommended):**
-```
-wii-freeglut
-wii-glu
-wii-opengx
-```
-
-<br>
-
 ### How to Build: Desktop Linux (Testing/Unsupported)
 
-1. Create a build directory:
+1. Install Dependencies:
+   You will need the following build tools. For the libraries listed below, ensure you install the **development headers** (often ending in `-dev` or `-devel`).
+
+   **Build Tools:**
+   ```
+   C++20 Compiler (GCC 10+ or Clang 10+)
+   CMake
+   ```
+
+   **SDL 1.2 Framework:**
+   ```
+   SDL 1.2 (or sdl12-compat)
+   SDL_image 1.2
+   SDL_mixer 1.2
+   ```
+
+   **Core Libraries:**
+   ```
+   libpng
+   libjpeg
+   zlib
+   ```
+
+   **Graphics (Optional):**
+   ```
+   OpenGL
+   ```
+
+2. Create a build directory:
    ```bash
    mkdir build_linux
    cd build_linux
    ```
 
-2. Configure for desktop:
+3. Configure for desktop:
    ```bash
    cmake ..
    ```
 
-3. Build:
+4. Build:
    ```bash
    make -j$(nproc)
    ```
 
-4. Run (Portable Mode):
+5. Run (Portable Mode):
    The build process automatically creates a portable folder named `supertux-wii` inside `build/dist/` containing the executable and data.
    ```bash
    cd dist/supertux-wii
@@ -165,6 +213,10 @@ While `sudo make install` is supported by CMake, it is **not recommended** for t
 files directly to your system directories this way without using a package manager makes them very difficult
 to uninstall cleanly later. We strongly recommend using the portable method above for testing.
 
+**Note on Other Operating Systems:**
+Support for other platforms (Windows, macOS, BSD) is currently outside the scope of this repository, as the
+primary focus is the Wii hardware. Given the standard CMake infrastructure, adapting the build system for
+other platforms should be fairly trivial.
 <br>
 
 ### Disclaimer

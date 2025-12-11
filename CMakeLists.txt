@@ -12,18 +12,18 @@
 cmake_minimum_required(VERSION 3.13)
 project(SuperTux-Wii VERSION 0.1.4 LANGUAGES C CXX)
 
+# Build Type Configuration
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
 # Enforce C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# --- Build Type Configuration ---
-# Default to Release if not specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-endif()
-
-# --- Options ---
+# Options
 option(ENABLE_WII "Build for Wii" OFF)
 option(ENABLE_OPENGL "Enable OpenGL support" ON)
 
@@ -32,99 +32,128 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "powerpc")
   set(ENABLE_WII ON)
 endif()
 
-# --- Source Files ---
+# Source Files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
 file(GLOB_RECURSE HEADERS "src/*.hpp" "src/*.h")
 
-
-# --- Dependencies ---
+# ============================================================================
+# Platform-Specific Configuration
+# ============================================================================
 
 if(ENABLE_WII)
-  message(STATUS "Configuring for Wii (${CMAKE_BUILD_TYPE})...")
-  
-  # Wii-specific definitions
   add_definitions(-D_WII_ -DGEKKO)
 
-  # Common Wii Architecture Flags
-  set(WII_ARCH_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float -D_WII_ -DGEKKO")
+  # Helper macro to find library and print status
+  macro(wii_find_lib VAR NAME)
+    find_library(${VAR} ${NAME} REQUIRED)
+    message(STATUS "Found ${NAME}: ${${VAR}}")
+  endmacro()
 
-  # Configure Flags based on Build Type
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # Debug: Symbols enabled, Optimization off, In-game Debug enabled
-    set(CMAKE_C_FLAGS "-g -O0 -Wall ${WII_ARCH_FLAGS} -DDEBUG" CACHE STRING "" FORCE)
-    set(CMAKE_CXX_FLAGS "-g -O0 -Wall ${WII_ARCH_FLAGS} -DDEBUG" CACHE STRING "" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS "-g ${WII_ARCH_FLAGS} -Wl,-Map,${CMAKE_PROJECT_NAME}.map" CACHE STRING "" FORCE)
+  # System Libraries (OGC/Wii)
+  wii_find_lib(AESND_LIB aesnd)
+  wii_find_lib(FAT_LIB fat)
+  wii_find_lib(WIIUSE_LIB wiiuse)
+  wii_find_lib(BTE_LIB bte)
+  wii_find_lib(WIIKEYBOARD_LIB wiikeyboard)
+  wii_find_lib(OGC_LIB ogc)
+
+  # Port Libraries (via PkgConfig)
+  find_package(PkgConfig REQUIRED)
+
+  # Helper macro to check pkg-config and print version
+  macro(wii_check_pkg PREFIX MODULE)
+    pkg_check_modules(${PREFIX} REQUIRED ${MODULE} IMPORTED_TARGET)
+    if(${PREFIX}_VERSION)
+      message(STATUS "Found ${MODULE}: ${${PREFIX}_VERSION}")
+    else()
+      message(STATUS "Found ${MODULE}: (version unknown)")
+    endif()
+  endmacro()
+
+  # Graphics & Core
+  wii_check_pkg(SDL sdl)
+  wii_check_pkg(SDL_IMAGE SDL_image)
+  wii_check_pkg(FREETYPE freetype2)
+  wii_check_pkg(PNG libpng)
+  wii_check_pkg(JPEG libjpeg)
+  wii_check_pkg(ZLIB zlib)
+
+  # Audio (SDL_mixer + Codecs)
+  wii_check_pkg(SDL_MIXER SDL_mixer)
+  
+  # Group codecs into one check
+  pkg_check_modules(CODECS REQUIRED libmodplug vorbisfile vorbis ogg mad IMPORTED_TARGET)
+  message(STATUS "Found Audio Codecs: modplug, vorbis, ogg, mad")
+
+  # OpenGL (Optional)
+  if(ENABLE_OPENGL)
+    wii_find_lib(GLU_LIB GLU)
+    wii_find_lib(GLUT_LIB glut)
+    wii_find_lib(OPENGX_LIB opengx)
+    set(RENDERER_STATUS "OpenGL (OpenGX)")
   else()
-    # Release: Max Optimization, LTO enabled, No debug symbols
-    set(CMAKE_C_FLAGS "-O3 -Wall -flto ${WII_ARCH_FLAGS}" CACHE STRING "" FORCE)
-    set(CMAKE_CXX_FLAGS "-O3 -Wall -flto ${WII_ARCH_FLAGS}" CACHE STRING "" FORCE)
-    set(CMAKE_EXE_LINKER_FLAGS "-flto ${WII_ARCH_FLAGS} -Wl,-Map,${CMAKE_PROJECT_NAME}.map" CACHE STRING "" FORCE)
+    add_definitions(-DNOOPENGL)
+    set(RENDERER_STATUS "Software (SDL)")
   endif()
 
-  # Include Paths
-  include_directories(SYSTEM
+  # Build Target
+  add_executable(${PROJECT_NAME}.elf ${SOURCES} ${HEADERS})
+  
+  # Include directories (PkgConfig handles lib includes automatically)
+  target_include_directories(${PROJECT_NAME}.elf PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    $ENV{DEVKITPRO}/libogc/include
-    $ENV{DEVKITPRO}/portlibs/wii/include
-    $ENV{DEVKITPRO}/portlibs/wii/include/SDL
-    $ENV{DEVKITPRO}/portlibs/wii/include/GL
-    $ENV{DEVKITPRO}/portlibs/ppc/include
   )
-
-  # Link Directories
-  link_directories(
-    $ENV{DEVKITPRO}/libogc/lib/wii
-    $ENV{DEVKITPRO}/portlibs/wii/lib
-    $ENV{DEVKITPRO}/portlibs/ppc/lib
-  )
-
-  # Wii Specific Libraries
-  set(PLATFORM_LIBS
-    # --- NOTE: For Future SDL2 Upgrade ---
-    # When upgrading to wii-sdl2_mixer, swap '-lvorbisfile -lvorbis' for '-lvorbisidec'
-    # (SDL2 uses integer-based vorbisidec/tremor; current SDL 1.2 uses standard float-based vorbis)
-    -lSDL_mixer
-    -lSDL_image
-    -lmodplug
-    -lvorbisfile
-    -lvorbis
-    -logg
-    -lmad
-    -ljpeg
-    -lpng
-    -lSDLmain
-    -lSDL
-    -laesnd
-    -lfreetype
-    -lz
-    -lfat
-    -lwiiuse
-    -lbte
-    -lwiikeyboard
-    -logc
-    -lm
+  
+  # Link libraries
+  target_link_libraries(${PROJECT_NAME}.elf PRIVATE
+    PkgConfig::SDL_MIXER
+    PkgConfig::SDL_IMAGE
+    PkgConfig::CODECS
+    PkgConfig::JPEG
+    PkgConfig::PNG
+    PkgConfig::SDL
+    PkgConfig::FREETYPE
+    PkgConfig::ZLIB
+    ${AESND_LIB}
+    ${FAT_LIB}
+    ${WIIUSE_LIB}
+    ${BTE_LIB}
+    ${WIIKEYBOARD_LIB}
+    ${OGC_LIB}
+    m
   )
 
   if(ENABLE_OPENGL)
-    set(PLATFORM_LIBS -lGLU -lglut -lopengx ${PLATFORM_LIBS})
-  else()
-    add_definitions(-DNOOPENGL)
+    target_link_libraries(${PROJECT_NAME}.elf PRIVATE 
+      ${GLU_LIB} 
+      ${GLUT_LIB} 
+      ${OPENGX_LIB}
+    )
   endif()
 
-  # Add the executable
-  add_executable(${PROJECT_NAME}.elf ${SOURCES} ${HEADERS})
-  
-  # Link libraries
-  target_link_libraries(${PROJECT_NAME}.elf ${PLATFORM_LIBS})
+  # Compile options
+  target_compile_options(${PROJECT_NAME}.elf PRIVATE
+    -Wall
+    $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
+    $<$<CONFIG:Release>:-O3 -flto>
+  )
+
+  # Link options
+  target_link_options(${PROJECT_NAME}.elf PRIVATE
+    -Wl,-Map,${CMAKE_PROJECT_NAME}.map
+    $<$<CONFIG:Release>:-flto>
+  )
 
   # Post-build: Convert ELF to DOL
   add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
-    COMMAND $ENV{DEVKITPRO}/tools/bin/elf2dol ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.elf ${CMAKE_CURRENT_BINARY_DIR}/boot.dol
+    COMMAND ${DEVKITPRO}/tools/bin/elf2dol 
+            $<TARGET_FILE:${PROJECT_NAME}.elf>
+            ${CMAKE_CURRENT_BINARY_DIR}/boot.dol
     COMMENT "Converting ELF to DOL..."
+    VERBATIM
   )
 
-  # Post-build: Create distribution folder (apps/supertux)
-  # Copies boot.dol, data/, icon.png, and meta.xml
+  # Post-build: Create Homebrew Channel structure
   add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/boot.dol ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/boot.dol
@@ -132,12 +161,14 @@ if(ENABLE_WII)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/wii/icon.png ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/icon.png
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/wii/meta.xml ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/meta.xml
     COMMENT "Creating Homebrew structure in build/apps/supertux..."
+    VERBATIM
   )
 
 else()
-  # --- Desktop Linux/Windows Build ---
-  message(STATUS "Configuring for Desktop (${CMAKE_BUILD_TYPE})...")
-
+  # ============================================================================
+  # Desktop Linux/Windows Build
+  # ============================================================================
+  
   # Find SDL dependencies
   find_package(SDL REQUIRED)
   find_package(SDL_image REQUIRED)
@@ -148,20 +179,12 @@ else()
   find_package(PNG REQUIRED)
   find_package(JPEG REQUIRED)
   
-  include_directories(
-    ${SDL_INCLUDE_DIR} 
-    ${SDL_IMAGE_INCLUDE_DIRS} 
-    ${SDL_MIXER_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
-    ${PNG_INCLUDE_DIRS}
-    ${JPEG_INCLUDE_DIRS}
-  )
-
   if(ENABLE_OPENGL)
     find_package(OpenGL REQUIRED)
-    include_directories(${OPENGL_INCLUDE_DIR})
+    set(RENDERER_STATUS "OpenGL")
   else()
     add_definitions(-DNOOPENGL)
+    set(RENDERER_STATUS "Software (SDL)")
   endif()
 
   add_definitions(-DDATA_PREFIX="${CMAKE_INSTALL_PREFIX}/share/supertux")
@@ -171,7 +194,21 @@ else()
   # Force lowercase executable name (standard on Linux/Unix)
   set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "supertux-wii")
 
-  target_link_libraries(${PROJECT_NAME} 
+  target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${SDL_INCLUDE_DIR}
+    ${SDL_IMAGE_INCLUDE_DIRS}
+    ${SDL_MIXER_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+    ${PNG_INCLUDE_DIRS}
+    ${JPEG_INCLUDE_DIRS}
+  )
+  
+  if(ENABLE_OPENGL)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${OPENGL_INCLUDE_DIR})
+  endif()
+
+  target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SDL_LIBRARY} 
     ${SDL_IMAGE_LIBRARIES} 
     ${SDL_MIXER_LIBRARIES}
@@ -181,33 +218,53 @@ else()
   )
 
   if(ENABLE_OPENGL)
-    target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
   endif()
 
-  # Post-build: Create portable distribution folder (dist/supertux-wii)
-  # Copies executable and data/ into a clean folder
+  # Post-build: Create portable distribution folder
   add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/$<TARGET_FILE_NAME:${PROJECT_NAME}>
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/data
     COMMENT "Creating portable build structure in build/dist/supertux-wii..."
+    VERBATIM
   )
 
   # Linux/BSD Specifics (Icons/Desktop files)
   if(UNIX AND NOT APPLE)
-    # Copy desktop files to portable folder
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.png ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.png
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.desktop ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.desktop
       COMMENT "Adding desktop integration files..."
+      VERBATIM
     )
-
-    # Install Linux desktop files (Optional system install)
+    
     install(TARGETS ${PROJECT_NAME} DESTINATION bin)
     install(FILES packaging/linux/supertux.desktop DESTINATION share/applications)
     install(FILES packaging/linux/supertux.png DESTINATION share/pixmaps)
     install(DIRECTORY data/ DESTINATION share/supertux)
   endif()
+endif()
+
+# ============================================================================
+# Configuration Summary
+# ============================================================================
+message(STATUS "")
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "Configuration Summary")
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "Project           : ${PROJECT_NAME} ${PROJECT_VERSION}")
+message(STATUS "System            : ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_PROCESSOR})")
+message(STATUS "Build Type        : ${CMAKE_BUILD_TYPE}")
+message(STATUS "Renderer          : ${RENDERER_STATUS}")
+if(ENABLE_WII)
+  message(STATUS "Toolchain         : devkitPPC")
+endif()
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "")
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(WARNING "You are building in DEBUG mode. Performance will be significantly impacted. Use -DCMAKE_BUILD_TYPE=Release for gameplay.")
 endif()
 
 # EOF
