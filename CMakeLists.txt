@@ -263,8 +263,4 @@ endif()
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  message(WARNING "You are building in DEBUG mode. Performance will be significantly impacted. Use -DCMAKE_BUILD_TYPE=Release for gameplay.")
-endif()
-
 # EOF
