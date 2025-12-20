@@ -16,8 +16,8 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #ifndef NOOPENGL
 #include "texture.h"
@@ -33,6 +33,11 @@
 #include "screen.h"
 #include "setup.h"
 #include "type.h"
+
+// Global Screen Resources
+SDL_Window* window = nullptr;
+SDL_Renderer* renderer = nullptr;
+// use_gl is already defined in globals.cpp
 
 // Utility macros for sign and absolute value
 #define SGN(x) ((x) > 0 ? 1 : ((x) == 0 ? 0 : (-1)))
@@ -137,7 +142,7 @@ void swapOpenGLBuffers()
   // context. We reset our tracker here to be safe and ensure the next
   // frame starts with a known state.
   SurfaceOpenGL::reset_state();
-  SDL_GL_SwapBuffers();
+  SDL_GL_SwapWindow(window);
 }
 
 #endif // NOOPENGL
@@ -158,7 +163,8 @@ void clearscreen(int r, int g, int b)
     return;
   }
 #endif
-  SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, r, g, b));
+  SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+  SDL_RenderClear(renderer);
 }
 
 /* --- DRAWS A VERTICAL GRADIENT --- */
@@ -241,25 +247,10 @@ void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
  */
 void drawpixel(int x, int y, Uint32 pixel)
 {
-  if (SDL_MUSTLOCK(screen))
-  {
-    if (SDL_LockSurface(screen) < 0)
-    {
-      std::cerr << "Can't lock screen: " << SDL_GetError() << std::endl;
-      return;
-    }
-  }
-
-  if (x >= 0 && y >= 0 && x < screen->w && y < screen->h)
-  {
-    putpixel(screen, x, y, pixel);
-  }
-
-  if (SDL_MUSTLOCK(screen))
-  {
-    SDL_UnlockSurface(screen);
-  }
-  SDL_Flip(screen);
+  // Unused in this port and incompatible with SDL_Renderer via direct surface access
+  (void)x;
+  (void)y;
+  (void)pixel;
 }
 
 /* --- DRAW LINE --- */
@@ -281,47 +272,8 @@ void drawline(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
     return;
   }
 #endif
-  int lg_delta = x2 - x1;
-  int sh_delta = y2 - y1;
-  int lg_step = SGN(lg_delta);
-  int sh_step = SGN(sh_delta);
-  lg_delta = ABS(lg_delta);
-  sh_delta = ABS(sh_delta);
-
-  Uint32 color = SDL_MapRGBA(screen->format, r, g, b, a);
-
-  // Choose the dominant direction (x or y) to determine the step increments
-  int cycle = (sh_delta < lg_delta) ? (lg_delta >> 1) : (sh_delta >> 1);
-
-  if (sh_delta < lg_delta)
-  {
-    while (x1 != x2)
-    {
-      drawpixel(x1, y1, color);
-      cycle += sh_delta;
-      if (cycle > lg_delta)
-      {
-        cycle -= lg_delta;
-        y1 += sh_step;
-      }
-      x1 += lg_step;
-    }
-  }
-  else
-  {
-    while (y1 != y2)
-    {
-      drawpixel(x1, y1, color);
-      cycle += lg_delta;
-      if (cycle > sh_delta)
-      {
-        cycle -= lg_delta;
-        x1 += lg_step;
-      }
-      y1 += sh_step;
-    }
-  }
-  drawpixel(x1, y1, color);  // Draw the final pixel
+  SDL_SetRenderDrawColor(renderer, r, g, b, a);
+  SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
 }
 
 /* --- FILL A RECTANGLE --- */
@@ -362,23 +314,16 @@ void fillrect(float x, float y, float w, float h, int r, int g, int b, int a)
     return;
   }
 #endif
-  SDL_Rect rect = {static_cast<Sint16>(ix), static_cast<Sint16>(iy), static_cast<Uint16>(iw), static_cast<Uint16>(ih)};
-  SDL_Surface *temp = nullptr;
+  SDL_Rect rect = {static_cast<int>(ix), static_cast<int>(iy), static_cast<int>(iw), static_cast<int>(ih)};
+
+  SDL_SetRenderDrawColor(renderer, r, g, b, a);
+  if (a != 255)
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+  SDL_RenderFillRect(renderer, &rect);
 
   if (a != 255)
-  {
-    temp = SDL_CreateRGBSurface(screen->flags, rect.w, rect.h, screen->format->BitsPerPixel,
-                                screen->format->Rmask, screen->format->Gmask, screen->format->Bmask, screen->format->Amask);
-
-    SDL_FillRect(temp, NULL, SDL_MapRGB(screen->format, r, g, b));
-    SDL_SetAlpha(temp, SDL_SRCALPHA, a);
-    SDL_BlitSurface(temp, NULL, screen, &rect);
-    SDL_FreeSurface(temp);
-  }
-  else
-  {
-    SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, r, g, b));
-  }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
 /* --- FLIP SCREEN --- */
@@ -395,7 +340,7 @@ void flipscreen()
     return;
   }
 #endif
-  SDL_Flip(screen);
+  SDL_RenderPresent(renderer);
 }
 
 /* --- FADE OUT SCREEN --- */
@@ -419,7 +364,7 @@ void update_rect(SDL_Surface *scr, Sint32 x, Sint32 y, Sint32 w, Sint32 h)
 {
   if (!use_gl)
   {
-    SDL_UpdateRect(scr, x, y, w, h);
+    SDL_RenderPresent(renderer);
   }
 }
 

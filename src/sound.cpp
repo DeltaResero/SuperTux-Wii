@@ -11,7 +11,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include <SDL_mixer.h>
+#include <SDL2/SDL_mixer.h>
 #include "defines.h"
 #include "globals.h"
 #include "sound.h"

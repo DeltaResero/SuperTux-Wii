@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_PLAYER_H
 #define SUPERTUX_PLAYER_H
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <vector>
 #include "type.h"
 #include "timer.h"
@@ -131,7 +131,7 @@ public:
 
 public:
   void init();                              // Initializes player state for a new level
-  int key_event(SDLKey key, int state);     // Processes a keyboard event
+  int key_event(SDL_Keycode key, int state);     // Processes a keyboard event
   void level_begin();                       // Resets player state for a level loop (e.g., in menu demo)
   void action(float frame_ratio);          // Main update function, called once per frame
   void updatePhysics(float deltaTime);

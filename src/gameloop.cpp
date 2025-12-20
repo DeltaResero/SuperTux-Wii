@@ -22,7 +22,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <time.h>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -166,6 +166,7 @@ void GameSession::levelintro(void)
 {
   music_manager->halt_music();
 
+  clearscreen(0, 0, 0); // Clear screen to prevent ghosting
   get_level()->draw_bg();
 
   gold_text->drawf(world->get_level()->name, 0, 200, A_HMIDDLE, A_TOP, 1);
@@ -218,11 +219,11 @@ void GameSession::on_escape_press()
   {
     // Reset key states to avoid control bugs
     Player& tux = *world->get_tux();
-    tux.key_event((SDLKey) keymap.jump,  UP);
-    tux.key_event((SDLKey) keymap.duck,  UP);
-    tux.key_event((SDLKey) keymap.left,  UP);
-    tux.key_event((SDLKey) keymap.right, UP);
-    tux.key_event((SDLKey) keymap.fire,  UP);
+    tux.key_event((SDL_Keycode) keymap.jump,  UP);
+    tux.key_event((SDL_Keycode) keymap.duck,  UP);
+    tux.key_event((SDL_Keycode) keymap.left,  UP);
+    tux.key_event((SDL_Keycode) keymap.right, UP);
+    tux.key_event((SDL_Keycode) keymap.fire,  UP);
 
     Menu::set_current(game_menu);
     Ticks::pause_start();
@@ -278,7 +279,7 @@ void GameSession::process_events()
     last_x_pos = tux.base.x;
 
     SDL_Event event;
-    while (SDL_PollEvent(&event))
+    while (st_poll_event(&event))
     {
       // Handle menu events during the end sequence
       if (Menu::current())
@@ -334,7 +335,7 @@ void GameSession::process_events()
     }
 
     SDL_Event event;
-    while (SDL_PollEvent(&event))
+    while (st_poll_event(&event))
     {
       if (Menu::current())
       {
@@ -817,7 +818,7 @@ GameSession::ExitStatus GameSession::run()
 
   // Eat unneeded events
   SDL_Event event;
-  while (SDL_PollEvent(&event))
+  while (st_poll_event(&event))
   {}
 
   draw();
@@ -975,6 +976,7 @@ void GameSession::drawstatus()
  */
 void GameSession::drawresultscreen()
 {
+  clearscreen(0, 0, 0); // Clear screen to prevent ghosting
   get_level()->draw_bg();
 
   blue_text->drawf("Result:", 0, 200, A_HMIDDLE, A_TOP, 1);

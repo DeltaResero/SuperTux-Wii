@@ -868,7 +868,7 @@ void WorldMap::get_input()
   input_direction = D_NONE;
 
   SDL_Event event;
-  while (SDL_PollEvent(&event))
+  while (st_poll_event(&event))
   {
     if (Menu::current())
     {
@@ -912,21 +912,21 @@ void WorldMap::get_input()
 
   if (!Menu::current())
   {
-    Uint8* keystate = SDL_GetKeyState(NULL);
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
 
-    if (keystate[SDLK_LEFT])
+    if (keystate[SDL_SCANCODE_LEFT])
     {
       input_direction = D_WEST;
     }
-    else if (keystate[SDLK_RIGHT])
+    else if (keystate[SDL_SCANCODE_RIGHT])
     {
       input_direction = D_EAST;
     }
-    else if (keystate[SDLK_UP])
+    else if (keystate[SDL_SCANCODE_UP])
     {
       input_direction = D_NORTH;
     }
-    else if (keystate[SDLK_DOWN])
+    else if (keystate[SDL_SCANCODE_DOWN])
     {
       input_direction = D_SOUTH;
     }
@@ -1262,6 +1262,11 @@ void WorldMap::draw(const Point& offset)
     glClear(GL_COLOR_BUFFER_BIT);
   }
 #endif
+  // Also clear for SDL renderer to prevent ghosting
+  if (!use_gl)
+  {
+    clearscreen(0, 0, 0);
+  }
 
   // Determine the range of tiles visible on the screen
   int x_start = -offset.x / 32;

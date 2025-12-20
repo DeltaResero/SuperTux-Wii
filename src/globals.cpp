@@ -136,7 +136,7 @@ int wait_for_event(SDL_Event& event, unsigned int min_delay, unsigned int max_de
 
   if (empty_events)
   {
-    while (SDL_PollEvent(&event))
+    while (st_poll_event(&event))
     {}
   }
 
@@ -144,7 +144,7 @@ int wait_for_event(SDL_Event& event, unsigned int min_delay, unsigned int max_de
 
   for (i = 0; maxdelay.check() || !i; ++i)
   {
-    while (SDL_PollEvent(&event))
+    while (st_poll_event(&event))
     {
       if (!mindelay.check())
       {
@@ -205,6 +205,173 @@ void draw_player_hud()
       tux_life->draw(545 + (18 * i), 20 + offset_y);
     }
   }
+}
+
+void st_wii_input_init()
+{
+#ifdef _WII_
+  WPAD_Init();
+  // Enable all buttons and accelerometer for all connected controllers
+  WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+#endif
+}
+
+/**
+ * Custom event polling wrapper to handle Wii Remote input directly.
+ * Standard SDL2 on Wii sometimes "cooks" events into mouse inputs or misses
+ * them. This injects raw WPAD events as standard SDL Joystick events.
+ */
+int st_poll_event(SDL_Event *event)
+{
+#ifdef _WII_
+
+  static uint8_t last_hat = SDL_HAT_CENTERED;
+  static SDL_Event queue[32]; // Small buffer for injected events
+  static int queue_head = 0;
+  static int queue_tail = 0;
+
+  // First, drain our injected queue
+  if (queue_head != queue_tail)
+  {
+    *event = queue[queue_head];
+    queue_head = (queue_head + 1) % 32;
+    return 1;
+  }
+
+  // Poll native Wii input
+  WPAD_ScanPads();
+  uint32_t buttons_down = WPAD_ButtonsDown(0);
+  uint32_t buttons_up = WPAD_ButtonsUp(0);
+  uint32_t buttons_held = WPAD_ButtonsHeld(0);
+
+  // Mapping Wii Remote buttons to SDL Joystick Buttons
+  // 0: A
+  // 1: B
+  // 2: 1
+  // 3: 2
+  // 4: Minus
+  // 5: Plus
+  // 6: Home
+  struct ButtonMap {
+    uint32_t wpad_btn;
+    uint8_t sdl_btn;
+  };
+
+  ButtonMap bmap[] = {
+      {WPAD_BUTTON_A, 0},    {WPAD_BUTTON_B, 1},     {WPAD_BUTTON_1, 2},
+      {WPAD_BUTTON_2, 3},    {WPAD_BUTTON_MINUS, 4}, {WPAD_BUTTON_PLUS, 5},
+      {WPAD_BUTTON_HOME, 6},
+  };
+
+  for (auto &bm : bmap)
+  {
+    if (buttons_down & bm.wpad_btn)
+    {
+      SDL_Event e;
+      e.type = SDL_JOYBUTTONDOWN;
+      e.jbutton.which = 0;
+      e.jbutton.button = bm.sdl_btn;
+      e.jbutton.state = SDL_PRESSED;
+      queue[queue_tail] = e;
+      queue_tail = (queue_tail + 1) % 32;
+    }
+    if (buttons_up & bm.wpad_btn)
+    {
+      SDL_Event e;
+      e.type = SDL_JOYBUTTONUP;
+      e.jbutton.which = 0;
+      e.jbutton.button = bm.sdl_btn;
+      e.jbutton.state = SDL_RELEASED;
+      queue[queue_tail] = e;
+      queue_tail = (queue_tail + 1) % 32;
+    }
+  }
+
+  // Handle D-Pad as Hat
+  uint8_t hat = SDL_HAT_CENTERED;
+  if (buttons_held & WPAD_BUTTON_UP)
+    hat |= SDL_HAT_UP;
+  if (buttons_held & WPAD_BUTTON_DOWN)
+    hat |= SDL_HAT_DOWN;
+  if (buttons_held & WPAD_BUTTON_LEFT)
+    hat |= SDL_HAT_LEFT;
+  if (buttons_held & WPAD_BUTTON_RIGHT)
+    hat |= SDL_HAT_RIGHT;
+
+  if (hat != last_hat) {
+    SDL_Event e;
+    e.type = SDL_JOYHATMOTION;
+    e.jhat.which = 0;
+    e.jhat.hat = 0;
+    e.jhat.value = hat;
+    queue[queue_tail] = e;
+    queue_tail = (queue_tail + 1) % 32;
+    last_hat = hat;
+  }
+
+  // Handle Nunchuk Analog Stick
+  WPADData *wd = WPAD_Data(0);
+  if (wd->exp.type == WPAD_EXP_NUNCHUK)
+  {
+    static int16_t last_x = 0;
+    static int16_t last_y = 0;
+
+    // Get raw position and subtract center to get centered value (-128 to +127
+    // range)
+    int raw_x = wd->exp.nunchuk.js.pos.x - wd->exp.nunchuk.js.center.x;
+    int raw_y = wd->exp.nunchuk.js.pos.y - wd->exp.nunchuk.js.center.y;
+
+    // Scale to SDL's -32768 to +32767 range (multiply by ~256)
+    int16_t current_x = (int16_t)(raw_x * 256);
+    int16_t current_y = (int16_t)(raw_y * 256);
+
+    // Apply deadzone: if within small range of center, treat as zero
+    const int16_t DEADZONE = 4000;
+    if (abs(current_x) < DEADZONE)
+      current_x = 0;
+    if (abs(current_y) < DEADZONE)
+      current_y = 0;
+
+    // Send X axis event if changed
+    if (current_x != last_x)
+    {
+      SDL_Event e;
+      e.type = SDL_JOYAXISMOTION;
+      e.jaxis.which = 0;
+      e.jaxis.axis = 0; // X Axis
+      e.jaxis.value = current_x;
+      queue[queue_tail] = e;
+      queue_tail = (queue_tail + 1) % 32;
+      last_x = current_x;
+    }
+
+    // Send Y axis event if changed (invert Y: pushing stick UP should be
+    // negative in SDL)
+    if (current_y != last_y)
+    {
+      SDL_Event e;
+      e.type = SDL_JOYAXISMOTION;
+      e.jaxis.which = 0;
+      e.jaxis.axis = 1;           // Y Axis
+      e.jaxis.value = -current_y; // Invert Y for SDL standard
+      queue[queue_tail] = e;
+      queue_tail = (queue_tail + 1) % 32;
+      last_y = current_y;
+    }
+  }
+
+  // If we generated events, return the first one
+  if (queue_head != queue_tail)
+  {
+    *event = queue[queue_head];
+    queue_head = (queue_head + 1) % 32;
+    return 1;
+  }
+#endif
+
+  // Fallback to standard SDL polling for other systems or non-Wii-specific
+  // events
+  return SDL_PollEvent(event);
 }
 
 // EOF

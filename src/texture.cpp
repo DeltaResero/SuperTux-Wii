@@ -14,8 +14,8 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-#include "SDL.h"
-#include "SDL_image.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "texture.h"
 #include "globals.h"
 #include "setup.h"
@@ -55,14 +55,11 @@ static SDL_Surface* finalize_surface(SDL_Surface* temp, bool use_alpha, const st
 {
   SDL_Surface* final_surface;
 
-  if (!use_alpha && !use_gl)
-  {
-    final_surface = SDL_DisplayFormat(temp);
-  }
-  else
-  {
-    final_surface = SDL_DisplayFormatAlpha(temp);
-  }
+  // In SDL2, we typically just convert to a standard format like RGBA8888 or
+  // ARGB8888 regardless of alpha preference, relying on BlendMode for alpha
+  // handling.
+  Uint32 format = SDL_PIXELFORMAT_RGBA8888;
+  final_surface = SDL_ConvertSurfaceFormat(temp, format, 0);
 
   if (final_surface == NULL)
   {
@@ -71,7 +68,8 @@ static SDL_Surface* finalize_surface(SDL_Surface* temp, bool use_alpha, const st
 
   if (!use_alpha && !use_gl)
   {
-    SDL_SetAlpha(final_surface, 0, 0);
+    // Disable blending if alpha is not requested
+    SDL_SetSurfaceBlendMode(final_surface, SDL_BLENDMODE_NONE);
   }
 
   SDL_FreeSurface(temp);
@@ -89,8 +87,7 @@ SurfaceData::SurfaceData(SDL_Surface* temp, bool use_alpha_)
   : type(SURFACE), surface(nullptr), use_alpha(use_alpha_)
 {
   // Copy the given surface and make sure that it's not stored in video memory
-  surface = SDL_CreateRGBSurface(temp->flags & (~SDL_HWSURFACE),
-                                 temp->w, temp->h,
+  surface = SDL_CreateRGBSurface(0, temp->w, temp->h,
                                  temp->format->BitsPerPixel,
                                  temp->format->Rmask,
                                  temp->format->Gmask,
@@ -100,7 +97,7 @@ SurfaceData::SurfaceData(SDL_Surface* temp, bool use_alpha_)
   {
     st_abort("No memory left.", "");
   }
-  SDL_SetAlpha(temp, 0, 0);
+  SDL_SetSurfaceBlendMode(temp, SDL_BLENDMODE_NONE);
   SDL_BlitSurface(temp, NULL, surface, NULL);
 }
 
@@ -271,6 +268,10 @@ Surface::Surface(const std::string& file, int x, int y, int w, int h, bool use_a
  */
 void Surface::reload()
 {
+  // Explicitly destroy the old implementation first
+  impl.reset();
+
+  // Now create the new implementation with fresh texture objects
   impl.reset(data.create());
   if (impl)
   {
@@ -449,7 +450,7 @@ SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, i
                               temp->format->Bmask,
                               temp->format->Amask);
 
-  SDL_SetAlpha(temp, 0, 0);
+  SDL_SetSurfaceBlendMode(temp, SDL_BLENDMODE_NONE);
   SDL_BlitSurface(temp, &src, conv, NULL);
   SDL_FreeSurface(temp);
 
@@ -482,23 +483,24 @@ SDL_Surface* sdl_surface_from_file(const std::string& file, bool use_alpha)
 SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha)
 {
   SDL_Surface* sdl_surface;
-  Uint32 saved_flags;
   Uint8 saved_alpha;
 
-  saved_flags = sdl_surf->flags & (SDL_SRCALPHA | SDL_RLEACCELOK);
-  saved_alpha = sdl_surf->format->alpha;
-  if ((saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA)
+  SDL_GetSurfaceAlphaMod(sdl_surf, &saved_alpha);
+  if (sdl_surf->format->Amask != 0)
   {
-    SDL_SetAlpha(sdl_surf, 0, 0);
+    // Check if surface has an alpha channel
+    SDL_SetSurfaceAlphaMod(sdl_surf, 255);
   }
 
   if (!use_alpha && !use_gl)
   {
-    sdl_surface = SDL_DisplayFormat(sdl_surf);
+    sdl_surface = SDL_ConvertSurfaceFormat(sdl_surf, SDL_PIXELFORMAT_RGBA8888, 0);
   }
   else
   {
-    sdl_surface = SDL_DisplayFormatAlpha(sdl_surf);
+    // If use_alpha is true or use_gl is true, we still convert to RGBA8888
+    // as it's a common format for OpenGL textures and handles alpha.
+    sdl_surface = SDL_ConvertSurfaceFormat(sdl_surf, SDL_PIXELFORMAT_RGBA8888, 0);
   }
 
   if (sdl_surface == NULL)
@@ -506,14 +508,15 @@ SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha)
     st_abort("Can't convert to display format", "SURFACE");
   }
 
-  if ((saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA)
+  if (sdl_surf->format->Amask != 0)
   {
-    SDL_SetAlpha(sdl_surface, saved_flags, saved_alpha);
+    // Restore alpha if it had one
+    SDL_SetSurfaceAlphaMod(sdl_surface, saved_alpha);
   }
 
   if (!use_alpha && !use_gl)
   {
-    SDL_SetAlpha(sdl_surface, 0, 0);
+    SDL_SetSurfaceAlphaMod(sdl_surface, 255);
   }
 
   return sdl_surface;
@@ -671,7 +674,6 @@ void SurfaceOpenGL::enable_vertex_arrays()
  */
 void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
 {
-  Uint32 saved_flags;
   Uint8 saved_alpha;
   int w, h;
   SDL_Surface* conv;
@@ -722,11 +724,13 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   conv = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, bpp, rmask, gmask, bmask, amask);
 
   /* Save the alpha blending attributes */
-  saved_flags = surf->flags & (SDL_SRCALPHA | SDL_RLEACCELOK);
-  saved_alpha = surf->format->alpha;
-  if ((saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA)
+  // SDL_SRCALPHA is implied in SDL2 for surfaces with alpha channel
+  SDL_GetSurfaceAlphaMod(surf, &saved_alpha);
+  // We can't easily check for RLE accel in SDL2, but it matters less.
+
+  if (surf->format->Amask != 0)
   {
-    SDL_SetAlpha(surf, 0, 0);
+    SDL_SetSurfaceAlphaMod(surf, 255);
   }
 
   // Blit the original image
@@ -769,9 +773,9 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   }
 
   /* Restore the alpha blending attributes */
-  if ((saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA)
+  if (surf->format->Amask != 0)
   {
-    SDL_SetAlpha(surf, saved_flags, saved_alpha);
+    SDL_SetSurfaceAlphaMod(surf, saved_alpha);
   }
 
   glGenTextures(1, tex);
@@ -1005,26 +1009,24 @@ int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha,
 }
 #endif
 
-/**
- * Constructor for SurfaceSDL.
- * @param surf The SDL_Surface to wrap.
- * @param use_alpha Whether to use alpha transparency.
- */
-SurfaceSDL::SurfaceSDL(SDL_Surface* surf, bool use_alpha)
-{
-  sdl_surface = sdl_surface_from_sdl_surface(surf, use_alpha);
-  w = sdl_surface->w;
-  h = sdl_surface->h;
-}
+// ----------------------------------------------------------------------------
+// SurfaceSDL Implementation (SDL2 Renderer)
+// ----------------------------------------------------------------------------
 
 /**
  * Constructor for SurfaceSDL.
  * @param file The path to the image file.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceSDL::SurfaceSDL(const std::string& file, bool use_alpha)
+SurfaceSDL::SurfaceSDL(const std::string &file, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_file(file, use_alpha);
+  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
+  if (!texture)
+  {
+    std::cerr << "Failed to create texture from " << file << ": "
+              << SDL_GetError() << "\n";
+  }
   w = sdl_surface->w;
   h = sdl_surface->h;
 }
@@ -1038,11 +1040,33 @@ SurfaceSDL::SurfaceSDL(const std::string& file, bool use_alpha)
  * @param h The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceSDL::SurfaceSDL(const std::string& file, int x, int y, int w, int h, bool use_alpha)
+SurfaceSDL::SurfaceSDL(const std::string &file, int x, int y, int w, int h, bool use_alpha)
 {
   sdl_surface = sdl_surface_part_from_file(file, x, y, w, h, use_alpha);
+  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
+  if (!texture)
+  {
+    std::cerr << "Failed to create texture part from " << file << ": "
+              << SDL_GetError() << "\n";
+  }
+  this->w = sdl_surface->w;
+  this->h = sdl_surface->h;
+}
+
+SurfaceSDL::SurfaceSDL(SDL_Surface *surf, bool use_alpha)
+{
+  sdl_surface = sdl_surface_from_sdl_surface(surf, use_alpha);
+  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
   w = sdl_surface->w;
   h = sdl_surface->h;
+}
+
+SurfaceSDL::~SurfaceSDL()
+{
+  if (texture)
+  {
+    SDL_DestroyTexture(texture);
+  }
 }
 
 /**
@@ -1055,25 +1079,22 @@ SurfaceSDL::SurfaceSDL(const std::string& file, int x, int y, int w, int h, bool
  */
 int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
 {
-  SDL_Rect dest;
+  SDL_Rect dst;
 
-  // Round to nearest integer for SDL rendering to prevent sub-pixel jitter
-  dest.x = static_cast<int>(x + 0.5f);
-  dest.y = static_cast<int>(y + 0.5f);
-  dest.w = w;
-  dest.h = h;
+  dst.x = (int)x;
+  dst.y = (int)y;
+  dst.w = w;
+  dst.h = h;
 
-  // Set the alpha on the source surface before blitting.
-  SDL_SetAlpha(sdl_surface, SDL_SRCALPHA, alpha);
-
-  int ret = SDL_BlitSurface(sdl_surface, NULL, screen, &dest);
+  SDL_SetTextureAlphaMod(texture, alpha);
+  SDL_RenderCopy(renderer, texture, NULL, &dst);
 
   if (update == UPDATE)
   {
-    SDL_Flip(screen);
+    SDL_RenderPresent(renderer);
   }
 
-  return ret;
+  return 0;
 }
 
 /**
@@ -1084,50 +1105,23 @@ int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
  */
 int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
 {
-  SDL_Rect dest;
-
-  dest.x = 0;
-  dest.y = 0;
-  dest.w = screen->w;
-  dest.h = screen->h;
-
-  if (alpha != 255)
+  // Tile the texture to fill 640x480
+  SDL_SetTextureAlphaMod(texture, alpha);
+  for (int x = 0; x < 640; x += w)
   {
-    /* Create a Surface, make it using colorkey, blit surface into temp, apply alpha
-     * to temp sur, blit the temp into the screen
-     * NOTE: this has to be done, since SDL doesn't allow to set alpha to surfaces that
-     * already have an alpha mask yet... */
-    SDL_Surface* sdl_surface_copy = SDL_CreateRGBSurface(sdl_surface->flags,
-                                    sdl_surface->w, sdl_surface->h, sdl_surface->format->BitsPerPixel,
-                                    sdl_surface->format->Rmask, sdl_surface->format->Gmask,
-                                    sdl_surface->format->Bmask,
-                                    0);
-    int colorkey = SDL_MapRGB(sdl_surface_copy->format, 255, 0, 255);
-    SDL_FillRect(sdl_surface_copy, NULL, colorkey);
-    SDL_SetColorKey(sdl_surface_copy, SDL_SRCCOLORKEY, colorkey);
-
-    SDL_BlitSurface(sdl_surface, NULL, sdl_surface_copy, NULL);
-    SDL_SetAlpha(sdl_surface_copy, SDL_SRCALPHA, alpha);
-
-    int ret = SDL_BlitSurface(sdl_surface_copy, NULL, screen, &dest);
-
-    if (update == UPDATE)
+    for (int y = 0; y < 480; y += h)
     {
-      SDL_Flip(screen);
+      SDL_Rect dst = {x, y, w, h};
+      SDL_RenderCopy(renderer, texture, NULL, &dst);
     }
-
-    SDL_FreeSurface(sdl_surface_copy);
-    return ret;
   }
-
-  int ret = SDL_SoftStretch(sdl_surface, NULL, screen, &dest);
 
   if (update == UPDATE)
   {
-    SDL_Flip(screen);
+    SDL_RenderPresent(renderer);
   }
 
-  return ret;
+  return 0;
 }
 
 /**
@@ -1144,30 +1138,24 @@ int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
  */
 int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update)
 {
-  SDL_Rect src, dest;
+  SDL_Rect src, dst;
+  src.x = (int)sx;
+  src.y = (int)sy;
+  src.w = (int)w;
+  src.h = (int)h;
 
-  src.x = static_cast<int>(sx);
-  src.y = static_cast<int>(sy);
-  src.w = static_cast<int>(w);
-  src.h = static_cast<int>(h);
+  dst.x = (int)x;
+  dst.y = (int)y;
+  dst.w = (int)w;
+  dst.h = (int)h;
 
-  // Round to nearest integer for SDL rendering to prevent sub-pixel jitter
-  dest.x = static_cast<int>(x + 0.5f);
-  dest.y = static_cast<int>(y + 0.5f);
-  dest.w = static_cast<int>(w);
-  dest.h = static_cast<int>(h);
-
-  // Set the alpha on the source surface before blitting.
-  SDL_SetAlpha(sdl_surface, SDL_SRCALPHA, alpha);
-
-  int ret = SDL_BlitSurface(sdl_surface, &src, screen, &dest);
+  SDL_SetTextureAlphaMod(texture, alpha);
+  SDL_RenderCopy(renderer, texture, &src, &dst);
 
   if (update == UPDATE)
-  {
-    update_rect(screen, dest.x, dest.y, dest.w, dest.h);
-  }
+    SDL_RenderPresent(renderer);
 
-  return ret;
+  return 0;
 }
 
 /**
@@ -1182,44 +1170,19 @@ int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w, float h
  */
 int SurfaceSDL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update)
 {
-  SDL_Rect dest;
+  SDL_Rect dst;
+  dst.x = (int)x;
+  dst.y = (int)y;
+  dst.w = sw;
+  dst.h = sh;
 
-  // Round to nearest integer for SDL rendering to prevent sub-pixel jitter
-  dest.x = static_cast<int>(x + 0.5f);
-  dest.y = static_cast<int>(y + 0.5f);
-  dest.w = static_cast<int>(sw);
-  dest.h = static_cast<int>(sh);
-
-  if (alpha != 255)
-  {
-    SDL_SetAlpha(sdl_surface, SDL_SRCALPHA, alpha);
-  }
-
-  SDL_Surface* sdl_surface_copy = SDL_CreateRGBSurface(sdl_surface->flags,
-                                  sw, sh, sdl_surface->format->BitsPerPixel,
-                                  sdl_surface->format->Rmask, sdl_surface->format->Gmask,
-                                  sdl_surface->format->Bmask,
-                                  0);
-
-  SDL_BlitSurface(sdl_surface, NULL, sdl_surface_copy, NULL);
-  SDL_SoftStretch(sdl_surface_copy, NULL, sdl_surface_copy, &dest);
-
-  int ret = SDL_BlitSurface(sdl_surface_copy, NULL, screen, &dest);
-  SDL_FreeSurface(sdl_surface_copy);
+  SDL_SetTextureAlphaMod(texture, alpha);
+  SDL_RenderCopy(renderer, texture, NULL, &dst);
 
   if (update == UPDATE)
-  {
-    update_rect(screen, dest.x, dest.y, dest.w, dest.h);
-  }
+    SDL_RenderPresent(renderer);
 
-  return ret;
-}
-
-/**
- * Destructor for SurfaceSDL.
- */
-SurfaceSDL::~SurfaceSDL()
-{
+  return 0;
 }
 
 // EOF

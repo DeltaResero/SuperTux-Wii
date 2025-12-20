@@ -71,15 +71,15 @@ if(ENABLE_WII)
   endmacro()
 
   # Graphics & Core
-  wii_check_pkg(SDL sdl)
-  wii_check_pkg(SDL_IMAGE SDL_image)
+  wii_check_pkg(SDL2 sdl2)
+  wii_check_pkg(SDL2_IMAGE SDL2_image)
   wii_check_pkg(FREETYPE freetype2)
   wii_check_pkg(PNG libpng)
   wii_check_pkg(JPEG libjpeg)
   wii_check_pkg(ZLIB zlib)
 
-  # Audio (SDL_mixer + Codecs)
-  wii_check_pkg(SDL_MIXER SDL_mixer)
+  # Audio (SDL2_mixer + Codecs)
+  wii_check_pkg(SDL2_MIXER SDL2_mixer)
   
   # Group codecs into one check
   pkg_check_modules(CODECS REQUIRED libmodplug vorbisfile vorbis ogg mad IMPORTED_TARGET)
@@ -100,18 +100,20 @@ if(ENABLE_WII)
   add_executable(${PROJECT_NAME}.elf ${SOURCES} ${HEADERS})
   
   # Include directories (PkgConfig handles lib includes automatically)
+  # We must explicitly add libogc includes for gccore.h and wiiuse/wpad.h
   target_include_directories(${PROJECT_NAME}.elf PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    $ENV{DEVKITPRO}/libogc/include
   )
   
   # Link libraries
   target_link_libraries(${PROJECT_NAME}.elf PRIVATE
-    PkgConfig::SDL_MIXER
-    PkgConfig::SDL_IMAGE
+    PkgConfig::SDL2_MIXER
+    PkgConfig::SDL2_IMAGE
     PkgConfig::CODECS
     PkgConfig::JPEG
     PkgConfig::PNG
-    PkgConfig::SDL
+    PkgConfig::SDL2
     PkgConfig::FREETYPE
     PkgConfig::ZLIB
     ${AESND_LIB}
@@ -169,10 +171,11 @@ else()
   # Desktop Linux/Windows Build
   # ============================================================================
   
-  # Find SDL dependencies
-  find_package(SDL REQUIRED)
-  find_package(SDL_image REQUIRED)
-  find_package(SDL_mixer REQUIRED)
+  # Find SDL2 dependencies
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(SDL2 REQUIRED sdl2 IMPORTED_TARGET)
+  pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image IMPORTED_TARGET)
+  pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer IMPORTED_TARGET)
 
   # Find Core dependencies
   find_package(ZLIB REQUIRED)
@@ -196,9 +199,6 @@ else()
 
   target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${SDL_INCLUDE_DIR}
-    ${SDL_IMAGE_INCLUDE_DIRS}
-    ${SDL_MIXER_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIRS}
     ${JPEG_INCLUDE_DIRS}
@@ -209,9 +209,9 @@ else()
   endif()
 
   target_link_libraries(${PROJECT_NAME} PRIVATE
-    ${SDL_LIBRARY} 
-    ${SDL_IMAGE_LIBRARIES} 
-    ${SDL_MIXER_LIBRARIES}
+    PkgConfig::SDL2
+    PkgConfig::SDL2_IMAGE
+    PkgConfig::SDL2_MIXER
     ${ZLIB_LIBRARIES}
     ${PNG_LIBRARIES}
     ${JPEG_LIBRARIES}
