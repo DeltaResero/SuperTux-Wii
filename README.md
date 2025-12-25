@@ -16,7 +16,7 @@ Software license: GPLv3+
 
 [![Latest Release][release-img]][release-url]
 [![View All Releases][downloads-img]][downloads-url]
-[![License][license-img]][license-url]
+[![License](https://img.shields.io/badge/license-GPLv3+-blue.svg)](LICENSE)
 [![Codacy Badge][codacy-img]][codacy-url]
 
 <!-- Link Definitions -->
@@ -24,8 +24,6 @@ Software license: GPLv3+
 [release-url]: https://github.com/DeltaResero/SuperTux-Wii/releases/latest
 [downloads-img]: https://img.shields.io/badge/Downloads-View_All_Releases-blue
 [downloads-url]: https://github.com/DeltaResero/SuperTux-Wii/releases
-[license-img]: https://img.shields.io/badge/license-GPLv3+-blue.svg
-[license-url]: https://raw.githubusercontent.com/DeltaResero/SuperTux-Wii/master/LICENSE
 [codacy-img]: https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f
 [codacy-url]: https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
 
