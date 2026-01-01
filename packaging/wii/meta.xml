@@ -2,8 +2,8 @@
 <app version="1.0">
     <name>SuperTux Wii</name>
     <coder>scanff, Arikado, &amp; DeltaResero</coder>
-    <version>0.1.4-wii-d.4</version>
-    <release_date>2025-11-16</release_date>
+    <version>0.1.4-wii-d.5</version>
+    <release_date>2025-12-31</release_date>
     <short_description>Port of SuperTux</short_description>
     <long_description>Wii port of the classic platformer starring Tux the Penguin
 - Based on Milestone 1 of the game, originally released in 2003

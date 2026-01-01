@@ -10,7 +10,7 @@
 Ported by: scanff & Arikado
 Updated by: DeltaResero
 Type: Platform game
-Version: 0.1.4-wii-d.4
+Version: 0.1.4-wii-d.5
 Software license: GPLv3+
 ```
 
