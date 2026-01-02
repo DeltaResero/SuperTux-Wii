@@ -134,7 +134,7 @@ void Player::init()
  * @param state The state of the key (DOWN or UP).
  * @return True if the key was a mapped player control, false otherwise.
  */
-int Player::key_event(SDLKey key, int state)
+int Player::key_event(SDL_Keycode key, int state)
 {
   if (key == keymap.right)
   {

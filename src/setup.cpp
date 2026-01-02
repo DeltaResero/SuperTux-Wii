@@ -12,8 +12,8 @@
 
 #include <limits.h>
 #include <unistd.h>
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <time.h>
 #include <filesystem>
 #include <fstream>
@@ -38,6 +38,7 @@
 
 #ifdef _WII_
 #include <gccore.h>
+#include <wiiuse/wpad.h>
 #endif
 
 #include "globals.h"
@@ -82,6 +83,11 @@ void seticon(void);
 void usage(char* prog, int ret);
 
 namespace fs = std::filesystem;
+
+// Store the GL context globally so we can destroy it when switching modes
+#ifndef NOOPENGL
+static SDL_GLContext gl_context = nullptr;
+#endif
 
 /**
  * Checks if the given file exists and is accessible.
@@ -323,19 +329,22 @@ void st_directory_setup(void)
 
 #if defined(__linux__)
     ssize_t len = readlink("/proc/self/exe", exe_file, sizeof(exe_file) - 1);
-    if (len > 0) {
+    if (len > 0)
+    {
       exe_file[len] = '\0';
       path_retrieved = true;
     }
 #elif defined(__APPLE__)
     uint32_t size = sizeof(exe_file);
-    if (_NSGetExecutablePath(exe_file, &size) == 0) {
+    if (_NSGetExecutablePath(exe_file, &size) == 0)
+    {
       path_retrieved = true;
     }
 #elif defined(__FreeBSD__)
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
     size_t len = sizeof(exe_file);
-    if (sysctl(mib, 4, exe_file, &len, NULL, 0) == 0) {
+    if (sysctl(mib, 4, exe_file, &len, NULL, 0) == 0)
+    {
       path_retrieved = true;
     }
 #endif
@@ -590,7 +599,9 @@ void st_general_setup(void)
 #endif
 
   /* Unicode needed for input handling: */
-  SDL_EnableUNICODE(1);
+  // SDL2 handles unicode internally in text input events, explicit enable not
+  // needed/exists SDL_StartTextInput() can be called if we need text input
+  // mode.
 
   /* Load global images: */
   black_text = new Text(datadir + "/images/status/letters-black.png", TEXT_TEXT, 16, 18);
@@ -647,6 +658,39 @@ void st_general_free(void)
   delete main_menu;
 }
 
+/**
+ * Properly cleans up video resources before switching modes.
+ * This prevents the "ghost window" issue when toggling between modes.
+ */
+void st_video_cleanup(void)
+{
+#ifndef NOOPENGL
+  // Destroy OpenGL context if it exists
+  if (gl_context)
+  {
+    SDL_GL_DeleteContext(gl_context);
+    gl_context = nullptr;
+  }
+#endif
+
+  // Destroy renderer if it exists
+  if (renderer)
+  {
+    SDL_DestroyRenderer(renderer);
+    renderer = nullptr;
+  }
+
+  // Destroy window if it exists
+  if (window)
+  {
+    SDL_DestroyWindow(window);
+    window = nullptr;
+  }
+
+  // Note: We don't free the 'screen' surface here because it's just a
+  // compatibility surface and will be recreated in st_video_setup()
+}
+
 /*
  * This function is responsible for configuring the visual display, including
  * windowed and fullscreen modes, and preparing the screen for rendering.
@@ -668,6 +712,56 @@ void st_video_setup(void)
     st_abort("Video Initialization Failed", error_message);
   }
 
+  // Create standard SDL window (used for both GL and Renderer modes)
+  Uint32 window_flags = 0;
+  if (use_fullscreen)
+    window_flags |= SDL_WINDOW_FULLSCREEN;
+
+#ifndef NOOPENGL
+  if (use_gl)
+  {
+    window_flags |= SDL_WINDOW_OPENGL;
+  }
+#endif
+
+  // Create the window
+  window = SDL_CreateWindow("SuperTux Wii " VERSION, SDL_WINDOWPOS_CENTERED,
+                            SDL_WINDOWPOS_CENTERED, SCREEN_W, SCREEN_H,
+                            window_flags);
+
+  if (!window)
+  {
+    st_abort("Window Creation Failed", SDL_GetError());
+  }
+
+  // Free the old screen surface if it exists before creating a new one
+  if (screen)
+  {
+    SDL_FreeSurface(screen);
+    screen = nullptr;
+  }
+
+  // Initialize the global 'screen' surface for compatibility with existing code
+  // that checks screen->w and screen->h.
+  // In SDL2, we don't draw directly to this surface for the screen,
+  // but we need it to exist and have the correct dimensions.
+  Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  rmask = 0xff000000; gmask = 0x00ff0000; bmask = 0x0000ff00; amask = 0x000000ff;
+#else
+  rmask = 0x000000ff; gmask = 0x0000ff00; bmask = 0x00ff0000; amask = 0xff000000;
+#endif
+
+  screen = SDL_CreateRGBSurface(0, SCREEN_W, SCREEN_H, 32, rmask, gmask, bmask, amask);
+  if (!screen)
+  {
+      st_abort("Failed to create compatibility screen surface", SDL_GetError());
+  }
+
+#ifndef _WII_
+  seticon(); // Set window manager icon image
+#endif
+
   /* Open display and select video setup based on if we have OpenGL support: */
 #ifndef NOOPENGL
   if (use_gl)
@@ -684,52 +778,122 @@ void st_video_setup(void)
 
   // After reloading all surfaces, tell all Text objects to recache their internal pointers.
   Text::recache_all_pointers();
+}
 
-#ifndef _WII_ /* Skip window manager setup for Wii builds */
-  SDL_WM_SetCaption("SuperTux Wii " VERSION, "SuperTux Wii");
-#endif /* #ifndef _WII_ */
+/**
+ * Reinitializes the video system when switching between OpenGL/SDL or
+ * windowed/fullscreen modes. This ensures proper cleanup of the old mode
+ * before setting up the new one.
+ */
+void st_video_reinit(void)
+{
+  // First, clean up existing video resources
+  st_video_cleanup();
+
+  // Then set up video with the new settings
+  st_video_setup();
+}
+
+/**
+ * Toggles fullscreen mode without recreating the window or renderer.
+ * This preserves all textures and is the proper SDL2 way to toggle fullscreen.
+ * Based on modern SuperTux's approach (sdlbase_video_system.cpp).
+ */
+void st_toggle_fullscreen(void)
+{
+  if (!window)
+    return;
+
+  if (use_fullscreen)
+  {
+    // Go fullscreen (borderless desktop mode - no resolution change)
+    if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
+    {
+      fprintf(stderr, "Failed to enter fullscreen: %s\n", SDL_GetError());
+    }
+  }
+  else
+  {
+    // Go windowed
+    SDL_SetWindowFullscreen(window, 0);
+    SDL_SetWindowSize(window, SCREEN_W, SCREEN_H);
+  }
+
+  // Update renderer's logical size and viewport to maintain proper scaling (SDL
+  // mode)
+  if (renderer)
+  {
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+
+    // Reset renderer state completely
+    SDL_RenderSetLogicalSize(renderer, 0, 0);
+    SDL_RenderSetViewport(renderer, NULL);
+    SDL_RenderSetClipRect(renderer, NULL);
+    SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+
+    // Clear the entire window to black
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+    SDL_RenderClear(renderer);
+
+    // Manually calculate scaling for STRETCHING (ignoring aspect ratio)
+    float scale_x = (float)w / SCREEN_W;
+    float scale_y = (float)h / SCREEN_H;
+
+    // Set Scale to stretch the 640x480 logical space to the window size
+    SDL_RenderSetScale(renderer, scale_x, scale_y);
+
+    // Reset Viewport to full window
+    // Since we are stretching, we don't need offsets or centering.
+    SDL_RenderSetViewport(renderer, NULL);
+  }
+
+#ifndef NOOPENGL
+  // Update OpenGL viewport and projection for the new window size (OpenGL mode)
+  if (use_gl)
+  {
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, SCREEN_W, SCREEN_H, 0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+  }
+#endif
 }
 
 /**
  * Configures the video mode using SDL (Software Rendering).
  * This function is called when OpenGL is not available or not selected.
  */
+// SDL2 Renderer Setup
 void st_video_setup_sdl(void)
 {
-  if (use_fullscreen)
+  // Force linear filtering to match OpenGL's look
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
+  // Create hardware accelerated renderer
+  renderer = SDL_CreateRenderer(
+      window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+  if (!renderer)
   {
-    /* Set the video mode to fullscreen mode with double buffering for smoother rendering
-     * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
-    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_DOUBLEBUF);
-
-    if (screen == NULL)
-    {
-      fprintf(stderr, "\nWarning: Could not set up fullscreen video for 640x480 mode.\n"
-                      "The Simple DirectMedia error that occurred was:\n"
-                      "%s\n\n", SDL_GetError());
-      use_fullscreen = false;
-    }
+    std::cerr << "Warning: Failed to create accelerated renderer, falling back "
+                 "to software.\n";
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
   }
-  else
+
+  if (!renderer)
   {
-    /* Set the video mode to window mode with double buffering for smoother rendering
-     * NOTE: SDL_DOUBLEBUF implies SDL_HWSURFACE but will fallback to software when not available */
-    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_DOUBLEBUF);
-
-    if (screen == NULL)
-    {
-      // Get the SDL error message
-      const char* sdl_error = SDL_GetError();
-
-      // Construct a detailed abort message
-      std::string error_message = "Could not set up video for 640x480 mode.\n";
-      error_message += "The Simple DirectMedia Layer error that occurred was:\n";
-      error_message += sdl_error;
-
-      // Call st_abort with the detailed message
-      st_abort("Video Mode Setup Failed", error_message);
-    }
+    st_abort("Renderer Creation Failed", SDL_GetError());
   }
+
+  // Set logical size for resolution independence
+  SDL_RenderSetLogicalSize(renderer, SCREEN_W, SCREEN_H);
 }
 
 #ifndef NOOPENGL
@@ -746,29 +910,15 @@ void st_video_setup_gl(void)
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  if (use_fullscreen)
+  // Context creation - store it globally so we can destroy it later
+  gl_context = SDL_GL_CreateContext(window);
+  if (!gl_context)
   {
-    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_FULLSCREEN | SDL_OPENGL);
-    if (screen == nullptr)
-    {
-      std::string error_msg = "Warning: Could not set up fullscreen video for 640x480 mode.\n"
-                              "The Simple DirectMedia error that occurred was:\n";
-      error_msg += SDL_GetError();
-      fprintf(stderr, "%s\n\n", error_msg.c_str());
-      use_fullscreen = false;
-    }
+    st_abort("GL Context Creation Failed", SDL_GetError());
   }
-  else
-  {
-    screen = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 16, SDL_OPENGL);
-    if (screen == nullptr)
-    {
-      std::string error_msg = "Error: Could not set up video for 640x480 mode.\n"
-                              "The Simple DirectMedia error that occurred was:\n";
-      error_msg += SDL_GetError();
-      st_abort("Video Setup Failed", error_msg);
-    }
-  }
+
+  // VSync
+  SDL_GL_SetSwapInterval(1);
 
   /*
    * Set up OpenGL for 2D rendering.
@@ -781,10 +931,18 @@ void st_video_setup_gl(void)
   // so we don't need the Z-buffer and make sure it's disabled. Writing to it just wastes bandwidth.
   glDepthMask(GL_FALSE);
 
-  glViewport(0, 0, screen->w, screen->h);
+  // Disable Scissor Test.
+  // SDL's Renderer enables this for logical sizing. If we switch from SDL to OpenGL,
+  // this state might persist (especially on Wii), causing drawing to be clipped.
+  glDisable(GL_SCISSOR_TEST);
+
+  int w, h;
+  SDL_GetWindowSize(window, &w, &h);
+
+  glViewport(0, 0, w, h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, screen->w, screen->h, 0, -1.0, 1.0);
+  glOrtho(0, w, h, 0, -1.0, 1.0);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -811,23 +969,48 @@ void st_joystick_setup(void)
   }
   else
   {
+    // Ensure events are enabled and pump them once to update state
+    SDL_JoystickEventState(SDL_ENABLE);
+    SDL_PumpEvents();
+
+#ifdef _WII_
+    // SDL_Init resets WPAD. We must set the data format AFTER SDL_Init
+    // to ensure the Nunchuk/Extensions are detected and reported correctly
+    // for our custom polling in globals.cpp.
+    WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+#endif
+
     /* Open joystick: */
     if (SDL_NumJoysticks() <= 0)
     {
+#ifdef _WII_
+      // On Wii, we effectively always have a joystick (Wiimote) via WPAD.
+      // Even if SDL sees none, we force enabled so config saves correctly
+      // 'joystick 0'.
+      use_joystick = true;
+      if (joystick_num < 0)
+        joystick_num = 0;
+#else
       fprintf(stderr, "Warning: No joysticks are available.\n");
       use_joystick = false;
+#endif
     }
     else
     {
       js = SDL_JoystickOpen(joystick_num);
       if (js == nullptr)
       {
+#ifdef _WII_
+        // Ignore open failure on Wii; we use custom polling.
+        use_joystick = true;
+#else
         std::string error_msg = "Warning: Could not open joystick " + std::to_string(joystick_num) + ".\n"
                                 "The Simple DirectMedia error that occurred was:\n";
         error_msg += SDL_GetError();
         fprintf(stderr, "%s\n\n", error_msg.c_str());
 
         use_joystick = false;
+#endif
       }
       else
       {
@@ -840,8 +1023,12 @@ void st_joystick_setup(void)
 
         if (SDL_JoystickNumButtons(js) < 2)
         {
+#ifdef _WII_
+          use_joystick = true;
+#else
           fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
           use_joystick = false;
+#endif
         }
       }
     }
@@ -914,6 +1101,16 @@ void st_shutdown(void)
   // Save the current game configuration first.
   saveconfig();
 
+  // Clean up video resources
+  st_video_cleanup();
+
+  // Free the screen surface
+  if (screen)
+  {
+    SDL_FreeSurface(screen);
+    screen = nullptr;
+  }
+
   // Close the audio system.
   close_audio();
 
@@ -985,7 +1182,7 @@ void seticon(void)
     return;
   }
 
-  SDL_WM_SetIcon(icon, nullptr); /* Set icon */
+  SDL_SetWindowIcon(window, icon); /* Set icon */
   SDL_FreeSurface(icon);         /* Free icon surface & mask */
 }
 

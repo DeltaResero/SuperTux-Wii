@@ -16,7 +16,7 @@
 #define SUPERTUX_GLOBALS_H
 
 #include <string>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include "text.h"
 #include "menu.h"
 #include "mousecursor.h"
@@ -81,6 +81,9 @@ Uint8 adjust_joystick_hat(Uint8 hat);
 int wait_for_event(SDL_Event& event, unsigned int min_delay = 0, unsigned int max_delay = 0, bool empty_events = false);
 
 void draw_player_hud();
+
+void st_wii_input_init();
+int st_poll_event(SDL_Event *event);
 
 #endif /* SUPERTUX_GLOBALS_H */
 

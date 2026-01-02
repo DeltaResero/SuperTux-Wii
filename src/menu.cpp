@@ -79,10 +79,12 @@ bool confirm_dialog(const std::string& text, Surface* background)
   {
     SDL_Event event;
 
-    while (SDL_PollEvent(&event))
+    while (st_poll_event(&event))
     {
       dialog->event(event);
     }
+
+    clearscreen(0, 0, 0); // Ensure clean buffer
 
     if (background)
     {
@@ -240,7 +242,7 @@ void Menu::process_options_menu()
       if (use_gl != isToggled(MNID_OPENGL))
       {
         use_gl = isToggled(MNID_OPENGL);
-        st_video_setup();
+        st_video_reinit();
       }
 #else
       // If OpenGL is not compiled, ensure the toggle can't be set to true.
@@ -253,7 +255,7 @@ void Menu::process_options_menu()
       if (use_fullscreen != isToggled(MNID_FULLSCREEN))
       {
         use_fullscreen = isToggled(MNID_FULLSCREEN);
-        st_video_setup();
+        st_toggle_fullscreen();
       }
 #else
       // Fullscreen is forced on Wii.
@@ -713,7 +715,7 @@ bool Menu::isToggled(int id)
  */
 void Menu::event(SDL_Event& event)
 {
-  SDLKey key;
+  SDL_Keycode key;
   int x, y;
 
   switch (event.type)

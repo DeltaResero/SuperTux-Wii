@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_SCREEN_H
 #define SUPERTUX_SCREEN_H
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #ifndef NOOPENGL
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -23,6 +23,11 @@
 // Constants
 #define NO_UPDATE     false
 #define UPDATE        true
+
+// Global Screen Resources
+extern SDL_Window* window;
+extern SDL_Renderer* renderer;
+extern bool use_gl;
 
 // Represents a color with red, green, and blue components
 struct Color

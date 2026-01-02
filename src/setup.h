@@ -36,6 +36,9 @@ void st_general_free(); // Frees resources from general setup
 void st_video_setup_sdl(void); // Sets up SDL video
 void st_video_setup_gl(void); // Sets up OpenGL video
 void st_video_setup(void); // Chooses and sets up the appropriate video system
+void st_video_cleanup(void); // Cleans up video resources before switching modes
+void st_video_reinit(void); // Reinitializes video when switching modes
+void st_toggle_fullscreen(void); // Toggles fullscreen without recreating window
 void st_audio_setup(void); // Sets up the audio system
 void st_joystick_setup(void); // Sets up the joystick system
 void st_shutdown(void); // Shuts down the game and frees resources

@@ -94,7 +94,7 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
 #endif
 
   // Load shadow font by processing the original surface
-  SDL_Surface *conv = SDL_DisplayFormatAlpha(chars->impl->get_sdl_surface());
+  SDL_Surface *conv = SDL_ConvertSurfaceFormat(chars->impl->get_sdl_surface(), SDL_PIXELFORMAT_RGBA8888, 0);
   int pixels = conv->w * conv->h;
   SDL_LockSurface(conv);
 
@@ -106,7 +106,7 @@ Text::Text(const std::string& file, int kind_, int w_, int h_)
   }
 
   SDL_UnlockSurface(conv);
-  SDL_SetAlpha(conv, SDL_SRCALPHA, 128);  // Set the alpha transparency level
+  SDL_SetSurfaceAlphaMod(conv, 128);  // Set the alpha transparency level
   shadow_chars = new Surface(conv, true);
 
 #ifndef NOOPENGL
@@ -729,20 +729,24 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     flipscreen();
 
     SDL_Event event;
-    while (true)
+    bool done_static = false;
+    while (!done_static)
     {
-      if (SDL_WaitEvent(&event))
+      if (st_poll_event(&event))
       {
         if (event.type == SDL_QUIT)
         {
           Menu::set_current(nullptr);
+          done_static = true;
           break;
         }
         if (event.type == SDL_KEYDOWN || event.type == SDL_JOYBUTTONDOWN)
         {
+          done_static = true;
           break;
         }
       }
+      SDL_Delay(10);
     }
   }
   else // --- SCROLLING-MODE-SPECIFIC LOGIC (Preserving original structure) ---
@@ -752,7 +756,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     float speed = scroll_speed / 50;
     int y = 0;
 
-    SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+    // SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL); // Not needed/supported in SDL2
 
     Uint32 lastticks = SDL_GetTicks();  // Declare ticks here, once per frame
 
@@ -767,7 +771,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     while (!done)
     {
       SDL_Event event;
-      while (SDL_PollEvent(&event))
+      while (st_poll_event(&event))
       {
         switch (event.type)
         {
@@ -862,7 +866,7 @@ void display_text_file(const std::string& file, Surface* surface, float scroll_s
     }
 
     // No need to call string_list_free since std::vector handles memory automatically
-    SDL_EnableKeyRepeat(0, 0);  // Disable key repeating
+    // SDL_EnableKeyRepeat(0, 0);  // Disable key repeating
     Menu::set_current(main_menu);
   }
 }

@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_TEXTURE_H
 #define SUPERTUX_TEXTURE_H
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <string>
 #include <memory>
 #ifndef NOOPENGL
@@ -164,9 +164,11 @@ private:
 class SurfaceSDL : public SurfaceImpl
 {
 public:
-  SurfaceSDL(SDL_Surface* surf, bool use_alpha);
-  SurfaceSDL(const std::string& file, bool use_alpha);
-  SurfaceSDL(const std::string& file, int x, int y, int w, int h, bool use_alpha);
+  SDL_Texture *texture; // Hardware texture
+
+  SurfaceSDL(SDL_Surface *surf, bool use_alpha);
+  SurfaceSDL(const std::string &file, bool use_alpha);
+  SurfaceSDL(const std::string &file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceSDL();
 
   int draw(float x, float y, Uint8 alpha, bool update) override;

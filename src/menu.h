@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_MENU_H
 #define SUPERTUX_MENU_H
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <vector>
 #include <string>
 #include <functional>

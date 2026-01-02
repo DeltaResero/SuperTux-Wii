@@ -17,8 +17,8 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <filesystem>
 #include <set>
 #include <algorithm>
@@ -321,18 +321,18 @@ void draw_demo(GameSession* session, float frame_ratio)
 #else // non-Wii builds
   global_frame_counter++; //increment every call as per normal
 #endif
-  tux->key_event((SDLKey) keymap.right, DOWN);
+  tux->key_event((SDL_Keycode) keymap.right, DOWN);
 
   // Check if the random timer has triggered an event
   if (random_timer.check())
   {
     if (walking)
     {
-      tux->key_event((SDLKey) keymap.jump, UP);
+      tux->key_event((SDL_Keycode) keymap.jump, UP);
     }
     else
     {
-      tux->key_event((SDLKey) keymap.jump, DOWN);
+      tux->key_event((SDL_Keycode) keymap.jump, DOWN);
     }
   }
   else
@@ -370,7 +370,7 @@ static void renderTitleScene(float frame_ratio);
 static void processTitleInput()
 {
   SDL_Event event;
-  while (SDL_PollEvent(&event))
+  while (st_poll_event(&event))
   {
     // First, check for our custom delete action if the load game menu is active.
     if (Menu::current() == load_game_menu &&
@@ -584,6 +584,7 @@ void title(void)
     processTitleInput();
 
     // Draw the background and demo BEFORE handling menu actions
+    clearscreen(0, 0, 0); // Clear screen to prevent ghosting/freezing
     bkg_title->draw_bg();
     draw_demo(session, frame_ratio);
 
