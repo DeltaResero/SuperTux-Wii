@@ -25,7 +25,7 @@ Software license: GPLv3+
 [downloads-img]: https://img.shields.io/badge/Downloads-View_All_Releases-blue
 [downloads-url]: https://github.com/DeltaResero/SuperTux-Wii/releases
 [codacy-img]: https://app.codacy.com/project/badge/Grade/f30877382d024e0c8f7768bd08f5211f
-[codacy-url]: https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
+[codacy-url]: https://app.codacy.com/gh/DeltaResero/SuperTux-Wii/dashboard
 
 <br>
 
@@ -33,43 +33,45 @@ Software license: GPLv3+
 
 This is a continuation fork of the original Wii port by scanff and Arikado, available at
 [Google Code archive](https://code.google.com/archive/p/supertux-wii), of SuperTux Classic
-(Milestone 1). It is designed for use through the
-[Homebrew Channel](http://wiibrew.org/wiki/Homebrew_Channel) using
-[SDL Wii](https://wiibrew.org/wiki/SDL_Wii) or [OpenGL (via OpenGX)](https://github.com/devkitPro/opengx). More information can be found on the
-Wiki at [SuperTux Wii on WiiBrew](http://wiibrew.org/wiki/SuperTux_Wii).
+(Milestone 1). Originally built with SDL 1.2, this port has been modernized to use
+[SDL2 for Wii](https://github.com/devkitPro/SDL). It is designed for use through the
+[Homebrew Channel](http://wiibrew.org/wiki/Homebrew_Channel) with
+[OpenGL (via OpenGX)](https://github.com/devkitPro/opengx) support.
 
 The [original SuperTux](https://code.google.com/p/supertux) repository has been migrated from
-[Google Code](https://code.google.com) to [GitHub](https://github.com). The source code for Classic
-SuperTux Milestone 1 can now be found in the [milestone 1 branch](https://github.com/SuperTux/supertux/tree/supertux-milestone1)
-of the [SuperTux GitHub repository](https://github.com/SuperTux/supertux).
-For more information about SuperTux, please visit the official website at [supertux.org](https://www.supertux.org).
+[Google Code](https://code.google.com) to [GitHub](https://github.com). The source code for
+Classic SuperTux Milestone 1 can now be found in the
+[milestone 1 branch](https://github.com/SuperTux/supertux/tree/supertux-milestone1) of the
+[SuperTux GitHub repository](https://github.com/SuperTux/supertux). For more information about
+SuperTux, please visit the official website at [supertux.org](https://www.supertux.org).
 
 <br>
 
 ### About SuperTux
 
-SuperTux is a jump'n'run game with strong inspiration from the Super Mario Bros.
-games for various Nintendo platforms.
+SuperTux is a jump'n'run game with strong inspiration from the Super Mario Bros. games for
+various Nintendo platforms.
 
-Run and jump through multiple worlds, fighting off enemies by jumping on them,
-bumping them from below, or tossing objects at them, while grabbing power-ups and
-other collectibles along the way.
+Run and jump through multiple worlds, fighting off enemies by jumping on them, bumping them
+from below, or tossing objects at them, while grabbing power-ups and other collectibles along
+the way.
 
 <br>
 
 ### Setup Guide for devkitPro PowerPC Build System
 
-To set up the devkitPro devkitPPC PowerPC build system, follow the
-instructions on the official devkitPro wiki:
+To set up the devkitPro devkitPPC PowerPC build system, follow the instructions on the official
+devkitPro wiki:
 
 - [Getting Started with devkitPro](https://devkitpro.org/wiki/Getting_Started)
 - [devkitPro Pacman](https://devkitpro.org/wiki/devkitPro_pacman)
 
-After setting up devkitPPC including environment variables, use (dkp-)pacman
-to install the following dependencies:
+After setting up devkitPPC including environment variables, use (dkp-)pacman to install the
+following dependencies:
 
 **Build Tools (Required):**
 ```
+devkitPPC (C++20 compatible compiler)
 wii-cmake
 wii-pkg-config
 ```
@@ -78,9 +80,9 @@ wii-pkg-config
 ```
 libogc
 libfat-ogc
-wii-sdl
-wii-sdl_image
-wii-sdl_mixer
+wii-sdl2
+wii-sdl2_image
+wii-sdl2_mixer
 ```
 
 **Graphics & Compression:**
@@ -133,13 +135,15 @@ wii-opengx
    make -j$(nproc)
    ```
 
-   This will generate `boot.dol` and a ready-to-deploy folder structure in `build/apps/supertux`.
+   This will generate `boot.dol` and a ready-to-deploy folder structure in
+   `build/apps/supertux`.
 
 <br>
 
 ### Installing SuperTux on Wii (Homebrew Channel)
 
-1. The build process automatically creates the necessary folder structure in `build/apps/supertux`.
+1. The build process automatically creates the necessary folder structure in
+   `build/apps/supertux`.
 
 2. Copy the `supertux` folder from `build/apps/` to the `apps/` folder on your SD/USB device.
    ```
@@ -149,14 +153,16 @@ wii-opengx
    SD:/apps/supertux/meta.xml
    ```
 
-3. Launch SuperTux from the Homebrew Channel. The game will create a config file and save folder on the first run.
+3. Launch SuperTux from the Homebrew Channel. The game will create a config file and save
+   folder on the first run.
 
 <br>
 
 ### How to Build: Desktop Linux (Testing/Unsupported)
 
 1. Install Dependencies:
-   You will need the following build tools. For the libraries listed below, ensure you install the **development headers** (often ending in `-dev` or `-devel`).
+   You will need the following build tools. For the libraries listed below, ensure you install
+   the **development headers** (often ending in `-dev` or `-devel`).
 
    **Build Tools:**
    ```
@@ -164,11 +170,11 @@ wii-opengx
    CMake
    ```
 
-   **SDL 1.2 Framework:**
+   **SDL 2 Framework:**
    ```
-   SDL 1.2 (or sdl12-compat)
-   SDL_image 1.2
-   SDL_mixer 1.2
+   SDL2 (or sdl2-compat)
+   SDL2_image
+   SDL2_mixer
    ```
 
    **Core Libraries:**
@@ -200,36 +206,41 @@ wii-opengx
    ```
 
 5. Run (Portable Mode):
-   The build process automatically creates a portable folder named `supertux-wii` inside `build/dist/` containing the executable and data.
+   The build process automatically creates a portable folder named `supertux-wii` inside
+   `build/dist/` containing the executable and data.
    ```bash
    cd dist/supertux-wii
    ./supertux-wii
    ```
 
 **Important Note on Installation:**
-While `sudo make install` is supported by CMake, it is **not recommended** for this project. Installing
-files directly to your system directories this way without using a package manager makes them very difficult
-to uninstall cleanly later. We strongly recommend using the portable method above for testing.
+While `sudo make install` is supported by CMake, it is **not recommended** for this project.
+Installing files directly to your system directories this way without using a package manager
+makes them very difficult to uninstall cleanly later. We strongly recommend using the portable
+method above for testing.
 
 **Note on Other Operating Systems:**
-Support for other platforms (Windows, macOS, BSD) is currently outside the scope of this repository, as the
-primary focus is the Wii hardware. Given the standard CMake infrastructure, adapting the build system for
-other platforms should be fairly trivial.
+Support for other platforms (Windows, macOS, BSD) is currently outside the scope of this
+repository, as the primary focus is the Wii hardware. Given the standard CMake infrastructure,
+adapting the build system for other platforms should be fairly trivial.
 <br>
+
+### License
+
+This program is distributed under the terms of the GNU General Public License version 3
+(or later). You can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Please see the [LICENSE](LICENSE) file for the full text.
 
 ### Disclaimer
 
-This is an unofficial port of SuperTux that runs on the Wii via the Homebrew Channel.
-It is not affiliated with, endorsed by, nor sponsored by the creators of the Wii console
-nor the Homebrew Channel. All trademarks and copyrights are the property of their
-respective owners.
-
-This port is distributed under the terms of the GNU General Public License version 3
-(or later). You can redistribute it and/or modify it under the terms of the GNU General
-Public License as published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
+This is an unofficial port of SuperTux that runs on the Wii via the Homebrew Channel. It is not
+affiliated with, endorsed by, nor sponsored by the creators of the Wii console nor the Homebrew
+Channel. All trademarks and copyrights are the property of their respective owners.
 
 This project is distributed in the hope that it will be useful, but **WITHOUT ANY WARRANTY**;
 without even the implied warranty of **MERCHANTABILITY** or **FITNESS FOR A PARTICULAR PURPOSE**.
-See the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html) for
-more details.
+See the [GNU General Public License](https://www.gnu.org/licenses/gpl-3.0.en.html) for more
+details.
