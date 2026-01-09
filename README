@@ -1,7 +1,5 @@
 - An introduction for SuperTux -
 http://super-tux.sf.net/
-
-Last update: April 26, 2004
  
 DESCRIPTION
 -----------
@@ -44,8 +42,8 @@ DOCUMENTATION
   Important documentation for SuperTux is contained in multiple files.
   Please see them:
 
-    AUTHORS     - Credits for people that contributed to the creation
-                  of SuperTux.
+    AUTHORS.md  - Credits for people that contributed to the creation
+                  of SuperTux and helped with the SuperTux Wii port.
 
     LICENSE     - The GNU Public License, which "SuperTux" is liscensed
                   under.
