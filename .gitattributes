@@ -1,0 +1,115 @@
+###############################################################################
+# GIT ATTRIBUTES
+#
+# This file controls how git treats files. It is primarily used here to
+# enforce Unix-style (LF) line endings across the project, regardless of
+# the developer's operating system.
+###############################################################################
+
+
+# =============================================================================
+# DEFAULT BEHAVIOR
+# =============================================================================
+
+# Auto-detect text files and normalize to LF.
+*                           text=auto eol=lf
+
+# =============================================================================
+# SOURCE CODE
+# =============================================================================
+
+# C and C++ source files
+*.c                         text eol=lf
+*.cc                        text eol=lf
+*.cpp                       text eol=lf
+*.cxx                       text eol=lf
+
+# C and C++ header files
+*.h                         text eol=lf
+*.hh                        text eol=lf
+*.hpp                       text eol=lf
+
+# =============================================================================
+# BUILD SYSTEM & CONFIGURATION
+# =============================================================================
+
+# CMake and Make configuration
+CMakeLists.txt              text eol=lf
+*.cmake                     text eol=lf
+Makefile                    text eol=lf
+
+# Packaging and Metadata
+*.xml                       text eol=lf
+*.desktop                   text eol=lf
+
+# =============================================================================
+# SUPERTUX DATA (TEXT)
+# =============================================================================
+
+# SuperTux uses Lisp-style S-expressions for data
+*.stl                       text eol=lf
+*.stwm                      text eol=lf
+*.stgt                      text eol=lf
+*.strf                      text eol=lf
+
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
+
+# Markdown and Text files
+*.md                        text eol=lf
+*.txt                       text eol=lf
+
+# Standard project documentation files
+AUTHORS                     text eol=lf
+LICENSE                     text eol=lf
+CREDITS                     text eol=lf
+TODO                        text eol=lf
+README                      text eol=lf
+README*                     text eol=lf
+
+# =============================================================================
+# ASSETS - TEXT BASED
+# =============================================================================
+
+# XPM (X PixMap) is an image format stored as C source code (Text)
+*.xpm                       text eol=lf
+
+# Vector graphics (XML)
+*.svg                       text eol=lf
+
+# =============================================================================
+# ASSETS - BINARY IMAGES
+# =============================================================================
+
+# Raster images must be binary to prevent corruption
+*.png                       binary
+*.jpg                       binary
+*.jpeg                      binary
+*.gif                       binary
+*.ico                       binary
+
+# =============================================================================
+# ASSETS - BINARY AUDIO
+# =============================================================================
+
+# Tracker modules, OGGs, and WAVs
+*.mod                       binary
+*.xm                        binary
+*.it                        binary
+*.ogg                       binary
+*.wav                       binary
+
+# =============================================================================
+# ARCHIVES
+# =============================================================================
+
+# Compressed files
+*.gz                        binary
+*.xz                        binary
+*.zip                       binary
+*.tar                       binary
+*.7z                        binary
+
+
+# EOF
