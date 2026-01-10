@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_RESOURCES_H
 #define SUPERTUX_RESOURCES_H
 
-#include "musicref.h"
+#include "musicref.hpp"
 
 class SpriteManager;
 class MusicManager;

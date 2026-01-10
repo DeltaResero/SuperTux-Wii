@@ -15,12 +15,12 @@
 
 #include <SDL2/SDL.h>
 #include <vector>
-#include "type.h"
-#include "timer.h"
-#include "texture.h"
-#include "collision.h"
-#include "sound.h"
-#include "physic.h"
+#include "type.hpp"
+#include "timer.hpp"
+#include "texture.hpp"
+#include "collision.hpp"
+#include "sound.hpp"
+#include "physic.hpp"
 
 // Gameplay timing constants
 #define TUX_SAFE_TIME 1800

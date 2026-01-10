@@ -10,12 +10,12 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "defines.h"
-#include "collision.h"
-#include "scene.h"
-#include "world.h"
-#include "level.h"
-#include "tile.h"
+#include "defines.hpp"
+#include "collision.hpp"
+#include "scene.hpp"
+#include "world.hpp"
+#include "level.hpp"
+#include "tile.hpp"
 #include <functional>
 #include <cmath>
 #include <algorithm>

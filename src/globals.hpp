@@ -17,9 +17,9 @@
 
 #include <string>
 #include <SDL2/SDL.h>
-#include "text.h"
-#include "menu.h"
-#include "mousecursor.h"
+#include "text.hpp"
+#include "menu.hpp"
+#include "mousecursor.hpp"
 
 // Loading Screen as Supertux takes a long, long time to load on Wii
 extern Surface* loading_surf;

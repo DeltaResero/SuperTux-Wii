@@ -10,15 +10,15 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "particlesystem.h"
+#include "particlesystem.hpp"
 
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
-#include "globals.h"
-#include "world.h"
-#include "level.h"
-#include "scene.h"
+#include "globals.hpp"
+#include "world.hpp"
+#include "level.hpp"
+#include "scene.hpp"
 
 /**
  * Constructs a ParticleSystem object.

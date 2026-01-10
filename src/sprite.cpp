@@ -12,10 +12,10 @@
 
 #include <iostream>
 #include <cmath>
-#include "globals.h"
-#include "sprite.h"
-#include "setup.h"
-#include "render_batcher.h"
+#include "globals.hpp"
+#include "sprite.hpp"
+#include "setup.hpp"
+#include "render_batcher.hpp"
 
 /**
  * Constructs a Sprite object.

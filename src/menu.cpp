@@ -22,17 +22,17 @@
 #include <assert.h>
 #include <string>
 
-#include "configfile.h"
-#include "defines.h"
-#include "globals.h"
-#include "menu.h"
-#include "screen.h"
-#include "setup.h"
-#include "sound.h"
-#include "scene.h"
-#include "timer.h"
+#include "configfile.hpp"
+#include "defines.hpp"
+#include "globals.hpp"
+#include "menu.hpp"
+#include "screen.hpp"
+#include "setup.hpp"
+#include "sound.hpp"
+#include "scene.hpp"
+#include "timer.hpp"
 
-#include "music_manager.h"
+#include "music_manager.hpp"
 extern MusicManager* music_manager;
 
 #define FLICK_CURSOR_TIME 500

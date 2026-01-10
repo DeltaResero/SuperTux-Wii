@@ -11,15 +11,15 @@
 // (at your option) any later version.
 
 #include <cmath>
-#include "gameloop.h"
-#include "globals.h"
-#include "player.h"
-#include "defines.h"
-#include "scene.h"
-#include "tile.h"
-#include "sprite.h"
-#include "screen.h"
-#include "render_batcher.h"
+#include "gameloop.hpp"
+#include "globals.hpp"
+#include "player.hpp"
+#include "defines.hpp"
+#include "scene.hpp"
+#include "tile.hpp"
+#include "sprite.hpp"
+#include "screen.hpp"
+#include "render_batcher.hpp"
 
 #define AUTOSCROLL_DEAD_INTERVAL 300
 

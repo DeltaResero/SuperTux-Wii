@@ -14,8 +14,8 @@
 #define SUPERTUX_MOUSECURSOR_H
 
 #include <string>
-#include "timer.h"
-#include "texture.h"
+#include "timer.hpp"
+#include "texture.hpp"
 
 #define MC_FRAME_PERIOD 800  // Frame period in ms
 #define MC_STATES_NB 3       // Number of cursor states

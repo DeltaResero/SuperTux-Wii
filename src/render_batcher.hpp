@@ -15,7 +15,7 @@
 #ifndef NOOPENGL
 
 #include <vector>
-#include "texture.h"
+#include "texture.hpp"
 
 // A simple struct to hold vertex data for one corner of a quad
 struct VertexData

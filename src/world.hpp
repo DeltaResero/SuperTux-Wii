@@ -18,14 +18,14 @@
 #include <vector>
 #include <string>
 #include <SDL2/SDL.h>
-#include "type.h"
-#include "scene.h"
-#include "special.h"
-#include "badguy.h"
-#include "particlesystem.h"
-#include "gameobjs.h"
-#include "object_pool.h"
-#include "spatial_grid.h"
+#include "type.hpp"
+#include "scene.hpp"
+#include "special.hpp"
+#include "badguy.hpp"
+#include "particlesystem.hpp"
+#include "gameobjs.hpp"
+#include "object_pool.hpp"
+#include "spatial_grid.hpp"
 
 class Level;
 class RenderBatcher;

@@ -17,7 +17,7 @@
 #include <list>
 #include <vector>
 #include <unordered_map>
-#include "texture.h"
+#include "texture.hpp"
 
 void display_text_file(const std::string& file, const std::string& surface, float scroll_speed);
 void display_text_file(const std::string& file, Surface* surface, float scroll_speed, bool is_static = false);

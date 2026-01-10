@@ -12,11 +12,11 @@
 
 #include <cstdlib>
 #include <cstring>
-#include "configfile.h"
-#include "setup.h"
-#include "globals.h"
-#include "lispreader.h"
-#include "player.h"
+#include "configfile.hpp"
+#include "setup.hpp"
+#include "globals.hpp"
+#include "lispreader.hpp"
+#include "player.hpp"
 
 #ifdef WIN32
 const char* config_filename = "st_config.dat";

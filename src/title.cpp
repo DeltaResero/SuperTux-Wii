@@ -28,22 +28,22 @@
 #include <ctype.h>
 #endif
 
-#include "defines.h"
-#include "globals.h"
-#include "title.h"
-#include "screen.h"
-#include "menu.h"
-#include "texture.h"
-#include "timer.h"
-#include "setup.h"
-#include "level.h"
-#include "gameloop.h"
-#include "scene.h"
-#include "player.h"
-#include "math.h"
-#include "tile.h"
-#include "resources.h"
-#include "worldmap.h"
+#include "defines.hpp"
+#include "globals.hpp"
+#include "title.hpp"
+#include "screen.hpp"
+#include "menu.hpp"
+#include "texture.hpp"
+#include "timer.hpp"
+#include "setup.hpp"
+#include "level.hpp"
+#include "gameloop.hpp"
+#include "scene.hpp"
+#include "player.hpp"
+#include <math.h>
+#include "tile.hpp"
+#include "resources.hpp"
+#include "worldmap.hpp"
 
 namespace fs = std::filesystem;  // Alias for ease of use
 

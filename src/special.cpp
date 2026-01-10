@@ -12,18 +12,18 @@
 
 #include <assert.h>
 #include <iostream>
-#include "SDL.h"
-#include "defines.h"
-#include "special.h"
-#include "gameloop.h"
-#include "screen.h"
-#include "sound.h"
-#include "scene.h"
-#include "globals.h"
-#include "player.h"
-#include "sprite_manager.h"
-#include "resources.h"
-#include "render_batcher.h"
+#include <SDL.h>
+#include "defines.hpp"
+#include "special.hpp"
+#include "gameloop.hpp"
+#include "screen.hpp"
+#include "sound.hpp"
+#include "scene.hpp"
+#include "globals.hpp"
+#include "player.hpp"
+#include "sprite_manager.hpp"
+#include "resources.hpp"
+#include "render_batcher.hpp"
 
 Sprite* img_bullet;
 Sprite* img_star;

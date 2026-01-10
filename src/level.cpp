@@ -20,17 +20,17 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include "globals.h"
-#include "setup.h"
-#include "screen.h"
-#include "level.h"
-#include "physic.h"
-#include "scene.h"
-#include "tile.h"
-#include "lispreader.h"
-#include "resources.h"
-#include "music_manager.h"
-#include "utils.h"
+#include "globals.hpp"
+#include "setup.hpp"
+#include "screen.hpp"
+#include "level.hpp"
+#include "physic.hpp"
+#include "scene.hpp"
+#include "tile.hpp"
+#include "lispreader.hpp"
+#include "resources.hpp"
+#include "music_manager.hpp"
+#include "utils.hpp"
 
 namespace fs = std::filesystem;  // Alias for ease of use
 using namespace std;

@@ -15,10 +15,10 @@
 #ifndef SUPERTUX_GAMELOOP_H
 #define SUPERTUX_GAMELOOP_H
 
-#include "sound.h"
-#include "type.h"
-#include "level.h"
-#include "world.h"
+#include "sound.hpp"
+#include "type.hpp"
+#include "level.hpp"
+#include "world.hpp"
 
 /* GameLoop modes */
 

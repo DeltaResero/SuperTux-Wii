@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_TIMER_H
 #define SUPERTUX_TIMER_H
 
-#include "SDL.h"
+#include <SDL.h>
 #include <stdio.h>
 
 class Ticks {

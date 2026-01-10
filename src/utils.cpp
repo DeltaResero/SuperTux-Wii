@@ -9,7 +9,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "utils.h"
+#include "utils.hpp"
 #include <cstring> // For memcpy, memchr
 #include <cmath>   // For std::sin, std::cos
 #include <numbers> // For std::numbers::pi_v

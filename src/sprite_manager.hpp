@@ -15,7 +15,7 @@
 
 #include <map>
 #include <string>
-#include "sprite.h"
+#include "sprite.hpp"
 
 // Manages loading and accessing sprites by name
 class SpriteManager

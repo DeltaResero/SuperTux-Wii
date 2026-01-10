@@ -14,11 +14,11 @@
 #include <algorithm>
 #include <cstring>
 #include <string>
-#include "world.h"
-#include "tile.h"
-#include "gameloop.h"
-#include "gameobjs.h"
-#include "render_batcher.h"
+#include "world.hpp"
+#include "tile.hpp"
+#include "gameloop.hpp"
+#include "gameobjs.hpp"
+#include "render_batcher.hpp"
 
 /**
  * Initializes a BouncyDistro object.

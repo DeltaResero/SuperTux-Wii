@@ -10,9 +10,9 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "SDL.h"
-#include "defines.h"
-#include "timer.h"
+#include <SDL.h>
+#include "defines.hpp"
+#include "timer.hpp"
 
 // Static member definitions for the Ticks class.
 Uint32 Ticks::pause_ticks = 0, Ticks::pause_count = 0;

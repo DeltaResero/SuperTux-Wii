@@ -12,10 +12,10 @@
 // (at your option) any later version.
 
 #include <SDL2/SDL_mixer.h>
-#include "defines.h"
-#include "globals.h"
-#include "sound.h"
-#include "setup.h"
+#include "defines.hpp"
+#include "globals.hpp"
+#include "sound.hpp"
+#include "setup.hpp"
 
 /* Global variables */
 bool use_sound = true;    /* handle sound on/off menu and command-line option */

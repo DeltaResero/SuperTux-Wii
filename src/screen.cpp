@@ -20,7 +20,7 @@
 #include <SDL2/SDL_image.h>
 
 #ifndef NOOPENGL
-#include "texture.h"
+#include "texture.hpp"
 #endif
 
 #ifndef WIN32
@@ -28,11 +28,11 @@
 #include <ctype.h>
 #endif
 
-#include "defines.h"
-#include "globals.h"
-#include "screen.h"
-#include "setup.h"
-#include "type.h"
+#include "defines.hpp"
+#include "globals.hpp"
+#include "screen.hpp"
+#include "setup.hpp"
+#include "type.hpp"
 
 // Global Screen Resources
 SDL_Window* window = nullptr;

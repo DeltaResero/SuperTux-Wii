@@ -15,8 +15,8 @@
 
 #include <string>
 #include <vector>
-#include "SDL.h"
-#include "scene.h"
+#include <SDL.h>
+#include "scene.hpp"
 
 /* 'Base' type for game objects */
 

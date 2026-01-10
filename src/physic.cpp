@@ -10,9 +10,9 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "physic.h"
-#include "world.h"
-#include "level.h"
+#include "physic.hpp"
+#include "world.hpp"
+#include "level.hpp"
 
 // The constructor and destructor are defaulted in the header file.
 // All simple getters and setters have been inlined for performance.

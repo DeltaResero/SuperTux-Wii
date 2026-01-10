@@ -18,20 +18,20 @@
 #include <string.h>
 #include <algorithm>
 #include <string>
-#include "globals.h"
-#include "scene.h"
-#include "screen.h"
-#include "defines.h"
-#include "world.h"
-#include "level.h"
-#include "tile.h"
-#include "resources.h"
-#include "render_batcher.h"
-#include "text.h"
-#include "sound.h"
-#include "player.h"
-#include "collision.h"
-#include "texture.h"
+#include "globals.hpp"
+#include "scene.hpp"
+#include "screen.hpp"
+#include "defines.hpp"
+#include "world.hpp"
+#include "level.hpp"
+#include "tile.hpp"
+#include "resources.hpp"
+#include "render_batcher.hpp"
+#include "text.hpp"
+#include "sound.hpp"
+#include "player.hpp"
+#include "collision.hpp"
+#include "texture.hpp"
 
 // Extern sprite declarations needed for monolithic draw loops
 extern Sprite* img_bullet;

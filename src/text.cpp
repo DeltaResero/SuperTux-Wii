@@ -16,12 +16,12 @@
 #include <tuple>
 #include <stdio.h>
 #include <string.h>
-#include "globals.h"
-#include "defines.h"
-#include "screen.h"
-#include "text.h"
-#include "menu.h"
-#include "texture.h"
+#include "globals.hpp"
+#include "defines.hpp"
+#include "screen.hpp"
+#include "text.hpp"
+#include "menu.hpp"
+#include "texture.hpp"
 
 Text::Texts Text::texts;
 

@@ -11,8 +11,8 @@
 // (at your option) any later version.
 
 #include <stdlib.h>
-#include "scene.h"
-#include "defines.h"
+#include "scene.hpp"
+#include "defines.hpp"
 
 // Global player status
 PlayerStatus player_status;

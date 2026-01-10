@@ -10,8 +10,8 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "screen.h"
-#include "mousecursor.h"
+#include "screen.hpp"
+#include "mousecursor.hpp"
 
 MouseCursor* MouseCursor::current_ = nullptr;  // Initialize static member to nullptr
 

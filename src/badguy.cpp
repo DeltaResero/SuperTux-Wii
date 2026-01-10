@@ -19,17 +19,17 @@
 #include <string>
 #include <unordered_map>
 
-#include "globals.h"
-#include "defines.h"
-#include "badguy.h"
-#include "scene.h"
-#include "screen.h"
-#include "world.h"
-#include "tile.h"
-#include "resources.h"
-#include "utils.h"
-#include "sprite_manager.h"
-#include "render_batcher.h"
+#include "globals.hpp"
+#include "defines.hpp"
+#include "badguy.hpp"
+#include "scene.hpp"
+#include "screen.hpp"
+#include "world.hpp"
+#include "tile.hpp"
+#include "resources.hpp"
+#include "utils.hpp"
+#include "sprite_manager.hpp"
+#include "render_batcher.hpp"
 
 // Gameplay Constants
 static const float BADGUY_WALK_SPEED = 0.8f;

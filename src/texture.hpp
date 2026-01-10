@@ -22,7 +22,7 @@
 #endif
 
 #include <list>
-#include "screen.h"
+#include "screen.hpp"
 
 // Load part of an image into SDL_Surface
 SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, bool use_alpha);

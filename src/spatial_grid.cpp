@@ -9,9 +9,9 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "spatial_grid.h"
-#include "badguy.h"
-#include "special.h"
+#include "spatial_grid.hpp"
+#include "badguy.hpp"
+#include "special.hpp"
 #include <cmath>
 
 SpatialGrid::SpatialGrid(int cell_size_)

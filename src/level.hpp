@@ -21,10 +21,10 @@
 
 #include <string>
 #include <vector>
-#include "lispreader.h"
-#include "texture.h"
-#include "badguy.h"
-#include "musicref.h"
+#include "lispreader.hpp"
+#include "texture.hpp"
+#include "badguy.hpp"
+#include "musicref.hpp"
 
 // Tilemaps
 #define TM_BG 0

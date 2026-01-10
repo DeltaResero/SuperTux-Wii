@@ -15,8 +15,8 @@
 
 #include <string>
 #include <vector>
-#include "lispreader.h"
-#include "texture.h"
+#include "lispreader.hpp"
+#include "texture.hpp"
 
 class RenderBatcher;
 

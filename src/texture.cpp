@@ -16,9 +16,9 @@
 #include <cmath>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include "texture.h"
-#include "globals.h"
-#include "setup.h"
+#include "texture.hpp"
+#include "globals.hpp"
+#include "setup.hpp"
 
 // ----------------------------------------------------------------------------
 // Internal State Tracking (OpenGL)

@@ -16,10 +16,10 @@
 #include <set>
 #include <map>
 #include <vector>
-#include "texture.h"
-#include "globals.h"
-#include "lispreader.h"
-#include "setup.h"
+#include "texture.hpp"
+#include "globals.hpp"
+#include "lispreader.hpp"
+#include "setup.hpp"
 
 class RenderBatcher; // Forward declaration
 

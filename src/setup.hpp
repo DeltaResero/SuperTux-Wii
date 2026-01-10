@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include <string>
 
-#include "menu.h"
-#include "sound.h"
-#include "type.h"
+#include "menu.hpp"
+#include "sound.hpp"
+#include "type.hpp"
 
 class Menu;
 

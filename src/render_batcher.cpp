@@ -9,13 +9,13 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "globals.h"
+#include "globals.hpp"
 
 #ifndef NOOPENGL
 
-#include "render_batcher.h"
-#include "texture.h"
-#include "scene.h"
+#include "render_batcher.hpp"
+#include "texture.hpp"
+#include "scene.hpp"
 #include <cmath>
 
 /**

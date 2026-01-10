@@ -13,7 +13,7 @@
 #ifndef SUPERTUX_MUSICREF_H
 #define SUPERTUX_MUSICREF_H
 
-#include "music_manager.h"
+#include "music_manager.hpp"
 
 // Class to handle references to music resources
 class MusicRef

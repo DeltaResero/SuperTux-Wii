@@ -12,8 +12,8 @@
 
 #include <iostream>
 #include <cstring>
-#include "lispreader.h"
-#include "sprite_manager.h"
+#include "lispreader.hpp"
+#include "sprite_manager.hpp"
 
 /**
  * Constructs a SpriteManager and loads sprites from a resource file.

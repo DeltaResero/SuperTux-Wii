@@ -11,7 +11,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "musicref.h"
+#include "musicref.hpp"
 
 MusicRef::MusicRef()
   : music(0)

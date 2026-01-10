@@ -14,10 +14,10 @@
 #ifndef SUPERTUX_GAMEOBJS_H
 #define SUPERTUX_GAMEOBJS_H
 
-#include "type.h"
-#include "texture.h"
-#include "timer.h"
-#include "scene.h"
+#include "type.hpp"
+#include "texture.hpp"
+#include "timer.hpp"
+#include "scene.hpp"
 
 /* Bounciness of distros: */
 #define NO_BOUNCE 0

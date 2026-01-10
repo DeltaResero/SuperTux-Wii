@@ -16,19 +16,19 @@
 #include <cstring>
 #include <cassert>
 #include <unistd.h>
-#include "globals.h"
-#include "texture.h"
-#include "screen.h"
-#include "lispreader.h"
-#include "gameloop.h"
-#include "setup.h"
-#include "worldmap.h"
-#include "resources.h"
-#include "level.h"
-#include "timer.h"
-#include "player.h"
-#include "utils.h"
-#include "render_batcher.h"
+#include "globals.hpp"
+#include "texture.hpp"
+#include "screen.hpp"
+#include "lispreader.hpp"
+#include "gameloop.hpp"
+#include "setup.hpp"
+#include "worldmap.hpp"
+#include "resources.hpp"
+#include "level.hpp"
+#include "timer.hpp"
+#include "player.hpp"
+#include "utils.hpp"
+#include "render_batcher.hpp"
 
 #define DISPLAY_MAP_MESSAGE_TIME 2800
 

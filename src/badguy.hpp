@@ -15,14 +15,14 @@
 #ifndef SUPERTUX_BADGUY_H
 #define SUPERTUX_BADGUY_H
 
-#include "SDL.h"
-#include "defines.h"
-#include "type.h"
-#include "timer.h"
-#include "texture.h"
-#include "physic.h"
-#include "collision.h"
-#include "sprite.h"
+#include <SDL.h>
+#include "defines.hpp"
+#include "type.hpp"
+#include "timer.hpp"
+#include "texture.hpp"
+#include "physic.hpp"
+#include "collision.hpp"
+#include "sprite.hpp"
 
 /* Bad guy kinds: */
 enum BadGuyKind

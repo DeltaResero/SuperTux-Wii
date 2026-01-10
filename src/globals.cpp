@@ -16,9 +16,9 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "globals.h"
-#include "player.h"
-#include "resources.h" // Needed for tux_life sprite
+#include "globals.hpp"
+#include "player.hpp"
+#include "resources.hpp" // Needed for tux_life sprite
 
 #ifdef _WII_
 #include <gccore.h>

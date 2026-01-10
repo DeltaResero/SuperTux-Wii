@@ -17,10 +17,10 @@
 #include <vector>
 #include <string>
 #include <functional>
-#include "texture.h"
-#include "timer.h"
-#include "type.h"
-#include "mousecursor.h"
+#include "texture.hpp"
+#include "timer.hpp"
+#include "type.hpp"
+#include "mousecursor.hpp"
 
 /* IDs for menus */
 #pragma region MenuIDs

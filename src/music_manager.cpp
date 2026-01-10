@@ -12,10 +12,10 @@
 
 #include <cassert>
 #include <stdexcept>
-#include "music_manager.h"
-#include "musicref.h"
-#include "sound.h"
-#include "setup.h"
+#include "music_manager.hpp"
+#include "musicref.hpp"
+#include "sound.hpp"
+#include "setup.hpp"
 
 /**
  * Constructs a MusicManager.

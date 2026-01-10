@@ -11,8 +11,8 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "lispreader.h"
-#include "setup.h"
+#include "lispreader.hpp"
+#include "setup.hpp"
 #include <algorithm>
 #include <array>
 #include <cassert>

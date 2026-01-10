@@ -10,15 +10,15 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "globals.h"
-#include "scene.h"
-#include "player.h"
-#include "badguy.h"
-#include "gameobjs.h"
-#include "special.h"
-#include "resources.h"
-#include "sprite_manager.h"
-#include "setup.h"
+#include "globals.hpp"
+#include "scene.hpp"
+#include "player.hpp"
+#include "badguy.hpp"
+#include "gameobjs.hpp"
+#include "special.hpp"
+#include "resources.hpp"
+#include "sprite_manager.hpp"
+#include "setup.hpp"
 
 Surface* img_waves[3];
 Surface* img_water;

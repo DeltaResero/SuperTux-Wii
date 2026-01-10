@@ -15,7 +15,7 @@
 
 #include <vector>
 #include <array>
-#include "texture.h"
+#include "texture.hpp"
 
 // Instead of complex inheritance, we use simple structs.
 // This makes the data layout much more efficient for the CPU.

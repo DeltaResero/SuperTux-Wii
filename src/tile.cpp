@@ -10,12 +10,12 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-#include "tile.h"
-#include "scene.h"
-#include "assert.h"
+#include "tile.hpp"
+#include "scene.hpp"
+#include <assert.h>
 #include <cstring>
 #include <filesystem>
-#include "render_batcher.h"
+#include "render_batcher.hpp"
 
 // Static member initialization
 TileManager* TileManager::instance_ = nullptr;

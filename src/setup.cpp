@@ -41,31 +41,31 @@
 #include <wiiuse/wpad.h>
 #endif
 
-#include "globals.h"
-#include "setup.h"
-#include "screen.h"
-#include "texture.h"
-#include "menu.h"
-#include "gameloop.h"
-#include "configfile.h"
-#include "worldmap.h"
-#include "resources.h"
-#include "title.h"
-#include "intro.h"
-#include "music_manager.h"
-#include "player.h"
-#include "SDL_audio.h"
-#include "SDL_error.h"
-#include "SDL_joystick.h"
-#include "SDL_keyboard.h"
-#include "SDL_timer.h"
-#include "SDL_video.h"
-#include "mousecursor.h"
-#include "sound.h"
-#include "text.h"
-#include "timer.h"
-#include "type.h"
-#include "utils.h"
+#include "globals.hpp"
+#include "setup.hpp"
+#include "screen.hpp"
+#include "texture.hpp"
+#include "menu.hpp"
+#include "gameloop.hpp"
+#include "configfile.hpp"
+#include "worldmap.hpp"
+#include "resources.hpp"
+#include "title.hpp"
+#include "intro.hpp"
+#include "music_manager.hpp"
+#include "player.hpp"
+#include <SDL_audio.h>
+#include <SDL_error.h>
+#include <SDL_joystick.h>
+#include <SDL_keyboard.h>
+#include <SDL_timer.h>
+#include <SDL_video.h>
+#include "mousecursor.hpp"
+#include "sound.hpp"
+#include "text.hpp"
+#include "timer.hpp"
+#include "type.hpp"
+#include "utils.hpp"
 
 #ifdef WIN32
 #define mkdir(dir, mode)    mkdir(dir)

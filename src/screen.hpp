@@ -18,7 +18,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #endif
-#include "texture.h"
+#include "texture.hpp"
 
 // Constants
 #define NO_UPDATE     false

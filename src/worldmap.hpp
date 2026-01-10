@@ -16,8 +16,8 @@
 #include <vector>
 #include <string>
 
-#include "musicref.h"
-#include "gameloop.h"
+#include "musicref.hpp"
+#include "gameloop.hpp"
 
 // Forward declare SDL_Event to avoid including SDL.h in the header
 // Corrected from 'struct' to 'union' to match the actual SDL definition.

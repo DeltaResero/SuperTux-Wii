@@ -14,7 +14,7 @@
 
 #include <vector>
 #include <unordered_map>
-#include "defines.h"
+#include "defines.hpp"
 
 class BadGuy;
 class Bullet;

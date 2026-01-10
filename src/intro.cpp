@@ -19,12 +19,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
-#include "defines.h"
-#include "globals.h"
-#include "intro.h"
-#include "text.h"
+#include "defines.hpp"
+#include "globals.hpp"
+#include "intro.hpp"
+#include "text.hpp"
 
-#include "screen.h"
+#include "screen.hpp"
 
 void draw_intro()
 {

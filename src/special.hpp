@@ -14,11 +14,11 @@
 #define SUPERTUX_SPECIAL_H
 
 #include <SDL2/SDL.h>
-#include "type.h"
-#include "texture.h"
-#include "collision.h"
-#include "player.h"
-#include "physic.h"
+#include "type.hpp"
+#include "texture.hpp"
+#include "collision.hpp"
+#include "player.hpp"
+#include "physic.hpp"
 
 // Upgrade types
 enum UpgradeKind {
