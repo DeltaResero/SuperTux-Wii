@@ -1177,6 +1177,11 @@ void WorldMap::update(float delta)
 
         handleLevelCompletion(result, coffee, big, level);
 
+        if (quit)
+        {
+          return;
+        }
+
         unloadsounds();
         loadSprites();
         tux->loadSprites();
@@ -1507,6 +1512,12 @@ void WorldMap::display()
 
     processInput();
     updateScene(delta);
+
+    if (quit)
+    {
+      break;
+    }
+
     renderScene();
   }
 }
