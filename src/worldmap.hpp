@@ -285,6 +285,9 @@ private:
   void draw_status();
   void on_escape_press();
 
+  // Smart tile substitution for snow tiles
+  int get_display_tile_id(int x, int y);
+
   Tux* tux;
   bool quit;
 

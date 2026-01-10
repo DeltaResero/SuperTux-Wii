@@ -83,6 +83,14 @@
        (east  #f)
        (stop  #f))
 
+ (tile (id 10)
+       (image "snow0.png")
+       (north #f)
+       (south #f)
+       (west  #f)
+       (east  #f)
+       (stop  #f))
+
  (tile (id 11)
        (image "snow1.png")
        (north #f)

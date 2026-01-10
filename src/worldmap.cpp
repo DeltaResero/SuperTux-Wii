@@ -1255,6 +1255,46 @@ WorldMap::Level* WorldMap::at_level()
 }
 
 /**
+ * Gets the tile ID to display, applying smart substitution for snow6 tiles.
+ * Replaces snow6 (ID 16) with snow0 (ID 10) when flanked by other snow6 tiles.
+ * @param x The x coordinate of the tile.
+ * @param y The y coordinate of the tile.
+ * @return The tile ID to use for rendering.
+ */
+int WorldMap::get_display_tile_id(int x, int y)
+{
+  if (x < 0 || x >= width || y < 0 || y >= height)
+  {
+    return 8; // Return ground tile for out of bounds
+  }
+
+  int tile_id = tilemap[width * y + x];
+
+  // Check if this is a snow6 tile (ID 16)
+  if (tile_id == 16)
+  {
+    // Check horizontal neighbors for snow6/snow0 tiles
+    bool has_snow6_left = false;
+    bool has_corner_left = false;
+
+    if (x > 0)
+    {
+      int left_id = tilemap[width * y + (x - 1)];
+      has_snow6_left = (left_id == 16 || left_id == 10); // snow6 or snow0
+      has_corner_left = (left_id == 11); // snow1
+    }
+
+    // Replace with snow0 if in middle of sequence and not adjacent to left corner
+    if (has_snow6_left && !has_corner_left)
+    {
+      return 10; // Use snow0 for seamless tiling
+    }
+  }
+
+  return tile_id;
+}
+
+/**
  * Draws the world map at the specified offset.
  * @param offset The point used to offset drawing on the screen.
  */
@@ -1288,12 +1328,14 @@ void WorldMap::draw(const Point& offset)
   // Use the batcher if OpenGL is enabled
   RenderBatcher* batcher = use_gl ? m_renderBatcher : nullptr;
 
-  // Only draw the visible tiles
+  // Only draw the visible tiles with smart tile substitution
   for (int y = y_start; y < y_end; ++y)
   {
     for (int x = x_start; x < x_end; ++x)
     {
-      Tile* tile = at(Point(x, y));
+      // Use the smart tile ID getter to handle snow6/snow0 substitution
+      int display_tile_id = get_display_tile_id(x, y);
+      Tile* tile = tile_manager->get(display_tile_id);
       if (batcher)
       {
         // Add to batcher. Hotspots are 0, 0.
