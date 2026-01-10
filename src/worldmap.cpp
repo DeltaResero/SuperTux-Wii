@@ -1097,7 +1097,7 @@ void WorldMap::handleLevelCompletion(GameSession::ExitStatus result, bool coffee
         // Display final credits and go back to the main menu
         display_text_file(level->extro_filename, "/images/background/extro.jpg", SCROLL_SPEED_MESSAGE);
         music_manager->play_music(credits, 0);
-        display_text_file("CREDITS", "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
+        display_text_file("credits.txt", "/images/background/oiltux.jpg", SCROLL_SPEED_CREDITS);
         music_manager->play_music(theme);
         quit = true;
       }

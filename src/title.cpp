@@ -435,7 +435,7 @@ static void handleMenuActions()
           {
             credits_background = new Surface(datadir + "/images/title/background.jpg", false);
           }
-          display_text_file("CREDITS", credits_background, SCROLL_SPEED_CREDITS);
+          display_text_file("credits.txt", credits_background, SCROLL_SPEED_CREDITS);
 
           music_manager->halt_music();
           session->get_world()->play_music(LEVEL_MUSIC); // FIXME:Check if needed
