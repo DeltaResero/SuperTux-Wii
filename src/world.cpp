@@ -979,6 +979,7 @@ void World::play_music(int musictype)
       break;
     default:
       music_manager->halt_music();
+      currentmusic = NO_MUSIC; // Reset state when halting
       break;
   }
 }

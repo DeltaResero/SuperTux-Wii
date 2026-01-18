@@ -438,7 +438,8 @@ static void handleMenuActions()
           display_text_file("credits.txt", credits_background, SCROLL_SPEED_CREDITS);
 
           music_manager->halt_music();
-          session->get_world()->play_music(LEVEL_MUSIC); // FIXME:Check if needed
+          // Explicitly tell the world that no music is playing.
+          session->get_world()->play_music(NO_MUSIC);
           Menu::set_current(main_menu);
       }
     }
