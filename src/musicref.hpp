@@ -1,4 +1,4 @@
-// src/musicref.h
+// src/musicref.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

@@ -1,4 +1,4 @@
-// src/sprite_manager.h
+// src/sprite_manager.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

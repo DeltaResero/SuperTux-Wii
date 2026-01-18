@@ -1,4 +1,4 @@
-// src/mousecursor.h
+// src/mousecursor.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -17,8 +17,8 @@
 #include "timer.hpp"
 #include "texture.hpp"
 
-#define MC_FRAME_PERIOD 800  // Frame period in ms
-#define MC_STATES_NB 3       // Number of cursor states
+inline constexpr int MC_FRAME_PERIOD = 800;  // Frame period in ms
+inline constexpr int MC_STATES_NB = 3;       // Number of cursor states
 
 enum {
   MC_NORMAL,

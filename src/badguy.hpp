@@ -1,4 +1,4 @@
-// src/badguy.h
+// src/badguy.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

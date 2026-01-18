@@ -1,4 +1,4 @@
-// src/gameloop.h
+// src/gameloop.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -22,11 +22,11 @@
 
 /* GameLoop modes */
 
-#define ST_GL_PLAY 0
-#define ST_GL_TEST 1
-#define ST_GL_LOAD_GAME 2
-#define ST_GL_LOAD_LEVEL_FILE  3
-#define ST_GL_DEMO_GAME  4
+inline constexpr int ST_GL_PLAY = 0;
+inline constexpr int ST_GL_TEST = 1;
+inline constexpr int ST_GL_LOAD_GAME = 2;
+inline constexpr int ST_GL_LOAD_LEVEL_FILE  = 3;
+inline constexpr int ST_GL_DEMO_GAME  = 4;
 
 extern int game_started;
 

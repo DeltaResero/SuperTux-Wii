@@ -1,4 +1,4 @@
-// src/level.h
+// src/level.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -27,9 +27,9 @@
 #include "musicref.hpp"
 
 // Tilemaps
-#define TM_BG 0
-#define TM_IA 1
-#define TM_FG 2
+inline constexpr int TM_BG = 0;
+inline constexpr int TM_IA = 1;
+inline constexpr int TM_FG = 2;
 
 class LevelSubset
 {

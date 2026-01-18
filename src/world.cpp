@@ -44,6 +44,14 @@ extern Surface* img_distro[4];
 // Extern declaration for bumpbrick if it is not in a header
 extern void bumpbrick(float x, float y);
 
+namespace {
+// the space that it takes for the screen to start scrolling, regarding
+// screen bounds (in pixels)
+  constexpr int X_SPACE = 400 - 16;
+// the time it takes to move the camera (in ms)
+  constexpr int CHANGE_DIR_SCROLL_SPEED = 2000;
+}
+
 World* World::current_ = 0;
 
 void World::common_setup()
@@ -598,12 +606,6 @@ void World::action(float elapsed_time)
   // Clean up all objects marked for removal
   cleanup_dead_objects();
 }
-
-// the space that it takes for the screen to start scrolling, regarding
-// screen bounds (in pixels)
-#define X_SPACE (400-16)
-// the time it takes to move the camera (in ms)
-#define CHANGE_DIR_SCROLL_SPEED 2000
 
 /**
  * This function smoothly scrolls the camera to keep the player in view.

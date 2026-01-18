@@ -25,11 +25,13 @@
 
 Text::Texts Text::texts;
 
-#define MAX_TEXT_LEN 256     // Define a maximum length for safety
-#define MAX_VEL      10      // Maximum velocity for scrolling text
-#define SPEED_INC    0.01    // Speed increment for scrolling
-#define SCROLL       60      // Fixed scroll amount when space/enter is pressed
-#define ITEMS_SPACE  4       // Space between lines of text
+namespace {
+  constexpr size_t MAX_TEXT_LEN = 256;
+  constexpr int MAX_VEL = 10;
+  constexpr float SPEED_INC = 0.01f;
+  constexpr int SCROLL = 60;
+  constexpr int ITEMS_SPACE = 4;
+}
 
 #ifndef NOOPENGL
 // --- The Lookup Table (LUT) ---

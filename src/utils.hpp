@@ -1,4 +1,4 @@
-// src/utils.h
+// src/utils.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -20,7 +20,7 @@
 // A namespace for pre-calculated trigonometry tables
 namespace Trig
 {
-  constexpr int ANGLE_COUNT = 256; // Number of steps in the circle (must be a power of 2)
+  inline constexpr int ANGLE_COUNT = 256; // Number of steps in the circle (must be a power of 2)
 
   // Declare the tables to be defined in utils.cpp
   extern float sin_table[ANGLE_COUNT];

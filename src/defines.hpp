@@ -1,4 +1,4 @@
-// src/defines.h
+// src/defines.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -33,14 +33,14 @@
 /* Memory Optimizations */
 #ifdef _WII_
   // Wii has limited RAM and predictable, short file paths.
-  #define PATH_BUFFER_SIZE 128
+  inline constexpr int PATH_BUFFER_SIZE = 128;
 #else
   // Other platforms have more RAM and may have very long directory paths.
-  #define PATH_BUFFER_SIZE 1024
+  inline constexpr int PATH_BUFFER_SIZE = 1024;
 #endif
 
 /* FPS */
-#define FPS (1000 / 25)  // Target: 25 frames/sec (~40 ms frame delay)
+inline constexpr int FPS = 1000 / 25;  // Target: 25 frames/sec (~40 ms frame delay)
 
 /* Directions */
 enum Direction
@@ -49,8 +49,8 @@ enum Direction
   RIGHT = 1
 };
 
-#define UP 0       // Up direction state
-#define DOWN 1     // Down direction state
+inline constexpr int UP = 0;       // Up direction state
+inline constexpr int DOWN = 1;     // Down direction state
 
 /* Dying types */
 enum DyingType
@@ -61,43 +61,43 @@ enum DyingType
 };
 
 /* Sizes */
-#define SMALL 0
-#define BIG 1
+inline constexpr int SMALL = 0;
+inline constexpr int BIG = 1;
 
 /* Speed limits */
-#define MAX_WALK_XM 2.3   // Max horizontal speed while walking
-#define MAX_RUN_XM 3.2    // Max horizontal speed while running
-#define MAX_YM 20.0       // Max vertical speed (falling)
+inline constexpr float MAX_WALK_XM = 2.3f;   // Max horizontal speed while walking
+inline constexpr float MAX_RUN_XM = 3.2f;    // Max horizontal speed while running
+inline constexpr float MAX_YM = 20.0f;       // Max vertical speed (falling)
 
-#define MAX_JUMP_TIME 375 // Max jump duration (ms)
-#define MAX_LIVES 99      // Max lives
+inline constexpr int MAX_JUMP_TIME = 375; // Max jump duration (ms)
+inline constexpr int MAX_LIVES = 99;      // Max lives
 
-#define WALK_SPEED 1.0    // Speed when walking
-#define RUN_SPEED 1.5     // Speed when running
-#define JUMP_SPEED 1.2    // Speed when jumping
+inline constexpr float WALK_SPEED = 1.0f;    // Speed when walking
+inline constexpr float RUN_SPEED = 1.5f;     // Speed when running
+inline constexpr float JUMP_SPEED = 1.2f;    // Speed when jumping
 
 /* Gameplay limits */
-#define START_LIVES 4        // Initial lives
-#define MAX_BULLETS 2        // Max bullets player can have
-#define YM_FOR_JUMP 6.0      // Min vertical speed needed for a jump
-#define WALK_ACCELERATION_X 0.03 // Horizontal acceleration while walking
-#define RUN_ACCELERATION_X 0.04  // Horizontal acceleration while running
-#define KILL_BOUNCE_YM 8.0   // Vertical speed after enemy kill bounce
+inline constexpr int START_LIVES = 4;        // Initial lives
+inline constexpr int MAX_BULLETS = 2;        // Max bullets player can have
+inline constexpr float YM_FOR_JUMP = 6.0f;      // Min vertical speed needed for a jump
+inline constexpr float WALK_ACCELERATION_X = 0.03f; // Horizontal acceleration while walking
+inline constexpr float RUN_ACCELERATION_X = 0.04f;  // Horizontal acceleration while running
+inline constexpr float KILL_BOUNCE_YM = 8.0f;   // Vertical speed after enemy kill bounce
 
 /* Skid settings */
-#define SKID_XM 2.0          // Horizontal skid speed
-#define SKID_TIME 200        // Skid duration (ms)
+inline constexpr float SKID_XM = 2.0f;          // Horizontal skid speed
+inline constexpr int SKID_TIME = 200;        // Skid duration (ms)
 
 /* World sizes */
-#define OFFSCREEN_DISTANCE 256 // Distance to offscreen limit
-#define LEVEL_WIDTH 375        // Width of a level
+inline constexpr int OFFSCREEN_DISTANCE = 256; // Distance to offscreen limit
+inline constexpr int LEVEL_WIDTH = 375;        // Width of a level
 
 /* Timing */
-#define KICKING_TIME 200      // Kicking duration (ms)
+inline constexpr int KICKING_TIME = 200;      // Kicking duration (ms)
 
 /* Scroll speeds */
-#define SCROLL_SPEED_CREDITS 1.55   // Scroll speed for credits
-#define SCROLL_SPEED_MESSAGE 1.0   // Scroll speed for messages
+inline constexpr float SCROLL_SPEED_CREDITS = 1.55f;   // Scroll speed for credits
+inline constexpr float SCROLL_SPEED_MESSAGE = 1.0f;   // Scroll speed for messages
 
 /* Debugging */
 #ifdef DEBUG

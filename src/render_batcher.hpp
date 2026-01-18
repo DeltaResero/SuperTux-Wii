@@ -1,4 +1,4 @@
-// src/render_batcher.h
+// src/render_batcher.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

@@ -1,4 +1,4 @@
-// src/tile.h
+// src/tile.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

@@ -32,7 +32,7 @@
 #include "render_batcher.hpp"
 
 // Gameplay Constants
-static const float BADGUY_WALK_SPEED = 0.8f;
+static constexpr float BADGUY_WALK_SPEED = 0.8f;
 
 // Define bad guy sprites globally
 Sprite* img_mriceblock_flat_left;
@@ -254,7 +254,7 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
 void BadGuy::action_mriceblock(float frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
-  static const float KICK_VELOCITY = 3.5f;
+  static constexpr float KICK_VELOCITY = 3.5f;
 
   /* Move left/right: */
   if (mode != HELD)
@@ -512,7 +512,7 @@ void BadGuy::action_jumpy(float frame_ratio)
 
   Player& tux = *World::current()->get_tux();
 
-  static const float JUMP_VELOCITY = 6.0f;
+  static constexpr float JUMP_VELOCITY = 6.0f;
 
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
@@ -576,8 +576,8 @@ void BadGuy::action_mrbomb(float frame_ratio)
  */
 void BadGuy::action_bomb(float frame_ratio)
 {
-  static const int TICKING_TIME = 1000;
-  static const int EXPLODE_TIME = 1000;
+  static constexpr int TICKING_TIME = 1000;
+  static constexpr int EXPLODE_TIME = 1000;
 
   if (mode == NORMAL)
   {
@@ -627,8 +627,8 @@ void BadGuy::action_stalactite(float frame_ratio)
 {
   Player& tux = *World::current()->get_tux();
 
-  static const int SHAKE_TIME = 800;
-  static const int SHAKE_RANGE = 40;
+  static constexpr int SHAKE_TIME = 800;
+  static constexpr int SHAKE_RANGE = 40;
 
   if (mode == NORMAL)
   {
@@ -675,9 +675,9 @@ void BadGuy::action_stalactite(float frame_ratio)
  */
 void BadGuy::action_flame(float frame_ratio)
 {
-  static const float FLAME_RADIUS = 100.0f;
+  static constexpr float FLAME_RADIUS = 100.0f;
   // Adjust speed to work with our integer angle indices (0.82 gives nearly the same original speed)
-  static const float FLAME_SPEED = 0.82f;
+  static constexpr float FLAME_SPEED = 0.82f;
 
   // Get the current angle as an integer index
   int current_angle = static_cast<int>(base.ym);
@@ -703,8 +703,8 @@ void BadGuy::action_flame(float frame_ratio)
  */
 void BadGuy::action_fish(float frame_ratio)
 {
-  static const float FISH_JUMP_VELOCITY = 6.0f;
-  static const int FISH_WAIT_TIME = 1000;
+  static constexpr float FISH_JUMP_VELOCITY = 6.0f;
+  static constexpr int FISH_WAIT_TIME = 1000;
 
   // Go in wait mode when back in water
   if (dying == DYING_NOT
@@ -742,7 +742,7 @@ void BadGuy::action_fish(float frame_ratio)
  */
 void BadGuy::action_bouncingsnowball(float frame_ratio)
 {
-  static const float SNOWBALL_JUMP_VELOCITY = 4.5f;
+  static constexpr float SNOWBALL_JUMP_VELOCITY = 4.5f;
 
   // Jump when on ground
   if (dying == DYING_NOT && issolid(base.x, base.y + 32))
@@ -776,8 +776,8 @@ void BadGuy::action_bouncingsnowball(float frame_ratio)
  */
 void BadGuy::action_flyingsnowball(float frame_ratio)
 {
-  static const float FLYING_SNOWBALL_SPEED = 1.0f;
-  static const int DIRECTION_CHANGE_TIME = 1000;
+  static constexpr float FLYING_SNOWBALL_SPEED = 1.0f;
+  static constexpr int DIRECTION_CHANGE_TIME = 1000;
 
   // Go into fly up mode if none specified yet
   if (dying == DYING_NOT && mode == NORMAL)
@@ -1058,7 +1058,7 @@ void BadGuy::squish_me(Player* player)
  */
 void BadGuy::squish(Player* player)
 {
-  static const int MAX_ICEBLOCK_SQUISHES = 10;
+  static constexpr int MAX_ICEBLOCK_SQUISHES = 10;
 
   if (kind == BAD_MRBOMB)
   {

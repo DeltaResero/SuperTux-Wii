@@ -1,4 +1,4 @@
-// src/scene.h
+// src/scene.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -16,7 +16,7 @@
 #include "texture.hpp"
 #include "timer.hpp"
 
-#define FRAME_RATE 10  // 100 Frames per second (10ms)
+inline constexpr int FRAME_RATE = 10;  // 100 Frames per second (10ms)
 
 // Holds the player's status
 struct PlayerStatus

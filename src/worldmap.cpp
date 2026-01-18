@@ -30,7 +30,9 @@
 #include "utils.hpp"
 #include "render_batcher.hpp"
 
-#define DISPLAY_MAP_MESSAGE_TIME 2800
+namespace {
+  constexpr int DISPLAY_MAP_MESSAGE_TIME = 2800;
+}
 
 namespace WorldMapNS
 {

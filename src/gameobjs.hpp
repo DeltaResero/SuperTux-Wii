@@ -1,4 +1,4 @@
-// src/gameobjs.h
+// src/gameobjs.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -20,8 +20,8 @@
 #include "scene.hpp"
 
 /* Bounciness of distros: */
-#define NO_BOUNCE 0
-#define BOUNCE 1
+inline constexpr int NO_BOUNCE = 0;
+inline constexpr int BOUNCE = 1;
 
 class RenderBatcher;
 
@@ -41,8 +41,8 @@ class BouncyDistro: public GameObject
 
 extern Surface* img_distro[4];
 
-#define BOUNCY_BRICK_MAX_OFFSET 8
-#define BOUNCY_BRICK_SPEED 0.9
+inline constexpr int BOUNCY_BRICK_MAX_OFFSET = 8;
+inline constexpr float BOUNCY_BRICK_SPEED = 0.9f;
 
 class Tile;
 

@@ -1,4 +1,4 @@
-// src/music_manager.h
+// src/music_manager.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

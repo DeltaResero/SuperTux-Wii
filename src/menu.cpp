@@ -35,7 +35,9 @@
 #include "music_manager.hpp"
 extern MusicManager* music_manager;
 
-#define FLICK_CURSOR_TIME 500
+namespace {
+  constexpr int FLICK_CURSOR_TIME = 500;
+}
 
 #pragma region Globals
 Surface* checkbox;

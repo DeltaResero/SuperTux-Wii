@@ -1,4 +1,4 @@
-// src/sprite.h
+// src/sprite.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

@@ -1,4 +1,4 @@
-// src/intro.h
+// src/intro.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

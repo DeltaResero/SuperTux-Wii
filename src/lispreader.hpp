@@ -1,4 +1,4 @@
-// src/lispreader.h
+// src/lispreader.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux - lispreader.h
@@ -20,33 +20,33 @@
 #include <unordered_map>
 
 // Stream types for handling file, string, and custom streams
-#define LISP_STREAM_FILE       1
-#define LISP_STREAM_STRING     2
-#define LISP_STREAM_ANY        3
+inline constexpr int LISP_STREAM_FILE       = 1;
+inline constexpr int LISP_STREAM_STRING     = 2;
+inline constexpr int LISP_STREAM_ANY        = 3;
 
 // Lisp object types
-#define LISP_TYPE_INTERNAL      -3
-#define LISP_TYPE_PARSE_ERROR   -2
-#define LISP_TYPE_EOF           -1
-#define LISP_TYPE_NIL           0
-#define LISP_TYPE_SYMBOL        1
-#define LISP_TYPE_INTEGER       2
-#define LISP_TYPE_STRING        3
-#define LISP_TYPE_REAL          4
-#define LISP_TYPE_CONS          5
-#define LISP_TYPE_PATTERN_CONS  6
-#define LISP_TYPE_BOOLEAN       7
-#define LISP_TYPE_PATTERN_VAR   8
+inline constexpr int LISP_TYPE_INTERNAL      = -3;
+inline constexpr int LISP_TYPE_PARSE_ERROR   = -2;
+inline constexpr int LISP_TYPE_EOF           = -1;
+inline constexpr int LISP_TYPE_NIL           = 0;
+inline constexpr int LISP_TYPE_SYMBOL        = 1;
+inline constexpr int LISP_TYPE_INTEGER       = 2;
+inline constexpr int LISP_TYPE_STRING        = 3;
+inline constexpr int LISP_TYPE_REAL          = 4;
+inline constexpr int LISP_TYPE_CONS          = 5;
+inline constexpr int LISP_TYPE_PATTERN_CONS  = 6;
+inline constexpr int LISP_TYPE_BOOLEAN       = 7;
+inline constexpr int LISP_TYPE_PATTERN_VAR   = 8;
 
 // Pattern matching types
-#define LISP_PATTERN_ANY        1
-#define LISP_PATTERN_SYMBOL     2
-#define LISP_PATTERN_STRING     3
-#define LISP_PATTERN_INTEGER    4
-#define LISP_PATTERN_REAL       5
-#define LISP_PATTERN_BOOLEAN    6
-#define LISP_PATTERN_LIST       7
-#define LISP_PATTERN_OR         8
+inline constexpr int LISP_PATTERN_ANY        = 1;
+inline constexpr int LISP_PATTERN_SYMBOL     = 2;
+inline constexpr int LISP_PATTERN_STRING     = 3;
+inline constexpr int LISP_PATTERN_INTEGER    = 4;
+inline constexpr int LISP_PATTERN_REAL       = 5;
+inline constexpr int LISP_PATTERN_BOOLEAN    = 6;
+inline constexpr int LISP_PATTERN_LIST       = 7;
+inline constexpr int LISP_PATTERN_OR         = 8;
 
 // Structure defining Lisp stream types
 typedef struct

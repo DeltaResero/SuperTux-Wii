@@ -31,10 +31,11 @@ Sprite* img_growup;
 Sprite* img_iceflower;
 Sprite* img_1up;
 
-#define GROWUP_SPEED 1.0f
-
-#define BULLET_STARTING_YM 0
-#define BULLET_XM 6
+namespace {
+  constexpr float GROWUP_SPEED = 1.0f;
+  constexpr int BULLET_STARTING_YM = 0;
+  constexpr int BULLET_XM = 6;
+}
 
 /**
  * Initializes a bullet with the given position, velocity, and direction.

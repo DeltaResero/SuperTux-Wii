@@ -1,4 +1,4 @@
-// src/player.h
+// src/player.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -23,15 +23,15 @@
 #include "physic.hpp"
 
 // Gameplay timing constants
-#define TUX_SAFE_TIME 1800
-#define TUX_INVINCIBLE_TIME 10000
-#define TUX_INVINCIBLE_TIME_WARNING 2000
-#define TIME_WARNING 20000
+inline constexpr int TUX_SAFE_TIME = 1800;
+inline constexpr int TUX_INVINCIBLE_TIME = 10000;
+inline constexpr int TUX_INVINCIBLE_TIME_WARNING = 2000;
+inline constexpr int TIME_WARNING = 20000;
 
 // Gameplay score and item constants
-#define DISTROS_LIFEUP 100
-#define SCORE_BRICK 5
-#define SCORE_DISTRO 25
+inline constexpr int DISTROS_LIFEUP = 100;
+inline constexpr int SCORE_BRICK = 5;
+inline constexpr int SCORE_DISTRO = 25;
 
 // Structure to hold the key mappings for player actions
 struct PlayerKeymap

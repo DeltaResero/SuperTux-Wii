@@ -1,4 +1,4 @@
-// src/screen.h
+// src/screen.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -21,8 +21,8 @@
 #include "texture.hpp"
 
 // Constants
-#define NO_UPDATE     false
-#define UPDATE        true
+inline constexpr int NO_UPDATE = 0;
+inline constexpr int UPDATE = 1;
 
 // Global Screen Resources
 extern SDL_Window* window;

@@ -21,26 +21,26 @@
 #include "screen.hpp"
 #include "render_batcher.hpp"
 
-#define AUTOSCROLL_DEAD_INTERVAL 300
+static constexpr int AUTOSCROLL_DEAD_INTERVAL = 300;
 
 // Gameplay tuning constants to replace "magic numbers"
 namespace PlayerConstants
 {
 // Jump velocities
-static const float JUMP_VELOCITY_HIGH = -5.8f; // For running jumps
-static const float JUMP_VELOCITY_LOW  = -5.2f; // For standing jumps
+static constexpr float JUMP_VELOCITY_HIGH = -5.8f; // For running jumps
+static constexpr float JUMP_VELOCITY_LOW  = -5.2f; // For standing jumps
 
 // Enemy bounce velocities
-static const float ENEMY_BOUNCE_VELOCITY_HIGH = -5.2f; // Bouncing off enemy while holding jump
-static const float ENEMY_BOUNCE_VELOCITY_LOW  = -2.0f; // Bouncing off enemy without holding jump
+static constexpr float ENEMY_BOUNCE_VELOCITY_HIGH = -5.2f; // Bouncing off enemy while holding jump
+static constexpr float ENEMY_BOUNCE_VELOCITY_LOW  = -2.0f; // Bouncing off enemy without holding jump
 
 // Skid and friction constants
-static const float SKID_ACCELERATION_MULTIPLIER = 2.5f;
-static const float TURN_ACCELERATION_MULTIPLIER = 2.0f;
-static const float FRICTION_MULTIPLIER          = 1.5f;
+static constexpr float SKID_ACCELERATION_MULTIPLIER = 2.5f;
+static constexpr float TURN_ACCELERATION_MULTIPLIER = 2.0f;
+static constexpr float FRICTION_MULTIPLIER          = 1.5f;
 
 // Death constants
-static const float DEATH_BOUNCE_VELOCITY = -7.0f;
+static constexpr float DEATH_BOUNCE_VELOCITY = -7.0f;
 }
 
 // Global surfaces and sprites for the player

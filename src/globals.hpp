@@ -1,4 +1,4 @@
-// src/globals.h
+// src/globals.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

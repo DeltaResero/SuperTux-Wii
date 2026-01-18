@@ -1,4 +1,4 @@
-// src/object_pool.h
+// src/object_pool.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux

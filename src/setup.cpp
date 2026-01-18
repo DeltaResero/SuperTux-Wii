@@ -75,8 +75,10 @@
 
 /* Screen properties: */
 /* Don't use this to test for the actual screen sizes. Use screen->w/h instead! */
-#define SCREEN_W 640
-#define SCREEN_H 480
+namespace {
+  constexpr int SCREEN_W = 640;
+  constexpr int SCREEN_H = 480;
+}
 
 /* Local function prototypes: */
 void seticon(void);
