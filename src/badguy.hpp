@@ -97,6 +97,9 @@ private:
 
   int animation_offset;
 
+  // Collision cache
+  bool m_on_ground_cache;
+
 public:
   BadGuy(float x, float y, BadGuyKind kind, bool stay_on_platform);
 

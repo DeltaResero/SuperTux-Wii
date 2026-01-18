@@ -126,6 +126,9 @@ void Player::init()
   kick_timer.init(true);
 
   physic.reset();
+
+  m_on_ground_cache = false;
+  m_ceiling_cache = false;
 }
 
 /**
@@ -193,6 +196,9 @@ void Player::level_begin()
   frame_timer.init(true);
 
   physic.reset();
+
+  m_on_ground_cache = false;
+  m_ceiling_cache = false;
 }
 
 /**
@@ -201,6 +207,10 @@ void Player::level_begin()
  */
 void Player::action(float frame_ratio)
 {
+  // Update collision caches at the start of the frame
+  m_on_ground_cache = check_on_ground(base);
+  m_ceiling_cache = check_hit_ceiling(base, physic.get_velocity_y());
+
   if (input.fire == UP)
   {
     holding_something = false;
@@ -245,9 +255,7 @@ void Player::updatePhysics(float deltaTime)
  */
 bool Player::on_ground()
 {
-  return (issolid(base.x + base.width / 2, base.y + base.height) ||
-          issolid(base.x + 1, base.y + base.height) ||
-          issolid(base.x + base.width - 1, base.y + base.height));
+  return m_on_ground_cache;
 }
 
 /**
@@ -256,19 +264,7 @@ bool Player::on_ground()
  */
 bool Player::under_solid()
 {
-  // Check center point (always check this)
-  if (issolid(base.x + base.width / 2, base.y))
-    return true;
-
-  // Only check corners if we're moving upward OR stationary
-  // This prevents corner-catching when falling
-  if (physic.get_velocity_y() <= 0)
-  {
-    return (issolid(base.x + 1, base.y) ||
-            issolid(base.x + base.width - 1, base.y));
-  }
-
-  return false;
+  return m_ceiling_cache;
 }
 
 /**

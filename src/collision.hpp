@@ -49,6 +49,18 @@ Tile* collision_func(const base_type& base, std::function<Tile*(Tile*)> predicat
 
 Tile* collision_goal(const base_type& base); // Checks if an object collides with a goal tile
 
+/**
+ * Checks if the object is currently standing on a solid surface.
+ * Checks center, left, and right bottom points.
+ */
+bool check_on_ground(const base_type& object);
+
+/**
+ * Checks if the object is currently hitting a solid surface above it.
+ * @param vy The vertical velocity of the object (used to determine if corners should be checked).
+ */
+bool check_hit_ceiling(const base_type& object, float vy);
+
 #endif /* SUPERTUX_COLLISION_H */
 
 // EOF

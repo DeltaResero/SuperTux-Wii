@@ -161,7 +161,8 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
     squishcount(0),                       // int
     sprite_left(nullptr),                 // Sprite*
     sprite_right(nullptr),                // Sprite*
-    animation_offset(0)                   // int
+    animation_offset(0),                  // int
+    m_on_ground_cache(false)              // bool
 {
   base.x = x;
   base.y = y;
@@ -437,7 +438,7 @@ void BadGuy::fall()
   /* Fall if we get off the ground: */
   if (dying != DYING_FALLING)
   {
-    if (!issolid(base.x + base.width / 2, base.y + base.height))
+    if (!m_on_ground_cache)
     {
       // Not solid below us? Enable gravity
       physic.enable_gravity(true);
@@ -868,6 +869,9 @@ void BadGuy::action(float frame_ratio)
   {
     return;
   }
+
+  // Update collision cache at the start of the frame
+  m_on_ground_cache = check_on_ground(base);
 
   switch (kind)
   {

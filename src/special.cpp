@@ -118,9 +118,6 @@ void Bullet::updatePhysics(float deltaTime)
   base.ym = base.ym + 0.5f * deltaTime;
 }
 
-
-// Bullet::draw() removed. Logic moved to World::draw()
-
 /**
  * Handles bullet collision with other objects.
  * @param c_object The type of object the bullet collided with.
@@ -152,6 +149,7 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
   old_base = base;
 
   removable = false;
+  on_ground = false;
   physic.reset();
   physic.enable_gravity(false);
 
@@ -210,12 +208,15 @@ void Upgrade::action(float frame_ratio)
 
   updatePhysics(frame_ratio);
 
+  // Update collision cache
+  on_ground = check_on_ground(base);
+
   // Handle falling
   if (kind == UPGRADE_GROWUP || kind == UPGRADE_HERRING)
   {
     if (physic.get_velocity_y() != 0)
     {
-      if (issolid(base.x, base.y + base.height))
+      if (on_ground)
       {
         base.y = int(base.y / 32) * 32;
         old_base = base;
@@ -232,10 +233,7 @@ void Upgrade::action(float frame_ratio)
     }
     else
     {
-      if ((physic.get_velocity_x() < 0 &&
-           !issolid(base.x + base.width, base.y + base.height)) ||
-          (physic.get_velocity_x() > 0 &&
-           !issolid(base.x, base.y + base.height)))
+      if (!on_ground)
       {
         physic.enable_gravity(true);
       }
@@ -270,8 +268,6 @@ void Upgrade::updatePhysics(float deltaTime)
     collision_swept_object_map(&old_base, &base);
   }
 }
-
-// Upgrade::draw() removed. Logic moved to World::draw()
 
 /**
  * Handles upgrade collisions with other objects.

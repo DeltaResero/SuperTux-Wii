@@ -337,4 +337,39 @@ bool isdistro(float x, float y)
     return checkTilePropertyAt(x, y, [](const Tile* t) { return t->distro; });
 }
 
+/**
+ * Checks if the object is currently standing on a solid surface.
+ * @param object The object to check.
+ * @return True if on the ground, false otherwise.
+ */
+bool check_on_ground(const base_type& object)
+{
+  return (issolid(object.x + object.width / 2, object.y + object.height) ||
+          issolid(object.x + 1, object.y + object.height) ||
+          issolid(object.x + object.width - 1, object.y + object.height));
+}
+
+/**
+ * Checks if the object is currently hitting a solid surface above it.
+ * @param object The object to check.
+ * @param vy The vertical velocity of the object.
+ * @return True if under a solid tile, false otherwise.
+ */
+bool check_hit_ceiling(const base_type& object, float vy)
+{
+  // Check center point (always check this)
+  if (issolid(object.x + object.width / 2, object.y))
+    return true;
+
+  // Only check corners if we're moving upward OR stationary
+  // This prevents corner-catching when falling
+  if (vy <= 0)
+  {
+    return (issolid(object.x + 1, object.y) ||
+            issolid(object.x + object.width - 1, object.y));
+  }
+
+  return false;
+}
+
 // EOF

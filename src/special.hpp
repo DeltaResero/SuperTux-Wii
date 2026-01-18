@@ -36,6 +36,7 @@ class Upgrade : public GameObject
 {
 public:
   bool removable;
+  bool on_ground; // Collision cache
   UpgradeKind kind;
   Direction dir;
   Physic physic;

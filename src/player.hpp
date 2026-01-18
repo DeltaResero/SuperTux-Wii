@@ -129,6 +129,11 @@ public:
   // The physics component for this player.
   Physic physic;
 
+private:
+  // Collision caches
+  bool m_on_ground_cache;
+  bool m_ceiling_cache;
+
 public:
   void init();                              // Initializes player state for a new level
   int key_event(SDL_Keycode key, int state);     // Processes a keyboard event
