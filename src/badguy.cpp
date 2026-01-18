@@ -744,8 +744,13 @@ void BadGuy::action_bouncingsnowball(float frame_ratio)
 {
   static constexpr float SNOWBALL_JUMP_VELOCITY = 4.5f;
 
-  // Jump when on ground
-  if (dying == DYING_NOT && issolid(base.x, base.y + 32))
+  // This handles landing and snapping to grid. If we run this after the jump logic,
+  // it will detect we are still near the ground and cancel the jump velocity.
+  fall();
+
+  // Jump Logic
+  // Use the cached ground check (checks center/left/right).
+  if (dying == DYING_NOT && m_on_ground_cache)
   {
     physic.set_velocity_y(-SNOWBALL_JUMP_VELOCITY);
     physic.enable_gravity(true);
@@ -758,9 +763,10 @@ void BadGuy::action_bouncingsnowball(float frame_ratio)
   // Check for right/left collisions
   check_horizontal_bump();
 
+  // Move
   updatePhysics(frame_ratio, dying == DYING_NOT);
 
-  // Handle dying timer:
+  // Handle dying timer
   if (dying == DYING_SQUISHED && !timer.check())
   {
     // Remove it if time's up
@@ -915,7 +921,7 @@ void BadGuy::action(float frame_ratio)
 
     case BAD_BOUNCINGSNOWBALL:
       action_bouncingsnowball(frame_ratio);
-      fall();
+      // fall() is moved inside action_bouncingsnowball to prevent it from cancelling the jump
       break;
 
     case BAD_FLYINGSNOWBALL:
