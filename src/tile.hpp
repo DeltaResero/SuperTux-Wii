@@ -34,6 +34,10 @@ public:
 
   int id;
 
+  // Pre-calculated frame index for the current global frame
+  // Calculated once per frame by TileManager::update_animations
+  int current_frame_index;
+
   std::vector<Surface*> images;
 
   std::vector<std::string>  filenames;
@@ -136,6 +140,9 @@ public:
     }
     return tilegroups_;
   }
+
+  // Updates animation frames for all loaded tiles
+  void update_animations(unsigned int frame_counter);
 
   Tile* get(unsigned int id)
   {

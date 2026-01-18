@@ -27,7 +27,7 @@ namespace fs = std::filesystem;  // Alias for ease of use
  * Constructor for Tile.
  * Initializes a Tile object.
  */
-Tile::Tile()
+Tile::Tile() : current_frame_index(0)
 {
   // Constructor: Initializes a Tile object
 }
@@ -113,6 +113,7 @@ void TileManager::load_tileset(std::string filename)
 
         // Initialize all fields to safe defaults
         tile->id = -1;
+        tile->current_frame_index = 0;
         tile->solid = false;
         tile->brick = false;
         tile->ice = false;
@@ -210,6 +211,31 @@ void TileManager::load_tileset(std::string filename)
 }
 
 /**
+ * Updates animation frames for all loaded tiles.
+ * This should be called once per frame to avoid recalculating the frame index
+ * for every single tile drawn on screen.
+ * @param frame_counter The global frame counter.
+ */
+void TileManager::update_animations(unsigned int frame_counter)
+{
+  for (Tile* tile : tiles)
+  {
+    if (tile && !tile->images.empty())
+    {
+      // Calculate once per tile type
+      if (tile->anim_speed > 0)
+      {
+        tile->current_frame_index = ((frame_counter * 25) / tile->anim_speed) % tile->images.size();
+      }
+      else
+      {
+        tile->current_frame_index = 0;
+      }
+    }
+  }
+}
+
+/**
  * Draws a tile at a specific position.
  * @param x The x-coordinate for drawing.
  * @param y The y-coordinate for drawing.
@@ -230,7 +256,8 @@ void Tile::draw(RenderBatcher* batcher, float x, float y, unsigned int c, Uint8 
     return;
   }
 
-  int frame_index = ((global_frame_counter * 25) / ptile->anim_speed) % ptile->images.size();
+  // Use pre-calculated index
+  int frame_index = ptile->current_frame_index;
 
   if (batcher)
   {
@@ -268,7 +295,8 @@ void Tile::draw_stretched(float x, float y, int w, int h, unsigned int c, Uint8 
     return;
   }
 
-  int frame_index = ((global_frame_counter * 25) / ptile->anim_speed) % ptile->images.size();
+  // Use pre-calculated index
+  int frame_index = ptile->current_frame_index;
   ptile->images[frame_index]->draw_stretched(x, y, w, h, alpha);
 }
 

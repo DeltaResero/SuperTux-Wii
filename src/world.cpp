@@ -559,6 +559,9 @@ void World::action(float elapsed_time)
 {
   m_elapsed_time = elapsed_time;
 
+  // Update tile animations once per frame
+  TileManager::instance()->update_animations(global_frame_counter);
+
   // Update all game logic
   tux.action(elapsed_time);
   tux.updatePhysics(elapsed_time);
