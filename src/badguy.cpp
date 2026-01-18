@@ -1103,15 +1103,16 @@ void BadGuy::squish(Player* player)
     {
       // Flatten
       play_sound(sounds[SND_STOMP], SOUND_CENTER_SPEAKER);
-      mode = FLAT;
-      set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
-      physic.set_velocity_x(0);
 
       // We are no longer a special collider.
       if (mode == KICK)
       {
         World::current()->set_badguy_collision_state(this, false);
       }
+
+      mode = FLAT;
+      set_sprite(img_mriceblock_flat_left, img_mriceblock_flat_right);
+      physic.set_velocity_x(0);
 
       timer.start(4000);
     }
