@@ -1252,6 +1252,12 @@ void BadGuy::handleCollisionWithBullet()
  */
 void BadGuy::handleCollisionWithBadGuy(BadGuy* other)
 {
+  // Flattened enemies are passive and shouldn't react to bumps
+  if (mode == FLAT)
+  {
+    return;
+  }
+
   // If we're a kicked MrIceBlock, kill any bad guys we hit
   if (kind == BAD_MRICEBLOCK && mode == KICK)
   {
@@ -1303,6 +1309,24 @@ void BadGuy::handleCollisionWithBadGuy(BadGuy* other)
     // Jumpy, fish, flame, stalactites are exceptions
     if (other->kind == BAD_JUMPY || other->kind == BAD_FLAME || other->kind == BAD_STALACTITE || other->kind == BAD_FISH)
     {
+      return;
+    }
+
+    // If the other badguy is flat (but not kicked), treat it as a static obstacle.
+    if (other->mode == FLAT)
+    {
+      if (dir == LEFT)
+      {
+        dir = RIGHT;
+        physic.set_velocity_x(std::fabs(physic.get_velocity_x()));
+        base.x = other->base.x + other->base.width + 1; // Push out to the right
+      }
+      else if (dir == RIGHT)
+      {
+        dir = LEFT;
+        physic.set_velocity_x(-std::fabs(physic.get_velocity_x()));
+        base.x = other->base.x - base.width - 1; // Push out to the left
+      }
       return;
     }
 
