@@ -21,6 +21,7 @@ SpatialGrid::SpatialGrid(int cell_size_)
   all_badguys.reserve(100);
   all_bullets.reserve(20);
   all_upgrades.reserve(30);
+  m_temp_cells.reserve(9); // Typically 3x3 max for normal sized objects
 }
 
 void SpatialGrid::clear()
@@ -39,10 +40,10 @@ SpatialGrid::CellKey SpatialGrid::get_cell(float x, float y) const
   };
 }
 
-void SpatialGrid::get_overlapping_cells(float x, float y, float w, float h,
-                                         std::vector<CellKey>& out_cells) const
+const std::vector<SpatialGrid::CellKey>& SpatialGrid::get_overlapping_cells(
+    float x, float y, float w, float h) const
 {
-  out_cells.clear();
+  m_temp_cells.clear();
 
   CellKey min_cell = get_cell(x, y);
   CellKey max_cell = get_cell(x + w, y + h);
@@ -51,9 +52,11 @@ void SpatialGrid::get_overlapping_cells(float x, float y, float w, float h,
   {
     for (int cx = min_cell.x; cx <= max_cell.x; ++cx)
     {
-      out_cells.push_back(CellKey{cx, cy});
+      m_temp_cells.push_back(CellKey{cx, cy});
     }
   }
+
+  return m_temp_cells;
 }
 
 void SpatialGrid::add_badguy(BadGuy* badguy)
@@ -64,9 +67,8 @@ void SpatialGrid::add_badguy(BadGuy* badguy)
   all_badguys.push_back(badguy);
 
   // Add to grid cells for bounded queries
-  std::vector<CellKey> cells;
-  get_overlapping_cells(badguy->base.x, badguy->base.y,
-                        badguy->base.width, badguy->base.height, cells);
+  const auto& cells = get_overlapping_cells(badguy->base.x, badguy->base.y,
+                                            badguy->base.width, badguy->base.height);
 
   for (const auto& cell_key : cells)
   {
@@ -80,9 +82,8 @@ void SpatialGrid::add_bullet(Bullet* bullet)
 
   all_bullets.push_back(bullet);
 
-  std::vector<CellKey> cells;
-  get_overlapping_cells(bullet->base.x, bullet->base.y,
-                        bullet->base.width, bullet->base.height, cells);
+  const auto& cells = get_overlapping_cells(bullet->base.x, bullet->base.y,
+                                            bullet->base.width, bullet->base.height);
 
   for (const auto& cell_key : cells)
   {
@@ -96,9 +97,8 @@ void SpatialGrid::add_upgrade(Upgrade* upgrade)
 
   all_upgrades.push_back(upgrade);
 
-  std::vector<CellKey> cells;
-  get_overlapping_cells(upgrade->base.x, upgrade->base.y,
-                        upgrade->base.width, upgrade->base.height, cells);
+  const auto& cells = get_overlapping_cells(upgrade->base.x, upgrade->base.y,
+                                            upgrade->base.width, upgrade->base.height);
 
   for (const auto& cell_key : cells)
   {
@@ -111,8 +111,7 @@ std::vector<BadGuy*> SpatialGrid::query_badguys(float x, float y, float w, float
   std::vector<BadGuy*> result;
   result.reserve(20); // Typical screen has ~10-20 visible badguys
 
-  std::vector<CellKey> cells;
-  get_overlapping_cells(x, y, w, h, cells);
+  const auto& cells = get_overlapping_cells(x, y, w, h);
 
   // Collect all badguys from overlapping cells
   // Note: Same badguy may appear multiple times if it spans cells
@@ -134,8 +133,7 @@ std::vector<Upgrade*> SpatialGrid::query_upgrades(float x, float y, float w, flo
   std::vector<Upgrade*> result;
   result.reserve(10);
 
-  std::vector<CellKey> cells;
-  get_overlapping_cells(x, y, w, h, cells);
+  const auto& cells = get_overlapping_cells(x, y, w, h);
 
   for (const auto& cell_key : cells)
   {

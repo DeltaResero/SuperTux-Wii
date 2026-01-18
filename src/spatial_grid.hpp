@@ -1,4 +1,4 @@
-// src/spatial_grid.h
+// src/spatial_grid.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -79,12 +79,14 @@ private:
   std::vector<Bullet*> all_bullets;
   std::vector<Upgrade*> all_upgrades;
 
+  // Reusable scratch buffer for cell queries
+  mutable std::vector<CellKey> m_temp_cells;
+
   // Helper to convert world coordinates to cell coordinates
   CellKey get_cell(float x, float y) const;
 
   // Get all cells that overlap the given rectangle
-  void get_overlapping_cells(float x, float y, float w, float h,
-                              std::vector<CellKey>& out_cells) const;
+  const std::vector<CellKey>& get_overlapping_cells(float x, float y, float w, float h) const;
 };
 
 #endif // SUPERTUX_SPATIAL_GRID_H
