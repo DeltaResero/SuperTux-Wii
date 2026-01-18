@@ -999,36 +999,12 @@ void BadGuy::draw(RenderBatcher* batcher)
  */
 void BadGuy::set_sprite(Sprite* left, Sprite* right)
 {
-  if (1)
-  {
-    base.width = 32;
-    base.height = 32;
-  }
-  else
-  {
-    // FIXME: Using the image size for the physics and collision is a bad idea,
-    // since images should always overlap their physical representation
-    if (left != nullptr)
-    {
-      if (base.width == 0 && base.height == 0)
-      {
-        base.width = left->get_width();
-        base.height = left->get_height();
-      }
-      else if (base.width != left->get_width() || base.height != left->get_height())
-      {
-        base.x -= (left->get_width() - base.width) / 2;
-        base.y -= left->get_height() - base.height;
-        base.width = left->get_width();
-        base.height = left->get_height();
-        old_base = base;
-      }
-    }
-    else
-    {
-      base.width = base.height = 0;
-    }
-  }
+  // All badguys use a fixed 32x32 collision box regardless of sprite size.
+  // This prevents visual sprite variations from affecting physics/collision.
+  // Using sprite dimensions for collision boxes would cause inconsistent
+  // behavior as sprites can have different sizes and padding.
+  base.width = 32;
+  base.height = 32;
 
   animation_offset = 0;
   sprite_left = left;
