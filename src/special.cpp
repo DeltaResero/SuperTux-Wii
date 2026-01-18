@@ -218,7 +218,7 @@ void Upgrade::action(float frame_ratio)
     {
       if (on_ground)
       {
-        base.y = int(base.y / 32) * 32;
+        base.y = (int)((base.y + base.height) / 32) * 32 - base.height;
         old_base = base;
         if (kind == UPGRADE_GROWUP)
         {
