@@ -26,7 +26,8 @@ enum Music_Type {
   NO_MUSIC,
   LEVEL_MUSIC,
   HURRYUP_MUSIC,
-  HERRING_MUSIC
+  HERRING_MUSIC,
+  LEVEL_END_MUSIC
 };
 
 /* panning effects: terrible :-) ! */

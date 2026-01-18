@@ -683,7 +683,7 @@ void GameSession::check_end_conditions()
   {
     end_sequence = ENDSEQUENCE_WAITING;
     last_x_pos = -1;
-    music_manager->play_music(level_end_song, 0);
+    world->play_music(LEVEL_END_MUSIC);
     endsequence_timer.start(7000);
     tux->invincible_timer.start(7000); // FIXME: Implement a winning timer for the end sequence
   }
@@ -700,7 +700,7 @@ void GameSession::check_end_conditions()
   {
     end_sequence = ENDSEQUENCE_RUNNING;
     last_x_pos = -1;
-    music_manager->play_music(level_end_song, 0);
+    world->play_music(LEVEL_END_MUSIC);
     endsequence_timer.start(7000);
     tux->invincible_timer.start(7000); // FIXME: Implement a winning timer for the end sequence
   }

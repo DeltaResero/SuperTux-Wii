@@ -165,7 +165,7 @@ void World::set_defaults()
   counting_distros = false;
   distro_counter = 0;
   /* set current song/music */
-  currentmusic = LEVEL_MUSIC;
+  currentmusic = NO_MUSIC;
 }
 
 void World::activate_bad_guys()
@@ -950,7 +950,14 @@ void World::set_badguy_collision_state(BadGuy* bg, bool is_special)
 
 void World::play_music(int musictype)
 {
+  // If the level is ending, or we're already playing the requested music, then do nothing.
+  if (currentmusic == musictype || currentmusic == LEVEL_END_MUSIC)
+  {
+    return;
+  }
+
   currentmusic = musictype;
+
   switch(currentmusic)
   {
     case HURRYUP_MUSIC:
@@ -961,6 +968,9 @@ void World::play_music(int musictype)
       break;
     case HERRING_MUSIC:
       music_manager->play_music(herring_song);
+      break;
+    case LEVEL_END_MUSIC:
+      music_manager->play_music(level_end_song, 0);
       break;
     default:
       music_manager->halt_music();
