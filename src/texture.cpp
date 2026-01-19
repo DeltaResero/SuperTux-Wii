@@ -20,6 +20,7 @@
 #include "texture.hpp"
 #include "globals.hpp"
 #include "setup.hpp"
+#include "defines.hpp"
 
 // ----------------------------------------------------------------------------
 // Internal State Tracking (OpenGL)
@@ -1109,11 +1110,11 @@ int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
  */
 int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
 {
-  // Tile the texture to fill 640x480
+  // Tile the texture to fill SCREEN_W x SCREEN_H
   SDL_SetTextureAlphaMod(texture, alpha);
-  for (int x = 0; x < 640; x += w)
+  for (int x = 0; x < SCREEN_W; x += w)
   {
-    for (int y = 0; y < 480; y += h)
+    for (int y = 0; y < SCREEN_H; y += h)
     {
       SDL_Rect dst = {x, y, w, h};
       SDL_RenderCopy(renderer, texture, NULL, &dst);

@@ -66,19 +66,13 @@
 #include "timer.hpp"
 #include "type.hpp"
 #include "utils.hpp"
+#include "defines.hpp"
 
 #ifdef WIN32
 #define mkdir(dir, mode)    mkdir(dir)
 #undef DATA_PREFIX
 #define DATA_PREFIX "./data/"
 #endif
-
-/* Screen properties: */
-/* Don't use this to test for the actual screen sizes. Use screen->w/h instead! */
-namespace {
-  constexpr int SCREEN_W = 640;
-  constexpr int SCREEN_H = 480;
-}
 
 /* Local function prototypes: */
 void seticon(void);

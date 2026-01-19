@@ -75,10 +75,10 @@ void drawOpenGLGradient(const Color& top_clr, const Color& bot_clr)
   glBegin(GL_QUADS);
   glColor3ub(top_clr.red, top_clr.green, top_clr.blue);
   glVertex2f(0, 0);
-  glVertex2f(640, 0);
+  glVertex2f(SCREEN_W, 0);
   glColor3ub(bot_clr.red, bot_clr.green, bot_clr.blue);
-  glVertex2f(640, 480);
-  glVertex2f(0, 480);
+  glVertex2f(SCREEN_W, SCREEN_H);
+  glVertex2f(0, SCREEN_H);
   glEnd();
 }
 
@@ -187,17 +187,17 @@ void drawgradient(Color top_clr, Color bot_clr)
   // If colors are the same, draw a single solid rectangle.
   if (top_clr == bot_clr)
   {
-    fillrect(0, 0, 640, 480, top_clr.red, top_clr.green, top_clr.blue, 255);
+    fillrect(0, 0, SCREEN_W, SCREEN_H, top_clr.red, top_clr.green, top_clr.blue, 255);
   }
   else // Otherwise, draw the gradient line by line.
   {
-    for (float y = 0; y < 480; y += 2)
+    for (float y = 0; y < SCREEN_H; y += 2)
     {
       // Linear interpolation to calculate the color at each line
-      fillrect(0, static_cast<int>(y), 640, 2,
-               static_cast<int>(((top_clr.red - bot_clr.red) / -480.0f) * y + top_clr.red),
-               static_cast<int>(((top_clr.green - bot_clr.green) / -480.0f) * y + top_clr.green),
-               static_cast<int>(((top_clr.blue - bot_clr.blue) / -480.0f) * y + top_clr.blue), 255);
+      fillrect(0, static_cast<int>(y), SCREEN_W, 2,
+               static_cast<int>(((top_clr.red - bot_clr.red) / -(float)SCREEN_H) * y + top_clr.red),
+               static_cast<int>(((top_clr.green - bot_clr.green) / -(float)SCREEN_H) * y + top_clr.green),
+               static_cast<int>(((top_clr.blue - bot_clr.blue) / -(float)SCREEN_H) * y + top_clr.blue), 255);
     }
   }
 }

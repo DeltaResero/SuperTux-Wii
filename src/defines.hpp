@@ -97,6 +97,10 @@ inline constexpr int TILE_SIZE = 32;           // Size of a tile (width and heig
 inline constexpr int SCREEN_HEIGHT_TILES = 15; // Height of screen in tiles
 inline constexpr int MIN_LEVEL_WIDTH = 21;     // Minimum width of a level in tiles
 
+/* Screen Dimensions */
+inline constexpr int SCREEN_W = 640;           // Screen width
+inline constexpr int SCREEN_H = 480;           // Screen height
+
 /* Timing */
 inline constexpr int KICKING_TIME = 200;      // Kicking duration (ms)
 
