@@ -435,7 +435,10 @@ void Player::handleActions()
   // Handle shooting
   if (input.fire == DOWN && input.old_fire == UP && got_coffee)
   {
-    World::current()->add_bullet(base.x, base.y, physic.get_velocity_x(), dir);
+    // Offset the bullet to spawn from Tux's beak/mouth level (approx 1/4 down from top)
+    // base.height is 64 for Big Tux, so this is 16 pixels down.
+    float bullet_y = base.y + (base.height / 4);
+    World::current()->add_bullet(base.x, bullet_y, physic.get_velocity_x(), dir);
     input.old_fire = DOWN;
   }
 
