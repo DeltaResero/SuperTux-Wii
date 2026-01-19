@@ -12,6 +12,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <string_view>
 #include "music_manager.hpp"
 #include "musicref.hpp"
 #include "sound.hpp"
@@ -52,13 +53,13 @@ MusicManager::~MusicManager()
  * @return A reference to the loaded music resource, or a null reference if failed.
  * @throws std::runtime_error if the music file does not exist or cannot be loaded.
  */
-MusicRef MusicManager::load_music(const std::string& file)
+MusicRef MusicManager::load_music(std::string_view file)
 {
   if (!audio_device)
     return MusicRef(nullptr);  // Return a null reference if no audio device is available
 
   if (!exists_music(file))
-    throw std::runtime_error("Couldn't load music file: " + file);
+    throw std::runtime_error("Couldn't load music file: " + std::string(file));
 
   auto i = musics.find(file);
   assert(i != musics.end());  // Ensure the music file exists in the map
@@ -70,17 +71,19 @@ MusicRef MusicManager::load_music(const std::string& file)
  * @param file The name of the music file to check.
  * @return True if the music file exists or was loaded successfully, false otherwise.
  */
-bool MusicManager::exists_music(const std::string& file)
+bool MusicManager::exists_music(std::string_view file)
 {
   auto i = musics.find(file);
   if (i != musics.end())
     return true;
 
-  Mix_Music* song = Mix_LoadMUS(file.c_str());
+  // Mix_LoadMUS requires a null-terminated C-string
+  Mix_Music* song = Mix_LoadMUS(std::string(file).c_str());
   if (!song)
     return false;  // Return false if the music file couldn't be loaded
 
-  auto result = musics.emplace(file, MusicResource());
+  // We need to store the key as a std::string in the map
+  auto result = musics.emplace(std::string(file), MusicResource());
   MusicResource& resource = result.first->second;
   resource.manager = this;
   resource.music = song;

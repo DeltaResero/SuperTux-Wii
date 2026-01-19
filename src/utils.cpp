@@ -14,6 +14,7 @@
 #include <cmath>   // For std::sin, std::cos
 #include <numbers> // For std::numbers::pi_v
 #include <fstream> // For std::ifstream
+#include <string_view>
 
 namespace Trig
 {
@@ -42,12 +43,15 @@ namespace Trig
  * @param untitled_fallback The string to return if the title isn't found.
  * @return The title of the file.
  */
-std::string get_title_from_lisp_file(const std::string& path, const std::string& invalid_fallback, const std::string& untitled_fallback)
+std::string get_title_from_lisp_file(std::string_view path, std::string_view invalid_fallback, std::string_view untitled_fallback)
 {
-  std::ifstream file(path);
+  // Fix: Use brace initialization to avoid C++ "Most Vexing Parse"
+  // (interpreting this as a function declaration instead of a variable).
+  std::ifstream file{std::string(path)};
+
   if (!file.is_open())
   {
-    return invalid_fallback;
+    return std::string(invalid_fallback);
   }
 
   std::string line;
@@ -74,7 +78,7 @@ std::string get_title_from_lisp_file(const std::string& path, const std::string&
     }
   }
 
-  return untitled_fallback; // Fallback title
+  return std::string(untitled_fallback); // Fallback title
 }
 
 // EOF

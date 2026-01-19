@@ -15,23 +15,25 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 #include "sprite.hpp"
 
 // Manages loading and accessing sprites by name
 class SpriteManager
 {
  private:
-  typedef std::map<std::string, Sprite*> Sprites; // Map of sprite names to Sprite objects
+  // Use std::less<> to enable heterogeneous lookup (finding by string_view)
+  typedef std::map<std::string, Sprite*, std::less<>> Sprites;
   Sprites sprites;                                // Collection of sprites
 
  public:
-  SpriteManager(const std::string& filename); // Loads sprites from a resource file
+  SpriteManager(std::string_view filename); // Loads sprites from a resource file
   ~SpriteManager(); // Destructor, frees allocated sprites
 
-  void load_resfile(const std::string& filename); // Loads sprite definitions from a resource file
+  void load_resfile(std::string_view filename); // Loads sprite definitions from a resource file
 
   // Retrieves a Sprite by name, do not delete the returned object
-  Sprite* load(const std::string& name);
+  Sprite* load(std::string_view name);
 };
 
 #endif

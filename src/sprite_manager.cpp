@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <string_view>
 #include "lispreader.hpp"
 #include "sprite_manager.hpp"
 
@@ -19,7 +20,7 @@
  * Constructs a SpriteManager and loads sprites from a resource file.
  * @param filename The path to the resource file containing sprite definitions.
  */
-SpriteManager::SpriteManager(const std::string& filename)
+SpriteManager::SpriteManager(std::string_view filename)
 {
   load_resfile(filename);
 }
@@ -41,7 +42,7 @@ SpriteManager::~SpriteManager()
  * This function reads the resource file, parses the sprite definitions, and creates Sprite objects.
  * @param filename The path to the resource file.
  */
-void SpriteManager::load_resfile(const std::string& filename)
+void SpriteManager::load_resfile(std::string_view filename)
 {
   lisp_object_t* root_obj = lisp_read_from_file(filename);
   if (!root_obj)
@@ -90,8 +91,10 @@ void SpriteManager::load_resfile(const std::string& filename)
  * @param name The name of the sprite to retrieve.
  * @return Sprite* Pointer to the Sprite object, or nullptr if not found.
  */
-Sprite* SpriteManager::load(const std::string& name)
+Sprite* SpriteManager::load(std::string_view name)
 {
+  // Thanks to std::less<> in the map definition, find() accepts string_view
+  // without creating a temporary std::string.
   auto it = sprites.find(name);
   if (it != sprites.end())
   {

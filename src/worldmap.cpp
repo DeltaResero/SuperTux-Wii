@@ -16,6 +16,7 @@
 #include <cstring>
 #include <cassert>
 #include <unistd.h>
+#include <string_view>
 #include "globals.hpp"
 #include "texture.hpp"
 #include "screen.hpp"
@@ -110,7 +111,7 @@ std::string direction_to_string(Direction direction)
  * @param directory The string representation of the direction.
  * @return The corresponding Direction.
  */
-Direction string_to_direction(const std::string& directory)
+Direction string_to_direction(std::string_view directory)
 {
   if (directory == "west")
   {
@@ -596,9 +597,9 @@ void WorldMap::deleteSprites()
  * Sets the world map file to be loaded.
  * @param mapfile The name of the map file.
  */
-void WorldMap::set_map_file(std::string mapfile)
+void WorldMap::set_map_file(std::string_view mapfile)
 {
-  map_file = datadir + "/levels/worldmaps/" + mapfile;
+  map_file = datadir + "/levels/worldmaps/" + std::string(mapfile);
 }
 
 /**
@@ -1570,12 +1571,13 @@ void WorldMap::display()
  * Saves the game state to the specified file.
  * @param filename The name of the file to save the game state.
  */
-void WorldMap::savegame(const std::string& filename)
+void WorldMap::savegame(std::string_view filename)
 {
 #ifdef DEBUG
   std::cout << "savegame: " << filename << std::endl;
 #endif
-  std::ofstream out(filename.c_str());
+  // ofstream requires const char* or std::string
+  std::ofstream out(std::string(filename).c_str());
 
   int nb_solved_levels = 0;
   for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
@@ -1614,7 +1616,7 @@ void WorldMap::savegame(const std::string& filename)
  * Loads the game state from the specified file.
  * @param filename The name of the file to load the game state.
  */
-void WorldMap::loadgame(const std::string& filename)
+void WorldMap::loadgame(std::string_view filename)
 {
 #ifdef DEBUG
   std::cout << "loadgame: " << filename << std::endl;
@@ -1707,7 +1709,7 @@ void WorldMap::loadgame(const std::string& filename)
  * Loads a world map from the specified file.
  * @param filename The name of the file to load the world map.
  */
-void WorldMap::loadmap(const std::string& filename)
+void WorldMap::loadmap(std::string_view filename)
 {
   savegame_file = "";
   set_map_file(filename);
@@ -1721,7 +1723,7 @@ void WorldMap::loadmap(const std::string& filename)
  * @param mapfile_path The full path to the .stwm file.
  * @return The title of the worldmap.
  */
-std::string WorldMap::get_world_title_fast(const std::string& mapfile_path)
+std::string WorldMap::get_world_title_fast(std::string_view mapfile_path)
 {
   return get_title_from_lisp_file(mapfile_path, "Invalid Worldmap", "Untitled Worldmap");
 }

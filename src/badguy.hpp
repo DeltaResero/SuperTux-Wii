@@ -16,6 +16,7 @@
 #define SUPERTUX_BADGUY_H
 
 #include <SDL.h>
+#include <string_view>
 #include "defines.hpp"
 #include "type.hpp"
 #include "timer.hpp"
@@ -41,7 +42,7 @@ enum BadGuyKind
   NUM_BadGuyKinds
 };
 
-BadGuyKind  badguykind_from_string(const std::string& str);
+BadGuyKind  badguykind_from_string(std::string_view str);
 std::string badguykind_to_string(BadGuyKind kind);
 void load_badguy_gfx();
 

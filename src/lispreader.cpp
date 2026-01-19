@@ -23,6 +23,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -2393,14 +2394,15 @@ lisp_object_t* LispWriter::create_lisp()
  * @param filename The file path to read
  * @return The parsed object, or nullptr on error
  */
-lisp_object_t* lisp_read_from_file(const std::string& filename)
+lisp_object_t* lisp_read_from_file(std::string_view filename)
 {
   if (filename.empty())
   {
     return nullptr;
   }
 
-  FILE* in = fopen(filename.c_str(), "rb");
+  // fopen requires a null-terminated C-string
+  FILE* in = fopen(std::string(filename).c_str(), "rb");
   if (!in)
   {
     return nullptr;

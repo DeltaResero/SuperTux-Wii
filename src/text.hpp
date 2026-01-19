@@ -14,13 +14,14 @@
 #define SUPERTUX_TEXT_H
 
 #include <string>
+#include <string_view>
 #include <list>
 #include <vector>
 #include <unordered_map>
 #include "texture.hpp"
 
-void display_text_file(const std::string& file, const std::string& surface, float scroll_speed);
-void display_text_file(const std::string& file, Surface* surface, float scroll_speed, bool is_static = false);
+void display_text_file(std::string_view file, std::string_view surface, float scroll_speed);
+void display_text_file(std::string_view file, Surface* surface, float scroll_speed, bool is_static = false);
 
 /* Kinds of texts. */
 enum
@@ -69,7 +70,7 @@ class Text
     // Cache structure for pre-built text geometry
     struct CachedTextRun
     {
-      std::string text;                    // The text string
+      std::string text;                    // The text string (owns data)
       int x, y;                             // Position
       std::vector<CharVertex> vertices;     // Pre-built vertices
       bool dirty = true;                    // Needs rebuilding?
@@ -80,28 +81,28 @@ class Text
     std::unordered_map<std::string, CachedTextRun> m_text_cache;
 
     // Helper to build cached text
-    void build_cached_text(Surface* pchars, const std::string& text, int x, int y, CachedTextRun& run);
+    void build_cached_text(Surface* pchars, std::string_view text, int x, int y, CachedTextRun& run);
 #endif
 
   public:
     typedef std::list<Text*> Texts;
     static Texts texts;
 
-    Text(const std::string& file, int kind, int w, int h);
+    Text(std::string_view file, int kind, int w, int h);
     ~Text();
 
     void recache_opengl_pointers(); // Public method to update pointers after a video mode switch.
     static void recache_all_pointers();
 
-    void draw(const std::string& text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
+    void draw(std::string_view text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
 #ifndef NOOPENGL
-    void draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
+    void draw_chars_batched(Surface* pchars, std::string_view text, int x, int y, int update = NO_UPDATE);
 #endif
-    void draw_chars(Surface* pchars, const std::string& text, int x, int y, int update = NO_UPDATE);
-    void drawf(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
-    void draw_align(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
-    void erasetext(const std::string& text, int x, int y, Surface* surf, int update, int shadowsize);
-    void erasecenteredtext(const std::string& text, int y, Surface* surf, int update, int shadowsize);
+    void draw_chars(Surface* pchars, std::string_view text, int x, int y, int update = NO_UPDATE);
+    void drawf(std::string_view text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update = NO_UPDATE);
+    void draw_align(std::string_view text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize = 1, int update = NO_UPDATE);
+    void erasetext(std::string_view text, int x, int y, Surface* surf, int update, int shadowsize);
+    void erasecenteredtext(std::string_view text, int y, Surface* surf, int update, int shadowsize);
 };
 
 #endif /*SUPERTUX_TEXT_H*/

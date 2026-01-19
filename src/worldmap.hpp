@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 
 #include "musicref.hpp"
 #include "gameloop.hpp"
@@ -100,7 +101,7 @@ public:
 enum Direction { D_NONE, D_WEST, D_EAST, D_NORTH, D_SOUTH };
 
 std::string direction_to_string(Direction d);
-Direction   string_to_direction(const std::string& d);
+Direction   string_to_direction(std::string_view d);
 Direction reverse_dir(Direction d);
 
 class WorldMap;
@@ -204,7 +205,7 @@ public:
   std::string passive_message;
 
   /** A lightweight function to get a worldmap's title without a full load */
-  static std::string get_world_title_fast(const std::string& mapfile_path);
+  static std::string get_world_title_fast(std::string_view mapfile_path);
 
   WorldMap();
   ~WorldMap();
@@ -212,7 +213,7 @@ public:
   void loadSprites();
   void deleteSprites();
 
-  void set_map_file(std::string mapfile);
+  void set_map_file(std::string_view mapfile);
 
   /** Busy loop */
   void display();
@@ -235,9 +236,9 @@ public:
       if possible, write the new position to \a new_pos */
   bool path_ok(Direction direction, Point pos, Point* new_pos);
 
-  void savegame(const std::string& filename);
-  void loadgame(const std::string& filename);
-  void loadmap(const std::string& filename);
+  void savegame(std::string_view filename);
+  void loadgame(std::string_view filename);
+  void loadmap(std::string_view filename);
 
   const std::string& get_world_title() const
   {

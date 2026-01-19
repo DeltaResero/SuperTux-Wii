@@ -17,6 +17,7 @@
 #include <cmath>
 #include <numbers>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "globals.hpp"
@@ -67,12 +68,12 @@ Sprite* img_snowball_squished_left;
 Sprite* img_snowball_squished_right;
 
 /**
- * Converts a string to a BadGuyKind enumeration.
+ * Converts a string view to a BadGuyKind enumeration.
  * This function is used to map string identifiers from level data to specific bad guy types.
- * @param str The string representing the bad guy type.
+ * @param str The string view representing the bad guy type.
  * @return BadGuyKind The corresponding bad guy kind enumeration.
  */
-BadGuyKind badguykind_from_string(const std::string& str)
+BadGuyKind badguykind_from_string(std::string_view str)
 {
   // Create a static map that is initialized only once on the first call
   static const std::unordered_map<std::string, BadGuyKind> kind_map =
@@ -92,8 +93,10 @@ BadGuyKind badguykind_from_string(const std::string& str)
     {"bsod", BAD_SNOWBALL}                       // was bsod in old maps
   };
 
-  // Use the map to find the kind
-  auto it = kind_map.find(str);
+  // Use the map to find the kind.
+  // We explicitly convert string_view to string here because std::hash<std::string>
+  // is not transparent in standard C++, preventing direct string_view lookup in unordered_map.
+  auto it = kind_map.find(std::string(str));
   if (it != kind_map.end())
   {
     return it->second;

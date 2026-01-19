@@ -11,6 +11,7 @@
 // (at your option) any later version.
 
 #include <stdlib.h>
+#include <string_view>
 #include "scene.hpp"
 #include "defines.hpp"
 
@@ -63,11 +64,11 @@ std::string bonus_to_string(PlayerStatus::BonusType b)
 }
 
 /**
- * Converts a string to a PlayerStatus::BonusType.
- * @param str The string to convert ("none", "growup", or "iceflower").
+ * Converts a string view to a PlayerStatus::BonusType.
+ * @param str The string view to convert ("none", "growup", or "iceflower").
  * @return The corresponding BonusType, or NO_BONUS if invalid.
  */
-PlayerStatus::BonusType string_to_bonus(const std::string& str)
+PlayerStatus::BonusType string_to_bonus(std::string_view str)
 {
   if (str == "none")
   {

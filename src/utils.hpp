@@ -15,7 +15,7 @@
 #include <cmath>   // For std::sin, std::cos
 #include <cstring> // For memcpy and strlen
 #include <string>  // For std::string
-
+#include <string_view>
 
 // A namespace for pre-calculated trigonometry tables
 namespace Trig
@@ -50,7 +50,7 @@ namespace Trig
  * @param untitled_fallback The string to return if the title isn't found.
  * @return The title of the file.
  */
-std::string get_title_from_lisp_file(const std::string& path, const std::string& invalid_fallback, const std::string& untitled_fallback);
+std::string get_title_from_lisp_file(std::string_view path, std::string_view invalid_fallback, std::string_view untitled_fallback);
 
 
 #endif // UTILS_H

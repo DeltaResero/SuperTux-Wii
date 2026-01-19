@@ -65,6 +65,7 @@ enum {
 extern const char* soundfilenames[NUM_SOUNDS];
 
 #include <string>
+#include <string_view>
 #include <SDL2/SDL_mixer.h>
 
 /* variables for stocking the sound and music */
@@ -74,7 +75,7 @@ extern Mix_Chunk* sounds[NUM_SOUNDS];
 int open_audio(int frequency, Uint16 format, int channels, int chunksize);
 void close_audio( void );
 
-Mix_Chunk * load_sound(const std::string& file);
+Mix_Chunk * load_sound(std::string_view file);
 void free_chunk(Mix_Chunk*chunk);
 void play_sound(Mix_Chunk * snd, enum Sound_Speaker whichSpeaker);
 

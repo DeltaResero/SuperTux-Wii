@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <unordered_map>
 
@@ -109,7 +110,7 @@ lisp_stream_t* lisp_stream_init_any(lisp_stream_t *stream, void *data,
 
 // Lisp object manipulation functions
 lisp_object_t* lisp_read(lisp_stream_t *in);
-lisp_object_t* lisp_read_from_file(const std::string& filename);
+lisp_object_t* lisp_read_from_file(std::string_view filename);
 void lisp_free(lisp_object_t *obj);
 lisp_object_t* lisp_read_from_string(const char *buf);
 void lisp_reset_pool();

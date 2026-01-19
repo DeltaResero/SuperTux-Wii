@@ -18,6 +18,7 @@
 #include <string.h>
 #include <algorithm>
 #include <string>
+#include <string_view>
 #include "globals.hpp"
 #include "scene.hpp"
 #include "screen.hpp"
@@ -68,7 +69,7 @@ void World::common_setup()
   m_spatial_grid = new SpatialGrid(128);
 }
 
-World::World(const std::string& filename)
+World::World(std::string_view filename)
   // Initialize all object pools with their fixed sizes.
   // This pre-allocates all memory needed for these objects upfront.
   : bouncy_distros(32),
@@ -85,7 +86,7 @@ World::World(const std::string& filename)
   common_setup();
 }
 
-World::World(const std::string& subset, int level_nr)
+World::World(std::string_view subset, int level_nr)
   // Initialize all object pools with their fixed sizes.
   : bouncy_distros(32),
     broken_bricks(64),

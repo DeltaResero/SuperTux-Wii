@@ -13,6 +13,7 @@
 #ifndef SUPERTUX_SCENE_H
 #define SUPERTUX_SCENE_H
 
+#include <string_view>
 #include "texture.hpp"
 #include "timer.hpp"
 
@@ -35,7 +36,7 @@ struct PlayerStatus
 
 // Utility functions to convert BonusType to and from strings
 std::string bonus_to_string(PlayerStatus::BonusType b);
-PlayerStatus::BonusType string_to_bonus(const std::string& str);
+PlayerStatus::BonusType string_to_bonus(std::string_view str);
 
 // Global variables for player status and frame management
 extern PlayerStatus player_status;

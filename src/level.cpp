@@ -20,6 +20,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <string_view>
 #include "globals.hpp"
 #include "setup.hpp"
 #include "screen.hpp"
@@ -57,7 +58,7 @@ LevelSubset::~LevelSubset()
  * @param subset_name The name of the subset to create.
  * Initializes and saves a new LevelSubset with the provided name.
  */
-void LevelSubset::create(const std::string& subset_name)
+void LevelSubset::create(std::string_view subset_name)
 {
   Level new_lev;
   LevelSubset new_subset;
@@ -66,7 +67,8 @@ void LevelSubset::create(const std::string& subset_name)
   new_subset.description = "No description so far.";
   new_subset.save();
   new_lev.init_defaults();
-  new_lev.save(subset_name, 1);
+  // Level::save takes const std::string&, so we must convert
+  new_lev.save(std::string(subset_name), 1);
 }
 
 /**
@@ -86,7 +88,7 @@ void LevelSubset::parse(lisp_object_t* data)
  * @param subset Pointer to the name of the subset to load.
  * Searches for and loads the level subset's info file, then parses the content.
  */
-void LevelSubset::load(const std::string& subset)
+void LevelSubset::load(std::string_view subset)
 {
   name = subset;
 
@@ -229,12 +231,12 @@ Level::Level()
  * @param subset The subset name containing the level.
  * @param level The level number to load.
  */
-Level::Level(const std::string& subset, int level)
+Level::Level(std::string_view subset, int level)
   : img_bkgd(nullptr)
 {
   if (load(subset, level) < 0)
   {
-    st_abort("Couldn't load level from subset", subset.c_str());
+    st_abort("Couldn't load level from subset", std::string(subset).c_str());
   }
 }
 
@@ -242,12 +244,12 @@ Level::Level(const std::string& subset, int level)
  * Constructs a Level object by loading a specific level file.
  * @param filename The filename of the level to load.
  */
-Level::Level(const std::string& filename)
+Level::Level(std::string_view filename)
   : img_bkgd(nullptr)
 {
   if (load(filename) < 0)
   {
-    st_abort("Couldn't load level ", filename.c_str());
+    st_abort("Couldn't load level ", std::string(filename).c_str());
   }
 }
 
@@ -299,7 +301,7 @@ void Level::init_defaults()
  * @param level The level number to load.
  * @return Returns 0 on success, or -1 on failure.
  */
-int Level::load(const std::string& subset, int level)
+int Level::load(std::string_view subset, int level)
 {
   // Construct the filename path using std::filesystem
   fs::path filename = fs::path(st_dir) / "levels" / subset / ("level" + to_string(level) + ".stl");
@@ -316,11 +318,11 @@ int Level::load(const std::string& subset, int level)
  * @param filename The filename of the level to load.
  * @return Returns 0 on success, or -1 on failure.
  */
-int Level::load(const std::string& filename)
+int Level::load(std::string_view filename)
 {
   init_defaults();
 
-  lisp_object_t* root_obj = lisp_read_from_file(filename.c_str());
+  lisp_object_t* root_obj = lisp_read_from_file(filename);
   if (!root_obj)
   {
     std::cout << "Level: Couldn't load file: " << filename << std::endl;
@@ -329,7 +331,7 @@ int Level::load(const std::string& filename)
 
   if (root_obj->type == LISP_TYPE_EOF || root_obj->type == LISP_TYPE_PARSE_ERROR)
   {
-    printf("World: Parse Error in file %s", filename.c_str());
+    printf("World: Parse Error in file %s", std::string(filename).c_str());
     return -1;
   }
 
@@ -930,8 +932,9 @@ void Level::draw_bg() const
  * @param level_filename The full path to the .stl file.
  * @return The title of the level.
  */
-std::string Level::get_level_title_fast(const std::string& level_filename)
+std::string Level::get_level_title_fast(std::string_view level_filename)
 {
+    // get_title_from_lisp_file now accepts string_view, so no conversion needed!
     return get_title_from_lisp_file(level_filename, "Invalid Level", "Untitled Level");
 }
 

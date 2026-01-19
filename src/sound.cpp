@@ -12,6 +12,7 @@
 // (at your option) any later version.
 
 #include <SDL2/SDL_mixer.h>
+#include <string_view>
 #include "defines.hpp"
 #include "globals.hpp"
 #include "sound.hpp"
@@ -104,18 +105,19 @@ void close_audio(void)
  * @param file File path to the sound file.
  * @return Pointer to the loaded sound chunk, or nullptr if loading failed.
  */
-Mix_Chunk* load_sound(const std::string& file)
+Mix_Chunk* load_sound(std::string_view file)
 {
   if (!audio_device)
   {
     return nullptr;
   }
 
-  Mix_Chunk* snd = Mix_LoadWAV(file.c_str());
+  // Mix_LoadWAV requires a null-terminated C-string
+  Mix_Chunk* snd = Mix_LoadWAV(std::string(file).c_str());
 
   if (snd == nullptr)
   {
-    st_abort("Can't load", file);
+    st_abort("Can't load", std::string(file));
   }
 
   return snd;

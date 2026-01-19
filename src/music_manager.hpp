@@ -16,6 +16,7 @@
 
 #include <SDL2/SDL_mixer.h>
 #include <string>
+#include <string_view>
 #include <map>
 
 class MusicRef;
@@ -27,8 +28,8 @@ public:
   MusicManager();
   ~MusicManager();
 
-  MusicRef load_music(const std::string& file);  // Load a music file
-  bool exists_music(const std::string& filename);  // Check if music file exists
+  MusicRef load_music(std::string_view file);  // Load a music file
+  bool exists_music(std::string_view filename);  // Check if music file exists
   void play_music(const MusicRef& music, int loops = -1);  // Play the loaded music
   void halt_music();  // Stop currently playing music
   void enable_music(bool enable);  // Enable or disable music playback
@@ -48,7 +49,8 @@ private:
 
   void free_music(MusicResource* music);  // Free a music resource
 
-  std::map<std::string, MusicResource> musics;  // Map to hold music resources
+  // Map to hold music resources, using std::less<> for transparent string_view lookup
+  std::map<std::string, MusicResource, std::less<>> musics;
   MusicResource* current_music;  // Currently playing music
   bool music_enabled;            // Flag to enable or disable music
 };

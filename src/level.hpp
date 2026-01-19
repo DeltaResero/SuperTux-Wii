@@ -20,6 +20,7 @@
 #define SUPERTUX_LEVEL_H
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include "lispreader.hpp"
 #include "texture.hpp"
@@ -43,9 +44,9 @@ public:
   LevelSubset();
   ~LevelSubset();
 
-  void create(const std::string& subset_name);
+  void create(std::string_view subset_name);
   void parse(lisp_object_t* data);
-  void load(const std::string& subset);
+  void load(std::string_view subset);
   void save();
 };
 
@@ -87,13 +88,13 @@ public:
   std::vector<BadGuyData> badguy_data;
 
   Level();
-  Level(const std::string& subset, int level);
-  Level(const std::string& filename);
+  Level(std::string_view subset, int level);
+  Level(std::string_view filename);
   ~Level();
 
   void init_defaults();
-  int load(const std::string& subset, int level);
-  int load(const std::string& filename);
+  int load(std::string_view subset, int level);
+  int load(std::string_view filename);
   void reload_bricks_and_coins();
   void save(const std::string& subset, int level);
   void cleanup();
@@ -110,7 +111,7 @@ public:
   void draw_bg() const;
 
   // A lightweight "peek" function to read just the title from a level file.
-  static std::string get_level_title_fast(const std::string& level_filename);
+  static std::string get_level_title_fast(std::string_view level_filename);
 
 private:
   MusicRef level_song;

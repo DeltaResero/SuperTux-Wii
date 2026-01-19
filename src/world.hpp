@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <SDL2/SDL.h>
 #include "type.hpp"
 #include "scene.hpp"
@@ -97,8 +98,8 @@ public:
   static World* current() { return current_; }
   static void set_current(World* w) { current_ = w; }
 
-  World(const std::string& filename);
-  World(const std::string& subset, int level_nr);
+  World(std::string_view filename);
+  World(std::string_view subset, int level_nr);
 
   World()
     : bouncy_distros(32),

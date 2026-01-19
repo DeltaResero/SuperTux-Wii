@@ -15,6 +15,7 @@
 
 #include <SDL2/SDL.h>
 #include <string>
+#include <string_view>
 #include <memory>
 #ifndef NOOPENGL
 #include <GL/gl.h>
@@ -25,10 +26,10 @@
 #include "screen.hpp"
 
 // Load part of an image into SDL_Surface
-SDL_Surface* sdl_surface_part_from_file(const std::string& file, int x, int y, int w, int h, bool use_alpha);
+SDL_Surface* sdl_surface_part_from_file(std::string_view file, int x, int y, int w, int h, bool use_alpha);
 
 // Load entire image file into SDL_Surface
-SDL_Surface* sdl_surface_from_file(const std::string& file, bool use_alpha);
+SDL_Surface* sdl_surface_from_file(std::string_view file, bool use_alpha);
 
 // Create a new SDL_Surface from an existing one
 SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha);
@@ -55,8 +56,8 @@ public:
   int h;
 
   SurfaceData(SDL_Surface* surf, bool use_alpha_);
-  SurfaceData(const std::string& file_, bool use_alpha_);
-  SurfaceData(const std::string& file_, int x_, int y_, int w_, int h_, bool use_alpha_);
+  SurfaceData(std::string_view file_, bool use_alpha_);
+  SurfaceData(std::string_view file_, int x_, int y_, int w_, int h_, bool use_alpha_);
   ~SurfaceData();
 
   SurfaceSDL* create_SurfaceSDL();
@@ -81,8 +82,8 @@ public:
   static Surfaces surfaces;
 
   Surface(SDL_Surface* surf, bool use_alpha);
-  Surface(const std::string& file, bool use_alpha);
-  Surface(const std::string& file, int x, int y, int w, int h, bool use_alpha);
+  Surface(std::string_view file, bool use_alpha);
+  Surface(std::string_view file, int x, int y, int w, int h, bool use_alpha);
   ~Surface();
 
   // Forbid copying to prevent double-free
@@ -140,8 +141,8 @@ public:
   float tex_h_allocated;
 
   SurfaceOpenGL(SDL_Surface* surf, bool use_alpha);
-  SurfaceOpenGL(const std::string& file, bool use_alpha);
-  SurfaceOpenGL(const std::string& file, int x, int y, int w, int h, bool use_alpha);
+  SurfaceOpenGL(std::string_view file, bool use_alpha);
+  SurfaceOpenGL(std::string_view file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceOpenGL();
 
   int draw(float x, float y, Uint8 alpha, bool update) override;
@@ -167,8 +168,8 @@ public:
   SDL_Texture *texture; // Hardware texture
 
   SurfaceSDL(SDL_Surface *surf, bool use_alpha);
-  SurfaceSDL(const std::string &file, bool use_alpha);
-  SurfaceSDL(const std::string &file, int x, int y, int w, int h, bool use_alpha);
+  SurfaceSDL(std::string_view file, bool use_alpha);
+  SurfaceSDL(std::string_view file, int x, int y, int w, int h, bool use_alpha);
   virtual ~SurfaceSDL();
 
   int draw(float x, float y, Uint8 alpha, bool update) override;

@@ -13,6 +13,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <stdio.h>
 #include <string.h>
@@ -79,7 +80,7 @@ void initialize_char_lut()
  * Constructor for the Text class.
  * Initializes the font surface and applies a shadow effect.
  */
-Text::Text(const std::string& file, int kind_, int w_, int h_)
+Text::Text(std::string_view file, int kind_, int w_, int h_)
   : kind(kind_), w(w_), h(h_)
 {
   // Load the main font surface
@@ -189,7 +190,7 @@ void Text::recache_all_pointers()
  * @param shadowsize Size of the shadow effect.
  * @param update Whether the screen should be updated.
  */
-void Text::draw(const std::string& text, int x, int y, int shadowsize, int update)
+void Text::draw(std::string_view text, int x, int y, int shadowsize, int update)
 {
   if (text.empty())
   {
@@ -226,7 +227,7 @@ void Text::draw(const std::string& text, int x, int y, int shadowsize, int updat
  * Build vertex array for a text run and cache it.
  * NOTE: Vertices are built relative to (0,0) to allow reuse via glTranslate.
  */
-void Text::build_cached_text(Surface* pchars, const std::string& text, int x, int y, CachedTextRun& run)
+void Text::build_cached_text(Surface* pchars, std::string_view text, int x, int y, CachedTextRun& run)
 {
   run.text = text;
   run.x = 0; // Always build at origin
@@ -287,7 +288,7 @@ void Text::build_cached_text(Surface* pchars, const std::string& text, int x, in
   run.dirty = false;
 }
 
-void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, int y, int update)
+void Text::draw_chars_batched(Surface* pchars, std::string_view text, int x, int y, int update)
 {
   if (text.empty())
   {
@@ -341,7 +342,8 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
     }
 
     // Use the text itself as the key. Position is handled via glTranslate.
-    const std::string& cache_key = text;
+    // We need to convert string_view to string for the map key
+    std::string cache_key(text);
 
     // Check if we have a cached version
     auto it = m_text_cache.find(cache_key);
@@ -412,7 +414,7 @@ void Text::draw_chars_batched(Surface* pchars, const std::string& text, int x, i
  * such as GCC 14, which may mishandle these cases. Stick with if-else for reliability
  * and cross-platform compatibility.
  */
-void Text::draw_chars(Surface* pchars, const std::string& text, int x, int y, int update)
+void Text::draw_chars(Surface* pchars, std::string_view text, int x, int y, int update)
 {
   // Limit string length to MAX_TEXT_LEN
   size_t len = text.length();
@@ -485,7 +487,7 @@ void Text::draw_chars(Surface* pchars, const std::string& text, int x, int y, in
  * @param shadowsize Size of the shadow effect.
  * @param update Whether the screen should be updated.
  */
-void Text::draw_align(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
+void Text::draw_align(std::string_view text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
 {
   if (text.empty())
   {
@@ -537,7 +539,7 @@ void Text::draw_align(const std::string& text, int x, int y, TextHAlign halign, 
  * @param shadowsize Size of the shadow effect.
  * @param update Whether the screen should be updated.
  */
-void Text::drawf(const std::string& text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
+void Text::drawf(std::string_view text, int x, int y, TextHAlign halign, TextVAlign valign, int shadowsize, int update)
 {
   if (text.empty())
   {
@@ -584,7 +586,7 @@ void Text::drawf(const std::string& text, int x, int y, TextHAlign halign, TextV
  * @param update Whether the screen should be updated.
  * @param shadowsize Size of the shadow effect.
  */
-void Text::erasetext(const std::string& text, int x, int y, Surface* ptexture, int update, int shadowsize)
+void Text::erasetext(std::string_view text, int x, int y, Surface* ptexture, int update, int shadowsize)
 {
   // Erase text by drawing the background texture over it
   SDL_Rect dest;
@@ -619,7 +621,7 @@ void Text::erasetext(const std::string& text, int x, int y, Surface* ptexture, i
  * @param update Whether the screen should be updated.
  * @param shadowsize Size of the shadow effect.
  */
-void Text::erasecenteredtext(const std::string& text, int y, Surface* ptexture, int update, int shadowsize)
+void Text::erasecenteredtext(std::string_view text, int y, Surface* ptexture, int update, int shadowsize)
 {
   // Erase text centered horizontally on the screen
   size_t text_len = text.length();
@@ -637,9 +639,9 @@ void Text::erasecenteredtext(const std::string& text, int y, Surface* ptexture, 
  * @param surface The surface file as a string to be loaded.
  * @param scroll_speed Speed of the scrolling effect.
  */
-void display_text_file(const std::string& file, const std::string& surface, float scroll_speed)
+void display_text_file(std::string_view file, std::string_view surface, float scroll_speed)
 {
-  Surface* sur = new Surface(datadir + surface, false);
+  Surface* sur = new Surface(datadir + std::string(surface), false);
   display_text_file(file, sur, scroll_speed, false);
   delete sur;
 }
@@ -652,13 +654,13 @@ void display_text_file(const std::string& file, const std::string& surface, floa
  * @param scroll_speed Speed of the scrolling effect (ignored if is_static is true).
  * @param is_static Flag to determine if the display is static or scrolling.
  */
-void display_text_file(const std::string& file, Surface* surface, float scroll_speed, bool is_static)
+void display_text_file(std::string_view file, Surface* surface, float scroll_speed, bool is_static)
 {
   // --- SHARED LOGIC: File Reading (with original comments) ---
   std::vector<std::string> lines;
 
   // Construct the full path using std::string
-  std::string filename = datadir + "/" + file;
+  std::string filename = datadir + "/" + std::string(file);
 
   // Read file line by line
   std::ifstream fi(filename);
