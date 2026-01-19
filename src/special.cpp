@@ -52,7 +52,7 @@ void Bullet::init(float x, float y, float xm, Direction dir)
 
   if (dir == RIGHT)
   {
-    base.x = x + 32;
+    base.x = x + TILE_SIZE;
     base.xm = BULLET_XM + xm;
   }
   else
@@ -143,7 +143,7 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
   kind = kind_;
   dir = dir_;
 
-  base.width = 32;
+  base.width = TILE_SIZE;
   base.height = 0;
   base.x = x_;
   base.y = y_;
@@ -158,7 +158,7 @@ void Upgrade::init(float x_, float y_, Direction dir_, UpgradeKind kind_)
   {
     physic.set_velocity(dir == LEFT ? -1 : 1, -4);
     physic.enable_gravity(true);
-    base.height = 32;
+    base.height = TILE_SIZE;
   }
   else if (kind == UPGRADE_ICEFLOWER)
   {
@@ -182,13 +182,13 @@ void Upgrade::action(float frame_ratio)
 {
   if (kind == UPGRADE_ICEFLOWER || kind == UPGRADE_GROWUP)
   {
-    if (base.height < 32)
+    if (base.height < TILE_SIZE)
     {
       /* Rise up! */
       base.height = base.height + 0.7f * frame_ratio;
-      if (base.height > 32)
+      if (base.height > TILE_SIZE)
       {
-        base.height = 32;
+        base.height = TILE_SIZE;
       }
 
       return;
@@ -219,7 +219,7 @@ void Upgrade::action(float frame_ratio)
     {
       if (on_ground)
       {
-        base.y = (int)((base.y + base.height) / 32) * 32 - base.height;
+        base.y = (int)((base.y + base.height) / TILE_SIZE) * TILE_SIZE - base.height;
         old_base = base;
         if (kind == UPGRADE_GROWUP)
         {

@@ -22,6 +22,7 @@
 #include <fstream>
 #include <string_view>
 #include "globals.hpp"
+#include "defines.hpp"
 #include "setup.hpp"
 #include "screen.hpp"
 #include "level.hpp"
@@ -274,7 +275,7 @@ void Level::init_defaults()
   author = "UnNamed";
   song_title = "Mortimers_chipdisko.mod";
   bkgd_image = "arctis2.jpg";
-  width = 21;
+  width = MIN_LEVEL_WIDTH;
   start_pos_x = 100;
   start_pos_y = 170;
   time_left = 100;
@@ -289,7 +290,7 @@ void Level::init_defaults()
   bkgd_bottom.green = 255;
   bkgd_bottom.blue = 255;
 
-  const int total_tiles = width * 15;
+  const int total_tiles = width * SCREEN_HEIGHT_TILES;
   ia_tiles.assign(total_tiles, 0);
   bg_tiles.assign(total_tiles, 0);
   fg_tiles.assign(total_tiles, 0);
@@ -416,7 +417,7 @@ void Level::parseProperties(LispReader& reader)
 void Level::parseTilemaps(LispReader& reader, int version)
 {
   vector<int> ia_tm, bg_tm, fg_tm;
-  const int total_tiles = width * 15;
+  const int total_tiles = width * SCREEN_HEIGHT_TILES;
 
   // Reserve memory to prevent reallocations
   ia_tm.reserve(total_tiles);
@@ -452,7 +453,7 @@ void Level::parseTilemaps(LispReader& reader, int version)
     {
       if (tile >= '0' && tile <= '2')
       {
-        badguy_data.push_back(BadGuyData(static_cast<BadGuyKind>(tile - '0'), x * 32, y * 32, false));
+        badguy_data.push_back(BadGuyData(static_cast<BadGuyKind>(tile - '0'), x * TILE_SIZE, y * TILE_SIZE, false));
         tile = 0;
       }
       else
@@ -474,7 +475,7 @@ void Level::parseTilemaps(LispReader& reader, int version)
   fg_tiles.resize(total_tiles);
 
   // Place interactive tiles
-  for (int j = 0; j < 15; ++j)
+  for (int j = 0; j < SCREEN_HEIGHT_TILES; ++j)
   {
     for (int i = 0; i < width; ++i)
     {
@@ -496,7 +497,7 @@ void Level::parseTilemaps(LispReader& reader, int version)
   }
 
   // Place background and foreground tiles
-  for (int j = 0; j < 15; ++j)
+  for (int j = 0; j < SCREEN_HEIGHT_TILES; ++j)
   {
     for (int i = 0; i < width; ++i)
     {
@@ -581,7 +582,7 @@ void Level::reload_bricks_and_coins()
 {
   for (const auto& tile_info : original_tiles)
   {
-    if (tile_info.y >= 0 && tile_info.y < 15 && tile_info.x >= 0 && tile_info.x < width)
+    if (tile_info.y >= 0 && tile_info.y < SCREEN_HEIGHT_TILES && tile_info.x >= 0 && tile_info.x < width)
     {
       ia_tiles[tile_info.y * width + tile_info.x] = tile_info.tile;
     }
@@ -643,7 +644,7 @@ void Level::save(const std::string& subset, int level)
   fprintf(fi, "  (gravity %2.1f)\n", gravity);
 
   fprintf(fi, "  (background-tm ");
-  for (int y = 0; y < 15; ++y)
+  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
   {
     for (int x = 0; x < width; ++x)
     {
@@ -653,7 +654,7 @@ void Level::save(const std::string& subset, int level)
   fprintf(fi, ")\n");
 
   fprintf(fi, "  (interactive-tm ");
-  for (int y = 0; y < 15; ++y)
+  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
   {
     for (int x = 0; x < width; ++x)
     {
@@ -663,7 +664,7 @@ void Level::save(const std::string& subset, int level)
   fprintf(fi, ")\n");
 
   fprintf(fi, "  (foreground-tm ");
-  for (int y = 0; y < 15; ++y)
+  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
   {
     for (int x = 0; x < width; ++x)
     {
@@ -760,22 +761,22 @@ void Level::load_image(Surface** ptexture, string theme, const char* file, bool 
  */
 void Level::change_size(int new_width)
 {
-  if (new_width < 21)
+  if (new_width < MIN_LEVEL_WIDTH)
   {
-    new_width = 21;
+    new_width = MIN_LEVEL_WIDTH;
   }
   if (new_width == width)
   {
     return;
   }
 
-  std::vector<unsigned int> new_ia_tiles(new_width * 15, 0);
-  std::vector<unsigned int> new_bg_tiles(new_width * 15, 0);
-  std::vector<unsigned int> new_fg_tiles(new_width * 15, 0);
+  std::vector<unsigned int> new_ia_tiles(new_width * SCREEN_HEIGHT_TILES, 0);
+  std::vector<unsigned int> new_bg_tiles(new_width * SCREEN_HEIGHT_TILES, 0);
+  std::vector<unsigned int> new_fg_tiles(new_width * SCREEN_HEIGHT_TILES, 0);
 
   int min_width = (new_width < width) ? new_width : width;
 
-  for (int y = 0; y < 15; ++y)
+  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
   {
     for (int x = 0; x < min_width; ++x)
     {
@@ -801,10 +802,10 @@ void Level::change_size(int new_width)
  */
 void Level::change(float x, float y, int tm, unsigned int c)
 {
-  int yy = static_cast<int>(y) >> 5;  // Divide by 32
-  int xx = static_cast<int>(x) >> 5;  // Divide by 32
+  int yy = static_cast<int>(y) / TILE_SIZE;
+  int xx = static_cast<int>(x) / TILE_SIZE;
 
-  if (yy >= 0 && yy < 15 && xx >= 0 && xx < width)
+  if (yy >= 0 && yy < SCREEN_HEIGHT_TILES && xx >= 0 && xx < width)
   {
     int index = yy * width + xx;
     switch (tm)
@@ -880,10 +881,10 @@ MusicRef Level::get_level_music_fast() const
  */
 unsigned int Level::gettileid(float x, float y) const
 {
-  int xx = static_cast<int>(x) >> 5; // Divide by 32
-  int yy = static_cast<int>(y) >> 5; // Divide by 32
+  int xx = static_cast<int>(x) / TILE_SIZE;
+  int yy = static_cast<int>(y) / TILE_SIZE;
 
-  if (yy >= 0 && yy < 15 && xx >= 0 && xx < width)
+  if (yy >= 0 && yy < SCREEN_HEIGHT_TILES && xx >= 0 && xx < width)
   {
     return ia_tiles[yy * width + xx];
   }
@@ -899,7 +900,7 @@ unsigned int Level::gettileid(float x, float y) const
  */
 unsigned int Level::get_tile_at(int x, int y) const
 {
-  if (x < 0 || x >= width || y < 0 || y > 14)
+  if (x < 0 || x >= width || y < 0 || y >= SCREEN_HEIGHT_TILES)
   {
     return 0;
   }

@@ -396,7 +396,7 @@ void GameSession::process_events()
                   if (debug_mode)
                   {
                     tux.size = !tux.size;
-                    tux.base.height = (tux.size == BIG) ? 64 : 32;
+                    tux.base.height = (tux.size == BIG) ? (TILE_SIZE * 2) : TILE_SIZE;
                   }
 
                   break;
@@ -675,7 +675,7 @@ void GameSession::check_end_conditions()
   Player* tux = world->get_tux();
 
   /* End of level? */
-  int endpos = (World::current()->get_level()->width - 5) * 32;
+  int endpos = (World::current()->get_level()->width - 5) * TILE_SIZE;
   Tile* endtile = collision_goal(tux->base);
 
   // Fallback in case the other end positions don't trigger
@@ -929,8 +929,8 @@ GameSession::ExitStatus GameSession::run()
  */
 void bumpbrick(float x, float y)
 {
-  World::current()->add_bouncy_brick(static_cast<int>((x + 1) / 32) * 32,
-                                     static_cast<int>(y / 32) * 32);
+  World::current()->add_bouncy_brick(static_cast<int>((x + 1) / TILE_SIZE) * TILE_SIZE,
+                                     static_cast<int>(y / TILE_SIZE) * TILE_SIZE);
 
   play_sound(sounds[SND_BRICK], SOUND_CENTER_SPEAKER);
 }

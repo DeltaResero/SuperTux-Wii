@@ -152,7 +152,6 @@ std::string badguykind_to_string(BadGuyKind kind)
  * @param y The initial y-coordinate of the bad guy.
  * @param kind_ The type of bad guy (BadGuyKind enumeration).
  * @param stay_on_platform_ Determines if the bad guy stays on platforms.
- * @note Order of initialization must match the order in the class definition
  */
 BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
   : dying(DYING_NOT),                     // DyingType
@@ -271,12 +270,12 @@ void BadGuy::action_mriceblock(float frame_ratio)
     dir = tux.dir;
     if (dir == RIGHT)
     {
-      base.x = tux.base.x + 16;
+      base.x = tux.base.x + (TILE_SIZE / 2);
       base.y = tux.base.y + tux.base.height / 1.5f - base.height;
     }
     else  // Facing left
     {
-      base.x = tux.base.x - 16;
+      base.x = tux.base.x - (TILE_SIZE / 2);
       base.y = tux.base.y + tux.base.height / 1.5f - base.height;
     }
 
@@ -451,7 +450,7 @@ void BadGuy::fall()
       /* Land: */
       if (physic.get_velocity_y() > 0)
       {
-        base.y = static_cast<int>((base.y + base.height) / 32) * 32 - base.height;
+        base.y = static_cast<int>((base.y + base.height) / TILE_SIZE) * TILE_SIZE - base.height;
         physic.set_velocity_y(0);
       }
       // No gravity anymore please
@@ -518,7 +517,7 @@ void BadGuy::action_jumpy(float frame_ratio)
   static constexpr float JUMP_VELOCITY = 6.0f;
 
   // Jump when on ground
-  if (dying == DYING_NOT && issolid(base.x, base.y + 32))
+  if (dying == DYING_NOT && issolid(base.x, base.y + TILE_SIZE))
   {
     physic.set_velocity_y(-JUMP_VELOCITY);
     physic.enable_gravity(true);
@@ -636,7 +635,7 @@ void BadGuy::action_stalactite(float frame_ratio)
   if (mode == NORMAL)
   {
     // Start shaking when Tux is below the stalactite and at least 40 pixels near
-    if (tux.base.x + 32 > base.x - SHAKE_RANGE && tux.base.x < base.x + 32 + SHAKE_RANGE && tux.base.y + tux.base.height > base.y)
+    if (tux.base.x + TILE_SIZE > base.x - SHAKE_RANGE && tux.base.x < base.x + TILE_SIZE + SHAKE_RANGE && tux.base.y + tux.base.height > base.y)
     {
       timer.start(SHAKE_TIME);
       mode = STALACTITE_SHAKING;
@@ -1012,8 +1011,8 @@ void BadGuy::set_sprite(Sprite* left, Sprite* right)
   // This prevents visual sprite variations from affecting physics/collision.
   // Using sprite dimensions for collision boxes would cause inconsistent
   // behavior as sprites can have different sizes and padding.
-  base.width = 32;
-  base.height = 32;
+  base.width = TILE_SIZE;
+  base.height = TILE_SIZE;
 
   animation_offset = 0;
   sprite_left = left;

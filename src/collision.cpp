@@ -63,14 +63,14 @@ bool collision_object_map(const base_type& base)
   TileManager& tilemanager = *TileManager::instance();
 
   // we make the collision rectangle 1 pixel smaller
-  int starttilex = static_cast<int>(base.x + 1) / 32;
-  int starttiley = static_cast<int>(base.y + 1) / 32;
+  int starttilex = static_cast<int>(base.x + 1) / TILE_SIZE;
+  int starttiley = static_cast<int>(base.y + 1) / TILE_SIZE;
   int max_x = static_cast<int>(base.x + base.width);
   int max_y = static_cast<int>(base.y + base.height);
 
-  for (int x = starttilex; x * 32 < max_x; ++x)
+  for (int x = starttilex; x * TILE_SIZE < max_x; ++x)
   {
-    for (int y = starttiley; y * 32 < max_y; ++y)
+    for (int y = starttiley; y * TILE_SIZE < max_y; ++y)
     {
       Tile* tile = tilemanager.get(level.get_tile_at(x, y));
       if (tile && tile->solid)
@@ -94,14 +94,14 @@ Tile* collision_func(const base_type& base, std::function<Tile*(Tile*)> predicat
   const Level& level = *World::current()->get_level();
   TileManager& tilemanager = *TileManager::instance();
 
-  int starttilex = static_cast<int>(base.x) / 32;
-  int starttiley = static_cast<int>(base.y) / 32;
+  int starttilex = static_cast<int>(base.x) / TILE_SIZE;
+  int starttiley = static_cast<int>(base.y) / TILE_SIZE;
   int max_x = static_cast<int>(base.x + base.width);
   int max_y = static_cast<int>(base.y + base.height);
 
-  for (int x = starttilex; x * 32 < max_x; ++x)
+  for (int x = starttilex; x * TILE_SIZE < max_x; ++x)
   {
-    for (int y = starttiley; y * 32 < max_y; ++y)
+    for (int y = starttiley; y * TILE_SIZE < max_y; ++y)
     {
       Tile* tile = tilemanager.get(level.get_tile_at(x, y));
       Tile* result = predicate(tile);
@@ -140,7 +140,7 @@ void collision_swept_object_map(base_type* old, base_type* current)
     return;
   }
 
-  // --- 1. Determine dominant axis and step increments ---
+  // --- Determine dominant axis and step increments ---
   float longest_path;
   float x_step, y_step;
   enum AxisCase { VERTICAL = 1, HORIZONTAL = 2, DIAGONAL = 3 } axis_case;
@@ -171,7 +171,7 @@ void collision_swept_object_map(base_type* old, base_type* current)
     y_step = dy / longest_path;
   }
 
-  // --- 2. Step along the movement path and check for collision ---
+  // --- Step along the movement path and check for collision ---
   const float original_pos_x = old->x;
   const float original_pos_y = old->y;
 
@@ -183,7 +183,7 @@ void collision_swept_object_map(base_type* old, base_type* current)
 
     if (collision_object_map(*old))
     {
-      // --- 3. Resolve collision ---
+      // --- Resolve collision ---
       if (axis_case == VERTICAL)
       {
         current->y = old->y - y_step;

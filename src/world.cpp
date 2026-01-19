@@ -46,10 +46,10 @@ extern Surface* img_distro[4];
 extern void bumpbrick(float x, float y);
 
 namespace {
-// the space that it takes for the screen to start scrolling, regarding
-// screen bounds (in pixels)
+  // the space that it takes for the screen to start scrolling, regarding
+  // screen bounds (in pixels)
   constexpr int X_SPACE = 400 - 16;
-// the time it takes to move the camera (in ms)
+  // the time it takes to move the camera (in ms)
   constexpr int CHANGE_DIR_SCROLL_SPEED = 2000;
 }
 
@@ -117,8 +117,8 @@ void World::apply_bonuses()
     case PlayerStatus::GROWUP_BONUS:
       // FIXME: Move this to Player class
       tux.size = BIG;
-      tux.base.height = 64;
-      tux.base.y -= 32;
+      tux.base.height = TILE_SIZE * 2;
+      tux.base.y -= TILE_SIZE;
       break;
   }
 }
@@ -215,9 +215,9 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
 {
   const int current_width = level->width;
   // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
-  const int first_tile_x = static_cast<int>(floorf(scroll_x / 32.0f)) - 12;
+  const int first_tile_x = static_cast<int>(floorf(scroll_x / (float)TILE_SIZE)) - 12;
 
-  for (int y = 0; y < 15; ++y)
+  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
   {
     // Loop 34 times to cover the screen plus the wide buffer.
     for (int x = 0; x < 34; ++x)
@@ -233,8 +233,8 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
         {
           for (const auto* brick : bouncy_bricks)
           {
-            if (static_cast<int>(brick->base.x) / 32 == map_tile_x &&
-                static_cast<int>(brick->base.y) / 32 == y)
+            if (static_cast<int>(brick->base.x) / TILE_SIZE == map_tile_x &&
+                static_cast<int>(brick->base.y) / TILE_SIZE == y)
             {
               should_draw_tile = false;
               break;
@@ -244,9 +244,9 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
 
         if (should_draw_tile)
         {
-          float tile_world_x = map_tile_x * 32.0f;
+          float tile_world_x = map_tile_x * (float)TILE_SIZE;
           unsigned int tile_id = tile_data[y * current_width + map_tile_x];
-          Tile::draw(batcher, tile_world_x - scroll_x, y * 32.0f, tile_id);
+          Tile::draw(batcher, tile_world_x - scroll_x, y * (float)TILE_SIZE, tile_id);
         }
       }
     }
@@ -327,15 +327,15 @@ void World::draw()
 
     if (sprite_to_draw)
     {
-      if (upgrade.base.height < 32)
+      if (upgrade.base.height < TILE_SIZE)
       {
         if (batcher)
         {
-          sprite_to_draw->draw_part(*batcher, 0, 0, upgrade.base.x, upgrade.base.y + 32 - upgrade.base.height, 32, upgrade.base.height);
+          sprite_to_draw->draw_part(*batcher, 0, 0, upgrade.base.x, upgrade.base.y + TILE_SIZE - upgrade.base.height, TILE_SIZE, upgrade.base.height);
         }
         else
         {
-          sprite_to_draw->draw_part(0, 0, upgrade.base.x - scroll_x, upgrade.base.y + 32 - upgrade.base.height, 32, upgrade.base.height);
+          sprite_to_draw->draw_part(0, 0, upgrade.base.x - scroll_x, upgrade.base.y + TILE_SIZE - upgrade.base.height, TILE_SIZE, upgrade.base.height);
         }
       }
       else
@@ -458,7 +458,7 @@ void World::resolvePlayerPhysics(Player* player)
       {
         // Snap the player's FEET to the top of the tile grid to ensure they are perfectly aligned.
         // This prevents jittering and falling through thin platforms.
-        player->base.y = (int)((player->base.y + player->base.height) / 32) * 32 - player->base.height;
+        player->base.y = (int)((player->base.y + player->base.height) / TILE_SIZE) * TILE_SIZE - player->base.height;
         player->physic.set_velocity_y(0);
       }
 
@@ -472,19 +472,19 @@ void World::resolvePlayerPhysics(Player* player)
     {
       if (isbrick(player->base.x, player->base.y) || isfullbox(player->base.x, player->base.y))
       {
-        trygrabdistro(player->base.x, player->base.y - 32, BOUNCE);
-        trybumpbadguy(player->base.x, player->base.y - 64);
+        trygrabdistro(player->base.x, player->base.y - TILE_SIZE, BOUNCE);
+        trybumpbadguy(player->base.x, player->base.y - (TILE_SIZE * 2));
         trybreakbrick(player->base.x, player->base.y, player->size == SMALL, RIGHT);
         bumpbrick(player->base.x, player->base.y);
         tryemptybox(player->base.x, player->base.y, RIGHT);
       }
-      if (isbrick(player->base.x + 31, player->base.y) || isfullbox(player->base.x + 31, player->base.y))
+      if (isbrick(player->base.x + (TILE_SIZE - 1), player->base.y) || isfullbox(player->base.x + (TILE_SIZE - 1), player->base.y))
       {
-        trygrabdistro(player->base.x + 31, player->base.y - 32, BOUNCE);
-        trybumpbadguy(player->base.x + 31, player->base.y - 64);
-        if (player->size == BIG) { trybreakbrick(player->base.x + 31, player->base.y, player->size == SMALL, LEFT); }
-        bumpbrick(player->base.x + 31, player->base.y);
-        tryemptybox(player->base.x + 31, player->base.y, LEFT);
+        trygrabdistro(player->base.x + (TILE_SIZE - 1), player->base.y - TILE_SIZE, BOUNCE);
+        trybumpbadguy(player->base.x + (TILE_SIZE - 1), player->base.y - (TILE_SIZE * 2));
+        if (player->size == BIG) { trybreakbrick(player->base.x + (TILE_SIZE - 1), player->base.y, player->size == SMALL, LEFT); }
+        bumpbrick(player->base.x + (TILE_SIZE - 1), player->base.y);
+        tryemptybox(player->base.x + (TILE_SIZE - 1), player->base.y, LEFT);
       }
     }
     player->grabdistros();
@@ -646,9 +646,9 @@ void World::scrolling(float elapsed_time)
   {
     scroll_x = 0;
   }
-  if (scroll_x > level->width * 32 - screen->w)
+  if (scroll_x > level->width * TILE_SIZE - screen->w)
   {
-    scroll_x = level->width * 32 - screen->w;
+    scroll_x = level->width * TILE_SIZE - screen->w;
   }
 }
 
@@ -692,8 +692,8 @@ void World::collision_handler()
 
     // Query badguys near bullet (bounded query)
     auto nearby_badguys = m_spatial_grid->query_badguys(
-      bullet->base.x - 32, bullet->base.y - 32,
-      bullet->base.width + 64, bullet->base.height + 64
+      bullet->base.x - TILE_SIZE, bullet->base.y - TILE_SIZE,
+      bullet->base.width + (TILE_SIZE * 2), bullet->base.height + (TILE_SIZE * 2)
     );
 
     for (auto* badguy : nearby_badguys)
@@ -737,8 +737,8 @@ void World::collision_handler()
     {
       // Other special colliders use spatial query
       auto nearby = m_spatial_grid->query_badguys(
-        special->base.x - 32, special->base.y - 32,
-        special->base.width + 64, special->base.height + 64
+        special->base.x - TILE_SIZE, special->base.y - TILE_SIZE,
+        special->base.width + (TILE_SIZE * 2), special->base.height + (TILE_SIZE * 2)
       );
 
       for (auto* normal : nearby)
@@ -774,8 +774,8 @@ void World::collision_handler()
   }
 
   // Normal vs Normal (use spatial grid)
-  const float screen_x_start = scroll_x - 64.0f;
-  const float screen_x_end = scroll_x + screen->w + 64.0f;
+  const float screen_x_start = scroll_x - (float)(TILE_SIZE * 2);
+  const float screen_x_end = scroll_x + screen->w + (float)(TILE_SIZE * 2);
 
   for (size_t i = 0; i < normal_colliders.size(); ++i)
   {
@@ -784,10 +784,10 @@ void World::collision_handler()
         normal_colliders[i]->base.x > screen_x_end) continue;
 
     auto nearby = m_spatial_grid->query_badguys(
-      normal_colliders[i]->base.x - 32,
-      normal_colliders[i]->base.y - 32,
-      normal_colliders[i]->base.width + 64,
-      normal_colliders[i]->base.height + 64
+      normal_colliders[i]->base.x - TILE_SIZE,
+      normal_colliders[i]->base.y - TILE_SIZE,
+      normal_colliders[i]->base.width + (TILE_SIZE * 2),
+      normal_colliders[i]->base.height + (TILE_SIZE * 2)
     );
 
     for (auto* other : nearby)
@@ -810,8 +810,8 @@ void World::collision_handler()
   {
     if (badguy->dying != DYING_NOT) continue;
 
-    if (badguy->base.x + badguy->base.width < tux.base.x - 64.0f ||
-        badguy->base.x > tux.base.x + tux.base.width + 64.0f)
+    if (badguy->base.x + badguy->base.width < tux.base.x - (float)(TILE_SIZE * 2) ||
+        badguy->base.x > tux.base.x + tux.base.width + (float)(TILE_SIZE * 2))
       continue;
 
     if (rectcollision_offset(badguy->base, tux.base, 0, 0))
@@ -837,8 +837,8 @@ void World::collision_handler()
     // Skip any upgrade that is not within a 64-pixel buffer around Tux
     Upgrade* upgrade = upgrades.get_object_at(index);
 
-    if (upgrade->base.x + upgrade->base.width < tux.base.x - 64.0f ||
-        upgrade->base.x > tux.base.x + tux.base.width + 64.0f)
+    if (upgrade->base.x + upgrade->base.width < tux.base.x - (float)(TILE_SIZE * 2) ||
+        upgrade->base.x > tux.base.x + tux.base.width + (float)(TILE_SIZE * 2))
     {
       continue;
     }
@@ -873,10 +873,10 @@ void World::add_bouncy_distro(float x, float y)
 void World::add_broken_brick(Tile* tile, float x, float y)
 {
   add_broken_brick_piece(tile, x, y, -1, -4);
-  add_broken_brick_piece(tile, x, y + 16, -1.5, -3);
+  add_broken_brick_piece(tile, x, y + (TILE_SIZE / 2), -1.5, -3);
 
-  add_broken_brick_piece(tile, x + 16, y, 1, -4);
-  add_broken_brick_piece(tile, x + 16, y + 16, 1.5, -3);
+  add_broken_brick_piece(tile, x + (TILE_SIZE / 2), y, 1, -4);
+  add_broken_brick_piece(tile, x + (TILE_SIZE / 2), y + (TILE_SIZE / 2), 1.5, -3);
 }
 
 void World::add_broken_brick_piece(Tile* tile, float x, float y, float xm, float ym)
@@ -1001,8 +1001,8 @@ void World::trybreakbrick(float x, float y, bool small, Direction col_side)
     if (tile->data > 0)
     {
       /* Get a distro from it: */
-      add_bouncy_distro(((int)(x + 1) / 32) * 32,
-                         (int)(y / 32) * 32);
+      add_bouncy_distro(((int)(x + 1) / TILE_SIZE) * TILE_SIZE,
+                         (int)(y / TILE_SIZE) * TILE_SIZE);
 
       // TODO: don't handle this in a global way but per-tile...
       if (!counting_distros)
@@ -1032,8 +1032,8 @@ void World::trybreakbrick(float x, float y, bool small, Direction col_side)
       plevel->change(x, y, TM_IA, tile->next_tile);
 
       /* Replace it with broken bits: */
-      add_broken_brick(tile, ((int)(x + 1) / 32) * 32,
-                              (int)(y / 32) * 32);
+      add_broken_brick(tile, ((int)(x + 1) / TILE_SIZE) * TILE_SIZE,
+                              (int)(y / TILE_SIZE) * TILE_SIZE);
 
       /* Get some score: */
       play_sound(sounds[SND_BRICK], SOUND_CENTER_SPEAKER);
@@ -1064,8 +1064,8 @@ void World::tryemptybox(float x, float y, Direction col_side)
     col_side = LEFT;
   }
 
-  int posx = ((int)(x+1) / 32) * 32;
-  int posy = (int)(y/32) * 32 - 32;
+  int posx = ((int)(x+1) / TILE_SIZE) * TILE_SIZE;
+  int posy = (int)(y/TILE_SIZE) * TILE_SIZE - TILE_SIZE;
   switch(tile->data)
   {
     case 1: // Box with a distro!
@@ -1109,8 +1109,8 @@ void World::trygrabdistro(float x, float y, int bounciness)
 
     if (bounciness == BOUNCE)
     {
-      add_bouncy_distro(((int)(x + 1) / 32) * 32,
-                         (int)(y / 32) * 32);
+      add_bouncy_distro(((int)(x + 1) / TILE_SIZE) * TILE_SIZE,
+                         (int)(y / TILE_SIZE) * TILE_SIZE);
     }
 
     player_status.score = player_status.score + SCORE_DISTRO;
@@ -1124,8 +1124,8 @@ void World::trybumpbadguy(float x, float y)
   // Check against normal colliders
   for (auto* badguy : normal_colliders)
   {
-    if (badguy->base.x >= x - 32 && badguy->base.x <= x + 32 &&
-        badguy->base.y >= y - 16 && badguy->base.y <= y + 16)
+    if (badguy->base.x >= x - TILE_SIZE && badguy->base.x <= x + TILE_SIZE &&
+        badguy->base.y >= y - (TILE_SIZE / 2) && badguy->base.y <= y + (TILE_SIZE / 2))
     {
       badguy->collision(&tux, CO_PLAYER, COLLISION_BUMP);
     }
@@ -1134,8 +1134,8 @@ void World::trybumpbadguy(float x, float y)
   // Check against special colliders as well
   for (auto* badguy : special_colliders)
   {
-    if (badguy->base.x >= x - 32 && badguy->base.x <= x + 32 &&
-        badguy->base.y >= y - 16 && badguy->base.y <= y + 16)
+    if (badguy->base.x >= x - TILE_SIZE && badguy->base.x <= x + TILE_SIZE &&
+        badguy->base.y >= y - (TILE_SIZE / 2) && badguy->base.y <= y + (TILE_SIZE / 2))
     {
       badguy->collision(&tux, CO_PLAYER, COLLISION_BUMP);
     }
@@ -1145,9 +1145,9 @@ void World::trybumpbadguy(float x, float y)
   for (size_t index : upgrades.get_active_indices())
   {
     Upgrade* upgrade = upgrades.get_object_at(index);
-    if (upgrade->base.height == 32 &&
-        upgrade->base.x >= x - 32 && upgrade->base.x <= x + 32 &&
-        upgrade->base.y >= y - 16 && upgrade->base.y <= y + 16)
+    if (upgrade->base.height == TILE_SIZE &&
+        upgrade->base.x >= x - TILE_SIZE && upgrade->base.x <= x + TILE_SIZE &&
+        upgrade->base.y >= y - (TILE_SIZE / 2) && upgrade->base.y <= y + (TILE_SIZE / 2))
     {
       upgrade->collision(&tux, CO_PLAYER, COLLISION_BUMP);
     }

@@ -32,6 +32,11 @@ namespace {
   constexpr float SPEED_INC = 0.01f;
   constexpr int SCROLL = 60;
   constexpr int ITEMS_SPACE = 4;
+
+  // Maximum cached text entries before clearing cache.
+  // Based on typical menu system usage (main menu, options, credits).
+  // 250 entries provides good hit rate without excessive memory use.
+  constexpr size_t MAX_TEXT_CACHE_SIZE = 250;
 }
 
 #ifndef NOOPENGL
@@ -336,7 +341,7 @@ void Text::draw_chars_batched(Surface* pchars, std::string_view text, int x, int
 
     // SAFETY VALVE: Prevent unbounded cache growth.
     // If the cache gets too big, clear it.
-    if (m_text_cache.size() > 250)
+    if (m_text_cache.size() > MAX_TEXT_CACHE_SIZE)
     {
       m_text_cache.clear();
     }
@@ -407,7 +412,7 @@ void Text::draw_chars_batched(Surface* pchars, std::string_view text, int x, int
  * @param text The string of text to be drawn.
  * @param x The starting x-coordinate on the surface.
  * @param y The starting y-coordinate on the surface.
- * @param update Whether the screen should be updated after drawing (0 = no update, 1 = update).
+ * @param update Whether the screen should be updated (0 = no update, 1 = update).
  *
  * @note Do not replace the if-else statements with switch-case here.
  * Range-based case statements can lead to unexpected behavior on some compilers,

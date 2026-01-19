@@ -92,6 +92,11 @@ inline constexpr int SKID_TIME = 200;        // Skid duration (ms)
 inline constexpr int OFFSCREEN_DISTANCE = 256; // Distance to offscreen limit
 inline constexpr int LEVEL_WIDTH = 375;        // Width of a level
 
+/* Tile settings */
+inline constexpr int TILE_SIZE = 32;           // Size of a tile (width and height)
+inline constexpr int SCREEN_HEIGHT_TILES = 15; // Height of screen in tiles
+inline constexpr int MIN_LEVEL_WIDTH = 21;     // Minimum width of a level in tiles
+
 /* Timing */
 inline constexpr int KICKING_TIME = 200;      // Kicking duration (ms)
 

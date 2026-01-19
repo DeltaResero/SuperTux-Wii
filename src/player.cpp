@@ -95,8 +95,8 @@ void Player::init()
 
   holding_something = false;
 
-  base.width = 32;
-  base.height = 32;
+  base.width = TILE_SIZE;
+  base.height = TILE_SIZE;
 
   size = SMALL;
   got_coffee = false;
@@ -418,7 +418,7 @@ void Player::handleVerticalMovement()
   }
 
   // Logic to re-enable jumping after a hop
-  if (issolid(base.x + base.width / 2, base.y + base.height + 64) &&
+  if (issolid(base.x + base.width / 2, base.y + base.height + (TILE_SIZE * 2)) &&
     !jumping && !can_jump && input.up == DOWN && input.old_up == UP)
   {
     can_jump = true;
@@ -467,15 +467,15 @@ void Player::handleActions()
   if (input.down == DOWN && size == BIG && !duck && physic.get_velocity_y() == 0 && on_ground())
   {
     duck = true;
-    base.height = 32;
-    base.y += 32;
+    base.height = TILE_SIZE;
+    base.y += TILE_SIZE;
     old_base = previous_base = base; // Sync positions after size change
   }
   else if (input.down == UP && size == BIG && duck && physic.get_velocity_y() == 0 && on_ground())
   {
     duck = false;
-    base.y -= 32;
-    base.height = 64;
+    base.y -= TILE_SIZE;
+    base.height = TILE_SIZE * 2;
     old_base = previous_base = base; // Sync positions after size change
   }
 }
@@ -491,8 +491,8 @@ void Player::grow()
   }
 
   size = BIG;
-  base.height = 64;
-  base.y -= 32;
+  base.height = TILE_SIZE * 2;
+  base.y -= TILE_SIZE;
 
   old_base = previous_base = base;
 }
@@ -522,14 +522,14 @@ void Player::grabdistros()
   if (!dying)
   {
     World::current()->trygrabdistro(base.x, base.y, NO_BOUNCE);
-    World::current()->trygrabdistro(base.x + 31, base.y, NO_BOUNCE);
+    World::current()->trygrabdistro(base.x + (TILE_SIZE - 1), base.y, NO_BOUNCE);
     World::current()->trygrabdistro(base.x, base.y + base.height, NO_BOUNCE);
-    World::current()->trygrabdistro(base.x + 31, base.y + base.height, NO_BOUNCE);
+    World::current()->trygrabdistro(base.x + (TILE_SIZE - 1), base.y + base.height, NO_BOUNCE);
 
     if (size == BIG)
     {
       World::current()->trygrabdistro(base.x, base.y + base.height / 2, NO_BOUNCE);
-      World::current()->trygrabdistro(base.x + 31, base.y + base.height / 2, NO_BOUNCE);
+      World::current()->trygrabdistro(base.x + (TILE_SIZE - 1), base.y + base.height / 2, NO_BOUNCE);
     }
   }
 
@@ -740,7 +740,7 @@ void Player::kill(HurtMode mode)
     else
     {
       size = SMALL;
-      base.height = 32;
+      base.height = TILE_SIZE;
       duck = false;
     }
     safe_timer.start(TUX_SAFE_TIME);
@@ -790,7 +790,7 @@ void Player::player_remove_powerups()
 {
   got_coffee = false;
   size = SMALL;
-  base.height = 32;
+  base.height = TILE_SIZE;
 }
 
 /**
@@ -835,7 +835,7 @@ void Player::check_bounds(bool back_scrolling, bool hor_autoscroll)
     // Check if Tux is being crushed against a wall by the auto-scrolling camera.
     if (base.x == scroll_x)
     {
-      if ((issolid(base.x + 32, base.y) || (size != SMALL && !duck && issolid(base.x + 32, base.y + 32))) && (dying == DYING_NOT))
+      if ((issolid(base.x + TILE_SIZE, base.y) || (size != SMALL && !duck && issolid(base.x + TILE_SIZE, base.y + TILE_SIZE))) && (dying == DYING_NOT))
       {
         kill(KILL);
       }

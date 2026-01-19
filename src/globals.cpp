@@ -25,6 +25,17 @@
 #include <wiiuse/wpad.h>
 #endif
 
+namespace {
+#ifdef _WII_
+  // Maximum Wii Remote events that can be queued per frame.
+  // 32 is generous - typical frame has <10 events.
+  // Must be power of 2 for efficient modulo operation.
+  constexpr size_t EVENT_QUEUE_SIZE = 32;
+  static_assert((EVENT_QUEUE_SIZE & (EVENT_QUEUE_SIZE - 1)) == 0,
+                "EVENT_QUEUE_SIZE must be power of 2");
+#endif
+}
+
 /** The datadir prefix prepended when loading game data file */
 std::string datadir;
 
@@ -226,7 +237,7 @@ int st_poll_event(SDL_Event *event)
 #ifdef _WII_
 
   static uint8_t last_hat = SDL_HAT_CENTERED;
-  static SDL_Event queue[32]; // Small buffer for injected events
+  static SDL_Event queue[EVENT_QUEUE_SIZE]; // Small buffer for injected events
   static int queue_head = 0;
   static int queue_tail = 0;
 
@@ -234,7 +245,7 @@ int st_poll_event(SDL_Event *event)
   if (queue_head != queue_tail)
   {
     *event = queue[queue_head];
-    queue_head = (queue_head + 1) % 32;
+    queue_head = (queue_head + 1) % EVENT_QUEUE_SIZE;
     return 1;
   }
 
@@ -273,7 +284,7 @@ int st_poll_event(SDL_Event *event)
       e.jbutton.button = bm.sdl_btn;
       e.jbutton.state = SDL_PRESSED;
       queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % 32;
+      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
     }
     if (buttons_up & bm.wpad_btn)
     {
@@ -283,7 +294,7 @@ int st_poll_event(SDL_Event *event)
       e.jbutton.button = bm.sdl_btn;
       e.jbutton.state = SDL_RELEASED;
       queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % 32;
+      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
     }
   }
 
@@ -305,7 +316,7 @@ int st_poll_event(SDL_Event *event)
     e.jhat.hat = 0;
     e.jhat.value = hat;
     queue[queue_tail] = e;
-    queue_tail = (queue_tail + 1) % 32;
+    queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
     last_hat = hat;
   }
 
@@ -341,7 +352,7 @@ int st_poll_event(SDL_Event *event)
       e.jaxis.axis = 0; // X Axis
       e.jaxis.value = current_x;
       queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % 32;
+      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
       last_x = current_x;
     }
 
@@ -355,7 +366,7 @@ int st_poll_event(SDL_Event *event)
       e.jaxis.axis = 1;           // Y Axis
       e.jaxis.value = -current_y; // Invert Y for SDL standard
       queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % 32;
+      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
       last_y = current_y;
     }
   }
@@ -364,7 +375,7 @@ int st_poll_event(SDL_Event *event)
   if (queue_head != queue_tail)
   {
     *event = queue[queue_head];
-    queue_head = (queue_head + 1) % 32;
+    queue_head = (queue_head + 1) % EVENT_QUEUE_SIZE;
     return 1;
   }
 #endif
