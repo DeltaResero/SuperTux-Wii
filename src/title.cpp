@@ -343,7 +343,7 @@ void draw_demo(GameSession* session, float frame_ratio)
   }
 
   // Wrap around at the end of the level back to the beginning
-  if (plevel->width * 32 - 320 < tux->base.x)
+  if (plevel->width * TILE_SIZE - (SCREEN_W / 2) < tux->base.x)
   {
     tux->level_begin();
     scroll_x = 0;

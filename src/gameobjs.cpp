@@ -19,6 +19,7 @@
 #include "gameloop.hpp"
 #include "gameobjs.hpp"
 #include "render_batcher.hpp"
+#include "defines.hpp"
 
 /**
  * Initializes a BouncyDistro object.
@@ -139,7 +140,7 @@ void BouncyBrick::draw()
 void BouncyBrick::draw(RenderBatcher* batcher)
 {
   // BouncyBrick uses Tile system - same for both paths
-  if (base.x >= scroll_x - 32 && base.x <= scroll_x + screen->w)
+  if (base.x >= scroll_x - TILE_SIZE && base.x <= scroll_x + screen->w)
   {
     // Simply draw the tile at its current animated position (No more erasing!)
     Tile::draw(batcher, base.x - scroll_x, base.y + offset, shape);

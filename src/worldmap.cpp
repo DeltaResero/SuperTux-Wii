@@ -30,6 +30,7 @@
 #include "player.hpp"
 #include "utils.hpp"
 #include "render_batcher.hpp"
+#include "defines.hpp"
 
 namespace {
   constexpr int DISPLAY_MAP_MESSAGE_TIME = 2800;
@@ -345,29 +346,29 @@ void Tux::draw(const Point& offset, RenderBatcher* batcher)
  */
 Point Tux::get_pos() const
 {
-  float x = tile_pos.x * 32;
-  float y = tile_pos.y * 32;
+  float x = tile_pos.x * TILE_SIZE;
+  float y = tile_pos.y * TILE_SIZE;
 
   switch (direction)
   {
     case D_WEST:
     {
-      x -= offset - 32;
+      x -= offset - TILE_SIZE;
       break;
     }
     case D_EAST:
     {
-      x += offset - 32;
+      x += offset - TILE_SIZE;
       break;
     }
     case D_NORTH:
     {
-      y -= offset - 32;
+      y -= offset - TILE_SIZE;
       break;
     }
     case D_SOUTH:
     {
-      y += offset - 32;
+      y += offset - TILE_SIZE;
       break;
     }
     case D_NONE:
@@ -424,10 +425,10 @@ void Tux::update(float delta)
     // Let Tux walk a few pixels (20 pixels/sec)
     offset += 20.0f * delta;
 
-    if (offset > 32)
+    if (offset > TILE_SIZE)
     {
       // We reached the next tile, so we check what to do now
-      offset -= 32;
+      offset -= TILE_SIZE;
 
       WorldMap::Level* level = worldmap->at_level();
       if (level && level->name.empty() && !level->display_map_message.empty() && level->passive_message)
@@ -529,7 +530,7 @@ WorldMap::WorldMap()
   m_renderBatcher = new RenderBatcher();
 
   width = (int)(20);
-  height = (int)(15);
+  height = (int)(SCREEN_HEIGHT_TILES);
 
   start_x = int(4);
   start_y = int(5);
@@ -1317,10 +1318,10 @@ void WorldMap::draw(const Point& offset)
   }
 
   // Determine the range of tiles visible on the screen
-  int x_start = -offset.x / 32;
-  int y_start = -offset.y / 32;
-  int x_end = x_start + (screen->w / 32) + 2;
-  int y_end = y_start + (screen->h / 32) + 2;
+  int x_start = -offset.x / TILE_SIZE;
+  int y_start = -offset.y / TILE_SIZE;
+  int x_end = x_start + (screen->w / TILE_SIZE) + 2;
+  int y_end = y_start + (screen->h / TILE_SIZE) + 2;
 
   // Clamp the tile range to the map's actual boundaries
   if (x_start < 0) x_start = 0;
@@ -1342,11 +1343,11 @@ void WorldMap::draw(const Point& offset)
       if (batcher)
       {
         // Add to batcher. Hotspots are 0, 0.
-        batcher->add(tile->sprite, x * 32 + offset.x, y * 32 + offset.y, 0, 0);
+        batcher->add(tile->sprite, x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y, 0, 0);
       }
       else
       {
-        tile->sprite->draw(x * 32 + offset.x, y * 32 + offset.y);
+        tile->sprite->draw(x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y);
       }
     }
   }
@@ -1379,11 +1380,11 @@ void WorldMap::draw(const Point& offset)
         if (batcher)
         {
           // Add to batcher. Hotspots are 0, 0.
-          batcher->add(dot_sprite, i->x * 32 + offset.x, i->y * 32 + offset.y, 0, 0);
+          batcher->add(dot_sprite, i->x * TILE_SIZE + offset.x, i->y * TILE_SIZE + offset.y, 0, 0);
         }
         else
         {
-          dot_sprite->draw(i->x * 32 + offset.x, i->y * 32 + offset.y);
+          dot_sprite->draw(i->x * TILE_SIZE + offset.x, i->y * TILE_SIZE + offset.y);
         }
       }
     }
@@ -1497,13 +1498,13 @@ void WorldMap::renderScene()
     offset.y = 0;
   }
 
-  if (offset.x < screen->w - width * 32)
+  if (offset.x < screen->w - width * TILE_SIZE)
   {
-    offset.x = screen->w - width * 32;
+    offset.x = screen->w - width * TILE_SIZE;
   }
-  if (offset.y < screen->h - height * 32)
+  if (offset.y < screen->h - height * TILE_SIZE)
   {
-    offset.y = screen->h - height * 32;
+    offset.y = screen->h - height * TILE_SIZE;
   }
 
   draw(offset);

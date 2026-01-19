@@ -27,6 +27,7 @@
 #include "gameobjs.hpp"
 #include "object_pool.hpp"
 #include "spatial_grid.hpp"
+#include "defines.hpp" // Added for pool size constants
 
 class Level;
 class RenderBatcher;
@@ -102,11 +103,11 @@ public:
   World(std::string_view subset, int level_nr);
 
   World()
-    : bouncy_distros(32),
-      broken_bricks(64),
-      floating_scores(32),
-      bullets(8),
-      upgrades(16),
+    : bouncy_distros(POOL_MAX_BOUNCY_DISTROS),
+      broken_bricks(POOL_MAX_BROKEN_BRICKS),
+      floating_scores(POOL_MAX_FLOATING_SCORES),
+      bullets(POOL_MAX_BULLETS),
+      upgrades(POOL_MAX_UPGRADES),
       m_spatial_grid(nullptr)
   {};
   ~World();

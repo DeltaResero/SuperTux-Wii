@@ -14,6 +14,8 @@
 #if !defined(SUPERTUX_DEFINES_H)
 #define SUPERTUX_DEFINES_H
 
+#include <cstddef> // Required for size_t
+
 /* Version */
 #ifndef VERSION
   #define VERSION "0.1.4-wii-d.5"
@@ -100,6 +102,13 @@ inline constexpr int MIN_LEVEL_WIDTH = 21;     // Minimum width of a level in ti
 /* Screen Dimensions */
 inline constexpr int SCREEN_W = 640;           // Screen width
 inline constexpr int SCREEN_H = 480;           // Screen height
+
+/* Object Pool Sizes */
+inline constexpr size_t POOL_MAX_BOUNCY_DISTROS = 32;
+inline constexpr size_t POOL_MAX_BROKEN_BRICKS  = 64;
+inline constexpr size_t POOL_MAX_FLOATING_SCORES = 32;
+inline constexpr size_t POOL_MAX_BULLETS        = 8;
+inline constexpr size_t POOL_MAX_UPGRADES       = 16;
 
 /* Timing */
 inline constexpr int KICKING_TIME = 200;      // Kicking duration (ms)
