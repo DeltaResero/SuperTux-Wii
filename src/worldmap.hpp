@@ -1,4 +1,4 @@
-// src/worldmap.h
+// src/worldmap.hpp
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // SuperTux
@@ -144,7 +144,10 @@ public:
   {
     return moving;
   }
-  Point get_pos();
+
+  // Added const
+  Point get_pos() const;
+
   Point get_tile_pos() const
   {
     return tile_pos;
@@ -287,7 +290,8 @@ private:
   void on_escape_press();
 
   // Smart tile substitution for snow tiles
-  int get_display_tile_id(int x, int y);
+  // Added const
+  int get_display_tile_id(int x, int y) const;
 
   Tux* tux;
   bool quit;

@@ -191,8 +191,11 @@ public:
     return item[index];
   }
   MenuItem& get_item_by_id(int id);
-  int get_active_item_id();
-  bool isToggled(int id);
+
+  // Added const
+  int get_active_item_id() const;
+  // Added const
+  bool isToggled(int id) const;
 
   void draw();
   void set_pos(int x, int y, float rw = 0, float rh = 0);

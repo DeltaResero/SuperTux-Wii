@@ -124,7 +124,9 @@ public:
   void scrolling(float frame_ratio);   // camera scrolling
 
   void play_music(int musictype);
-  int get_music_type();
+
+  // Added const
+  int get_music_type() const;
 
 
   /** Checks for all possible collisions. And calls the

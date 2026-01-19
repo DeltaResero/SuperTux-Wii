@@ -253,7 +253,7 @@ void Player::updatePhysics(float deltaTime)
  * Checks if the player is currently standing on a solid surface.
  * @return True if on the ground, false otherwise.
  */
-bool Player::on_ground()
+bool Player::on_ground() const
 {
   return m_on_ground_cache;
 }
@@ -262,7 +262,7 @@ bool Player::on_ground()
  * Checks if the player is currently underneath a solid surface.
  * @return True if under a solid tile, false otherwise.
  */
-bool Player::under_solid()
+bool Player::under_solid() const
 {
   return m_ceiling_cache;
 }
@@ -771,7 +771,7 @@ void Player::is_dying()
  * Checks if the player is considered dead (e.g., fallen off-screen).
  * @return True if the player is dead, false otherwise.
  */
-bool Player::is_dead()
+bool Player::is_dead() const
 {
   if (base.y > screen->h || base.x < scroll_x - AUTOSCROLL_DEAD_INTERVAL)
   {

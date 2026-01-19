@@ -985,7 +985,7 @@ void World::play_music(int musictype)
   }
 }
 
-int World::get_music_type()
+int World::get_music_type() const
 {
   return currentmusic;
 }

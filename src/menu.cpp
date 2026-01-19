@@ -695,7 +695,7 @@ MenuItem& Menu::get_item_by_id(int id)
  * Gets the ID of the currently active menu item.
  * @return Returns the ID of the active menu item.
  */
-int Menu::get_active_item_id()
+int Menu::get_active_item_id() const
 {
   return item[active_item].id;
 }
@@ -705,9 +705,16 @@ int Menu::get_active_item_id()
  * @param id The ID of the menu item to check.
  * @return Returns true if the item is toggled, false otherwise.
  */
-bool Menu::isToggled(int id)
+bool Menu::isToggled(int id) const
 {
-  return get_item_by_id(id).toggled;
+  for (const auto& current_item : item)
+  {
+    if (current_item.id == id)
+    {
+      return current_item.toggled;
+    }
+  }
+  return false;
 }
 
 /**

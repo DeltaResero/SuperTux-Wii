@@ -343,7 +343,7 @@ void Tux::draw(const Point& offset, RenderBatcher* batcher)
  * Returns the current position of Tux in world map coordinates.
  * @return The position of Tux as a Point object.
  */
-Point Tux::get_pos()
+Point Tux::get_pos() const
 {
   float x = tile_pos.x * 32;
   float y = tile_pos.y * 32;
@@ -1264,7 +1264,7 @@ WorldMap::Level* WorldMap::at_level()
  * @param y The y coordinate of the tile.
  * @return The tile ID to use for rendering.
  */
-int WorldMap::get_display_tile_id(int x, int y)
+int WorldMap::get_display_tile_id(int x, int y) const
 {
   if (x < 0 || x >= width || y < 0 || y >= height)
   {
