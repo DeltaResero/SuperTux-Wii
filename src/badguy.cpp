@@ -154,17 +154,8 @@ std::string badguykind_to_string(BadGuyKind kind)
  * @param stay_on_platform_ Determines if the bad guy stays on platforms.
  */
 BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
-  : dying(DYING_NOT),                     // DyingType
-    kind(kind_),                          // BadGuyKind
-    mode(NORMAL),                         // BadGuyMode
-    stay_on_platform(stay_on_platform_),  // bool
-    removable(false),                     // bool
-    seen(false),                          // bool
-    squishcount(0),                       // int
-    sprite_left(nullptr),                 // Sprite*
-    sprite_right(nullptr),                // Sprite*
-    animation_offset(0),                  // int
-    m_on_ground_cache(false)              // bool
+  : kind(kind_),                          // BadGuyKind
+    stay_on_platform(stay_on_platform_)   // bool
 {
   base.x = x;
   base.y = y;
@@ -174,7 +165,6 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
   base.ym = 0;
 
   old_base = base;
-  dir = LEFT;
   physic.reset();
   timer.init(true);
 

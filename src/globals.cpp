@@ -41,14 +41,6 @@ std::string datadir;
 
 JoystickKeymap::JoystickKeymap()
 {
-  a_button     = 0;
-  b_button     = 1;
-  start_button = 2;
-
-  x_axis = 0;
-  y_axis = 1;
-
-  dead_zone = 8192;
 }
 
 JoystickKeymap joystick_keymap;

@@ -28,14 +28,14 @@ extern std::string datadir;
 
 struct JoystickKeymap
 {
-  int a_button;
-  int b_button;
-  int start_button;
+  int a_button{0};
+  int b_button{1};
+  int start_button{2};
 
-  int x_axis;
-  int y_axis;
+  int x_axis{0};
+  int y_axis{1};
 
-  int dead_zone;
+  int dead_zone{8192};
 
   JoystickKeymap();
 };

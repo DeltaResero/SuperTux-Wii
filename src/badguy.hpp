@@ -75,31 +75,31 @@ public:
     FLY_DOWN
   };
 public:
-  DyingType  dying;
+  DyingType  dying{DYING_NOT};
   BadGuyKind kind;
-  BadGuyMode mode;
+  BadGuyMode mode{NORMAL};
 
   /** If true the enemy will stay on its current platform, ie. if he
       reaches the edge he will turn around and walk into the other
       direction, if false the enemy will jump or walk of the edge */
   bool stay_on_platform;
 
-  Direction dir;
+  Direction dir{LEFT};
 
 private:
-  bool removable;
-  bool seen;
-  int squishcount; // number of times this enemy was squished
+  bool removable{false};
+  bool seen{false};
+  int squishcount{0}; // number of times this enemy was squished
   Timer timer;
   Physic physic;
 
-  Sprite*   sprite_left;
-  Sprite*   sprite_right;
+  Sprite*   sprite_left{nullptr};
+  Sprite*   sprite_right{nullptr};
 
-  int animation_offset;
+  int animation_offset{0};
 
   // Collision cache
-  bool m_on_ground_cache;
+  bool m_on_ground_cache{false};
 
 public:
   BadGuy(float x, float y, BadGuyKind kind, bool stay_on_platform);

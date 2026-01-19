@@ -78,12 +78,11 @@ public:
   BadGuys normal_colliders;
   BadGuys special_colliders;
 
-  // Use the new generic ObjectPool template for all pooled objects
-  ObjectPool<BouncyDistro> bouncy_distros;
-  ObjectPool<BrokenBrick> broken_bricks;
-  ObjectPool<FloatingScore> floating_scores;
-  ObjectPool<Bullet> bullets;
-  ObjectPool<Upgrade> upgrades;
+  ObjectPool<BouncyDistro> bouncy_distros{POOL_MAX_BOUNCY_DISTROS};
+  ObjectPool<BrokenBrick> broken_bricks{POOL_MAX_BROKEN_BRICKS};
+  ObjectPool<FloatingScore> floating_scores{POOL_MAX_FLOATING_SCORES};
+  ObjectPool<Bullet> bullets{POOL_MAX_BULLETS};
+  ObjectPool<Upgrade> upgrades{POOL_MAX_UPGRADES};
 
   // BouncyBrick is infrequent and can remain a simple vector for now
   std::vector<BouncyBrick*> bouncy_bricks;
@@ -93,7 +92,7 @@ public:
 
 private:
   // Spatial grid is declared last as it's constructed after pools
-  SpatialGrid* m_spatial_grid;
+  SpatialGrid* m_spatial_grid{nullptr};
 
 public:
   static World* current() { return current_; }
@@ -102,14 +101,7 @@ public:
   World(std::string_view filename);
   World(std::string_view subset, int level_nr);
 
-  World()
-    : bouncy_distros(POOL_MAX_BOUNCY_DISTROS),
-      broken_bricks(POOL_MAX_BROKEN_BRICKS),
-      floating_scores(POOL_MAX_FLOATING_SCORES),
-      bullets(POOL_MAX_BULLETS),
-      upgrades(POOL_MAX_UPGRADES),
-      m_spatial_grid(nullptr)
-  {};
+  World() {};
   ~World();
 
   void activate_world();

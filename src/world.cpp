@@ -70,14 +70,6 @@ void World::common_setup()
 }
 
 World::World(std::string_view filename)
-  // Initialize all object pools with their fixed sizes.
-  // This pre-allocates all memory needed for these objects upfront.
-  : bouncy_distros(POOL_MAX_BOUNCY_DISTROS),
-    broken_bricks(POOL_MAX_BROKEN_BRICKS),
-    floating_scores(POOL_MAX_FLOATING_SCORES),
-    bullets(POOL_MAX_BULLETS),
-    upgrades(POOL_MAX_UPGRADES),
-    m_spatial_grid(nullptr)
 {
   // FIXME: Move this to action and draw and everywhere else where the
   // world calls child functions
@@ -87,13 +79,6 @@ World::World(std::string_view filename)
 }
 
 World::World(std::string_view subset, int level_nr)
-  // Initialize all object pools with their fixed sizes.
-  : bouncy_distros(POOL_MAX_BOUNCY_DISTROS),
-    broken_bricks(POOL_MAX_BROKEN_BRICKS),
-    floating_scores(POOL_MAX_FLOATING_SCORES),
-    bullets(POOL_MAX_BULLETS),
-    upgrades(POOL_MAX_UPGRADES),
-    m_spatial_grid(nullptr)
 {
   // FIXME: Move this to action and draw and everywhere else where the
   // world calls child functions
