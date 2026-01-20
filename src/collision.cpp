@@ -140,6 +140,22 @@ void collision_swept_object_map(base_type* old, base_type* current)
     return;
   }
 
+  // Check if the swept bounding box collides with anything.
+  base_type swept_box;
+  swept_box.x = std::min(old->x, current->x);
+  swept_box.y = std::min(old->y, current->y);
+  swept_box.width = std::max(old->x + old->width, current->x + current->width) - swept_box.x;
+  swept_box.height = std::max(old->y + old->height, current->y + current->height) - swept_box.y;
+  swept_box.xm = 0;
+  swept_box.ym = 0;
+
+  // If the entire area traversed is empty, we can skip the expensive stepping.
+  if (!collision_object_map(swept_box))
+  {
+    *old = *current;
+    return;
+  }
+
   // --- Determine dominant axis and step increments ---
   float longest_path;
   float x_step, y_step;
