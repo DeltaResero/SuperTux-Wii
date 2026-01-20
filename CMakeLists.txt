@@ -85,6 +85,9 @@ if(ENABLE_WII)
   pkg_check_modules(CODECS REQUIRED libmodplug vorbisfile vorbis ogg mad IMPORTED_TARGET)
   message(STATUS "Found Audio Codecs: modplug, vorbis, ogg, mad")
 
+  # Verify strip tool
+  message(STATUS "Found strip: ${CMAKE_STRIP}")
+
   # OpenGL (Optional)
   if(ENABLE_OPENGL)
     wii_find_lib(GLU_LIB GLU)
@@ -146,6 +149,16 @@ if(ENABLE_WII)
     $<$<CONFIG:Release>:-flto>
   )
 
+  # Post-build: Strip the ELF binary (Release builds only)
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
+      COMMAND ${CMAKE_STRIP}
+              $<TARGET_FILE:${PROJECT_NAME}.elf>
+      COMMENT "Stripping ELF binary..."
+      VERBATIM
+    )
+  endif()
+
   # Post-build: Convert ELF to DOL
   add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
     COMMAND ${DEVKITPRO}/tools/bin/elf2dol 
@@ -177,6 +190,9 @@ else()
   pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image IMPORTED_TARGET)
   pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer IMPORTED_TARGET)
 
+  # Verify strip tool
+  message(STATUS "Found strip: ${CMAKE_STRIP}")
+
   # Find Core dependencies
   find_package(ZLIB REQUIRED)
   find_package(PNG REQUIRED)
@@ -196,6 +212,15 @@ else()
 
   # Force lowercase executable name (standard on Linux/Unix)
   set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "supertux-wii")
+
+  # Post-build: Strip the binary (Release builds only)
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+      COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${PROJECT_NAME}>
+      COMMENT "Stripping binary..."
+      VERBATIM
+    )
+  endif()
 
   target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
