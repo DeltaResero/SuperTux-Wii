@@ -986,7 +986,7 @@ void World::trybreakbrick(float x, float y, bool small, Direction col_side)
     if (tile->data > 0)
     {
       /* Get a distro from it: */
-      add_bouncy_distro(((int)(x + 1) / TILE_SIZE) * TILE_SIZE,
+      add_bouncy_distro(((int)(x) / TILE_SIZE) * TILE_SIZE,
                          (int)(y / TILE_SIZE) * TILE_SIZE);
 
       // TODO: don't handle this in a global way but per-tile...
@@ -1017,7 +1017,7 @@ void World::trybreakbrick(float x, float y, bool small, Direction col_side)
       plevel->change(x, y, TM_IA, tile->next_tile);
 
       /* Replace it with broken bits: */
-      add_broken_brick(tile, ((int)(x + 1) / TILE_SIZE) * TILE_SIZE,
+      add_broken_brick(tile, ((int)(x) / TILE_SIZE) * TILE_SIZE,
                               (int)(y / TILE_SIZE) * TILE_SIZE);
 
       /* Get some score: */
@@ -1049,7 +1049,7 @@ void World::tryemptybox(float x, float y, Direction col_side)
     col_side = LEFT;
   }
 
-  int posx = ((int)(x+1) / TILE_SIZE) * TILE_SIZE;
+  int posx = ((int)(x) / TILE_SIZE) * TILE_SIZE;
   int posy = (int)(y/TILE_SIZE) * TILE_SIZE - TILE_SIZE;
   switch(tile->data)
   {
@@ -1094,7 +1094,7 @@ void World::trygrabdistro(float x, float y, int bounciness)
 
     if (bounciness == BOUNCE)
     {
-      add_bouncy_distro(((int)(x + 1) / TILE_SIZE) * TILE_SIZE,
+      add_bouncy_distro(((int)(x) / TILE_SIZE) * TILE_SIZE,
                          (int)(y / TILE_SIZE) * TILE_SIZE);
     }
 
