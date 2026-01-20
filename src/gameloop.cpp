@@ -876,14 +876,13 @@ GameSession::ExitStatus GameSession::run()
     last_update_time = update_time;
     update_time = Ticks::get();
 
-#ifndef _WII_ // Wii runs too slow to need this
-    /* Pause till next frame */
-    if (last_update_time >= update_time - 12)
+    // Yield the CPU if the frame finished very quickly. This prevents 100% CPU usage
+    // and improves frame pacing, especially on fast hardware.
+    if ((update_time - last_update_time) <= 12)
     {
-      SDL_Delay(5); // FIXME: Throttle hack as without it many things subtly break at higher framerates (default: 10; lowered to 5 for testing)
+      SDL_Delay(5);
       update_time = Ticks::get();
     }
-#endif
 
     /* Handle time: */
     if (!time_left.check() && world->get_tux()->dying == DYING_NOT && !end_sequence)

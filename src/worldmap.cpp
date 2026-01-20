@@ -422,8 +422,8 @@ void Tux::update(float delta)
   }
   else
   {
-    // Let Tux walk a few pixels (20 pixels/sec)
-    offset += 20.0f * delta;
+    // Tux walking speed constant
+    offset += 4.0f * delta;
 
     if (offset > TILE_SIZE)
     {
@@ -1542,21 +1542,21 @@ void WorldMap::display()
   music_manager->play_music(song);
 
   unsigned int last_update_time = Ticks::get();
+  unsigned int update_time = last_update_time;
 
   // Ensure scroll_x is 0 so RenderBatcher doesn't apply side-scroller offsets
   scroll_x = 0;
 
   while (!quit)
   {
-    unsigned int update_time = Ticks::get();
-    float delta = ((float)(update_time - last_update_time)) / 100.0f;
-    delta *= 1.3f;
+    // Use same delta calculation as gameloop (divide by FRAME_RATE)
+    float delta = static_cast<float>(update_time - last_update_time) / static_cast<float>(FRAME_RATE);
 
-    if (delta > 10.0f)
+    // Cap delta for lag spikes (same as gameloop)
+    if (delta > 2.5f)
     {
-      delta = 0.3f;
+      delta = 2.5f;
     }
-    last_update_time = update_time;
 
     processInput();
     updateScene(delta);
@@ -1567,6 +1567,16 @@ void WorldMap::display()
     }
 
     renderScene();
+
+    // Frame pacing
+    last_update_time = update_time;
+    update_time = Ticks::get();
+
+    if ((update_time - last_update_time) <= 12)
+    {
+      SDL_Delay(5);
+      update_time = Ticks::get();
+    }
   }
 }
 
