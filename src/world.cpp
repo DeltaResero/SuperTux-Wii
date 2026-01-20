@@ -676,7 +676,7 @@ void World::collision_handler()
     if (bullet->removable) continue;
 
     // Query badguys near bullet (bounded query)
-    auto nearby_badguys = m_spatial_grid->query_badguys(
+    const auto& nearby_badguys = m_spatial_grid->query_badguys(
       bullet->base.x - TILE_SIZE, bullet->base.y - TILE_SIZE,
       bullet->base.width + (TILE_SIZE * 2), bullet->base.height + (TILE_SIZE * 2)
     );
@@ -721,7 +721,7 @@ void World::collision_handler()
     else
     {
       // Other special colliders use spatial query
-      auto nearby = m_spatial_grid->query_badguys(
+      const auto& nearby = m_spatial_grid->query_badguys(
         special->base.x - TILE_SIZE, special->base.y - TILE_SIZE,
         special->base.width + (TILE_SIZE * 2), special->base.height + (TILE_SIZE * 2)
       );
@@ -768,7 +768,7 @@ void World::collision_handler()
     if (normal_colliders[i]->base.x + normal_colliders[i]->base.width < screen_x_start ||
         normal_colliders[i]->base.x > screen_x_end) continue;
 
-    auto nearby = m_spatial_grid->query_badguys(
+    const auto& nearby = m_spatial_grid->query_badguys(
       normal_colliders[i]->base.x - TILE_SIZE,
       normal_colliders[i]->base.y - TILE_SIZE,
       normal_colliders[i]->base.width + (TILE_SIZE * 2),

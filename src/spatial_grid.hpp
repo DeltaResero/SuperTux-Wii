@@ -40,8 +40,8 @@ public:
 
   // Query entities in cells overlapping the given rectangle
   // Used for normal bounded collision checks
-  std::vector<BadGuy*> query_badguys(float x, float y, float w, float h) const;
-  std::vector<Upgrade*> query_upgrades(float x, float y, float w, float h) const;
+  const std::vector<BadGuy*>& query_badguys(float x, float y, float w, float h) const;
+  const std::vector<Upgrade*>& query_upgrades(float x, float y, float w, float h) const;
 
   // Query ALL entities regardless of position
   // Used for Mr. Iceblock off-screen collisions
@@ -81,6 +81,10 @@ private:
 
   // Reusable scratch buffer for cell queries
   mutable std::vector<CellKey> m_temp_cells;
+
+  // Query caches to prevent heap allocation churn
+  mutable std::vector<BadGuy*> m_query_cache_badguys;
+  mutable std::vector<Upgrade*> m_query_cache_upgrades;
 
   // Helper to convert world coordinates to cell coordinates
   CellKey get_cell(float x, float y) const;

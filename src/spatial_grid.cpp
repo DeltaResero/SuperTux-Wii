@@ -22,6 +22,10 @@ SpatialGrid::SpatialGrid(int cell_size_)
   all_bullets.reserve(20);
   all_upgrades.reserve(30);
   m_temp_cells.reserve(9); // Typically 3x3 max for normal sized objects
+
+  // Reserve cache space
+  m_query_cache_badguys.reserve(32);
+  m_query_cache_upgrades.reserve(16);
 }
 
 void SpatialGrid::clear()
@@ -106,10 +110,9 @@ void SpatialGrid::add_upgrade(Upgrade* upgrade)
   }
 }
 
-std::vector<BadGuy*> SpatialGrid::query_badguys(float x, float y, float w, float h) const
+const std::vector<BadGuy*>& SpatialGrid::query_badguys(float x, float y, float w, float h) const
 {
-  std::vector<BadGuy*> result;
-  result.reserve(20); // Typical screen has ~10-20 visible badguys
+  m_query_cache_badguys.clear();
 
   const auto& cells = get_overlapping_cells(x, y, w, h);
 
@@ -121,17 +124,18 @@ std::vector<BadGuy*> SpatialGrid::query_badguys(float x, float y, float w, float
     if (it != grid.end())
     {
       const auto& cell_badguys = it->second.badguys;
-      result.insert(result.end(), cell_badguys.begin(), cell_badguys.end());
+      m_query_cache_badguys.insert(m_query_cache_badguys.end(),
+                                   cell_badguys.begin(),
+                                   cell_badguys.end());
     }
   }
 
-  return result;
+  return m_query_cache_badguys;
 }
 
-std::vector<Upgrade*> SpatialGrid::query_upgrades(float x, float y, float w, float h) const
+const std::vector<Upgrade*>& SpatialGrid::query_upgrades(float x, float y, float w, float h) const
 {
-  std::vector<Upgrade*> result;
-  result.reserve(10);
+  m_query_cache_upgrades.clear();
 
   const auto& cells = get_overlapping_cells(x, y, w, h);
 
@@ -141,11 +145,13 @@ std::vector<Upgrade*> SpatialGrid::query_upgrades(float x, float y, float w, flo
     if (it != grid.end())
     {
       const auto& cell_upgrades = it->second.upgrades;
-      result.insert(result.end(), cell_upgrades.begin(), cell_upgrades.end());
+      m_query_cache_upgrades.insert(m_query_cache_upgrades.end(),
+                                    cell_upgrades.begin(),
+                                    cell_upgrades.end());
     }
   }
 
-  return result;
+  return m_query_cache_upgrades;
 }
 
 // EOF
