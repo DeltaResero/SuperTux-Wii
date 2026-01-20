@@ -18,11 +18,14 @@
 #include "texture.hpp"
 
 // A simple struct to hold vertex data for one corner of a quad
-struct VertexData
+struct alignas(16) VertexData
 {
   float x, y; // Position
   float u, v; // Texture Coordinates
 };
+
+static_assert(sizeof(VertexData) == 16, "VertexData must be 16 bytes");
+static_assert(alignof(VertexData) == 16, "VertexData must be 16-byte aligned");
 
 // Represents a single render batch (all geometry sharing the same texture)
 struct RenderBatch

@@ -45,10 +45,13 @@ enum TextVAlign
 };
 
 #ifndef NOOPENGL
-struct CharVertex {
+struct alignas(16) CharVertex {
   float x, y;
   float tx, ty;
-} __attribute__((packed));
+};
+
+static_assert(sizeof(CharVertex) == 16, "CharVertex must be 16 bytes");
+static_assert(alignof(CharVertex) == 16, "CharVertex must be 16-byte aligned");
 #endif
 
 /* Text type */
