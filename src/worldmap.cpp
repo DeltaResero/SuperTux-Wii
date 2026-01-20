@@ -693,6 +693,16 @@ void WorldMap::load_map()
     }
   }
 
+  // Pre-calculate display tiles (smart substitution) once at load time
+  display_tilemap.resize(width * height);
+  for (int y = 0; y < height; ++y)
+  {
+    for (int x = 0; x < width; ++x)
+    {
+      display_tilemap[y * width + x] = get_display_tile_id(x, y);
+    }
+  }
+
   tux = new Tux(this);
 }
 
@@ -1338,7 +1348,7 @@ void WorldMap::draw(const Point& offset)
     for (int x = x_start; x < x_end; ++x)
     {
       // Use the smart tile ID getter to handle snow6/snow0 substitution
-      int display_tile_id = get_display_tile_id(x, y);
+      int display_tile_id = display_tilemap[y * width + x];
       Tile* tile = tile_manager->get(display_tile_id);
       if (batcher)
       {

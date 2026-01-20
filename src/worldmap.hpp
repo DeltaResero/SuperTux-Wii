@@ -305,6 +305,7 @@ private:
   std::string music;
 
   std::vector<int> tilemap;
+  std::vector<int> display_tilemap; // Cached visual tile IDs
   int width;
   int height;
 
