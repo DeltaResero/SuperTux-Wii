@@ -140,7 +140,7 @@ SurfaceData::~SurfaceData()
  * Creates a SurfaceImpl based on the type of surface and system capabilities.
  * @return A pointer to the created SurfaceImpl.
  */
-SurfaceImpl* SurfaceData::create()
+std::unique_ptr<SurfaceImpl> SurfaceData::create() const
 {
 #ifndef NOOPENGL
   if (use_gl)
@@ -160,16 +160,16 @@ SurfaceImpl* SurfaceData::create()
  * Creates a SurfaceSDL based on the type of surface.
  * @return A pointer to the created SurfaceSDL.
  */
-SurfaceSDL* SurfaceData::create_SurfaceSDL()
+std::unique_ptr<SurfaceSDL> SurfaceData::create_SurfaceSDL() const
 {
   switch (type)
   {
     case LOAD:
-      return new SurfaceSDL(file, use_alpha);
+      return std::make_unique<SurfaceSDL>(file, use_alpha);
     case LOAD_PART:
-      return new SurfaceSDL(file, x, y, w, h, use_alpha);
+      return std::make_unique<SurfaceSDL>(file, x, y, w, h, use_alpha);
     case SURFACE:
-      return new SurfaceSDL(surface, use_alpha);
+      return std::make_unique<SurfaceSDL>(surface, use_alpha);
     default:
       assert(0);
       return nullptr;
@@ -181,16 +181,16 @@ SurfaceSDL* SurfaceData::create_SurfaceSDL()
  * Creates a SurfaceOpenGL based on the type of surface.
  * @return A pointer to the created SurfaceOpenGL.
  */
-SurfaceOpenGL* SurfaceData::create_SurfaceOpenGL()
+std::unique_ptr<SurfaceOpenGL> SurfaceData::create_SurfaceOpenGL() const
 {
   switch (type)
   {
     case LOAD:
-      return new SurfaceOpenGL(file, use_alpha);
+      return std::make_unique<SurfaceOpenGL>(file, use_alpha);
     case LOAD_PART:
-      return new SurfaceOpenGL(file, x, y, w, h, use_alpha);
+      return std::make_unique<SurfaceOpenGL>(file, x, y, w, h, use_alpha);
     case SURFACE:
-      return new SurfaceOpenGL(surface, use_alpha);
+      return std::make_unique<SurfaceOpenGL>(surface, use_alpha);
     default:
       assert(0);
       return nullptr;
@@ -219,12 +219,9 @@ inline int power_of_two(int input)
  */
 void Surface::init_impl()
 {
-  impl.reset(data.create());
-  if (impl)
-  {
-    w = impl->w;
-    h = impl->h;
-  }
+  impl = data.create();
+  w = impl ? impl->w : 0;
+  h = impl ? impl->h : 0;
   surfaces.push_back(this);
 }
 
@@ -270,16 +267,9 @@ Surface::Surface(std::string_view file, int x, int y, int w, int h, bool use_alp
  */
 void Surface::reload()
 {
-  // Explicitly destroy the old implementation first
-  impl.reset();
-
-  // Now create the new implementation with fresh texture objects
-  impl.reset(data.create());
-  if (impl)
-  {
-    w = impl->w;
-    h = impl->h;
-  }
+  impl = data.create();
+  w = impl ? impl->w : 0;
+  h = impl ? impl->h : 0;
 }
 
 /**

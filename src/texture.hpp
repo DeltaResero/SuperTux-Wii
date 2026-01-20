@@ -60,13 +60,14 @@ public:
   SurfaceData(std::string_view file_, int x_, int y_, int w_, int h_, bool use_alpha_);
   ~SurfaceData();
 
-  SurfaceSDL* create_SurfaceSDL();
+  std::unique_ptr<SurfaceImpl> create() const;
+
+private:
+  std::unique_ptr<SurfaceSDL> create_SurfaceSDL() const;
 
 #ifndef NOOPENGL
-  SurfaceOpenGL* create_SurfaceOpenGL();
+  std::unique_ptr<SurfaceOpenGL> create_SurfaceOpenGL() const;
 #endif
-
-  SurfaceImpl* create();
 };
 
 // A container for surface data to support different implementations (OpenGL/SDL)
