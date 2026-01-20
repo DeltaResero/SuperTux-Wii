@@ -1232,6 +1232,12 @@ void BadGuy::handleCollisionWithBadGuy(BadGuy* other)
     return;
   }
 
+  // Flames have fixed orbital movement and should not react to collisions
+  if (kind == BAD_FLAME)
+  {
+    return;
+  }
+
   // If we're a kicked MrIceBlock, kill any bad guys we hit
   if (kind == BAD_MRICEBLOCK && mode == KICK)
   {
