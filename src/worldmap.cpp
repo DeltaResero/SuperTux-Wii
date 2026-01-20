@@ -1400,17 +1400,9 @@ void WorldMap::draw(const Point& offset)
     }
   }
 
-  // Flush the batcher before drawing Tux (who might change texture state)
-#ifndef NOOPENGL
-  if (use_gl)
-  {
-    m_renderBatcher->flush();
-  }
-#endif
-
   tux->draw(offset, batcher);
 
-  // Flush again after Tux
+  // Flush all batches at once for max efficiency
 #ifndef NOOPENGL
   if (use_gl)
   {
