@@ -202,32 +202,58 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
   // Calculate the first tile index and subtract 12 to create a wide buffer for large objects.
   const int first_tile_x = static_cast<int>(floorf(scroll_x / (float)TILE_SIZE)) - 12;
 
-  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
+  // Only perform culling logic if we are on the interactive layer
+  // AND there are actually bouncy bricks to cull.
+  if (is_interactive_layer && !bouncy_bricks.empty())
   {
-    // Loop 34 times to cover the screen plus the wide buffer.
-    for (int x = 0; x < 34; ++x)
+    // Active Bouncy Bricks
+    // Populate the bitset with the screen-relative positions of active bricks.
+    m_screen_occupancy.reset();
+    for (const auto* brick : bouncy_bricks)
     {
-      int map_tile_x = first_tile_x + x;
-      if (map_tile_x >= 0 && map_tile_x < current_width)
+      int brick_tile_x = static_cast<int>(brick->base.x) / TILE_SIZE;
+      int brick_tile_y = static_cast<int>(brick->base.y) / TILE_SIZE;
+
+      int relative_x = brick_tile_x - first_tile_x;
+
+      if (relative_x >= 0 && relative_x < DRAW_BUFFER_WIDTH &&
+          brick_tile_y >= 0 && brick_tile_y < SCREEN_HEIGHT_TILES)
       {
-        bool should_draw_tile = true;
+        m_screen_occupancy.set(brick_tile_y * DRAW_BUFFER_WIDTH + relative_x);
+      }
+    }
 
-        // Special check for the interactive layer to avoid drawing a static
-        // tile where a bouncy brick is currently active.
-        if (is_interactive_layer)
+    // Draw tiles with bitset culling
+    for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
+    {
+      for (int x = 0; x < DRAW_BUFFER_WIDTH; ++x)
+      {
+        int map_tile_x = first_tile_x + x;
+        if (map_tile_x >= 0 && map_tile_x < current_width)
         {
-          for (const auto* brick : bouncy_bricks)
+          // If the bit is set, a brick is here. Skip drawing the static tile.
+          if (m_screen_occupancy.test(y * DRAW_BUFFER_WIDTH + x))
           {
-            if (static_cast<int>(brick->base.x) / TILE_SIZE == map_tile_x &&
-                static_cast<int>(brick->base.y) / TILE_SIZE == y)
-            {
-              should_draw_tile = false;
-              break;
-            }
+            continue;
           }
-        }
 
-        if (should_draw_tile)
+          float tile_world_x = map_tile_x * (float)TILE_SIZE;
+          unsigned int tile_id = tile_data[y * current_width + map_tile_x];
+          Tile::draw(batcher, tile_world_x - scroll_x, y * (float)TILE_SIZE, tile_id);
+        }
+      }
+    }
+  }
+  else
+  {
+    // Fast Path (No Bricks / BG / FG)
+    // No culling logic overhead (fastest possible draw loop).
+    for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
+    {
+      for (int x = 0; x < DRAW_BUFFER_WIDTH; ++x)
+      {
+        int map_tile_x = first_tile_x + x;
+        if (map_tile_x >= 0 && map_tile_x < current_width)
         {
           float tile_world_x = map_tile_x * (float)TILE_SIZE;
           unsigned int tile_id = tile_data[y * current_width + map_tile_x];

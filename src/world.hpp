@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <string_view>
+#include <bitset>
 #include <SDL2/SDL.h>
 #include "type.hpp"
 #include "scene.hpp"
@@ -93,6 +94,12 @@ public:
 private:
   // Spatial grid is declared last as it's constructed after pools
   SpatialGrid* m_spatial_grid{nullptr};
+
+  // Bitset for on-screen bouncy bricks.
+  // The draw loop iterates 34 columns (buffer) * SCREEN_HEIGHT_TILES rows.
+  // 34 * 20 (approx max height) = 680 bits = 85 bytes (fits in L1 cache).
+  static constexpr int DRAW_BUFFER_WIDTH = 34;
+  std::bitset<DRAW_BUFFER_WIDTH * SCREEN_HEIGHT_TILES> m_screen_occupancy;
 
 public:
   static World* current() { return current_; }
