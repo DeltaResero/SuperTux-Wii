@@ -1067,14 +1067,14 @@ void st_audio_setup(void)
   /* Open sound silently regardless of the value of "use_sound" */
   if (audio_device)
   {
-    if (open_audio(48000, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    if (open_audio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
     {
       /* only print out message if sound or music
          was not disabled at command-line
        */
       if (use_sound || use_music)
       {
-        std::string error_msg = "\nWarning: Could not set up audio for 48000 Hz "
+        std::string error_msg = "\nWarning: Could not set up audio for 44100 Hz "
                                 "16-bit stereo.\n"
                                 "The Simple DirectMedia error that occurred was:\n";
         error_msg += SDL_GetError();
