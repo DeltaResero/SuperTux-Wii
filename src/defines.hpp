@@ -18,7 +18,7 @@
 
 /* Version */
 #ifndef VERSION
-  #define VERSION "0.1.4-wii-d.5"
+  #define VERSION "0.1.4-wii-d.05"
 #endif
 
 /* --- Cross-compiler Cache Line Alignment --- */
