@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SuperTux
-# Copyright (C) 2025 DeltaResero
+# Copyright (C) 2025-2026 DeltaResero
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -10,12 +10,32 @@
 # (at your option) any later version.
 
 cmake_minimum_required(VERSION 3.13)
+
+# Prevent in-source builds
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+  message(FATAL_ERROR "In-source builds are not allowed. Please create a build directory and run cmake from there:\n"
+                      "  mkdir build\n"
+                      "  cd build\n"
+                      "  cmake ..\n")
+endif()
+
 project(SuperTux-Wii VERSION 0.1.4 LANGUAGES C CXX)
 
-# Build Type Configuration
+# Full version string including platform suffix
+set(FULL_VERSION "${PROJECT_VERSION}-wii-d.05")
+set(VERSION ${FULL_VERSION})  # For config.h substitution
+
+# Build Type Configuration (Default to Release)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
+# Verify strip tool is found by the toolchain
+if(CMAKE_STRIP)
+  message(STATUS "Found strip tool: ${CMAKE_STRIP}")
+else()
+  message(WARNING "Strip tool not found. Release binaries will not be stripped.")
 endif()
 
 # Enforce C++20
@@ -23,14 +43,57 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Detect Wii build
+if(CMAKE_SYSTEM_NAME STREQUAL "NintendoWii")
+  set(ENABLE_WII ON)
+  message(STATUS "Configuring for Nintendo Wii")
+  add_compile_definitions(__WII__ GEKKO)
+else()
+  set(ENABLE_WII OFF)
+endif()
+
+# Cross-compilation safety check
+if(CMAKE_CROSSCOMPILING AND NOT ENABLE_WII)
+  message(WARNING "Cross-compiling detected but not for Wii. "
+                  "If this is unintentional, please check your toolchain file.")
+endif()
+
+# Wii-specific environment validation
+if(ENABLE_WII)
+  # Verify DEVKITPRO environment
+  if(NOT DEFINED ENV{DEVKITPRO})
+    message(FATAL_ERROR "DEVKITPRO environment variable not set. "
+                        "Please set it to your devkitPro installation path.")
+  endif()
+  
+  # Verify required tools exist
+  if(NOT EXISTS "$ENV{DEVKITPRO}/tools/bin/elf2dol")
+    message(FATAL_ERROR "elf2dol not found at $ENV{DEVKITPRO}/tools/bin/elf2dol. "
+                        "Please check your devkitPro installation.")
+  endif()
+  
+  # Verify required libraries exist
+  if(NOT EXISTS "$ENV{DEVKITPRO}/libogc")
+    message(FATAL_ERROR "libogc not found at $ENV{DEVKITPRO}/libogc. "
+                        "Please install libogc from devkitPro.")
+  endif()
+endif()
+
 # Options
-option(ENABLE_WII "Build for Wii" OFF)
 option(ENABLE_OPENGL "Enable OpenGL support" ON)
 
-# Detect if we are using the Wii Toolchain
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "powerpc")
-  set(ENABLE_WII ON)
-endif()
+# Compiler Warning Options
+option(WARNINGS "Enable extra compiler warnings (-Wall -Wextra)" ON)
+
+# Add module path for custom Find modules, toolchains, and platform files
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+# Generate config.h
+configure_file(
+    "${CMAKE_SOURCE_DIR}/config.h.in"
+    "${CMAKE_BINARY_DIR}/config.h"
+)
 
 # Source Files
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
@@ -41,11 +104,15 @@ file(GLOB_RECURSE HEADERS "src/*.hpp" "src/*.h")
 # ============================================================================
 
 if(ENABLE_WII)
-  add_definitions(-D_WII_ -DGEKKO)
-
   # Helper macro to find library and print status
+  # Uses HINTS to support both local and system toolchains
   macro(wii_find_lib VAR NAME)
-    find_library(${VAR} ${NAME} REQUIRED)
+    find_library(${VAR} ${NAME} 
+      HINTS 
+        ${DEVKITPRO}/libogc/lib/wii
+        $ENV{DEVKITPRO}/libogc/lib/wii
+      REQUIRED
+    )
     message(STATUS "Found ${NAME}: ${${VAR}}")
   endmacro()
 
@@ -85,9 +152,6 @@ if(ENABLE_WII)
   pkg_check_modules(CODECS REQUIRED libmodplug vorbisfile vorbis ogg mad IMPORTED_TARGET)
   message(STATUS "Found Audio Codecs: modplug, vorbis, ogg, mad")
 
-  # Verify strip tool
-  message(STATUS "Found strip: ${CMAKE_STRIP}")
-
   # OpenGL (Optional)
   if(ENABLE_OPENGL)
     wii_find_lib(GLU_LIB GLU)
@@ -105,6 +169,7 @@ if(ENABLE_WII)
   # Include directories (PkgConfig handles lib includes automatically)
   # We must explicitly add libogc includes for gccore.h and wiiuse/wpad.h
   target_include_directories(${PROJECT_NAME}.elf PRIVATE
+    ${CMAKE_BINARY_DIR}  # For config.h
     ${CMAKE_SOURCE_DIR}/src
     $ENV{DEVKITPRO}/libogc/include
   )
@@ -137,8 +202,11 @@ if(ENABLE_WII)
   endif()
 
   # Compile options
+  if(WARNINGS)
+    target_compile_options(${PROJECT_NAME}.elf PRIVATE -Wall -Wextra)
+  endif()
+  
   target_compile_options(${PROJECT_NAME}.elf PRIVATE
-    -Wall
     $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
     $<$<CONFIG:Release>:-O3 -flto>
   )
@@ -150,10 +218,9 @@ if(ENABLE_WII)
   )
 
   # Post-build: Strip the ELF binary (Release builds only)
-  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  if(CMAKE_BUILD_TYPE STREQUAL "Release" AND CMAKE_STRIP)
     add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
-      COMMAND ${CMAKE_STRIP}
-              $<TARGET_FILE:${PROJECT_NAME}.elf>
+      COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${PROJECT_NAME}.elf>
       COMMENT "Stripping ELF binary..."
       VERBATIM
     )
@@ -161,10 +228,10 @@ if(ENABLE_WII)
 
   # Post-build: Convert ELF to DOL
   add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
-    COMMAND ${DEVKITPRO}/tools/bin/elf2dol 
+    COMMAND $ENV{DEVKITPRO}/tools/bin/elf2dol 
             $<TARGET_FILE:${PROJECT_NAME}.elf>
             ${CMAKE_CURRENT_BINARY_DIR}/boot.dol
-    COMMENT "Converting ELF to DOL..."
+    COMMENT "Converting ELF to DOL for Homebrew Channel..."
     VERBATIM
   )
 
@@ -175,7 +242,7 @@ if(ENABLE_WII)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/data
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/wii/icon.png ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/icon.png
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/wii/meta.xml ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/meta.xml
-    COMMENT "Creating Homebrew structure in build/apps/supertux..."
+    COMMENT "Creating Homebrew Channel package in build/apps/supertux/..."
     VERBATIM
   )
 
@@ -189,9 +256,6 @@ else()
   pkg_check_modules(SDL2 REQUIRED sdl2 IMPORTED_TARGET)
   pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image IMPORTED_TARGET)
   pkg_check_modules(SDL2_MIXER REQUIRED SDL2_mixer IMPORTED_TARGET)
-
-  # Verify strip tool
-  message(STATUS "Found strip: ${CMAKE_STRIP}")
 
   # Find Core dependencies
   find_package(ZLIB REQUIRED)
@@ -214,7 +278,7 @@ else()
   set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "supertux-wii")
 
   # Post-build: Strip the binary (Release builds only)
-  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  if(CMAKE_BUILD_TYPE STREQUAL "Release" AND CMAKE_STRIP)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
       COMMAND ${CMAKE_STRIP} $<TARGET_FILE:${PROJECT_NAME}>
       COMMENT "Stripping binary..."
@@ -223,6 +287,7 @@ else()
   endif()
 
   target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_BINARY_DIR}  # For config.h
     ${CMAKE_SOURCE_DIR}/src
     ${ZLIB_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIRS}
@@ -251,7 +316,7 @@ else()
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/$<TARGET_FILE_NAME:${PROJECT_NAME}>
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/data
-    COMMENT "Creating portable build structure in build/dist/supertux-wii..."
+    COMMENT "Creating distribution directory in build/dist/supertux-wii/..."
     VERBATIM
   )
 
@@ -260,7 +325,7 @@ else()
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.png ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.png
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.desktop ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.desktop
-      COMMENT "Adding desktop integration files..."
+      COMMENT "Copying Linux desktop files to dist/supertux-wii/..."
       VERBATIM
     )
     
@@ -278,12 +343,18 @@ message(STATUS "")
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "Configuration Summary")
 message(STATUS "----------------------------------------------------------------")
-message(STATUS "Project           : ${PROJECT_NAME} ${PROJECT_VERSION}")
+message(STATUS "Project           : ${PROJECT_NAME} ${FULL_VERSION}")
 message(STATUS "System            : ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_PROCESSOR})")
+message(STATUS "C++ Compiler      : ${CMAKE_CXX_COMPILER}")
 message(STATUS "Build Type        : ${CMAKE_BUILD_TYPE}")
+message(STATUS "Strip Tool        : ${CMAKE_STRIP}")
 message(STATUS "Renderer          : ${RENDERER_STATUS}")
 if(ENABLE_WII)
   message(STATUS "Toolchain         : devkitPPC")
+  message(STATUS "Output            : build/apps/supertux/")
+else()
+  message(STATUS "Install Prefix    : ${CMAKE_INSTALL_PREFIX}")
+  message(STATUS "Distribution      : build/dist/supertux-wii/")
 endif()
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "")

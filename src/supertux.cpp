@@ -24,7 +24,7 @@
 #include "resources.hpp"
 #include "texture.hpp"
 #include "tile.hpp"
-#ifdef _WII_
+#ifdef __WII__
   #include <unistd.h>
   #include <wiiuse/wpad.h>
   #include <ogc/lwp_watchdog.h>
@@ -48,7 +48,7 @@ Surface* loading_surf = NULL;
 int main(int argc, char ** argv)
 {
 
-#ifdef _WII_
+#ifdef __WII__
   // Wii-specific setup for FAT library and USB disk handling.
   sleep(1);  // Delay to allow USB disks behind hubs to initialize.
   bool res = fatInitDefault();
@@ -63,7 +63,7 @@ int main(int argc, char ** argv)
   st_directory_setup();
   load_config_file();  // Load configuration file
 
-#ifndef _WII_
+#ifndef __WII__
   parseargs(argc, argv);  // Parse command-line arguments
 #endif
 

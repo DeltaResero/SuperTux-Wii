@@ -9,12 +9,16 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_NAME NintendoWii)
 set(CMAKE_SYSTEM_PROCESSOR powerpc)
+
+# Add cmake directory to module path so CMake can find Platform/NintendoWii.cmake
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/.." ${CMAKE_MODULE_PATH})
 
 # --- Environment Check ---
 if(NOT DEFINED ENV{DEVKITPRO} OR NOT DEFINED ENV{DEVKITPPC})
-  message(FATAL_ERROR "Please set DEVKITPRO and DEVKITPPC in your environment.")
+  message(FATAL_ERROR "Please set DEVKITPRO and DEVKITPPC in your environment. "
+                      "Example: export DEVKITPRO=/opt/devkitpro && export DEVKITPPC=/opt/devkitpro/devkitPPC")
 endif()
 
 set(DEVKITPRO $ENV{DEVKITPRO})
@@ -59,9 +63,8 @@ set(CMAKE_INCLUDE_PATH
 
 # --- Compiler Flags ---
 set(WII_ARCH_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float")
-
-set(CMAKE_C_FLAGS_INIT "${WII_ARCH_FLAGS} -D_WII_ -DGEKKO -ffunction-sections -fdata-sections")
-set(CMAKE_CXX_FLAGS_INIT "${WII_ARCH_FLAGS} -D_WII_ -DGEKKO -ffunction-sections -fdata-sections")
+set(CMAKE_C_FLAGS_INIT "${WII_ARCH_FLAGS} -D__WII__ -DGEKKO -ffunction-sections -fdata-sections")
+set(CMAKE_CXX_FLAGS_INIT "${WII_ARCH_FLAGS} -D__WII__ -DGEKKO -ffunction-sections -fdata-sections")
 
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "C Release flags")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "CXX Release flags")

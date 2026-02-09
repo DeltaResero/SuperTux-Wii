@@ -20,13 +20,13 @@
 #include "player.hpp"
 #include "resources.hpp" // Needed for tux_life sprite
 
-#ifdef _WII_
+#ifdef __WII__
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #endif
 
 namespace {
-#ifdef _WII_
+#ifdef __WII__
   // Maximum Wii Remote events that can be queued per frame.
   // 32 is generous - typical frame has <10 events.
   // Must be power of 2 for efficient modulo operation.
@@ -86,7 +86,7 @@ SDL_Joystick* js;
  */
 Uint8 adjust_joystick_hat(Uint8 hat)
 {
-#ifdef _WII_
+#ifdef __WII__
   // Dynamically check what is plugged into the expansion port.
   // This handles hot-plugging (plugging/unplugging mid-game).
   u32 type;
@@ -212,7 +212,7 @@ void draw_player_hud()
 
 void st_wii_input_init()
 {
-#ifdef _WII_
+#ifdef __WII__
   WPAD_Init();
   // Enable all buttons and accelerometer for all connected controllers
   WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
@@ -226,7 +226,7 @@ void st_wii_input_init()
  */
 int st_poll_event(SDL_Event *event)
 {
-#ifdef _WII_
+#ifdef __WII__
 
   static uint8_t last_hat = SDL_HAT_CENTERED;
   static SDL_Event queue[EVENT_QUEUE_SIZE]; // Small buffer for injected events

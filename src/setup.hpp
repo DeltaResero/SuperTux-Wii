@@ -50,7 +50,7 @@ void update_load_save_game_menu(Menu* pmenu); // Updates the load/save game menu
 
 void load_config_file(void);  // Load config file
 
-#ifndef _WII_
+#ifndef __WII__
 void parseargs(int argc, char * argv[]); // Parses command-line arguments
 #endif
 

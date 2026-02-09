@@ -16,10 +16,7 @@
 
 #include <cstddef> // Required for size_t
 
-/* Version */
-#ifndef VERSION
-  #define VERSION "0.1.4-wii-d.05"
-#endif
+#include "config.h"
 
 /* --- Cross-compiler Cache Line Alignment --- */
 /* Provides a portable way to align data structures to a 32-byte boundary, */
@@ -33,7 +30,7 @@
 #endif
 
 /* Memory Optimizations */
-#ifdef _WII_
+#ifdef __WII__
   // Wii has limited RAM and predictable, short file paths.
   inline constexpr int PATH_BUFFER_SIZE = 128;
 #else

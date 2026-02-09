@@ -36,7 +36,7 @@
 #include <GL/gl.h>
 #endif
 
-#ifdef _WII_
+#ifdef __WII__
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #endif
@@ -250,7 +250,7 @@ StringList dfiles(const char* rel_path, const char* glob, const char* exception_
   return sdirs;
 }
 
-#ifdef _WII_
+#ifdef __WII__
 
 /**
  * Set SuperTux configuration and save directories (Wii specific)
@@ -285,7 +285,7 @@ void st_directory_setup(void)
   #endif
 }
 
-#else // #ifndef _WII_
+#else // #ifndef __WII__
 
 /**
  * Set SuperTux configuration and save directories (non HBC Wii)
@@ -407,7 +407,7 @@ void st_directory_setup(void)
 #endif
 }
 
-#endif // def _WII_
+#endif // def __WII__
 
 /* Create and setup menus. */
 void st_menu(void)
@@ -437,7 +437,7 @@ void st_menu(void)
 #else
   options_menu->additem(MN_DEACTIVE, "OpenGL (not supported)", use_gl, 0, MNID_OPENGL);
 #endif
-#ifdef _WII_
+#ifdef __WII__
   // For Wii, always enable fullscreen and grey out the option
   options_menu->additem(MN_DEACTIVE, "Fullscreen (no window mode)", true, 0, MNID_FULLSCREEN);
 #else
@@ -590,7 +590,7 @@ void st_general_setup(void)
   /* Seed random number generator: */
   srand(SDL_GetTicks());
 
-#ifndef _WII_
+#ifndef __WII__
   seticon(); // Set window manager icon image
 #endif
 
@@ -754,7 +754,7 @@ void st_video_setup(void)
       st_abort("Failed to create compatibility screen surface", SDL_GetError());
   }
 
-#ifndef _WII_
+#ifndef __WII__
   seticon(); // Set window manager icon image
 #endif
 
@@ -969,7 +969,7 @@ void st_joystick_setup(void)
     SDL_JoystickEventState(SDL_ENABLE);
     SDL_PumpEvents();
 
-#ifdef _WII_
+#ifdef __WII__
     // SDL_Init resets WPAD. We must set the data format AFTER SDL_Init
     // to ensure the Nunchuk/Extensions are detected and reported correctly
     // for our custom polling in globals.cpp.
@@ -979,7 +979,7 @@ void st_joystick_setup(void)
     /* Open joystick: */
     if (SDL_NumJoysticks() <= 0)
     {
-#ifdef _WII_
+#ifdef __WII__
       // On Wii, we effectively always have a joystick (Wiimote) via WPAD.
       // Even if SDL sees none, we force enabled so config saves correctly
       // 'joystick 0'.
@@ -996,7 +996,7 @@ void st_joystick_setup(void)
       js = SDL_JoystickOpen(joystick_num);
       if (js == nullptr)
       {
-#ifdef _WII_
+#ifdef __WII__
         // Ignore open failure on Wii; we use custom polling.
         use_joystick = true;
 #else
@@ -1019,7 +1019,7 @@ void st_joystick_setup(void)
 
         if (SDL_JoystickNumButtons(js) < 2)
         {
-#ifdef _WII_
+#ifdef __WII__
           use_joystick = true;
 #else
           fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
@@ -1115,7 +1115,7 @@ void st_shutdown(void)
   // which will be called automatically and safely when main() returns.
   // Calling it manually here leads to a double-free and a segfault.
 
-#ifdef _WII_
+#ifdef __WII__
   // Reset the system and return to the system menu
   SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #endif
@@ -1158,7 +1158,7 @@ void load_config_file()
   offset_y = tv_overscan_enabled ? 40 : 0;
 }
 
-#ifndef _WII_ /* Wii Homebrew Apps don't use a window manager nor take arguments */
+#ifndef __WII__ /* Wii Homebrew Apps don't use a window manager nor take arguments */
 /**
  * Sets the window icon for non-Wii builds. This function attempts
  * to load the "supertux.png" file as the window icon and will fail
@@ -1353,7 +1353,7 @@ void usage(char* prog, int ret)
     exit(ret);
   }
 }
-#endif /* #ifndef _WII_ */
+#endif /* #ifndef __WII__ */
 
 /**
  * Prints an error message to the console or the Wii framebuffer.
@@ -1362,7 +1362,7 @@ void usage(char* prog, int ret)
  */
 void print_status(const char* st)
 {
-#ifdef _WII_ // Check for Wii-specific compilation
+#ifdef __WII__ // Check for Wii-specific compilation
 
   static void* xfb = nullptr;
   static GXRModeObj* rmode = nullptr;

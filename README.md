@@ -110,6 +110,19 @@ wii-opengx
 
 <br>
 
+### Build Configuration
+
+You can configure the build by passing flags to `cmake`. For example, to disable OpenGL
+support, append the following flag to your `cmake` command: `-DENABLE_OPENGL=OFF`
+
+| Option             | Description                                 | Default   |
+|--------------------|---------------------------------------------|-----------|
+| `CMAKE_BUILD_TYPE` | Build type (Debug or Release)               | `Release` |
+| `ENABLE_OPENGL`    | Build with OpenGL support                   | `ON`      |
+| `WARNINGS`         | Set Extra compiler warnings (-Wall -Wextra) | `ON`      |
+
+<br>
+
 ### How to Build: Wii Homebrew Build
 
 1. Create a build directory:
@@ -118,16 +131,13 @@ wii-opengx
    cd build
    ```
 
-2. Configure the project using CMake and the Wii Toolchain file.
-
-   **Option A: Build with OpenGL/OpenGX (Recommended)**
+2. Configure using CMake and the included Wii Toolchain file:
    ```bash
    cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/Wii.cmake ..
    ```
-
-   **Option B: Build with SDL only (No OpenGL)**
+   Alternatively, the system-wide toolchain provided by devkitPro should work:
    ```bash
-   cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/Wii.cmake -DENABLE_OPENGL=OFF ..
+   cmake -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Wii.cmake ..
    ```
 
 3. Build the game:

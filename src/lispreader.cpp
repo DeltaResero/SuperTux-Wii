@@ -35,7 +35,7 @@ namespace
   // Constants and Configuration
   // ========================================================================
 
-#ifdef _WII_
+#ifdef __WII__
   constexpr size_t MAX_TOKEN_LENGTH = 256;
 #else
   constexpr size_t MAX_TOKEN_LENGTH = 1024;

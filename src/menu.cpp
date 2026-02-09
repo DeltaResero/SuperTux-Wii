@@ -253,7 +253,7 @@ void Menu::process_options_menu()
       break;
 
     case MNID_FULLSCREEN:
-#ifndef _WII_
+#ifndef __WII__
       if (use_fullscreen != isToggled(MNID_FULLSCREEN))
       {
         use_fullscreen = isToggled(MNID_FULLSCREEN);

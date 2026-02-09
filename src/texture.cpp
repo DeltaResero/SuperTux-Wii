@@ -673,7 +673,7 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   int w, h;
   SDL_Surface* conv;
 
-#ifdef _WII_
+#ifdef __WII__
   // Wii optimization: Align to 4 pixels instead of full Power-Of-Two.
   // This saves significant RAM (e.g., a 300px image uses 300px width, not 512px).
   w = (surf->w + 3) & ~3;
