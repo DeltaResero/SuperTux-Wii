@@ -143,7 +143,6 @@ autoscan.log
 /compile
 /config.guess
 /config.h
-/config.h.in
 /config.log
 /config-ml.in
 /config.py
