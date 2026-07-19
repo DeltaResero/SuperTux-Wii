@@ -208,9 +208,16 @@ void Timer::fread(FILE* fi)
   Uint32 diff_ticks;
   Uint32 tick_mode;
 
-  ::fread(&period, sizeof(Uint32), 1, fi);
-  ::fread(&diff_ticks, sizeof(Uint32), 1, fi);
-  ::fread(&tick_mode, sizeof(Uint32), 1, fi);
+  // A truncated or corrupt save must not load garbage into the timer.
+  // On any short read, reset to a stopped state and leave the tick mode as-is.
+  if (::fread(&period, sizeof(Uint32), 1, fi) != 1 ||
+      ::fread(&diff_ticks, sizeof(Uint32), 1, fi) != 1 ||
+      ::fread(&tick_mode, sizeof(Uint32), 1, fi) != 1)
+  {
+    period = 0;
+    time = 0;
+    return;
+  }
 
   use_game_ticks = (tick_mode != 0);
 
