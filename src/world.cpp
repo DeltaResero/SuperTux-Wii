@@ -528,23 +528,9 @@ void World::cleanup_dead_objects()
     }
   }
 
-  // Use the same safe backward loop for bad_guys.
-  for (size_t i = 0; i < bad_guys.size(); )
-  {
-    if (bad_guys[i]->is_removable())
-    {
-      delete bad_guys[i];
-      bad_guys[i] = bad_guys.back();
-      bad_guys.pop_back();
-    }
-    else
-    {
-      ++i;
-    }
-  }
-
-  // Also clean up the collision lists.
-  // We don't need to delete the objects here, just remove the pointers.
+  // Clean up the non-owning collision lists FIRST, while the pointers they
+  // hold are still valid. The owning bad_guys list is deleted afterwards.
+  // (Pruning after deletion would call is_removable() on freed memory.)
   for (size_t i = 0; i < normal_colliders.size(); )
   {
     if (normal_colliders[i]->is_removable())
@@ -564,6 +550,22 @@ void World::cleanup_dead_objects()
     {
       special_colliders[i] = special_colliders.back();
       special_colliders.pop_back();
+    }
+    else
+    {
+      ++i;
+    }
+  }
+
+  // Now that no other list refers to them, delete the removable bad guys.
+  // The bad_guys list is the sole owner of these objects.
+  for (size_t i = 0; i < bad_guys.size(); )
+  {
+    if (bad_guys[i]->is_removable())
+    {
+      delete bad_guys[i];
+      bad_guys[i] = bad_guys.back();
+      bad_guys.pop_back();
     }
     else
     {
