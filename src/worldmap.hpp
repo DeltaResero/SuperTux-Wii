@@ -13,6 +13,7 @@
 #ifndef SUPERTUX_WORLDMAP_H
 #define SUPERTUX_WORLDMAP_H
 
+#include <memory>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -66,7 +67,7 @@ public:
   Tile();
   ~Tile();
 
-  Surface* sprite;
+  std::unique_ptr<Surface> sprite;
 
   // Directions in which Tux is allowed to walk from this tile
   bool north;
@@ -88,7 +89,7 @@ public:
 class TileManager
 {
 private:
-  typedef std::vector<Tile*> Tiles;
+  typedef std::vector<std::unique_ptr<Tile>> Tiles;
   Tiles tiles;
 
 public:
@@ -112,9 +113,9 @@ public:
   Direction back_direction;
 private:
   WorldMap* worldmap;
-  Surface* largetux_sprite;
-  Surface* firetux_sprite;
-  Surface* smalltux_sprite;
+  std::unique_ptr<Surface> largetux_sprite;
+  std::unique_ptr<Surface> firetux_sprite;
+  std::unique_ptr<Surface> smalltux_sprite;
 
   Direction input_direction;
   Direction direction;
@@ -293,13 +294,13 @@ private:
   // Added const
   int get_display_tile_id(int x, int y) const;
 
-  Tux* tux;
+  std::unique_ptr<Tux> tux;
   bool quit;
 
-  Surface* level_sprite;
-  Surface* leveldot_green;
-  Surface* leveldot_red;
-  Surface* leveldot_teleporter;
+  std::unique_ptr<Surface> level_sprite;
+  std::unique_ptr<Surface> leveldot_green;
+  std::unique_ptr<Surface> leveldot_red;
+  std::unique_ptr<Surface> leveldot_teleporter;
 
   std::string name;
   std::string music;
@@ -312,7 +313,7 @@ private:
   int start_x;
   int start_y;
 
-  TileManager* tile_manager;
+  std::unique_ptr<TileManager> tile_manager;
 
   Levels levels;
 
@@ -325,7 +326,7 @@ private:
   std::string savegame_file;
   std::string map_file;
 
-  RenderBatcher* m_renderBatcher;
+  std::unique_ptr<RenderBatcher> m_renderBatcher;
 
 private:
   static WorldMap* current_;

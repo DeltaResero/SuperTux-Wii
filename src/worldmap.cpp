@@ -161,7 +161,7 @@ TileManager::TileManager()
         int id = 0;
         std::string filename = "<invalid>";
 
-        Tile* tile = new Tile;
+        auto tile = std::make_unique<Tile>();
         tile->north = true;
         tile->east = true;
         tile->south = true;
@@ -202,12 +202,12 @@ TileManager::TileManager()
           }
         }
 
-        tile->sprite = new Surface(datadir + "/images/worldmap/" + filename, true);
+        tile->sprite = std::make_unique<Surface>(datadir + "/images/worldmap/" + filename, true);
         if (id >= int(tiles.size()))
         {
           tiles.resize(id + 1);
         }
-        tiles[id] = tile;
+        tiles[id] = std::move(tile);
       }
       else
       {
@@ -228,10 +228,7 @@ TileManager::TileManager()
  */
 TileManager::~TileManager()
 {
-  for (std::vector<Tile*>::iterator i = tiles.begin(); i != tiles.end(); ++i)
-  {
-    delete *i;
-  }
+  // Tiles are owned by unique_ptr; nothing to do.
 }
 
 /**
@@ -242,7 +239,7 @@ TileManager::~TileManager()
 Tile* TileManager::get(int i)
 {
   assert(i >= 0 && i < int(tiles.size()));
-  return tiles[i];
+  return tiles[i].get();
 }
 
 /**
@@ -251,9 +248,9 @@ Tile* TileManager::get(int i)
  */
 Tux::Tux(WorldMap* worldmap_) : back_direction(D_NONE), worldmap(worldmap_)
 {
-  largetux_sprite = new Surface(datadir + "/images/worldmap/tux.png", true);
-  firetux_sprite = new Surface(datadir + "/images/worldmap/firetux.png", true);
-  smalltux_sprite = new Surface(datadir + "/images/worldmap/smalltux.png", true);
+  largetux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/tux.png", true);
+  firetux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/firetux.png", true);
+  smalltux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/smalltux.png", true);
 
   offset = 0;
   moving = false;
@@ -276,9 +273,9 @@ Tux::~Tux()
  */
 void Tux::loadSprites()
 {
-  largetux_sprite = new Surface(datadir + "/images/worldmap/tux.png", true);
-  firetux_sprite = new Surface(datadir + "/images/worldmap/firetux.png", true);
-  smalltux_sprite = new Surface(datadir + "/images/worldmap/smalltux.png", true);
+  largetux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/tux.png", true);
+  firetux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/firetux.png", true);
+  smalltux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/smalltux.png", true);
 }
 
 /**
@@ -286,21 +283,11 @@ void Tux::loadSprites()
  */
 void Tux::deleteSprites()
 {
-  if (smalltux_sprite)
-  {
-    delete smalltux_sprite;
-  }
-  if (firetux_sprite)
-  {
-    delete firetux_sprite;
-  }
-  if (largetux_sprite)
-  {
-    delete largetux_sprite;
-  }
-  smalltux_sprite = 0;
-  firetux_sprite = 0;
-  largetux_sprite = 0;
+  // Explicitly release the sprite surfaces. Called before entering a level
+  // to free RAM during play; sprites are reloaded on return to the map.
+  smalltux_sprite.reset();
+  firetux_sprite.reset();
+  largetux_sprite.reset();
 }
 
 /**
@@ -316,13 +303,13 @@ void Tux::draw(const Point& offset, RenderBatcher* batcher)
   switch (player_status.bonus)
   {
     case PlayerStatus::GROWUP_BONUS:
-      sprite_to_draw = largetux_sprite;
+      sprite_to_draw = largetux_sprite.get();
       break;
     case PlayerStatus::FLOWER_BONUS:
-      sprite_to_draw = firetux_sprite;
+      sprite_to_draw = firetux_sprite.get();
       break;
     case PlayerStatus::NO_BONUS:
-      sprite_to_draw = smalltux_sprite;
+      sprite_to_draw = smalltux_sprite.get();
       break;
   }
 
@@ -520,7 +507,7 @@ Tile::Tile()
  */
 Tile::~Tile()
 {
-  delete sprite;
+  // sprite is owned by unique_ptr; nothing to do.
 }
 
 //---------------------------------------------------------------------------
@@ -533,8 +520,8 @@ WorldMap::WorldMap()
   tux = nullptr;
   quit = false;
   level_sprite = nullptr;
-  tile_manager = new TileManager();
-  m_renderBatcher = new RenderBatcher();
+  tile_manager = std::make_unique<TileManager>();
+  m_renderBatcher = std::make_unique<RenderBatcher>();
 
   width = (int)(20);
   height = (int)(SCREEN_HEIGHT_TILES);
@@ -561,9 +548,8 @@ WorldMap::WorldMap()
 WorldMap::~WorldMap()
 {
   if (current_ == this) current_ = nullptr;
-  delete tux;
-  delete tile_manager;
-  delete m_renderBatcher;
+  // tux, tile_manager, and m_renderBatcher are owned by unique_ptr and
+  // destroyed automatically after this body runs.
 
   deleteSprites();
   lisp_reset_pool(); // Free all memory used by the worldmap data
@@ -574,9 +560,9 @@ WorldMap::~WorldMap()
  */
 void WorldMap::loadSprites()
 {
-  leveldot_green = new Surface(datadir + "/images/worldmap/leveldot_green.png", true);
-  leveldot_red = new Surface(datadir + "/images/worldmap/leveldot_red.png", true);
-  leveldot_teleporter = new Surface(datadir + "/images/worldmap/teleporter.png", true);
+  leveldot_green = std::make_unique<Surface>(datadir + "/images/worldmap/leveldot_green.png", true);
+  leveldot_red = std::make_unique<Surface>(datadir + "/images/worldmap/leveldot_red.png", true);
+  leveldot_teleporter = std::make_unique<Surface>(datadir + "/images/worldmap/teleporter.png", true);
 }
 
 /**
@@ -584,21 +570,11 @@ void WorldMap::loadSprites()
  */
 void WorldMap::deleteSprites()
 {
-  if (leveldot_green)
-  {
-    delete leveldot_green;
-  }
-  if (leveldot_red)
-  {
-    delete leveldot_red;
-  }
-  if (leveldot_teleporter)
-  {
-    delete leveldot_teleporter;
-  }
-  leveldot_green = 0;
-  leveldot_red = 0;
-  leveldot_teleporter = 0;
+  // Explicitly release the level dot surfaces. Called before entering a
+  // level to free RAM during play; reloaded on return to the map.
+  leveldot_green.reset();
+  leveldot_red.reset();
+  leveldot_teleporter.reset();
 }
 
 /**
@@ -710,7 +686,7 @@ void WorldMap::load_map()
     }
   }
 
-  tux = new Tux(this);
+  tux = std::make_unique<Tux>(this);
 }
 
 /**
@@ -1349,7 +1325,7 @@ void WorldMap::draw(const Point& offset)
   if (y_end > height) y_end = height;
 
   // Use the batcher if OpenGL is enabled
-  RenderBatcher* batcher = use_gl ? m_renderBatcher : nullptr;
+  RenderBatcher* batcher = use_gl ? m_renderBatcher.get() : nullptr;
 
   // Only draw the visible tiles with smart tile substitution
   for (int y = y_start; y < y_end; ++y)
@@ -1362,7 +1338,7 @@ void WorldMap::draw(const Point& offset)
       if (batcher)
       {
         // Add to batcher. Hotspots are 0, 0.
-        batcher->add(tile->sprite, x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y, 0, 0);
+        batcher->add(tile->sprite.get(), x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y, 0, 0);
       }
       else
       {
@@ -1382,16 +1358,16 @@ void WorldMap::draw(const Point& offset)
       {
         if ((i->teleport_dest_x != -1) && !i->invisible_teleporter)
         {
-          dot_sprite = leveldot_teleporter;
+          dot_sprite = leveldot_teleporter.get();
         }
       }
       else if (i->solved)
       {
-        dot_sprite = leveldot_green;
+        dot_sprite = leveldot_green.get();
       }
       else
       {
-        dot_sprite = leveldot_red;
+        dot_sprite = leveldot_red.get();
       }
 
       if (dot_sprite)
