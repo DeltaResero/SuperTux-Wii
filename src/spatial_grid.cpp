@@ -30,7 +30,19 @@ SpatialGrid::SpatialGrid(int cell_size_)
 
 void SpatialGrid::clear()
 {
-  grid.clear();
+  // Empty the per-cell entity lists but keep the cells (and their vectors'
+  // capacity) alive. Destroying the map every frame would force each occupied
+  // cell to reallocate its three vectors from scratch on every rebuild, which
+  // is exactly the malloc churn this engine is designed to avoid on Wii.
+  // The map only grows to the set of cells ever occupied in the level, so the
+  // retained memory is small and bounded.
+  for (auto& entry : grid)
+  {
+    entry.second.badguys.clear();
+    entry.second.bullets.clear();
+    entry.second.upgrades.clear();
+  }
+
   all_badguys.clear();
   all_bullets.clear();
   all_upgrades.clear();
