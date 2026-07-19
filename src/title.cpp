@@ -81,41 +81,36 @@ static StringList worldmap_list;  // List of available world maps
   static double fractional_increment = 0.0; // Static variable to manage the fractional increment
 #endif
 
-GameSession* session = nullptr;  // Pointer to the current game session
+static std::unique_ptr<GameSession> session;  // The current demo session
 
 /**
  * Returns the current game session.
- * @return GameSession* Pointer to the current game session.
+ * @return GameSession* Non-owning pointer to the current game session.
  */
 GameSession* getSession()
 {
-  return session;
+  return session.get();
 }
 
 /**
  * Deletes the current demo session, freeing associated resources.
- * Ensures that all pointers are set to null after deletion to avoid dangling pointers.
  */
 void deleteDemo()
 {
-  if (session)
-  {
-    delete session;
-    session = nullptr;
-  }
+  session.reset();
 }
 
 /**
  * Creates a new demo session.
  * The demo session is loaded from a predefined menu level.
+ * Any existing demo is destroyed first to free up resources.
  */
 void createDemo()
 {
-  // First, delete any existing demo to free up resources
+  // Reset first so the old session (and its lisp pool data) is freed
+  // before the new one starts allocating.
   deleteDemo();
-
-  // Create a new game session for the demo
-  session = new GameSession(datadir + "/levels/misc/menu.stl", 0, ST_GL_DEMO_GAME);
+  session = std::make_unique<GameSession>(datadir + "/levels/misc/menu.stl", 0, ST_GL_DEMO_GAME);
 }
 
 /**
@@ -583,7 +578,7 @@ void title(void)
     // Draw the background and demo BEFORE handling menu actions
     clearscreen(0, 0, 0); // Clear screen to prevent ghosting/freezing
     bkg_title->draw_bg();
-    draw_demo(session, frame_ratio);
+    draw_demo(session.get(), frame_ratio);
 
     handleMenuActions();
 
