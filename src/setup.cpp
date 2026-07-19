@@ -483,7 +483,7 @@ void parseargs(int argc, char* argv[])
     else if (strcmp(argv[i], "--help") == 0)
     {
       /* Show help */
-      puts("SuperTux Wii" VERSION "\n"
+      puts("SuperTux Wii " VERSION "\n"
            "  Please see the file \"README.txt\" for more details.\n");
       printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
       puts("Display Options:\n"
