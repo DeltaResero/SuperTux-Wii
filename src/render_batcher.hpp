@@ -29,11 +29,13 @@ struct alignas(16) VertexData
 static_assert(sizeof(VertexData) == 16, "VertexData must be 16 bytes");
 static_assert(alignof(VertexData) == 16, "VertexData must be 16-byte aligned");
 
-// Represents a single render batch (all geometry sharing the same texture)
-struct RenderBatch
+// Represents a single render batch: a contiguous run of vertices in the
+// shared vertex arena that all use the same texture.
+struct BatchSpan
 {
   GLuint texture_id;
-  std::vector<VertexData> vertices;
+  size_t first; // Index of the first vertex of this span in the arena.
+  size_t count; // Number of vertices in this span (always a multiple of 4).
 };
 
 class RenderBatcher
@@ -51,8 +53,13 @@ public:
   void flush();
 
 private:
-  // Sequential list of batches - preserves draw order!
-  std::vector<RenderBatch> m_batches;
+  // All vertices for the frame live in one persistent arena. clear() empties
+  // it without releasing capacity, so after the first few frames no further
+  // heap allocations occur in the render path.
+  std::vector<VertexData> m_vertices;
+
+  // Sequential list of spans into m_vertices - preserves draw order!
+  std::vector<BatchSpan> m_spans;
 };
 
 #else // NOOPENGL is defined. Provide a dummy class for non-OpenGL builds.

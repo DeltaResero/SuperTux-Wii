@@ -23,6 +23,11 @@
  */
 RenderBatcher::RenderBatcher()
 {
+  // Warm-start capacities so the first frames don't reallocate repeatedly.
+  // 4096 vertices = 1024 quads (64 KB), comfortably above a typical frame's
+  // tile + sprite count; the arena grows further only if a frame exceeds it.
+  m_vertices.reserve(4096);
+  m_spans.reserve(64);
 }
 
 /**
@@ -88,25 +93,20 @@ void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
   float u2 = (sx + w) / gl_surface->tex_w_allocated;
   float v2 = (sy + h) / gl_surface->tex_h_allocated;
 
-  // Try to add to the LAST batch if it has the same texture
-  if (!m_batches.empty() && m_batches.back().texture_id == tex_id)
+  // Extend the LAST span if it uses the same texture; otherwise open a new
+  // span starting at the current end of the vertex arena. Spans are drawn in
+  // order, so the original draw sequence is preserved either way.
+  if (m_spans.empty() || m_spans.back().texture_id != tex_id)
   {
-    std::vector<VertexData>& vertices = m_batches.back().vertices;
-    vertices.push_back({draw_x, draw_y, u1, v1});
-    vertices.push_back({draw_x + w, draw_y, u2, v1});
-    vertices.push_back({draw_x + w, draw_y + h, u2, v2});
-    vertices.push_back({draw_x, draw_y + h, u1, v2});
+    m_spans.push_back(BatchSpan{tex_id, m_vertices.size(), 0});
   }
-  else
-  {
-    RenderBatch new_batch;
-    new_batch.texture_id = tex_id;
-    new_batch.vertices.push_back({draw_x, draw_y, u1, v1});
-    new_batch.vertices.push_back({draw_x + w, draw_y, u2, v1});
-    new_batch.vertices.push_back({draw_x + w, draw_y + h, u2, v2});
-    new_batch.vertices.push_back({draw_x, draw_y + h, u1, v2});
-    m_batches.push_back(new_batch);
-  }
+
+  m_vertices.push_back({draw_x, draw_y, u1, v1});
+  m_vertices.push_back({draw_x + w, draw_y, u2, v1});
+  m_vertices.push_back({draw_x + w, draw_y + h, u2, v2});
+  m_vertices.push_back({draw_x, draw_y + h, u1, v2});
+
+  m_spans.back().count += 4;
 }
 
 /**
@@ -117,7 +117,7 @@ void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
  */
 void RenderBatcher::flush()
 {
-  if (m_batches.empty())
+  if (m_spans.empty())
   {
     return;
   }
@@ -133,20 +133,23 @@ void RenderBatcher::flush()
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-  // Draw batches IN ORDER - this preserves the original draw sequence!
-  for (const RenderBatch& batch : m_batches)
+  // All spans index into one arena, so the array pointers only need to be
+  // set once. No reallocation can occur during flush, so the pointers stay
+  // valid for the whole loop.
+  glVertexPointer(2, GL_FLOAT, sizeof(VertexData), &m_vertices[0].x);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(VertexData), &m_vertices[0].u);
+
+  // Draw spans IN ORDER - this preserves the original draw sequence!
+  for (const BatchSpan& span : m_spans)
   {
-    if (batch.vertices.empty())
+    if (span.count == 0)
     {
       continue;
     }
 
-    glBindTexture(GL_TEXTURE_2D, batch.texture_id);
-
-    glVertexPointer(2, GL_FLOAT, sizeof(VertexData), &batch.vertices[0].x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(VertexData), &batch.vertices[0].u);
-
-    glDrawArrays(GL_QUADS, 0, batch.vertices.size());
+    glBindTexture(GL_TEXTURE_2D, span.texture_id);
+    glDrawArrays(GL_QUADS, static_cast<GLint>(span.first),
+                 static_cast<GLsizei>(span.count));
   }
 
   glDisableClientState(GL_VERTEX_ARRAY);
@@ -155,7 +158,10 @@ void RenderBatcher::flush()
   // Reset state to sync with the tracker instead of manual glDisable
   SurfaceOpenGL::reset_state();
 
-  m_batches.clear();
+  // clear() keeps the allocated capacity, so subsequent frames reuse the
+  // same memory instead of reallocating.
+  m_vertices.clear();
+  m_spans.clear();
 }
 
 #endif // NOOPENGL
