@@ -112,6 +112,13 @@ void World::apply_bonuses()
 World::~World()
 {
   deactivate_world();
+
+  // Don't leave the static accessor dangling. Guard against a newer
+  // world having already replaced us.
+  if (current_ == this)
+  {
+    current_ = nullptr;
+  }
 }
 
 void World::activate_world()

@@ -158,6 +158,13 @@ void GameSession::restart_level()
 GameSession::~GameSession()
 {
   lisp_reset_pool(); // Free all memory used by the level data
+
+  // Don't leave the static accessor dangling. Guard against a newer
+  // session having already replaced us.
+  if (current_ == this)
+  {
+    current_ = nullptr;
+  }
 }
 
 /**
