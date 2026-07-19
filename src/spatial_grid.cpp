@@ -116,17 +116,35 @@ const std::vector<BadGuy*>& SpatialGrid::query_badguys(float x, float y, float w
 
   const auto& cells = get_overlapping_cells(x, y, w, h);
 
-  // Collect all badguys from overlapping cells
-  // Note: Same badguy may appear multiple times if it spans cells
+  // Collect all badguys from overlapping cells.
+  // An entity spanning multiple cells is registered once per cell, so
+  // deduplicate while preserving first-occurrence order. Duplicates would
+  // make callers process the same collision pair more than once per frame,
+  // which breaks toggle-style responses (e.g. direction flips).
+  // The result set is small, so a linear membership check is cheapest here.
   for (const auto& cell_key : cells)
   {
     auto it = grid.find(cell_key);
-    if (it != grid.end())
+    if (it == grid.end())
     {
-      const auto& cell_badguys = it->second.badguys;
-      m_query_cache_badguys.insert(m_query_cache_badguys.end(),
-                                   cell_badguys.begin(),
-                                   cell_badguys.end());
+      continue;
+    }
+
+    for (BadGuy* badguy : it->second.badguys)
+    {
+      bool already_present = false;
+      for (BadGuy* existing : m_query_cache_badguys)
+      {
+        if (existing == badguy)
+        {
+          already_present = true;
+          break;
+        }
+      }
+      if (!already_present)
+      {
+        m_query_cache_badguys.push_back(badguy);
+      }
     }
   }
 
@@ -142,12 +160,27 @@ const std::vector<Upgrade*>& SpatialGrid::query_upgrades(float x, float y, float
   for (const auto& cell_key : cells)
   {
     auto it = grid.find(cell_key);
-    if (it != grid.end())
+    if (it == grid.end())
     {
-      const auto& cell_upgrades = it->second.upgrades;
-      m_query_cache_upgrades.insert(m_query_cache_upgrades.end(),
-                                    cell_upgrades.begin(),
-                                    cell_upgrades.end());
+      continue;
+    }
+
+    // Deduplicate, preserving first-occurrence order (see query_badguys).
+    for (Upgrade* upgrade : it->second.upgrades)
+    {
+      bool already_present = false;
+      for (Upgrade* existing : m_query_cache_upgrades)
+      {
+        if (existing == upgrade)
+        {
+          already_present = true;
+          break;
+        }
+      }
+      if (!already_present)
+      {
+        m_query_cache_upgrades.push_back(upgrade);
+      }
     }
   }
 
