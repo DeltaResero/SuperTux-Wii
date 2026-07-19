@@ -41,6 +41,7 @@
 #include "scene.hpp"
 #include "player.hpp"
 #include <math.h>
+#include <memory>
 #include "tile.hpp"
 #include "resources.hpp"
 #include "worldmap.hpp"
@@ -380,12 +381,11 @@ static void processTitleInput()
       int slot = load_game_menu->get_active_item_id();
 
       // Call the dialog, passing the correct background surface.
-      Surface* dialog_background = new Surface(datadir + "/images/title/background.jpg", false);
-      if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", dialog_background))
+      auto dialog_background = std::make_unique<Surface>(datadir + "/images/title/background.jpg", false);
+      if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", dialog_background.get()))
       {
         remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
       }
-      delete dialog_background; // Clean up the temporary surface.
 
       // After the action, refresh the save list and return to the main menu.
       update_load_save_game_menu(load_game_menu);
