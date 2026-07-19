@@ -79,7 +79,7 @@ namespace
       {
         props[i] |= PROP_WHITESPACE;
       }
-      if (strchr("\"();", i))
+      if (i != 0 && strchr("\"();", i)) // i != 0: strchr would match the terminating NUL
       {
         props[i] |= PROP_DELIMITER;
       }
