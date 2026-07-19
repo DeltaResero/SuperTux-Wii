@@ -23,6 +23,7 @@
 #include "lispreader.hpp"
 #include "gameloop.hpp"
 #include "setup.hpp"
+#include <memory>
 #include "worldmap.hpp"
 #include "resources.hpp"
 #include "level.hpp"
@@ -1186,13 +1187,16 @@ void WorldMap::update(float delta)
         deleteSprites();
         tux->deleteSprites();
 
-        GameSession* session = new GameSession(datadir + "/levels/" + level->name, 1, ST_GL_LOAD_LEVEL_FILE);
+        auto session = std::make_unique<GameSession>(datadir + "/levels/" + level->name, 1, ST_GL_LOAD_LEVEL_FILE);
         loadsounds();
 
         GameSession::ExitStatus result = session->run();
         bool coffee = session->get_world()->get_tux()->got_coffee;
         bool big = session->get_world()->get_tux()->size == BIG;
-        delete session;
+
+        // Destroy the session HERE, not at end of scope: ~GameSession resets
+        // the global lisp pool, and code below may allocate from it.
+        session.reset();
 
         handleLevelCompletion(result, coffee, big, level);
 
