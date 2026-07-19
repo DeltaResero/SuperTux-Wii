@@ -751,6 +751,12 @@ void World::collision_handler()
 
       for (auto* normal : nearby)
       {
+        // The grid contains ALL bad guys, so the query can return the special
+        // collider itself as well as other special colliders. Skip both:
+        // self-collision is never valid, and special-vs-special pairs are
+        // handled once by the dedicated loop below.
+        if (normal == special) continue;
+        if (normal->kind == BAD_MRICEBLOCK && normal->mode == BadGuy::KICK) continue;
         if (normal->dying != DYING_NOT) continue;
 
         if (rectcollision(special->base, normal->base))
