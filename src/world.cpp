@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <functional>
 #include <string>
 #include <string_view>
 #include "globals.hpp"
@@ -786,26 +787,43 @@ void World::collision_handler()
 
   for (size_t i = 0; i < normal_colliders.size(); ++i)
   {
-    if (normal_colliders[i]->dying != DYING_NOT) continue;
-    if (normal_colliders[i]->base.x + normal_colliders[i]->base.width < screen_x_start ||
-        normal_colliders[i]->base.x > screen_x_end) continue;
+    BadGuy* cur = normal_colliders[i];
+
+    if (cur->dying != DYING_NOT) continue;
+    if (cur->base.x + cur->base.width < screen_x_start ||
+        cur->base.x > screen_x_end) continue;
 
     const auto& nearby = m_spatial_grid->query_badguys(
-      normal_colliders[i]->base.x - TILE_SIZE,
-      normal_colliders[i]->base.y - TILE_SIZE,
-      normal_colliders[i]->base.width + (TILE_SIZE * 2),
-      normal_colliders[i]->base.height + (TILE_SIZE * 2)
+      cur->base.x - TILE_SIZE,
+      cur->base.y - TILE_SIZE,
+      cur->base.width + (TILE_SIZE * 2),
+      cur->base.height + (TILE_SIZE * 2)
     );
 
     for (auto* other : nearby)
     {
-      if (other == normal_colliders[i]) continue;
+      if (other == cur) continue;
       if (other->dying != DYING_NOT) continue;
 
-      if (rectcollision(normal_colliders[i]->base, other->base))
+      // Kicked ice blocks are special colliders; that pairing is already
+      // handled (unbounded) by the special collider loop above.
+      if (other->kind == BAD_MRICEBLOCK && other->mode == BadGuy::KICK) continue;
+
+      // The original engine (j = i + 1) processed each unordered pair exactly
+      // once. With the grid, the pair (A, B) would otherwise be visited from
+      // both sides, and collision responses like direction flips are toggles,
+      // so firing twice cancels them out. Process the pair from 'cur' only if
+      // 'other' won't process it itself: either 'cur' orders first, or 'other'
+      // is outside the screen cull and will never take its turn.
+      bool other_is_culled = (other->base.x + other->base.width < screen_x_start ||
+                              other->base.x > screen_x_end);
+      if (!other_is_culled && std::less<BadGuy*>{}(other, cur)) continue;
+
+      if (rectcollision(cur->base, other->base))
       {
-        other->collision(normal_colliders[i], CO_BADGUY);
-        normal_colliders[i]->collision(other, CO_BADGUY);
+        // Callback order matches the original: the later element first.
+        other->collision(cur, CO_BADGUY);
+        cur->collision(other, CO_BADGUY);
       }
     }
   }
