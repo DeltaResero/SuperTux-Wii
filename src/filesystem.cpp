@@ -95,7 +95,7 @@ FILE* opendata(const char* rel_filename, const char* mode)
 
   if (fi == nullptr)
   {
-    std::cerr << "Warning: Unable to open the file \"" << filename << "\" ";
+    std::cerr << "Warning: Unable to open the file \"" << filename.string() << "\" ";
     if (strcmp(mode, "r") == 0)
     {
       std::cerr << "for read!!!\n";
