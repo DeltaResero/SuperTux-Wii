@@ -56,8 +56,6 @@ class Bullet : public GameObject
  public:
   bool removable;
   int life_count;
-  // base_type is already part of GameObject, no need to redeclare
-  base_type old_base;
 
   void init(float x, float y, float xm, Direction dir);
   void action(float frame_ratio);
