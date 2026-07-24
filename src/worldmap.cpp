@@ -878,7 +878,6 @@ void WorldMap::get_input()
         case SDL_QUIT:
         {
           st_abort("Received window close", "");
-          break;
         }
         case SDL_KEYDOWN:
         {
