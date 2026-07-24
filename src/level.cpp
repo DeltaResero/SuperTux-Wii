@@ -199,7 +199,8 @@ void LevelSubset::save()
     FILE* fi = fopen(filename.string().c_str(), "w");
     if (fi == nullptr)
     {
-      perror(filename.string().c_str());
+      perror(filename.string().c_str());  // System-generated error message
+      return;
     }
 
     // Write header:
