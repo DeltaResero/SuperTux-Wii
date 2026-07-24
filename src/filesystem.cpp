@@ -249,13 +249,22 @@ void st_directory_setup(void)
  */
 void st_directory_setup(void)
 {
-  const char* home;
-
-  /* Get home directory from $HOME variable or use current directory (".") */
+  /* Get home directory from $HOME variable, canonicalized to strip any
+   * path-traversal sequences (e.g. "..") before we use it to build st_dir. */
   const char* home_env = getenv("HOME");
-  home = (home_env != nullptr) ? home_env : ".";
+  std::string home;
+  if (home_env != nullptr)
+  {
+    char* resolved_home = realpath(home_env, nullptr);
+    home = (resolved_home != nullptr) ? resolved_home : ".";
+    free(resolved_home);
+  }
+  else
+  {
+    home = ".";
+  }
 
-  st_dir = std::string(home) + "/.supertux";
+  st_dir = home + "/.supertux";
 
   /* Remove .supertux config-file from old SuperTux versions */
   if (faccessible(st_dir.c_str()))
