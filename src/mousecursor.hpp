@@ -32,6 +32,9 @@ public:
   MouseCursor(std::string cursor_file, int frames);
   ~MouseCursor();
 
+  MouseCursor(const MouseCursor&) = delete;
+  MouseCursor& operator=(const MouseCursor&) = delete;
+
   int state() const; // Returns the current state of the cursor
   void set_state(int nstate); // Sets the cursor's state
   void set_mid(int x, int y); // Sets the midpoint of the cursor

@@ -46,6 +46,9 @@ public:
     ParticleSystem();
     virtual ~ParticleSystem() = default;
 
+    ParticleSystem(const ParticleSystem&) = delete;
+    ParticleSystem& operator=(const ParticleSystem&) = delete;
+
     virtual void draw(float scrollx, float scrolly, int layer) = 0;
     virtual void simulate(float elapsed_time) = 0;
 
@@ -60,6 +63,9 @@ public:
     SnowParticleSystem();
     ~SnowParticleSystem() override;
 
+    SnowParticleSystem(const SnowParticleSystem&) = delete;
+    SnowParticleSystem& operator=(const SnowParticleSystem&) = delete;
+
     void draw(float scrollx, float scrolly, int layer) override;
     void simulate(float elapsed_time) override;
 
@@ -73,6 +79,9 @@ class CloudParticleSystem : public ParticleSystem
 public:
     CloudParticleSystem();
     ~CloudParticleSystem() override;
+
+    CloudParticleSystem(const CloudParticleSystem&) = delete;
+    CloudParticleSystem& operator=(const CloudParticleSystem&) = delete;
 
     void draw(float scrollx, float scrolly, int layer) override;
     void simulate(float elapsed_time) override;

@@ -97,6 +97,9 @@ class Text
     Text(std::string_view file, int kind, int w, int h);
     ~Text();
 
+    Text(const Text&) = delete;
+    Text& operator=(const Text&) = delete;
+
     void recache_opengl_pointers(); // Public method to update pointers after a video mode switch.
     static void recache_all_pointers();
 
