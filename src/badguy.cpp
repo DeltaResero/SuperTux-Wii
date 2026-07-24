@@ -502,8 +502,6 @@ void BadGuy::action_jumpy(float frame_ratio)
     set_sprite(img_jumpy_left_up, img_jumpy_left_up);
   }
 
-  Player& tux = *World::current()->get_tux();
-
   static constexpr float JUMP_VELOCITY = 6.0f;
 
   // Jump when on ground
@@ -521,6 +519,7 @@ void BadGuy::action_jumpy(float frame_ratio)
   // Set direction based on Tux
   if (dying == DYING_NOT)
   {
+    Player& tux = *World::current()->get_tux();
     if (tux.base.x > base.x)
     {
       dir = RIGHT;
