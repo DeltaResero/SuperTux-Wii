@@ -44,6 +44,9 @@ public:
   LevelSubset();
   ~LevelSubset();
 
+  LevelSubset(const LevelSubset&) = delete;
+  LevelSubset& operator=(const LevelSubset&) = delete;
+
   void create(std::string_view subset_name);
   void parse(lisp_object_t* data);
   void load(std::string_view subset);
@@ -94,6 +97,9 @@ public:
   Level(std::string_view subset, int level);
   explicit Level(std::string_view filename);
   ~Level();
+
+  Level(const Level&) = delete;
+  Level& operator=(const Level&) = delete;
 
   void init_defaults();
   int load(std::string_view subset, int level);
