@@ -246,14 +246,13 @@ Tile* TileManager::get(int i)
  * Constructor for Tux, initializes Tux with world map and sprites.
  * @param worldmap_ The WorldMap to associate with Tux.
  */
-Tux::Tux(WorldMap* worldmap_) : back_direction(D_NONE), worldmap(worldmap_)
+Tux::Tux(WorldMap* worldmap_) : back_direction(D_NONE), worldmap(worldmap_),
+  largetux_sprite(std::make_unique<Surface>(datadir + "/images/worldmap/tux.png", true)),
+  firetux_sprite(std::make_unique<Surface>(datadir + "/images/worldmap/firetux.png", true)),
+  smalltux_sprite(std::make_unique<Surface>(datadir + "/images/worldmap/smalltux.png", true)),
+  offset(0),
+  moving(false)
 {
-  largetux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/tux.png", true);
-  firetux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/firetux.png", true);
-  smalltux_sprite = std::make_unique<Surface>(datadir + "/images/worldmap/smalltux.png", true);
-
-  offset = 0;
-  moving = false;
   tile_pos.x = worldmap->get_start_x();
   tile_pos.y = worldmap->get_start_y();
   direction = D_NONE;
@@ -514,20 +513,12 @@ Tile::~Tile()
 /**
  * WorldMap constructor, initializes the world map and loads initial resources.
  */
-WorldMap::WorldMap()
+WorldMap::WorldMap() : tux(nullptr), quit(false), level_sprite(nullptr),
+  width(20), height(SCREEN_HEIGHT_TILES), start_x(4), start_y(5),
+  tile_manager(std::make_unique<TileManager>()),
+  m_renderBatcher(std::make_unique<RenderBatcher>())
 {
   current_ = this;
-  tux = nullptr;
-  quit = false;
-  level_sprite = nullptr;
-  tile_manager = std::make_unique<TileManager>();
-  m_renderBatcher = std::make_unique<RenderBatcher>();
-
-  width = (int)(20);
-  height = (int)(SCREEN_HEIGHT_TILES);
-
-  start_x = int(4);
-  start_y = int(5);
 
   passive_message_timer.init(true);
 
