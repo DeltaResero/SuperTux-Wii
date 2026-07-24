@@ -109,7 +109,6 @@ public:
   explicit World(std::string_view filename);
   World(std::string_view subset, int level_nr);
 
-  World();
   ~World();
 
   void activate_world();

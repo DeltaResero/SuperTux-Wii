@@ -56,8 +56,6 @@ namespace {
 
 World* World::current_ = 0;
 
-World::World() = default;
-
 void World::common_setup()
 {
   tux.init();

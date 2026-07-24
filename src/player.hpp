@@ -104,20 +104,22 @@ public:
   enum HurtMode { KILL, SHRINK };
 
   // Public member variables for player state
-  player_input_type input;                  // Current input state from keyboard/joystick
-  bool got_coffee;                          // True if player has the fire flower power-up
-  int size;                                 // Player's size (SMALL or BIG)
-  bool duck;                                // True if player is currently ducking
-  bool holding_something;                   // True if player is carrying an object (like Mr. Ice Block)
-  DyingType dying;                          // The player's current dying state
-  Direction dir;                            // The direction the player is facing
-  Direction old_dir;                        // The direction the player was facing last frame
-  bool jumping;                             // True if the jump key is currently held down during a jump
-  bool can_jump;                            // True if the player is able to initiate a new jump
-  int frame_;                               // Sub-frame for animation sequences
-  int frame_main;                           // Main frame for animation sequences
-  base_type previous_base;                  // Position at the start of the current frame (for collision)
-  base_type post_physics_base;
+  // In-class initializers give a Player a defined state from construction.
+  // init() overwrites all of these once a level is known.
+  player_input_type input{};                // Current input state from keyboard/joystick
+  bool got_coffee = false;                  // True if player has the fire flower power-up
+  int size = SMALL;                         // Player's size (SMALL or BIG)
+  bool duck = false;                        // True if player is currently ducking
+  bool holding_something = false;           // True if player is carrying an object (like Mr. Ice Block)
+  DyingType dying = DYING_NOT;              // The player's current dying state
+  Direction dir = RIGHT;                    // The direction the player is facing
+  Direction old_dir = RIGHT;                // The direction the player was facing last frame
+  bool jumping = false;                     // True if the jump key is currently held down during a jump
+  bool can_jump = true;                     // True if the player is able to initiate a new jump
+  int frame_ = 0;                           // Sub-frame for animation sequences
+  int frame_main = 0;                       // Main frame for animation sequences
+  base_type previous_base{};                // Position at the start of the current frame (for collision)
+  base_type post_physics_base{};
 
   // Timers for various player states.
   Timer invincible_timer;
@@ -131,8 +133,8 @@ public:
 
 private:
   // Collision caches
-  bool m_on_ground_cache;
-  bool m_ceiling_cache;
+  bool m_on_ground_cache = false;
+  bool m_ceiling_cache = false;
 
 public:
   void init();                              // Initializes player state for a new level
