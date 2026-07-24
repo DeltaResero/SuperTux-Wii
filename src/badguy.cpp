@@ -245,7 +245,6 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
  */
 void BadGuy::action_mriceblock(float frame_ratio)
 {
-  Player& tux = *World::current()->get_tux();
   static constexpr float KICK_VELOCITY = 3.5f;
 
   /* Move left/right: */
@@ -256,6 +255,7 @@ void BadGuy::action_mriceblock(float frame_ratio)
   }
   else // mode == HELD
   {
+    Player& tux = *World::current()->get_tux();
     // When held, the block's position is locked relative to Tux.
     dir = tux.dir;
     if (dir == RIGHT)
