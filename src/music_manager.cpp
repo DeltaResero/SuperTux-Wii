@@ -104,7 +104,7 @@ void MusicManager::free_music(MusicResource* music)
   {
     if (&i->second == music)
     {
-      i = musics.erase(i); // Erase and get the next valid iterator
+      musics.erase(i); // Erase and exit
       return; // Exit immediately
     }
     else
