@@ -250,18 +250,17 @@ void st_directory_setup(void)
 void st_directory_setup(void)
 {
   /* Get home directory from $HOME variable, canonicalized to strip any
-   * path-traversal sequences (e.g. "..") before we use it to build st_dir. */
+   * path-traversal sequences (e.g. "..") before we use it to build st_dir.
+   * realpath() only resolves paths that already exist, so a $HOME that has
+   * yet to be created must fall back to the raw value; create_directories()
+   * below will make it (and its parents). Only an unset $HOME uses ".". */
   const char* home_env = getenv("HOME");
-  std::string home;
+  std::string home = ".";
   if (home_env != nullptr)
   {
     char* resolved_home = realpath(home_env, nullptr);
-    home = (resolved_home != nullptr) ? resolved_home : ".";
+    home = (resolved_home != nullptr) ? resolved_home : home_env;
     free(resolved_home);
-  }
-  else
-  {
-    home = ".";
   }
 
   st_dir = home + "/.supertux";
