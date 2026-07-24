@@ -349,7 +349,11 @@ namespace
      */
     int get_char()
     {
-      if (!stream || ++operation_count > MAX_PARSE_OPERATIONS)
+      if (!stream)
+      {
+        return EOF;
+      }
+      if (++operation_count > MAX_PARSE_OPERATIONS)
       {
         return EOF;
       }
@@ -914,8 +918,12 @@ namespace
 
     int operations = 0;
 
-    while (!work_stack.empty() && operations++ < MAX_PARSE_OPERATIONS)
+    while (!work_stack.empty())
     {
+      if (operations++ >= MAX_PARSE_OPERATIONS)
+      {
+        break;
+      }
       // Use an index rather than a reference (push_back can reallocate)
       // the vector, invalidating any reference into it.
       const size_t back_idx = work_stack.size() - 1;
@@ -1065,8 +1073,12 @@ namespace
     std::vector<bool> results;
     results.push_back(false);
 
-    while (!stack.empty() && operations++ < MAX_PARSE_OPERATIONS)
+    while (!stack.empty())
     {
+      if (operations++ >= MAX_PARSE_OPERATIONS)
+      {
+        break;
+      }
       MatchWork& work = stack.back();
 
       if (work.phase == MatchWork::DONE)
@@ -1467,8 +1479,12 @@ void lisp_free(lisp_object_t* obj)
   stack.push_back({obj, false});
 
   int operations = 0;
-  while (!stack.empty() && operations++ < MAX_PARSE_OPERATIONS)
+  while (!stack.empty())
   {
+    if (operations++ >= MAX_PARSE_OPERATIONS)
+    {
+      break;
+    }
     FreeItem& item = stack.back();
 
     if (!item.obj || item.obj == &error_object || item.obj == &end_marker)
@@ -1887,8 +1903,12 @@ lisp_object_t* lisp_find_value(lisp_object_t* list, const char* key)
   int max_iterations = 10000;
   int iterations = 0;
 
-  while (!lisp_nil_p(list) && iterations++ < max_iterations)
+  while (!lisp_nil_p(list))
   {
+    if (iterations++ >= max_iterations)
+    {
+      break;
+    }
     lisp_object_t* cur = lisp_car(list);
     if (lisp_cons_p(cur) && lisp_symbol_p(lisp_car(cur)))
     {
@@ -1967,8 +1987,12 @@ void lisp_dump(lisp_object_t* obj, FILE* out)
     {
       fputs(lisp_type(obj) == LISP_TYPE_CONS ? "(" : "#?(", out);
       int depth = 0;
-      while (obj != nullptr && depth++ < 1000)
+      while (obj != nullptr)
       {
+        if (depth++ >= 1000)
+        {
+          break;
+        }
         lisp_dump(lisp_car(obj), out);
         obj = lisp_cdr(obj);
         if (obj != nullptr)
@@ -2012,8 +2036,12 @@ LispReader::LispReader(lisp_object_t* l) : lst(l)
   int max_properties = 10000;
   int count = 0;
 
-  for (lisp_object_t* cursor = lst; !lisp_nil_p(cursor) && count++ < max_properties; cursor = lisp_cdr(cursor))
+  for (lisp_object_t* cursor = lst; !lisp_nil_p(cursor); cursor = lisp_cdr(cursor))
   {
+    if (count++ >= max_properties)
+    {
+      break;
+    }
     lisp_object_t* cur = lisp_car(cursor);
     if (lisp_cons_p(cur) && lisp_symbol_p(lisp_car(cur)))
     {
@@ -2079,8 +2107,12 @@ bool LispReader::read_vector_impl(const char* name, std::vector<T>* vec, Predica
     int max_items = 10000;
     int count = 0;
 
-    while (!lisp_nil_p(obj) && count++ < max_items)
+    while (!lisp_nil_p(obj))
     {
+      if (count++ >= max_items)
+      {
+        break;
+      }
       lisp_object_t* item = lisp_car(obj);
       if (!pred(item))
       {
