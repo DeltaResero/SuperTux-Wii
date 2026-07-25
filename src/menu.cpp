@@ -266,8 +266,7 @@ void Menu::process_options_menu()
       break;
 
     case MNID_SOUND:
-      if (use_sound != isToggled(MNID_SOUND))
-        use_sound = isToggled(MNID_SOUND);
+      use_sound = isToggled(MNID_SOUND);
       break;
 
     case MNID_MUSIC:
@@ -280,14 +279,12 @@ void Menu::process_options_menu()
 
 #ifdef TSCONTROL
     case MNID_SHOWMOUSE:
-      if (show_mouse != isToggled(MNID_SHOWMOUSE))
-        show_mouse = isToggled(MNID_SHOWMOUSE);
+      show_mouse = isToggled(MNID_SHOWMOUSE);
       break;
 #endif
 
     case MNID_SHOWFPS:
-      if (show_fps != isToggled(MNID_SHOWFPS))
-        show_fps = isToggled(MNID_SHOWFPS);
+      show_fps = isToggled(MNID_SHOWFPS);
       break;
 
     case MNID_TV_OVERSCAN:
