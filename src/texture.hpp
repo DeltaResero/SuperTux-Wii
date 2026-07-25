@@ -120,8 +120,8 @@ public:
 
   virtual int draw(float x, float y, Uint8 alpha, bool update) = 0;
   virtual int draw_bg(Uint8 alpha, bool update) = 0;
-  virtual int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update) = 0;
-  virtual int draw_stretched(float x, float y, int w, int h, Uint8 alpha, bool update) = 0;
+  virtual int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) = 0;
+  virtual int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) = 0;
   int resize(int w_, int h_);
   SDL_Surface* get_sdl_surface() const;  // Avoid usage whenever possible
 };
@@ -148,7 +148,7 @@ public:
 
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
-  int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update) override;
+  int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) override;
   int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 
   static void reset_state();
@@ -175,7 +175,7 @@ public:
 
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
-  int draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update) override;
+  int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) override;
   int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 };
 

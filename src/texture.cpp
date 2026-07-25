@@ -949,13 +949,13 @@ int SurfaceOpenGL::draw_bg(Uint8 alpha, bool update)
  * @param sy The source y-coordinate.
  * @param x The destination x-coordinate.
  * @param y The destination y-coordinate.
- * @param w The width of the portion.
- * @param h The height of the portion.
+ * @param w_ The width of the portion.
+ * @param h_ The height of the portion.
  * @param alpha The alpha transparency.
  * @param update Whether to update the screen after drawing.
  * @return 0 on success, or -2 if the surface needs to be reloaded.
  */
-int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update)
+int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update)
 {
   x = floorf(x + 0.5f);
   y = floorf(y + 0.5f);
@@ -967,16 +967,16 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w, floa
 
   GLfloat vertices[] = {
     x, y,
-    x + w, y,
-    x + w, y + h,
-    x, y + h
+    x + w_, y,
+    x + w_, y + h_,
+    x, y + h_
   };
 
   GLfloat texcoords[] = {
     sx / pw, sy / ph,
-    (sx + w) / pw, sy / ph,
-    (sx + w) / pw, (sy + h) / ph,
-    sx / pw, (sy + h) / ph
+    (sx + w_) / pw, sy / ph,
+    (sx + w_) / pw, (sy + h_) / ph,
+    sx / pw, (sy + h_) / ph
   };
 
   SurfaceOpenGL::enable_vertex_arrays();
@@ -1133,25 +1133,25 @@ int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
  * @param sy The source y-coordinate.
  * @param x The destination x-coordinate.
  * @param y The destination y-coordinate.
- * @param w The width of the portion.
- * @param h The height of the portion.
+ * @param w_ The width of the portion.
+ * @param h_ The height of the portion.
  * @param alpha The alpha transparency.
  * @param update Whether to update the screen after drawing.
  * @return 0 on success, or -2 if the surface needs to be reloaded.
  */
-int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update)
+int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update)
 {
   SDL_Rect src;
   SDL_Rect dst;
   src.x = (int)sx;
   src.y = (int)sy;
-  src.w = (int)w;
-  src.h = (int)h;
+  src.w = (int)w_;
+  src.h = (int)h_;
 
   dst.x = (int)x;
   dst.y = (int)y;
-  dst.w = (int)w;
-  dst.h = (int)h;
+  dst.w = (int)w_;
+  dst.h = (int)h_;
 
   SDL_SetTextureAlphaMod(texture, alpha);
   SDL_RenderCopy(renderer, texture, &src, &dst);
