@@ -280,13 +280,13 @@ void Text::build_cached_text(Surface* pchars, std::string_view text, CachedTextR
       continue;
     }
 
-    float offset_x = info.col * w;
-    float offset_y = info.row * h;
+    float src_offset_x = info.col * w;
+    float src_offset_y = info.row * h;
 
-    float tx1 = offset_x / pw;
-    float ty1 = offset_y / ph;
-    float tx2 = (offset_x + w) / pw;
-    float ty2 = (offset_y + h) / ph;
+    float tx1 = src_offset_x / pw;
+    float ty1 = src_offset_y / ph;
+    float tx2 = (src_offset_x + w) / pw;
+    float ty2 = (src_offset_y + h) / ph;
 
     // Add quad vertices (two triangles - Bottom-left, Bottom-right, Top-right, and Top-left)
     run.vertices.push_back({static_cast<float>(current_x), static_cast<float>(current_y + h), tx1, ty2});
@@ -439,39 +439,39 @@ void Text::draw_chars(Surface* pchars, std::string_view text, int x, int y, int 
   size_t j = 0;
   for (size_t i = 0; i < len; ++i, ++j)
   {
-    int offset_x = 0;  // Horizontal offset on the source surface (spritesheet)
-    int offset_y = 0;  // Vertical offset on the source surface (spritesheet)
+    int src_offset_x = 0;  // Horizontal offset on the source surface (spritesheet)
+    int src_offset_y = 0;  // Vertical offset on the source surface (spritesheet)
 
     // Determine the position of the character on the spritesheet based on its ASCII value
     if (text[i] >= ' ' && text[i] <= '/')  // ASCII range for symbols (e.g., '!', '"', '#')
     {
-      offset_x = (text[i] - ' ') * w;
-      offset_y = 0;
+      src_offset_x = (text[i] - ' ') * w;
+      src_offset_y = 0;
     }
     else if (text[i] >= '0' && text[i] <= '?')  // ASCII range for numbers (0-9) and symbols
     {
-      offset_x = (text[i] - '0') * w;
-      offset_y = h;
+      src_offset_x = (text[i] - '0') * w;
+      src_offset_y = h;
     }
     else if (text[i] >= '@' && text[i] <= 'O')  // ASCII range for uppercase letters A-O
     {
-      offset_x = (text[i] - '@') * w;
-      offset_y = h * 2;
+      src_offset_x = (text[i] - '@') * w;
+      src_offset_y = h * 2;
     }
     else if (text[i] >= 'P' && text[i] <= '_')  // ASCII range for uppercase letters P-Z
     {
-      offset_x = (text[i] - 'P') * w;
-      offset_y = h * 3;
+      src_offset_x = (text[i] - 'P') * w;
+      src_offset_y = h * 3;
     }
     else if (text[i] >= '`' && text[i] <= 'o')  // ASCII range for lowercase letters a-o
     {
-      offset_x = (text[i] - '`') * w;
-      offset_y = h * 4;
+      src_offset_x = (text[i] - '`') * w;
+      src_offset_y = h * 4;
     }
     else if (text[i] >= 'p' && text[i] <= '~')  // ASCII range for lowercase letters p-z
     {
-      offset_x = (text[i] - 'p') * w;
-      offset_y = h * 5;
+      src_offset_x = (text[i] - 'p') * w;
+      src_offset_y = h * 5;
     }
     else if (text[i] == '\n')  // Handle new line character
     {
@@ -485,7 +485,7 @@ void Text::draw_chars(Surface* pchars, std::string_view text, int x, int y, int 
     }
 
     // Draw the character from the appropriate position on the spritesheet
-    pchars->draw_part(offset_x, offset_y, x + (j * w), y, w, h, 255, update);
+    pchars->draw_part(src_offset_x, src_offset_y, x + (j * w), y, w, h, 255, update);
   }
 }
 
