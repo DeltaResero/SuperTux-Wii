@@ -74,7 +74,7 @@ void LevelSubset::create(std::string_view subset_name)
 
 /**
  * Parses a Lisp object to extract LevelSubset information.
- * @param cursor Pointer to the Lisp object to parse.
+ * @param data Pointer to the Lisp object to parse.
  * Iterates through the object to extract the title and description.
  */
 void LevelSubset::parse(lisp_object_t* data)
@@ -86,7 +86,7 @@ void LevelSubset::parse(lisp_object_t* data)
 
 /**
  * Loads a LevelSubset from disk.
- * @param subset Pointer to the name of the subset to load.
+ * @param subset The name of the subset to load.
  * Searches for and loads the level subset's info file, then parses the content.
  */
 void LevelSubset::load(std::string_view subset)
