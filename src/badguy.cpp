@@ -118,17 +118,15 @@ BadGuyKind badguykind_from_string(std::string_view str)
  */
 std::string badguykind_to_string(BadGuyKind kind)
 {
-  // Names are looked up by enum value, so this table has to stay in the same
-  // order as BadGuyKind in badguy.hpp. The old switch had no case for
-  // BAD_BOMB and fell through to "snowball", which is preserved here. Bombs
-  // are only ever created at runtime by a dying MrBomb, so they never reach
-  // the level writer that turns these names back into text.
+  // Indexed by BadGuyKind, so this table has to stay in the same order as the
+  // enum in badguy.hpp. Names that can appear in level files must round trip
+  // through badguykind_from_string.
   static constexpr std::string_view kind_names[] =
   {
     "mriceblock",        // BAD_MRICEBLOCK
     "jumpy",             // BAD_JUMPY
     "mrbomb",            // BAD_MRBOMB
-    "snowball",          // BAD_BOMB
+    "bomb",              // BAD_BOMB
     "stalactite",        // BAD_STALACTITE
     "flame",             // BAD_FLAME
     "fish",              // BAD_FISH
