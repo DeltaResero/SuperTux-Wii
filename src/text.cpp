@@ -66,15 +66,22 @@ void initialize_char_lut()
     return;
   }
 
+  // The spritesheet is a uniform grid of six rows holding sixteen characters
+  // each, laid out in ASCII order starting at space. A character's row and
+  // column are therefore plain arithmetic on its ASCII value.
+  constexpr int CHARS_PER_ROW = 16;
+
   for (int i = 0; i < 256; ++i)
   {
-    char_lut[i] = { false, 0, 0 }; // Default to invisible
-    if      (i >= ' ' && i <= '/') { char_lut[i] = { true, 0, i - ' ' }; }
-    else if (i >= '0' && i <= '?') { char_lut[i] = { true, 1, i - '0' }; }
-    else if (i >= '@' && i <= 'O') { char_lut[i] = { true, 2, i - '@' }; }
-    else if (i >= 'P' && i <= '_') { char_lut[i] = { true, 3, i - 'P' }; }
-    else if (i >= '`' && i <= 'o') { char_lut[i] = { true, 4, i - '`' }; }
-    else if (i >= 'p' && i <= '~') { char_lut[i] = { true, 5, i - 'p' }; }
+    if (i >= ' ' && i <= '~')
+    {
+      const int offset = i - ' ';
+      char_lut[i] = { true, offset / CHARS_PER_ROW, offset % CHARS_PER_ROW };
+    }
+    else
+    {
+      char_lut[i] = { false, 0, 0 }; // Not on the spritesheet
+    }
   }
 
   is_lut_initialized = true;
