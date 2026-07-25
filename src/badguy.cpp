@@ -15,6 +15,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <iterator>
 #include <numbers>
 #include <string>
 #include <string_view>
@@ -117,31 +118,35 @@ BadGuyKind badguykind_from_string(std::string_view str)
  */
 std::string badguykind_to_string(BadGuyKind kind)
 {
-  switch (kind)
+  // Names are looked up by enum value, so this table has to stay in the same
+  // order as BadGuyKind in badguy.hpp. The old switch had no case for
+  // BAD_BOMB and fell through to "snowball", which is preserved here. Bombs
+  // are only ever created at runtime by a dying MrBomb, so they never reach
+  // the level writer that turns these names back into text.
+  static constexpr std::string_view kind_names[] =
   {
-    case BAD_JUMPY:
-      return "jumpy";
-    case BAD_MRICEBLOCK:
-      return "mriceblock";
-    case BAD_MRBOMB:
-      return "mrbomb";
-    case BAD_STALACTITE:
-      return "stalactite";
-    case BAD_FLAME:
-      return "flame";
-    case BAD_FISH:
-      return "fish";
-    case BAD_BOUNCINGSNOWBALL:
-      return "bouncingsnowball";
-    case BAD_FLYINGSNOWBALL:
-      return "flyingsnowball";
-    case BAD_SPIKY:
-      return "spiky";
-    case BAD_SNOWBALL:
-      return "snowball";
-    default:
-      return "snowball";
+    "mriceblock",        // BAD_MRICEBLOCK
+    "jumpy",             // BAD_JUMPY
+    "mrbomb",            // BAD_MRBOMB
+    "snowball",          // BAD_BOMB
+    "stalactite",        // BAD_STALACTITE
+    "flame",             // BAD_FLAME
+    "fish",              // BAD_FISH
+    "bouncingsnowball",  // BAD_BOUNCINGSNOWBALL
+    "flyingsnowball",    // BAD_FLYINGSNOWBALL
+    "spiky",             // BAD_SPIKY
+    "snowball"           // BAD_SNOWBALL
+  };
+  static_assert(std::size(kind_names) == NUM_BadGuyKinds,
+                "kind_names must have one entry per BadGuyKind");
+
+  const size_t index = static_cast<size_t>(kind);
+  if (index >= NUM_BadGuyKinds)
+  {
+    return "snowball"; // Default fallback for values outside the enum
   }
+
+  return std::string(kind_names[index]);
 }
 
 /**
