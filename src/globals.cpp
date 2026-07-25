@@ -104,20 +104,19 @@ Uint8 adjust_joystick_hat(Uint8 hat)
     return hat;
   }
 
-  switch (hat)
+  // SDL gives each direction its own bit ordered: up, right, down, left
+  // A quarter turn moves every direction onto the bit below it, with up
+  // wrapping around to left, so the whole remap is a one bit rotation of
+  // the low nibble. Diagonals come along for free because rotating both
+  // of their bits lands on the rotated diagonal.
+  constexpr Uint8 HAT_MASK = SDL_HAT_UP | SDL_HAT_RIGHT | SDL_HAT_DOWN | SDL_HAT_LEFT;
+
+  if ((hat & ~HAT_MASK) != 0)
   {
-    case SDL_HAT_UP:        return SDL_HAT_LEFT;
-    case SDL_HAT_DOWN:      return SDL_HAT_RIGHT;
-    case SDL_HAT_LEFT:      return SDL_HAT_DOWN;
-    case SDL_HAT_RIGHT:     return SDL_HAT_UP;
-
-    case SDL_HAT_RIGHTUP:   return SDL_HAT_LEFTUP;    // Right(Up) + Up(Left) -> Up + Left
-    case SDL_HAT_RIGHTDOWN: return SDL_HAT_RIGHTUP;   // Right(Up) + Down(Right) -> Up + Right
-    case SDL_HAT_LEFTUP:    return SDL_HAT_LEFTDOWN;  // Left(Down) + Up(Left) -> Down + Left
-    case SDL_HAT_LEFTDOWN:  return SDL_HAT_RIGHTDOWN; // Left(Down) + Down(Right) -> Down + Right
-
-    default:                return hat;
+    return hat; // Nothing we recognise as a direction, pass it through
   }
+
+  return static_cast<Uint8>(((hat >> 1) | (hat << 3)) & HAT_MASK);
 }
 
 /* Returns 1 for every button event, 2 for a quit event and 0 for no event. */
