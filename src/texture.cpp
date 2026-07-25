@@ -252,12 +252,12 @@ Surface::Surface(std::string_view file, bool use_alpha)
  * @param file The path to the image file.
  * @param x The x-coordinate of the part to load.
  * @param y The y-coordinate of the part to load.
- * @param w The width of the part to load.
- * @param h The height of the part to load.
+ * @param w_ The width of the part to load.
+ * @param h_ The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-Surface::Surface(std::string_view file, int x, int y, int w, int h, bool use_alpha)
-  : data(file, x, y, w, h, use_alpha), w(0), h(0)
+Surface::Surface(std::string_view file, int x, int y, int w_, int h_, bool use_alpha)
+  : data(file, x, y, w_, h_, use_alpha), w(0), h(0)
 {
   init_impl();
 }
@@ -596,18 +596,18 @@ SurfaceOpenGL::SurfaceOpenGL(std::string_view file, bool use_alpha)
  * @param file The path to the image file.
  * @param x The x-coordinate of the part to load.
  * @param y The y-coordinate of the part to load.
- * @param w The width of the part to load.
- * @param h The height of the part to load.
+ * @param w_ The width of the part to load.
+ * @param h_ The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceOpenGL::SurfaceOpenGL(std::string_view file, int x, int y, int w, int h, bool use_alpha)
+SurfaceOpenGL::SurfaceOpenGL(std::string_view file, int x, int y, int w_, int h_, bool use_alpha)
   : tex_w_allocated(0.0f), tex_h_allocated(0.0f)
 {
-  sdl_surface = sdl_surface_part_from_file(file, x, y, w, h, use_alpha);
+  sdl_surface = sdl_surface_part_from_file(file, x, y, w_, h_, use_alpha);
   create_gl(sdl_surface, &gl_texture);
 
-  this->w = sdl_surface->w;
-  this->h = sdl_surface->h;
+  w = sdl_surface->w;
+  h = sdl_surface->h;
 }
 
 /**
@@ -1039,21 +1039,21 @@ SurfaceSDL::SurfaceSDL(std::string_view file, bool use_alpha)
  * @param file The path to the image file.
  * @param x The x-coordinate of the part to load.
  * @param y The y-coordinate of the part to load.
- * @param w The width of the part to load.
- * @param h The height of the part to load.
+ * @param w_ The width of the part to load.
+ * @param h_ The height of the part to load.
  * @param use_alpha Whether to use alpha transparency.
  */
-SurfaceSDL::SurfaceSDL(std::string_view file, int x, int y, int w, int h, bool use_alpha)
+SurfaceSDL::SurfaceSDL(std::string_view file, int x, int y, int w_, int h_, bool use_alpha)
 {
-  sdl_surface = sdl_surface_part_from_file(file, x, y, w, h, use_alpha);
+  sdl_surface = sdl_surface_part_from_file(file, x, y, w_, h_, use_alpha);
   texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
   if (!texture)
   {
     std::cerr << "Failed to create texture part from " << file << ": "
               << SDL_GetError() << "\n";
   }
-  this->w = sdl_surface->w;
-  this->h = sdl_surface->h;
+  w = sdl_surface->w;
+  h = sdl_surface->h;
 }
 
 SurfaceSDL::SurfaceSDL(SDL_Surface *surf, bool use_alpha)
