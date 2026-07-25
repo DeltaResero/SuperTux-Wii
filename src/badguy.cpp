@@ -616,13 +616,13 @@ void BadGuy::action_bomb(float frame_ratio)
  */
 void BadGuy::action_stalactite(float frame_ratio)
 {
-  Player& tux = *World::current()->get_tux();
-
   static constexpr int SHAKE_TIME = 800;
   static constexpr int SHAKE_RANGE = 40;
 
   if (mode == NORMAL)
   {
+    Player& tux = *World::current()->get_tux();
+
     // Start shaking when Tux is below the stalactite and at least 40 pixels near
     if (tux.base.x + TILE_SIZE > base.x - SHAKE_RANGE && tux.base.x < base.x + TILE_SIZE + SHAKE_RANGE && tux.base.y + tux.base.height > base.y)
     {
