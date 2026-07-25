@@ -553,7 +553,6 @@ void print_status(const char* st)
 #ifdef __WII__ // Check for Wii-specific compilation
 
   static void* xfb = nullptr;
-  static GXRModeObj* rmode = nullptr;
 
   // Only initialize the console video system once
   if (xfb == nullptr)
@@ -562,7 +561,7 @@ void print_status(const char* st)
     VIDEO_Init();
 
     // Obtain the preferred video mode from the system
-    rmode = VIDEO_GetPreferredMode(nullptr);
+    GXRModeObj* rmode = VIDEO_GetPreferredMode(nullptr);
 
     // Allocate memory for the display in the uncached region
     xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
