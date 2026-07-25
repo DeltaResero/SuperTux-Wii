@@ -116,7 +116,7 @@ public:
   void explode(BadGuy* badguy);
 
   void collision(void* p_c_object, int c_object,
-                 CollisionType type = COLLISION_NORMAL);
+                 CollisionType type_ = COLLISION_NORMAL);
 
   /** this functions tries to kill the badguy and lets him fall off the
    * screen. Some badguys like the flame might ignore this.

@@ -274,13 +274,13 @@ void Upgrade::updatePhysics(float deltaTime)
  * Handles upgrade collisions with other objects.
  * @param p_c_object Pointer to the colliding object.
  * @param c_object Type of the object (e.g., player).
- * @param type Type of collision.
+ * @param type_ Type of collision.
  */
-void Upgrade::collision(void* p_c_object, int c_object, CollisionType type)
+void Upgrade::collision(void* p_c_object, int c_object, CollisionType type_)
 {
   Player* pplayer = nullptr;
 
-  if (type == COLLISION_BUMP)
+  if (type_ == COLLISION_BUMP)
   {
     // BUMP LOGIC
     if (kind != UPGRADE_GROWUP)

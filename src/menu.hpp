@@ -201,7 +201,7 @@ public:
   void set_pos(int x, int y, float rw = 0, float rh = 0);
 
   /** translate a SDL_Event into a menu_action */
-  void event(SDL_Event& event);
+  void event(SDL_Event& event_);
 
   int get_width() const;
   int get_height() const;

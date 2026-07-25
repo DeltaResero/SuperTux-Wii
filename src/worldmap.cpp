@@ -1611,8 +1611,8 @@ void WorldMap::loadgame(std::string_view filename)
 #endif
   savegame_file = filename;
 
-  lisp_object_t* savegame = lisp_read_from_file(filename);
-  if (!savegame)
+  lisp_object_t* savegame_obj = lisp_read_from_file(filename);
+  if (!savegame_obj)
   {
     // Reset player state for a new game
 #ifdef DEBUG
@@ -1622,11 +1622,11 @@ void WorldMap::loadgame(std::string_view filename)
     return;
   }
 
-  lisp_object_t* cur = savegame;
+  lisp_object_t* cur = savegame_obj;
 
   if (strcmp(lisp_symbol(lisp_car(cur)), "supertux-savegame") != 0)
   {
-    lisp_free(savegame);
+    lisp_free(savegame_obj);
     return;
   }
 
@@ -1690,7 +1690,7 @@ void WorldMap::loadgame(std::string_view filename)
     }
   }
 
-  lisp_free(savegame);
+  lisp_free(savegame_obj);
 }
 
 /**

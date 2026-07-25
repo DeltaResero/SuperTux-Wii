@@ -45,7 +45,7 @@ public:
   void action(float frame_ratio);
   void updatePhysics(float deltaTime);
   void draw() override {}
-  void collision(void* p_c_object, int c_object, CollisionType type);
+  void collision(void* p_c_object, int c_object, CollisionType type_);
   std::string type() { return "Upgrade"; };
 
   ~Upgrade() {};

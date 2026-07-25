@@ -1384,17 +1384,17 @@ void BadGuy::handleCollisionWithPlayer(Player* player)
  * This function determines the appropriate response based on the type of collision.
  * @param p_c_object Pointer to the colliding object or player.
  * @param c_object The type of colliding object (e.g., CO_BULLET, CO_PLAYER).
- * @param type The type of collision (e.g., COLLISION_BUMP, COLLISION_SQUISH).
+ * @param type_ The type of collision (e.g., COLLISION_BUMP, COLLISION_SQUISH).
  */
-void BadGuy::collision(void* p_c_object, int c_object, CollisionType type)
+void BadGuy::collision(void* p_c_object, int c_object, CollisionType type_)
 {
-  if (type == COLLISION_BUMP)
+  if (type_ == COLLISION_BUMP)
   {
     bump();
     return;
   }
 
-  if (type == COLLISION_SQUISH)
+  if (type_ == COLLISION_SQUISH)
   {
     Player* player = static_cast<Player*>(p_c_object);
     squish(player);

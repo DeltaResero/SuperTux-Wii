@@ -412,16 +412,16 @@ void Menu::action()
     case MENU_ACTION_LEFT:
       if (item[active_item].kind == MN_STRINGSELECT && !item[active_item].list.empty())
       {
-        int& current = item[active_item].list_active_item;
-        current = (current > 0) ? current - 1 : item[active_item].list.size() - 1;
+        int& current_index = item[active_item].list_active_item;
+        current_index = (current_index > 0) ? current_index - 1 : item[active_item].list.size() - 1;
       }
       break;
 
     case MENU_ACTION_RIGHT:
       if (item[active_item].kind == MN_STRINGSELECT && !item[active_item].list.empty())
       {
-        int& current = item[active_item].list_active_item;
-        current = (current < static_cast<int>(item[active_item].list.size()) - 1) ? current + 1 : 0;
+        int& current_index = item[active_item].list_active_item;
+        current_index = (current_index < static_cast<int>(item[active_item].list.size()) - 1) ? current_index + 1 : 0;
       }
       break;
 
@@ -720,18 +720,18 @@ bool Menu::isToggled(int id) const
 /**
  * Processes SDL events and updates the menu state.
  * Handles user input such as keyboard, mouse, and joystick events.
- * @param event Reference to the SDL event to process.
+ * @param event_ Reference to the SDL event to process.
  */
-void Menu::event(SDL_Event& event)
+void Menu::event(SDL_Event& event_)
 {
   SDL_Keycode key;
   int x;
   int y;
 
-  switch (event.type)
+  switch (event_.type)
   {
     case SDL_KEYDOWN:
-      key = event.key.keysym.sym;
+      key = event_.key.keysym.sym;
 
       // Special handling for control fields, which are actively waiting for a key press.
       if (!item.empty() && item[active_item].kind == MN_CONTROLFIELD)
@@ -776,37 +776,37 @@ void Menu::event(SDL_Event& event)
 
     case SDL_JOYHATMOTION:
       // Apply rotation if needed
-      event.jhat.value = adjust_joystick_hat(event.jhat.value);
+      event_.jhat.value = adjust_joystick_hat(event_.jhat.value);
 
-      if (event.jhat.value == SDL_HAT_UP)
+      if (event_.jhat.value == SDL_HAT_UP)
       {
         menuaction = MENU_ACTION_UP;
       }
-      if (event.jhat.value == SDL_HAT_DOWN)
+      if (event_.jhat.value == SDL_HAT_DOWN)
       {
         menuaction = MENU_ACTION_DOWN;
       }
       break;
 
     case SDL_JOYAXISMOTION:
-      if (event.jaxis.axis == joystick_keymap.y_axis)
+      if (event_.jaxis.axis == joystick_keymap.y_axis)
       {
         // Static flag to ensure we only move once per press.
         // The stick must return to the deadzone before moving again.
         static bool joystick_axis_ready = true;
 
-        if (abs(event.jaxis.value) < joystick_keymap.dead_zone)
+        if (abs(event_.jaxis.value) < joystick_keymap.dead_zone)
         {
           joystick_axis_ready = true;
         }
         else if (joystick_axis_ready)
         {
-          if (event.jaxis.value > joystick_keymap.dead_zone)
+          if (event_.jaxis.value > joystick_keymap.dead_zone)
           {
             menuaction = MENU_ACTION_DOWN;
             joystick_axis_ready = false;
           }
-          else if (event.jaxis.value < -joystick_keymap.dead_zone)
+          else if (event_.jaxis.value < -joystick_keymap.dead_zone)
           {
             menuaction = MENU_ACTION_UP;
             joystick_axis_ready = false;
@@ -818,12 +818,12 @@ void Menu::event(SDL_Event& event)
     case SDL_JOYBUTTONDOWN:
     {
       // CONFIRM action on Wii Remote 'A' (0) and '2' (3)
-      if (event.jbutton.button == 0 || event.jbutton.button == 3)
+      if (event_.jbutton.button == 0 || event_.jbutton.button == 3)
       {
         menuaction = MENU_ACTION_HIT;
       }
       // CANCEL action on Wii Remote 'B' (1) and '1' (2)
-      else if (event.jbutton.button == 1 || event.jbutton.button == 2)
+      else if (event_.jbutton.button == 1 || event_.jbutton.button == 2)
       {
         // On the main menu or top-level pause menus, these buttons do nothing.
         if (this != main_menu && this != game_menu && this != worldmap_menu)
@@ -835,7 +835,7 @@ void Menu::event(SDL_Event& event)
         }
       }
       // HOME button always functions as a back/exit key
-      else if (event.jbutton.button == 6)
+      else if (event_.jbutton.button == 6)
       {
         Menu::pop_current();
       }
@@ -845,7 +845,7 @@ void Menu::event(SDL_Event& event)
 
     case SDL_MOUSEBUTTONDOWN:
       // If the ignore flag is set, this is a spurious click.
-      // Reset the flag and ignore the event.
+      // Reset the flag and ignore the event_.
       if (ignore_mouse_click)
       {
         ignore_mouse_click = false;
@@ -853,17 +853,17 @@ void Menu::event(SDL_Event& event)
       }
 
       // Process LEFT mouse clicks for selection.
-      if (event.button.button == SDL_BUTTON_LEFT)
+      if (event_.button.button == SDL_BUTTON_LEFT)
       {
-        x = event.button.x;
-        y = event.button.y;
+        x = event_.button.x;
+        y = event_.button.y;
         if (x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
         {
           menuaction = MENU_ACTION_HIT;
         }
       }
       // Process RIGHT mouse clicks for going back.
-      else if (event.button.button == SDL_BUTTON_RIGHT)
+      else if (event_.button.button == SDL_BUTTON_RIGHT)
       {
         // On the main menu or top-level pause menus, this does nothing.
         if (this != main_menu && this != game_menu && this != worldmap_menu)
@@ -874,8 +874,8 @@ void Menu::event(SDL_Event& event)
       break;
 
     case SDL_MOUSEMOTION:
-      x = event.motion.x;
-      y = event.motion.y;
+      x = event_.motion.x;
+      y = event_.motion.y;
       if (!item.empty() && x > pos_x - get_width() / 2 && x < pos_x + get_width() / 2 && y > pos_y - get_height() / 2 && y < pos_y + get_height() / 2)
       {
         active_item = (y - (pos_y - get_height() / 2)) / 24;
