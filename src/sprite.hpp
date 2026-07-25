@@ -53,7 +53,7 @@ class Sprite
 
   int get_current_frame() const;  // Gets the current frame index
 
-  std::string get_name() const { return name; }  // Gets the name of the sprite
+  const std::string& get_name() const { return name; }  // Gets the name of the sprite
 
   int get_width() const;          // Gets the width of the current frame
   int get_height() const;         // Gets the height of the current frame
