@@ -71,7 +71,7 @@ following dependencies:
 
 **Build Tools (Required):**
 ```
-devkitPPC (C++20 compatible compiler)
+devkitPPC (C++23 compatible compiler)
 wii-cmake
 wii-pkg-config
 ```
@@ -176,8 +176,8 @@ support, append the following flag to your `cmake` command: `-DENABLE_OPENGL=OFF
 
    **Build Tools:**
    ```
-   C++20 Compiler (GCC 10+ or Clang 10+)
-   CMake
+   C++23 Compiler (GCC 11.1+ or Clang 13+)
+   CMake 3.20+
    ```
 
    **SDL 2 Framework:**

@@ -9,7 +9,8 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-cmake_minimum_required(VERSION 3.13)
+# Must be at least the release that accepts the CMAKE_CXX_STANDARD set below
+cmake_minimum_required(VERSION 3.20)
 
 # Prevent in-source builds
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
@@ -38,10 +39,21 @@ else()
   message(WARNING "Strip tool not found. Release binaries will not be stripped.")
 endif()
 
-# Enforce C++20
-set(CMAKE_CXX_STANDARD 20)
+# Enforce C++23
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Minimum compiler versions for the standard selected above
+# taken from CMake's own Compiler/GNU.cmake and Compiler/Clang.cmake
+set(MIN_GCC_VERSION 11.1)
+set(MIN_CLANG_VERSION 13.0)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_GCC_VERSION})
+  message(FATAL_ERROR "GCC ${CMAKE_CXX_COMPILER_VERSION} is too old for C++${CMAKE_CXX_STANDARD}. GCC ${MIN_GCC_VERSION} or newer is required.")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CLANG_VERSION})
+  message(FATAL_ERROR "Clang ${CMAKE_CXX_COMPILER_VERSION} is too old for C++${CMAKE_CXX_STANDARD}. Clang ${MIN_CLANG_VERSION} or newer is required.")
+endif()
 
 # Detect Wii build
 if(CMAKE_SYSTEM_NAME STREQUAL "NintendoWii")
