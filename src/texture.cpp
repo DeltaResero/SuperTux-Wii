@@ -357,16 +357,16 @@ void Surface::draw_bg(Uint8 alpha, bool update)
  * @param sy The source y-coordinate.
  * @param x The destination x-coordinate.
  * @param y The destination y-coordinate.
- * @param w The width of the portion.
- * @param h The height of the portion.
+ * @param w_ The width of the portion.
+ * @param h_ The height of the portion.
  * @param alpha The alpha transparency.
  * @param update Whether to update the screen after drawing.
  */
-void Surface::draw_part(float sx, float sy, float x, float y, float w, float h, Uint8 alpha, bool update)
+void Surface::draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update)
 {
   if (impl)
   {
-    if (impl->draw_part(sx, sy, x, y, w, h, alpha, update) == -2)
+    if (impl->draw_part(sx, sy, x, y, w_, h_, alpha, update) == -2)
     {
       reload();
     }
@@ -377,16 +377,16 @@ void Surface::draw_part(float sx, float sy, float x, float y, float w, float h, 
  * Draws the surface stretched to the specified width and height.
  * @param x The x-coordinate.
  * @param y The y-coordinate.
- * @param w The width to stretch to.
- * @param h The height to stretch to.
+ * @param w_ The width to stretch to.
+ * @param h_ The height to stretch to.
  * @param alpha The alpha transparency.
  * @param update Whether to update the screen after drawing.
  */
-void Surface::draw_stretched(float x, float y, int w, int h, Uint8 alpha, bool update)
+void Surface::draw_stretched(float x, float y, int w_, int h_, Uint8 alpha, bool update)
 {
   if (impl)
   {
-    if (impl->draw_stretched(x, y, w, h, alpha, update) == -2)
+    if (impl->draw_stretched(x, y, w_, h_, alpha, update) == -2)
     {
       reload();
     }

@@ -291,10 +291,10 @@ void Tux::deleteSprites()
 
 /**
  * Draws Tux at the given offset.
- * @param offset The point used to offset the drawing.
+ * @param offset_ The point used to offset the drawing.
  * @param batcher Optional RenderBatcher for OpenGL rendering.
  */
-void Tux::draw(const Point& offset, RenderBatcher* batcher)
+void Tux::draw(const Point& offset_, RenderBatcher* batcher)
 {
   Point pos = get_pos();
   Surface* sprite_to_draw = nullptr;
@@ -317,12 +317,12 @@ void Tux::draw(const Point& offset, RenderBatcher* batcher)
     if (batcher)
     {
       // Add to batcher if available. Hotspots are 0, 0.
-      batcher->add(sprite_to_draw, pos.x + offset.x, pos.y + offset.y - 10, 0, 0);
+      batcher->add(sprite_to_draw, pos.x + offset_.x, pos.y + offset_.y - 10, 0, 0);
     }
     else
     {
       // Fallback to immediate draw
-      sprite_to_draw->draw(pos.x + offset.x, pos.y + offset.y - 10);
+      sprite_to_draw->draw(pos.x + offset_.x, pos.y + offset_.y - 10);
     }
   }
 }
@@ -1285,9 +1285,9 @@ int WorldMap::get_display_tile_id(int x, int y) const
 
 /**
  * Draws the world map at the specified offset.
- * @param offset The point used to offset drawing on the screen.
+ * @param offset_ The point used to offset drawing on the screen.
  */
-void WorldMap::draw(const Point& offset)
+void WorldMap::draw(const Point& offset_)
 {
   // Clear the screen to prevent ghosting (essential for OpenGL)
 #ifndef NOOPENGL
@@ -1303,8 +1303,8 @@ void WorldMap::draw(const Point& offset)
   }
 
   // Determine the range of tiles visible on the screen
-  int x_start = -offset.x / TILE_SIZE;
-  int y_start = -offset.y / TILE_SIZE;
+  int x_start = -offset_.x / TILE_SIZE;
+  int y_start = -offset_.y / TILE_SIZE;
   int x_end = x_start + (screen->w / TILE_SIZE) + 2;
   int y_end = y_start + (screen->h / TILE_SIZE) + 2;
 
@@ -1328,11 +1328,11 @@ void WorldMap::draw(const Point& offset)
       if (batcher)
       {
         // Add to batcher. Hotspots are 0, 0.
-        batcher->add(tile->sprite.get(), x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y, 0, 0);
+        batcher->add(tile->sprite.get(), x * TILE_SIZE + offset_.x, y * TILE_SIZE + offset_.y, 0, 0);
       }
       else
       {
-        tile->sprite->draw(x * TILE_SIZE + offset.x, y * TILE_SIZE + offset.y);
+        tile->sprite->draw(x * TILE_SIZE + offset_.x, y * TILE_SIZE + offset_.y);
       }
     }
   }
@@ -1365,17 +1365,17 @@ void WorldMap::draw(const Point& offset)
         if (batcher)
         {
           // Add to batcher. Hotspots are 0, 0.
-          batcher->add(dot_sprite, i->x * TILE_SIZE + offset.x, i->y * TILE_SIZE + offset.y, 0, 0);
+          batcher->add(dot_sprite, i->x * TILE_SIZE + offset_.x, i->y * TILE_SIZE + offset_.y, 0, 0);
         }
         else
         {
-          dot_sprite->draw(i->x * TILE_SIZE + offset.x, i->y * TILE_SIZE + offset.y);
+          dot_sprite->draw(i->x * TILE_SIZE + offset_.x, i->y * TILE_SIZE + offset_.y);
         }
       }
     }
   }
 
-  tux->draw(offset, batcher);
+  tux->draw(offset_, batcher);
 
   // Flush all batches at once for max efficiency
 #ifndef NOOPENGL
@@ -1670,16 +1670,16 @@ void WorldMap::loadgame(std::string_view filename)
 
       if (strcmp(lisp_symbol(sym), "level") == 0)
       {
-        std::string name;
+        std::string level_name;
         bool solved = false;
 
         LispReader level_reader(data);
-        level_reader.read_string("name", &name);
+        level_reader.read_string("name", &level_name);
         level_reader.read_bool("solved", &solved);
 
         for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
         {
-          if (name == i->name)
+          if (level_name == i->name)
           {
             i->solved = solved;
           }

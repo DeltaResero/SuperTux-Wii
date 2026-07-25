@@ -205,26 +205,26 @@ void MenuItem::change_input(const std::string& text_)
 /**
  * Converts the integer key code from a control field into a human-readable string
  * This is used to display the name of the currently bound key (e.g., "Up cursor", "Space")
- * @param item A pointer to the MN_CONTROLFIELD item to process
+ * @param item_ A pointer to the MN_CONTROLFIELD item to process
  */
-void Menu::get_controlfield_key_into_input(MenuItem* item)
+void Menu::get_controlfield_key_into_input(MenuItem* item_)
 {
-  switch (*item->int_p)
+  switch (*item_->int_p)
   {
-    case SDLK_UP:       item->change_input("Up cursor"); break;
-    case SDLK_DOWN:     item->change_input("Down cursor"); break;
-    case SDLK_LEFT:     item->change_input("Left cursor"); break;
-    case SDLK_RIGHT:    item->change_input("Right cursor"); break;
-    case SDLK_RETURN:   item->change_input("Return"); break;
-    case SDLK_SPACE:    item->change_input("Space"); break;
-    case SDLK_RSHIFT:   item->change_input("Right Shift"); break;
-    case SDLK_LSHIFT:   item->change_input("Left Shift"); break;
-    case SDLK_RCTRL:    item->change_input("Right Control"); break;
-    case SDLK_LCTRL:    item->change_input("Left Control"); break;
-    case SDLK_RALT:     item->change_input("Right Alt"); break;
-    case SDLK_LALT:     item->change_input("Left Alt"); break;
+    case SDLK_UP:       item_->change_input("Up cursor"); break;
+    case SDLK_DOWN:     item_->change_input("Down cursor"); break;
+    case SDLK_LEFT:     item_->change_input("Left cursor"); break;
+    case SDLK_RIGHT:    item_->change_input("Right cursor"); break;
+    case SDLK_RETURN:   item_->change_input("Return"); break;
+    case SDLK_SPACE:    item_->change_input("Space"); break;
+    case SDLK_RSHIFT:   item_->change_input("Right Shift"); break;
+    case SDLK_LSHIFT:   item_->change_input("Left Shift"); break;
+    case SDLK_RCTRL:    item_->change_input("Right Control"); break;
+    case SDLK_LCTRL:    item_->change_input("Left Control"); break;
+    case SDLK_RALT:     item_->change_input("Right Alt"); break;
+    case SDLK_LALT:     item_->change_input("Left Alt"); break;
     default:
-      item->change_input(std::to_string(*item->int_p));
+      item_->change_input(std::to_string(*item_->int_p));
       break;
   }
 }

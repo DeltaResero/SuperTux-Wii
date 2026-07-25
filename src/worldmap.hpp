@@ -133,7 +133,7 @@ public:
   void loadSprites();
   void deleteSprites();
 
-  void draw(const Point& offset, RenderBatcher* batcher);
+  void draw(const Point& offset_, RenderBatcher* batcher);
   void update(float delta);
 
   void set_direction(Direction d)
@@ -230,7 +230,7 @@ public:
   void update(float delta);
 
   /** Draw one frame */
-  void draw(const Point& offset);
+  void draw(const Point& offset_);
 
   Point get_next_tile(Point pos, Direction direction);
   Tile* at(Point pos);
