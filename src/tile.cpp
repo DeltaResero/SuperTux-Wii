@@ -153,11 +153,11 @@ void TileManager::load_tileset(const std::string& filename)
         // Load images and associate them with the tile
         tile->images.reserve(tile->filenames.size());
 
-        for (const std::string& filename : tile->filenames)
+        for (const std::string& image_filename : tile->filenames)
         {
           Surface* cur_image = nullptr;
           tile->images.push_back(cur_image);
-          tile->images.back() = new Surface(base_path + filename, true);
+          tile->images.back() = new Surface(base_path + image_filename, true);
         }
 
         // Ensure the tiles vector is large enough
@@ -172,10 +172,10 @@ void TileManager::load_tileset(const std::string& filename)
       {
         // Load a nested tileset file
         LispReader reader(lisp_cdr(element));
-        std::string filename;
-        reader.read_string("file", &filename);
-        filename = datadir + "/images/tilesets/" + filename;
-        load_tileset(filename);
+        std::string nested_filename;
+        reader.read_string("file", &nested_filename);
+        nested_filename = datadir + "/images/tilesets/" + nested_filename;
+        load_tileset(nested_filename);
       }
       else if (strcmp(lisp_symbol(lisp_car(element)), "tilegroup") == 0)
       {
