@@ -392,14 +392,6 @@ namespace
           size_t pos = stream->v.string.pos++;
           return static_cast<unsigned char>(stream->v.string.buf[pos]);
         }
-        case LISP_STREAM_ANY:
-        {
-          if (!stream->v.any.next_char || !stream->v.any.data)
-          {
-            return EOF;
-          }
-          return stream->v.any.next_char(stream->v.any.data);
-        }
       }
       return EOF;
     }
@@ -430,14 +422,6 @@ namespace
           if (stream->v.string.pos > 0)
           {
             --stream->v.string.pos;
-          }
-          break;
-        }
-        case LISP_STREAM_ANY:
-        {
-          if (stream->v.any.unget_char)
-          {
-            stream->v.any.unget_char(c, stream->v.any.data);
           }
           break;
         }
@@ -1319,30 +1303,6 @@ lisp_stream_t* lisp_stream_init_string(lisp_stream_t* stream, const char* buf)
 }
 
 /**
- * Initialize a lisp stream from custom callbacks
- * @param stream The stream structure to initialize
- * @param data User data pointer passed to callbacks
- * @param next_char Callback to read next character
- * @param unget_char Callback to unread a character
- * @return The initialized stream, or nullptr on error
- */
-lisp_stream_t* lisp_stream_init_any(lisp_stream_t* stream, void* data,
-                                    int (*next_char) (void* data),
-                                    void (*unget_char) (char c, void* data))
-{
-  if (!stream || !next_char || !unget_char || !data)
-  {
-    return nullptr;
-  }
-
-  stream->type = LISP_STREAM_ANY;
-  stream->v.any.data = data;
-  stream->v.any.next_char = next_char;
-  stream->v.any.unget_char = unget_char;
-  return stream;
-}
-
-/**
  * Create a lisp integer object
  * @param value The integer value
  * @return Pointer to the new object
@@ -1772,115 +1732,6 @@ lisp_object_t* lisp_cdr(lisp_object_t* obj)
 }
 
 /**
- * Perform a series of car/cdr operations
- * The string x specifies the operations: 'a' for car, 'd' for cdr.
- * For example, "ad" means (car (cdr obj)).
- * @param obj The starting object
- * @param x String of 'a' and 'd' characters
- * @return The result of the operations, or nullptr on error
- */
-lisp_object_t* lisp_cxr(lisp_object_t* obj, const char* x)
-{
-  if (x == nullptr)
-  {
-    return nullptr;
-  }
-  const size_t len = strnlen(x, 64);
-  if (len > 64)
-  {
-    return nullptr;
-  }
-
-  for (size_t i = len; i-- > 0; )
-  {
-    if (obj == nullptr)
-    {
-      return nullptr;
-    }
-    if (x[i] == 'a')
-    {
-      obj = lisp_car(obj);
-    }
-    else if (x[i] == 'd')
-    {
-      obj = lisp_cdr(obj);
-    }
-    else
-    {
-      return nullptr;
-    }
-  }
-  return obj;
-}
-
-/**
- * Get the length of a list
- * @param obj The list object
- * @return The number of elements in the list
- */
-int lisp_list_length(lisp_object_t* obj)
-{
-  int length = 0;
-  int max_iterations = 100000;
-
-  while (obj != nullptr && length < max_iterations)
-  {
-    if (obj->type != LISP_TYPE_CONS && obj->type != LISP_TYPE_PATTERN_CONS)
-    {
-      break;
-    }
-    ++length;
-    obj = obj->v.cons.cdr;
-  }
-  return length;
-}
-
-/**
- * Get the nth cdr of a list
- * @param obj The list object
- * @param index The index (0-based)
- * @return The list starting at index, or nullptr if index out of bounds
- */
-lisp_object_t* lisp_list_nth_cdr(lisp_object_t* obj, int index)
-{
-  if (index < 0 || index > 10000)
-  {
-    return nullptr;
-  }
-
-  while (index > 0)
-  {
-    if (obj == nullptr)
-    {
-      return nullptr;
-    }
-    if (obj->type != LISP_TYPE_CONS && obj->type != LISP_TYPE_PATTERN_CONS)
-    {
-      return nullptr;
-    }
-    --index;
-    obj = obj->v.cons.cdr;
-  }
-  return obj;
-}
-
-/**
- * Get the nth element of a list
- * @param obj The list object
- * @param index The index (0-based)
- * @return The element at index, or nullptr if index out of bounds
- */
-lisp_object_t* lisp_list_nth(lisp_object_t* obj, int index)
-{
-  obj = lisp_list_nth_cdr(obj, index);
-  if (obj == nullptr)
-  {
-    return nullptr;
-  }
-  return obj->v.cons.car;
-}
-
-/**
  * Find a value in an association list by key
  * Searches for a cons cell whose car is a symbol matching the key.
  * @param list The association list
@@ -1921,100 +1772,6 @@ lisp_object_t* lisp_find_value(lisp_object_t* list, const char* key)
   }
 
   return nullptr;
-}
-
-/**
- * Dump a lisp object to a file stream for debugging
- * @param obj The object to dump
- * @param out The output file stream
- */
-void lisp_dump(lisp_object_t* obj, FILE* out)
-{
-  if (!out)
-  {
-    return;
-  }
-
-  if (obj == nullptr)
-  {
-    fprintf(out, "()");
-    return;
-  }
-
-  switch (lisp_type(obj))
-  {
-    case LISP_TYPE_EOF:
-      fputs("#<eof>", out);
-      break;
-    case LISP_TYPE_PARSE_ERROR:
-      fputs("#<error>", out);
-      break;
-    case LISP_TYPE_INTEGER:
-      fprintf(out, "%d", lisp_integer(obj));
-      break;
-    case LISP_TYPE_REAL:
-      fprintf(out, "%f", lisp_real(obj));
-      break;
-    case LISP_TYPE_SYMBOL:
-    {
-      char* sym = lisp_symbol(obj);
-      if (sym)
-      {
-        fputs(sym, out);
-      }
-      break;
-    }
-    case LISP_TYPE_STRING:
-    {
-      fputc('"', out);
-      char* str = lisp_string(obj);
-      if (str)
-      {
-        for (char* p = str; *p != 0; ++p)
-        {
-          if (*p == '"' || *p == '\\')
-          {
-            fputc('\\', out);
-          }
-          fputc(*p, out);
-        }
-      }
-      fputc('"', out);
-      break;
-    }
-    case LISP_TYPE_CONS:
-    case LISP_TYPE_PATTERN_CONS:
-    {
-      fputs(lisp_type(obj) == LISP_TYPE_CONS ? "(" : "#?(", out);
-      int depth = 0;
-      while (obj != nullptr)
-      {
-        if (depth++ >= 1000)
-        {
-          break;
-        }
-        lisp_dump(lisp_car(obj), out);
-        obj = lisp_cdr(obj);
-        if (obj != nullptr)
-        {
-          if (lisp_type(obj) != LISP_TYPE_CONS && lisp_type(obj) != LISP_TYPE_PATTERN_CONS)
-          {
-            fputs(" . ", out);
-            lisp_dump(obj, out);
-            break;
-          }
-          fputc(' ', out);
-        }
-      }
-      fputc(')', out);
-      break;
-    }
-    case LISP_TYPE_BOOLEAN:
-      fputs(lisp_boolean(obj) ? "#t" : "#f", out);
-      break;
-    default:
-      break;
-  }
 }
 
 // ============================================================================

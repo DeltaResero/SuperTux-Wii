@@ -20,10 +20,9 @@
 #include <vector>
 #include <unordered_map>
 
-// Stream types for handling file, string, and custom streams
+// Stream types for handling file and string streams
 inline constexpr int LISP_STREAM_FILE       = 1;
 inline constexpr int LISP_STREAM_STRING     = 2;
-inline constexpr int LISP_STREAM_ANY        = 3;
 
 // Lisp object types
 inline constexpr int LISP_TYPE_INTERNAL      = -3;
@@ -63,13 +62,6 @@ typedef struct
       size_t pos;
       size_t len;
     } string;
-
-    struct
-    {
-      void *data;
-      int (*next_char) (void *data);
-      void (*unget_char) (char c, void *data);
-    } any;
   } v;
 }
 lisp_stream_t;
@@ -104,9 +96,6 @@ struct _lisp_object_t
 // Stream initialization functions
 lisp_stream_t* lisp_stream_init_file(lisp_stream_t *stream, FILE *file);
 lisp_stream_t* lisp_stream_init_string(lisp_stream_t *stream, const char *buf);
-lisp_stream_t* lisp_stream_init_any(lisp_stream_t *stream, void *data,
-                                    int (*next_char) (void *data),
-                                    void (*unget_char) (char c, void *data));
 
 // Lisp object manipulation functions
 lisp_object_t* lisp_read(lisp_stream_t *in);
@@ -130,8 +119,6 @@ int lisp_boolean(lisp_object_t *obj);
 lisp_object_t* lisp_car(lisp_object_t *obj);
 lisp_object_t* lisp_cdr(lisp_object_t *obj);
 
-// Utility function for accessing parts of a cons list based on a string of 'a' and 'd'
-lisp_object_t* lisp_cxr(lisp_object_t *obj, const char *x);
 // Utility function to find the value associated with a symbol in a list (ideal for small lists)
 lisp_object_t* lisp_find_value(lisp_object_t* list, const char* key);
 
@@ -142,14 +129,6 @@ lisp_object_t* lisp_make_symbol(const char *value);
 lisp_object_t* lisp_make_string(const char *value);
 lisp_object_t* lisp_make_cons(lisp_object_t *car, lisp_object_t *cdr);
 lisp_object_t* lisp_make_boolean(int value);
-
-// List-related functions
-int lisp_list_length(lisp_object_t *obj);
-lisp_object_t* lisp_list_nth_cdr(lisp_object_t *obj, int index);
-lisp_object_t* lisp_list_nth(lisp_object_t *obj, int index);
-
-// Dumps a Lisp object to a file
-void lisp_dump(lisp_object_t *obj, FILE *out);
 
 // Macros for checking and accessing Lisp object types
 #define lisp_nil()           ((lisp_object_t*)0)
