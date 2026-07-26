@@ -242,7 +242,7 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
 
           float tile_world_x = map_tile_x * (float)TILE_SIZE;
           unsigned int tile_id = tile_data[y * current_width + map_tile_x];
-          Tile::draw(batcher, tile_world_x - scroll_x, y * (float)TILE_SIZE, tile_id);
+          Tile::draw(batcher, tile_world_x, y * (float)TILE_SIZE, tile_id);
         }
       }
     }
@@ -260,7 +260,7 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
         {
           float tile_world_x = map_tile_x * (float)TILE_SIZE;
           unsigned int tile_id = tile_data[y * current_width + map_tile_x];
-          Tile::draw(batcher, tile_world_x - scroll_x, y * (float)TILE_SIZE, tile_id);
+          Tile::draw(batcher, tile_world_x, y * (float)TILE_SIZE, tile_id);
         }
       }
     }

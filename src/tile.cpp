@@ -242,7 +242,8 @@ void TileManager::update_animations(unsigned int frame_counter)
 
 /**
  * Draws a tile at a specific position.
- * @param x The x-coordinate for drawing.
+ * @param x The x-coordinate in the level, measured from the level's left edge.
+ *          Scrolling is applied here, so the caller must not subtract scroll_x.
  * @param y The y-coordinate for drawing.
  * @param c The tile code.
  * @param alpha The alpha transparency value.
@@ -266,14 +267,11 @@ void Tile::draw(RenderBatcher* batcher, float x, float y, unsigned int c, Uint8 
 
   if (batcher)
   {
-      // RenderBatcher expects World Coordinates (it subtracts scroll_x internally)
-      // Tile::draw receives Screen Coordinates (scroll_x already subtracted)
-      // We must add scroll_x back to convert Screen -> World for the batcher
-      batcher->add(ptile->images[frame_index], x + scroll_x, y);
+      batcher->add(ptile->images[frame_index], x, y);
   }
   else
   {
-      ptile->images[frame_index]->draw(x, y, alpha);
+      ptile->images[frame_index]->draw(x - scroll_x, y, alpha);
   }
 }
 

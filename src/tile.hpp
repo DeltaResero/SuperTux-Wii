@@ -75,7 +75,8 @@ public:
 
   int anim_speed;
 
-  /** Draw a tile on the screen: */
+  /** Draw a tile on the screen. The position is where the tile sits in the
+      level, so callers pass it straight through without subtracting scroll_x. */
   static void draw(RenderBatcher* batcher, float x, float y, unsigned int c, Uint8 alpha = 255);
   static void draw_stretched(float x, float y, int w, int h, unsigned int c, Uint8 alpha = 255);
 };
