@@ -374,44 +374,6 @@ void Surface::draw_part(float sx, float sy, float x, float y, float w_, float h_
 }
 
 /**
- * Draws the surface stretched to the specified width and height.
- * @param x The x-coordinate.
- * @param y The y-coordinate.
- * @param w_ The width to stretch to.
- * @param h_ The height to stretch to.
- * @param alpha The alpha transparency.
- * @param update Whether to update the screen after drawing.
- */
-void Surface::draw_stretched(float x, float y, int w_, int h_, Uint8 alpha, bool update)
-{
-  if (impl)
-  {
-    if (impl->draw_stretched(x, y, w_, h_, alpha, update) == -2)
-    {
-      reload();
-    }
-  }
-}
-
-/**
- * Resizes the surface to the specified width and height.
- * @param w_ The new width.
- * @param h_ The new height.
- */
-void Surface::resize(int w_, int h_)
-{
-  if (impl)
-  {
-    w = w_;
-    h = h_;
-    if (impl->resize(w_, h_) == -2)
-    {
-      reload();
-    }
-  }
-}
-
-/**
  * Loads a portion of an image file into an SDL_Surface.
  * @param file The path to the image file.
  * @param x The x-coordinate of the part to load.
@@ -539,25 +501,6 @@ SurfaceImpl::~SurfaceImpl()
 SDL_Surface* SurfaceImpl::get_sdl_surface() const
 {
   return sdl_surface;
-}
-
-/**
- * Resizes the surface to the specified width and height.
- * @param w_ The new width.
- * @param h_ The new height.
- * @return 0 on success, or -2 if the surface needs to be reloaded.
- */
-int SurfaceImpl::resize(int w_, int h_)
-{
-  w = w_;
-  h = h_;
-  SDL_Rect dest;
-  dest.x = 0;
-  dest.y = 0;
-  dest.w = w;
-  dest.h = h;
-  int ret = SDL_SoftStretch(sdl_surface, NULL, sdl_surface, &dest);
-  return ret;
 }
 
 #ifndef NOOPENGL
@@ -835,7 +778,6 @@ void SurfaceOpenGL::setup_gl_state(Uint8 alpha)
 
 /**
  * Helper function to render a textured quad with OpenGL.
- * This eliminates code duplication between draw() and draw_stretched().
  * @param x The x-coordinate.
  * @param y The y-coordinate.
  * @param width The width of the quad to render.
@@ -990,26 +932,6 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w_, flo
   return 0;
 }
 
-/**
- * Draws the OpenGL surface stretched to the specified width and height.
- * @param x The x-coordinate.
- * @param y The y-coordinate.
- * @param sw The width to stretch to.
- * @param sh The height to stretch to.
- * @param alpha The alpha transparency.
- * @param update Whether to update the screen after drawing.
- * @return 0 on success, or -2 if the surface needs to be reloaded.
- */
-int SurfaceOpenGL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update)
-{
-  setup_gl_state(alpha);
-  render_textured_quad(x, y, static_cast<float>(sw), static_cast<float>(sh),
-                       static_cast<float>(this->w), static_cast<float>(this->h),
-                       tex_w_allocated, tex_h_allocated);
-
-  (void)update;
-  return 0;
-}
 #endif
 
 // ----------------------------------------------------------------------------
@@ -1155,33 +1077,6 @@ int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w_, float 
 
   SDL_SetTextureAlphaMod(texture, alpha);
   SDL_RenderCopy(renderer, texture, &src, &dst);
-
-  if (update == UPDATE)
-    SDL_RenderPresent(renderer);
-
-  return 0;
-}
-
-/**
- * Draws the SDL surface stretched to the specified width and height.
- * @param x The x-coordinate.
- * @param y The y-coordinate.
- * @param sw The width to stretch to.
- * @param sh The height to stretch to.
- * @param alpha The alpha transparency.
- * @param update Whether to update the screen after drawing.
- * @return 0 on success, or -2 if the surface needs to be reloaded.
- */
-int SurfaceSDL::draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update)
-{
-  SDL_Rect dst;
-  dst.x = (int)x;
-  dst.y = (int)y;
-  dst.w = sw;
-  dst.h = sh;
-
-  SDL_SetTextureAlphaMod(texture, alpha);
-  SDL_RenderCopy(renderer, texture, NULL, &dst);
 
   if (update == UPDATE)
     SDL_RenderPresent(renderer);

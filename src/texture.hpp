@@ -95,8 +95,6 @@ public:
   void draw(float x, float y, Uint8 alpha = 255, bool update = false);
   void draw_bg(Uint8 alpha = 255, bool update = false);
   void draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha = 255, bool update = false);
-  void draw_stretched(float x, float y, int w_, int h_, Uint8 alpha, bool update = false);
-  void resize(int w_, int h_);
 
   static void reload_all();
   static void debug_check();
@@ -121,8 +119,6 @@ public:
   virtual int draw(float x, float y, Uint8 alpha, bool update) = 0;
   virtual int draw_bg(Uint8 alpha, bool update) = 0;
   virtual int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) = 0;
-  virtual int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) = 0;
-  int resize(int w_, int h_);
   SDL_Surface* get_sdl_surface() const;  // Avoid usage whenever possible
 
 #ifndef NOOPENGL
@@ -156,7 +152,6 @@ public:
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
   int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) override;
-  int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 
   SurfaceOpenGL* as_opengl() override { return this; }
 
@@ -185,7 +180,6 @@ public:
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
   int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) override;
-  int draw_stretched(float x, float y, int sw, int sh, Uint8 alpha, bool update) override;
 };
 
 #endif /*SUPERTUX_TEXTURE_H*/

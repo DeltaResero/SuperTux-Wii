@@ -275,32 +275,4 @@ void Tile::draw(RenderBatcher* batcher, float x, float y, unsigned int c, Uint8 
   }
 }
 
-/**
- * Draws a tile stretched to a specific size.
- * @param x The x-coordinate for drawing.
- * @param y The y-coordinate for drawing.
- * @param w The width of the drawn tile.
- * @param h The height of the drawn tile.
- * @param c The tile code.
- * @param alpha The alpha transparency value.
- */
-void Tile::draw_stretched(float x, float y, int w, int h, unsigned int c, Uint8 alpha)
-{
-  if (c == 0)
-  {
-    return;
-  }
-
-  Tile* ptile = TileManager::instance()->get(c);
-
-  if (!ptile || ptile->images.empty())
-  {
-    return;
-  }
-
-  // Use pre-calculated index
-  int frame_index = ptile->current_frame_index;
-  ptile->images[frame_index]->draw_stretched(x, y, w, h, alpha);
-}
-
 // EOF
