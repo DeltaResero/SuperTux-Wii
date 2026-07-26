@@ -576,63 +576,6 @@ void Level::load_gfx()
 }
 
 /**
- * Loads a level-specific image.
- * @param ptexture Pointer to the Surface object to store the loaded image.
- * @param theme The theme name to load the image from.
- * @param file The filename of the image to load.
- * @param use_alpha Whether to use alpha channel for the image.
- */
-void Level::load_image(Surface** ptexture, const string& theme, const char* file, bool use_alpha)
-{
-  fs::path fname = fs::path(st_dir) / "themes" / theme / file;
-  if (!faccessible(fname.string().c_str()))
-  {
-    fname = fs::path(datadir) / "images/themes" / theme / file;
-  }
-
-  *ptexture = new Surface(fname.string().c_str(), use_alpha);
-}
-
-/**
- * Changes the size (width) of the level.
- * @param new_width The new width of the level
- * Resizes all tile layers to the new width, ensuring a minimum width of 21.
- */
-void Level::change_size(int new_width)
-{
-  if (new_width < MIN_LEVEL_WIDTH)
-  {
-    new_width = MIN_LEVEL_WIDTH;
-  }
-  if (new_width == width)
-  {
-    return;
-  }
-
-  std::vector<unsigned int> new_ia_tiles(new_width * SCREEN_HEIGHT_TILES, 0);
-  std::vector<unsigned int> new_bg_tiles(new_width * SCREEN_HEIGHT_TILES, 0);
-  std::vector<unsigned int> new_fg_tiles(new_width * SCREEN_HEIGHT_TILES, 0);
-
-  int min_width = (new_width < width) ? new_width : width;
-
-  for (int y = 0; y < SCREEN_HEIGHT_TILES; ++y)
-  {
-    for (int x = 0; x < min_width; ++x)
-    {
-      new_ia_tiles[y * new_width + x] = ia_tiles[y * width + x];
-      new_bg_tiles[y * new_width + x] = bg_tiles[y * width + x];
-      new_fg_tiles[y * new_width + x] = fg_tiles[y * width + x];
-    }
-  }
-
-  ia_tiles.swap(new_ia_tiles);
-  bg_tiles.swap(new_bg_tiles);
-  fg_tiles.swap(new_fg_tiles);
-
-  width = new_width;
-}
-
-/**
  * Changes a specific tile in the level.
  * @param x The x-coordinate of the tile to change.
  * @param y The y-coordinate of the tile to change.
@@ -682,16 +625,6 @@ void Level::load_song()
   {
     level_song_fast = music_manager->load_music(song_path);
   }
-}
-
-/**
- * Frees the level's music resources.
- * Sets the current level music to the end level music.
- */
-void Level::free_song()
-{
-  level_song = level_end_song;
-  level_song_fast = level_end_song;
 }
 
 /**

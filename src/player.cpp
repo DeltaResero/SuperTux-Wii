@@ -762,15 +762,6 @@ void Player::kill(HurtMode mode)
 }
 
 /**
- * Resets the player's dying state.
- */
-void Player::is_dying()
-{
-  player_remove_powerups();
-  dying = DYING_NOT;
-}
-
-/**
  * Checks if the player is considered dead (e.g., fallen off-screen).
  * @return True if the player is dead, false otherwise.
  */
@@ -784,16 +775,6 @@ bool Player::is_dead() const
   {
     return false;
   }
-}
-
-/**
- * Removes all of Tux's power-ups.
- */
-void Player::player_remove_powerups()
-{
-  got_coffee = false;
-  size = SMALL;
-  base.height = TILE_SIZE;
 }
 
 /**

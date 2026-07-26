@@ -37,15 +37,12 @@ public:
 
   int state() const; // Returns the current state of the cursor
   void set_state(int nstate); // Sets the cursor's state
-  void set_mid(int x, int y); // Sets the midpoint of the cursor
   void draw(); // Draws the cursor on the screen
 
   static MouseCursor* current() { return current_; };
   static void set_current(MouseCursor* pcursor) { current_ = pcursor; };
 
 private:
-  int mid_x;
-  int mid_y;
   static MouseCursor* current_;
   int state_before_click;
   int cur_state;

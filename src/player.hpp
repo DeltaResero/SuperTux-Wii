@@ -148,9 +148,7 @@ public:
   void draw(RenderBatcher* batcher);        // Draws the player sprite (unified for SDL/OpenGL)
   void collision(void* p_c_object, int c_object); // Handles collisions with other objects
   void kill(HurtMode mode);                 // Kills or shrinks the player
-  void is_dying();                          // Resets the player's dying state
   bool is_dead() const;                     // Checks if the player is considered dead (off-screen)
-  void player_remove_powerups();            // Removes all power-ups from the player
   void check_bounds(bool back_scrolling, bool hor_autoscroll); // Enforces level boundaries
   bool on_ground() const;                   // Checks if the player is on the ground
   bool under_solid() const;                 // Checks if the player is under a solid block

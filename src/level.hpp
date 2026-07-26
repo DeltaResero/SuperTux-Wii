@@ -105,11 +105,8 @@ public:
   void reload_bricks_and_coins();
   void cleanup();
   void load_gfx();
-  void load_image(Surface** ptexture, const std::string& theme, const char* file, bool use_alpha);
-  void change_size(int new_width);
   void change(float x, float y, int tm, unsigned int c);
   void load_song();
-  void free_song();
   MusicRef get_level_music() const;
   MusicRef get_level_music_fast() const;
   unsigned int gettileid(float x, float y) const;

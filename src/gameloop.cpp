@@ -979,26 +979,6 @@ void GameSession::drawstatus()
 }
 
 /**
- * Draws the result screen with the player's score and coins.
- */
-void GameSession::drawresultscreen()
-{
-  clearscreen(0, 0, 0); // Clear screen to prevent ghosting
-  get_level()->draw_bg();
-
-  blue_text->drawf("Result:", 0, 200, A_HMIDDLE, A_TOP, 1);
-
-  gold_text->drawf("SCORE: " + std::to_string(player_status.score), 0, 224, A_HMIDDLE, A_TOP, 1);
-
-  gold_text->drawf("COINS: " + std::to_string(player_status.distros), 0, 256, A_HMIDDLE, A_TOP, 1);
-
-  flipscreen();
-
-  SDL_Event event;
-  wait_for_event(event, 2000, 5000, true);
-}
-
-/**
  * Retrieves save slot information.
  * @param slot The save slot number.
  * @return A string with the slot information.

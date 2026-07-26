@@ -681,21 +681,6 @@ void WorldMap::load_map()
 }
 
 /**
- * Retrieves and sets the level's title from its file.
- * @param level The level whose title will be retrieved.
- */
-void WorldMap::get_level_title(Levels::pointer level)
-{
-  /** Get level's title */
-  level->title = "<no title>";
-
-  // Construct the full path to the level file.
-  std::string level_path = datadir + "/levels/" + level->name;
-
-  // Use the fast title reader instead of parsing the whole file.
-  level->title = ::Level::get_level_title_fast(level_path);
-}
-/**
  * Handles pressing the Escape key to show or hide the menu.
  */
 void WorldMap::on_escape_press()

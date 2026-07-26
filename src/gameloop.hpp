@@ -120,7 +120,6 @@ class GameSession
     void levelintro();
     void drawstatus();
     void drawendscreen();
-    void drawresultscreen(void);
 
   private:
     void on_escape_press();

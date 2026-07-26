@@ -22,7 +22,7 @@ MouseCursor* MouseCursor::current_ = nullptr;  // Initialize static member to nu
  * Loads the cursor image and initializes its state and position.
  */
 MouseCursor::MouseCursor(std::string cursor_file, int frames)
-  : mid_x(0), mid_y(0), state_before_click(MC_NORMAL), cur_state(MC_NORMAL),
+  : state_before_click(MC_NORMAL), cur_state(MC_NORMAL),
     cur_frame(0), tot_frames(frames), frame_w(0), frame_h(0)
 {
   cursor = new Surface(cursor_file, true);
@@ -78,18 +78,6 @@ void MouseCursor::set_state(int nstate)
 }
 
 /**
- * Sets the midpoint of the cursor.
- * @param x The x-coordinate of the cursor midpoint.
- * @param y The y-coordinate of the cursor midpoint.
- * This determines the cursor's anchor point on the screen.
- */
-void MouseCursor::set_mid(int x, int y)
-{
-  mid_x = x;
-  mid_y = y;
-}
-
-/**
  * Draws the cursor on the screen.
  * The cursor is drawn based on its current state and position.
  * The cursor's frame is updated periodically based on a timer.
@@ -133,7 +121,7 @@ void MouseCursor::draw()
   }
 
   // Draw the appropriate part of the cursor using the cached frame dimensions.
-  cursor->draw_part(frame_w * cur_frame, frame_h * cur_state, x - mid_x, y - mid_y, frame_w, frame_h);
+  cursor->draw_part(frame_w * cur_frame, frame_h * cur_state, x, y, frame_w, frame_h);
 }
 
 // EOF

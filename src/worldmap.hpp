@@ -286,7 +286,6 @@ private:
   // Refactored update logic
   void handleLevelCompletion(GameSession::ExitStatus result, bool coffee, bool big, Level* level);
 
-  void get_level_title(Levels::pointer level);
   void draw_status();
   void on_escape_press();
 

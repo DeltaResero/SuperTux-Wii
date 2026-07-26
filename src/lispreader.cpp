@@ -2082,8 +2082,8 @@ lisp_object_t* LispReader::search_for(const char* name)
 
 /**
  * Template helper for reading vector properties
- * This template eliminates code duplication between read_string_vector,
- * read_int_vector, and read_char_vector by abstracting the common logic.
+ * This template eliminates code duplication between read_string_vector
+ * and read_int_vector by abstracting the common logic.
  * @tparam T The vector element type
  * @tparam Predicate Function type for type checking
  * @tparam Getter Function type for value extraction
@@ -2223,23 +2223,6 @@ bool LispReader::read_string_vector(const char* name, std::vector<std::string>* 
 bool LispReader::read_int_vector(const char* name, std::vector<int>* vec)
 {
   return read_vector_impl(name, vec, [](lisp_object_t* obj){ return lisp_integer_p(obj); }, lisp_integer);
-}
-
-/**
- * Read a character vector property
- * @param name The property name
- * @param vec Output character vector pointer
- * @return true if property found and all elements are strings, false otherwise
- */
-bool LispReader::read_char_vector(const char* name, std::vector<char>* vec)
-{
-  // Lambda to extract first character from string
-  return read_vector_impl(name, vec, [](lisp_object_t* obj){ return lisp_string_p(obj); },
-    [](lisp_object_t* obj) -> char
-    {
-      char* str = lisp_string(obj);
-      return str ? *str : '\0';
-    });
 }
 
 /**
