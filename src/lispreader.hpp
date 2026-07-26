@@ -187,28 +187,6 @@ public:
   bool read_lisp(const char* name, lisp_object_t** b);
 };
 
-// LispWriter class for writing Lisp objects
-class LispWriter
-{
-private:
-  std::vector<lisp_object_t*> lisp_objs;
-
-  void append(lisp_object_t* obj);
-  lisp_object_t* make_list3(lisp_object_t*, lisp_object_t*, lisp_object_t*);
-  lisp_object_t* make_list2(lisp_object_t*, lisp_object_t*);
-public:
-  explicit LispWriter(const char* name);
-
-  void write_float(const char* name, float f);
-  void write_int(const char* name, int i);
-  void write_boolean(const char* name, bool b);
-  void write_string(const char* name, const char* str);
-  void write_symbol(const char* name, const char* symname);
-  void write_lisp_obj(const char* name, lisp_object_t* lst);
-
-  lisp_object_t* create_lisp();
-};
-
 #endif // __LISPREADER_H__
 
 // EOF
