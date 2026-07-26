@@ -673,28 +673,14 @@ void World::collision_handler()
   // Rebuild spatial grid each frame
   m_spatial_grid->clear();
 
-  // Add all active entities to grid
+  // Add living badguys to the grid. Bullets and upgrades are never looked
+  // up by area, so they are deliberately left out.
   for (auto* badguy : bad_guys)
   {
     if (badguy->dying == DYING_NOT)
     {
       m_spatial_grid->add_badguy(badguy);
     }
-  }
-
-  for (size_t index : bullets.get_active_indices())
-  {
-    Bullet* bullet = bullets.get_object_at(index);
-    if (!bullet->removable)
-    {
-      m_spatial_grid->add_bullet(bullet);
-    }
-  }
-
-  for (size_t index : upgrades.get_active_indices())
-  {
-    Upgrade* upgrade = upgrades.get_object_at(index);
-    m_spatial_grid->add_upgrade(upgrade);
   }
 
   // Bullet vs BadGuy collisions

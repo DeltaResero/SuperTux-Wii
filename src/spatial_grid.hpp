@@ -17,12 +17,14 @@
 #include "defines.hpp"
 
 class BadGuy;
-class Bullet;
-class Upgrade;
 
 /**
  * Spatial hash grid for efficient collision detection.
- * Divides the world into cells and tracks which entities are in each cell.
+ * Divides the world into cells and tracks which badguys are in each cell.
+ *
+ * Only badguys are stored. Bullets and upgrades are always the side that
+ * asks the question rather than the side being searched for, so putting
+ * them in the grid would cost work every frame that nothing reads back.
  */
 class SpatialGrid
 {
@@ -30,23 +32,14 @@ public:
   explicit SpatialGrid(int cell_size = 128);
   ~SpatialGrid() = default;
 
-  // Add entities to the grid (called each frame)
+  // Add badguys to the grid (called each frame)
   void add_badguy(BadGuy* badguy);
-  void add_bullet(Bullet* bullet);
-  void add_upgrade(Upgrade* upgrade);
 
-  // Clear all entities (called at frame start)
+  // Clear all badguys (called at frame start)
   void clear();
 
-  // Query entities in cells overlapping the given rectangle
-  // Used for normal bounded collision checks
+  // Query badguys in cells overlapping the given rectangle
   const std::vector<BadGuy*>& query_badguys(float x, float y, float w, float h) const;
-  const std::vector<Upgrade*>& query_upgrades(float x, float y, float w, float h) const;
-
-  // Query ALL entities regardless of position
-  // Used for Mr. Iceblock off-screen collisions
-  const std::vector<BadGuy*>& get_all_badguys() const { return all_badguys; }
-  const std::vector<Bullet*>& get_all_bullets() const { return all_bullets; }
 
 private:
   struct CellKey {
@@ -68,24 +61,16 @@ private:
 
   struct Cell {
     std::vector<BadGuy*> badguys;
-    std::vector<Bullet*> bullets;
-    std::vector<Upgrade*> upgrades;
   };
 
   int cell_size;
   std::unordered_map<CellKey, Cell, CellKeyHash> grid;
 
-  // Store ALL entities for unbounded queries (Mr. Iceblock case)
-  std::vector<BadGuy*> all_badguys;
-  std::vector<Bullet*> all_bullets;
-  std::vector<Upgrade*> all_upgrades;
-
   // Reusable scratch buffer for cell queries
   mutable std::vector<CellKey> m_temp_cells;
 
-  // Query caches to prevent heap allocation churn
+  // Query cache to prevent heap allocation churn
   mutable std::vector<BadGuy*> m_query_cache_badguys;
-  mutable std::vector<Upgrade*> m_query_cache_upgrades;
 
   // Helper to convert world coordinates to cell coordinates
   CellKey get_cell(float x, float y) const;

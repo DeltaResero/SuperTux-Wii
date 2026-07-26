@@ -11,41 +11,30 @@
 
 #include "spatial_grid.hpp"
 #include "badguy.hpp"
-#include "special.hpp"
 #include <cmath>
 
 SpatialGrid::SpatialGrid(int cell_size_)
   : cell_size(cell_size_)
 {
   // Reserve space to avoid reallocation during gameplay
-  all_badguys.reserve(100);
-  all_bullets.reserve(20);
-  all_upgrades.reserve(30);
   m_temp_cells.reserve(9); // Typically 3x3 max for normal sized objects
 
   // Reserve cache space
   m_query_cache_badguys.reserve(32);
-  m_query_cache_upgrades.reserve(16);
 }
 
 void SpatialGrid::clear()
 {
-  // Empty the per-cell entity lists but keep the cells (and their vectors'
+  // Empty the per-cell badguy lists but keep the cells (and their vectors'
   // capacity) alive. Destroying the map every frame would force each occupied
-  // cell to reallocate its three vectors from scratch on every rebuild, which
-  // is exactly the malloc churn this engine is designed to avoid on Wii.
+  // cell to reallocate its vector from scratch on every rebuild, which is
+  // exactly the malloc churn this engine is designed to avoid on Wii.
   // The map only grows to the set of cells ever occupied in the level, so the
   // retained memory is small and bounded.
   for (auto& entry : grid)
   {
     entry.second.badguys.clear();
-    entry.second.bullets.clear();
-    entry.second.upgrades.clear();
   }
-
-  all_badguys.clear();
-  all_bullets.clear();
-  all_upgrades.clear();
 }
 
 SpatialGrid::CellKey SpatialGrid::get_cell(float x, float y) const
@@ -79,9 +68,6 @@ void SpatialGrid::add_badguy(BadGuy* badguy)
 {
   if (!badguy) return;
 
-  // Add to global list for unbounded queries
-  all_badguys.push_back(badguy);
-
   // Add to grid cells for bounded queries
   const auto& cells = get_overlapping_cells(badguy->base.x, badguy->base.y,
                                             badguy->base.width, badguy->base.height);
@@ -89,36 +75,6 @@ void SpatialGrid::add_badguy(BadGuy* badguy)
   for (const auto& cell_key : cells)
   {
     grid[cell_key].badguys.push_back(badguy);
-  }
-}
-
-void SpatialGrid::add_bullet(Bullet* bullet)
-{
-  if (!bullet) return;
-
-  all_bullets.push_back(bullet);
-
-  const auto& cells = get_overlapping_cells(bullet->base.x, bullet->base.y,
-                                            bullet->base.width, bullet->base.height);
-
-  for (const auto& cell_key : cells)
-  {
-    grid[cell_key].bullets.push_back(bullet);
-  }
-}
-
-void SpatialGrid::add_upgrade(Upgrade* upgrade)
-{
-  if (!upgrade) return;
-
-  all_upgrades.push_back(upgrade);
-
-  const auto& cells = get_overlapping_cells(upgrade->base.x, upgrade->base.y,
-                                            upgrade->base.width, upgrade->base.height);
-
-  for (const auto& cell_key : cells)
-  {
-    grid[cell_key].upgrades.push_back(upgrade);
   }
 }
 
@@ -161,42 +117,6 @@ const std::vector<BadGuy*>& SpatialGrid::query_badguys(float x, float y, float w
   }
 
   return m_query_cache_badguys;
-}
-
-const std::vector<Upgrade*>& SpatialGrid::query_upgrades(float x, float y, float w, float h) const
-{
-  m_query_cache_upgrades.clear();
-
-  const auto& cells = get_overlapping_cells(x, y, w, h);
-
-  for (const auto& cell_key : cells)
-  {
-    auto it = grid.find(cell_key);
-    if (it == grid.end())
-    {
-      continue;
-    }
-
-    // Deduplicate, preserving first-occurrence order (see query_badguys).
-    for (Upgrade* upgrade : it->second.upgrades)
-    {
-      bool already_present = false;
-      for (Upgrade* existing : m_query_cache_upgrades)
-      {
-        if (existing == upgrade)
-        {
-          already_present = true;
-          break;
-        }
-      }
-      if (!already_present)
-      {
-        m_query_cache_upgrades.push_back(upgrade);
-      }
-    }
-  }
-
-  return m_query_cache_upgrades;
 }
 
 // EOF
