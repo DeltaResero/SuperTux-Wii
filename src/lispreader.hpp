@@ -34,19 +34,7 @@ inline constexpr int LISP_TYPE_INTEGER       = 2;
 inline constexpr int LISP_TYPE_STRING        = 3;
 inline constexpr int LISP_TYPE_REAL          = 4;
 inline constexpr int LISP_TYPE_CONS          = 5;
-inline constexpr int LISP_TYPE_PATTERN_CONS  = 6;
 inline constexpr int LISP_TYPE_BOOLEAN       = 7;
-inline constexpr int LISP_TYPE_PATTERN_VAR   = 8;
-
-// Pattern matching types
-inline constexpr int LISP_PATTERN_ANY        = 1;
-inline constexpr int LISP_PATTERN_SYMBOL     = 2;
-inline constexpr int LISP_PATTERN_STRING     = 3;
-inline constexpr int LISP_PATTERN_INTEGER    = 4;
-inline constexpr int LISP_PATTERN_REAL       = 5;
-inline constexpr int LISP_PATTERN_BOOLEAN    = 6;
-inline constexpr int LISP_PATTERN_LIST       = 7;
-inline constexpr int LISP_PATTERN_OR         = 8;
 
 // Structure defining Lisp stream types
 typedef struct
@@ -83,13 +71,6 @@ struct _lisp_object_t
     char *string;
     int integer;
     float real;
-
-    struct
-    {
-      int type;
-      int index;
-      struct _lisp_object_t *sub;
-    } pattern;
   } v;
 };
 
@@ -103,11 +84,6 @@ lisp_object_t* lisp_read_from_file(std::string_view filename);
 void lisp_free(lisp_object_t *obj);
 lisp_object_t* lisp_read_from_string(const char *buf);
 void lisp_reset_pool();
-
-// Pattern matching functions
-int lisp_compile_pattern(lisp_object_t **obj, int *num_subs);
-int lisp_match_pattern(lisp_object_t *pattern, lisp_object_t *obj, lisp_object_t **vars, int num_subs);
-int lisp_match_string(const char *pattern_string, lisp_object_t *obj, lisp_object_t **vars);
 
 // Accessor functions for Lisp object values
 int lisp_type(lisp_object_t *obj);

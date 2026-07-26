@@ -108,7 +108,6 @@ namespace
     STRING = 4,
     INTEGER = 5,
     REAL = 6,
-    PATTERN_OPEN_PAREN = 7,
     DOT = 8,
     TRUE = 9,
     FALSE = 10
@@ -288,36 +287,6 @@ namespace
     return g_object_pool.allocate(type);
   }
 
-  /**
-   * Creates a pattern cons cell (used in pattern matching)
-   * @param car The car of the cons cell
-   * @param cdr The cdr of the cons cell
-   * @return Pointer to the new pattern cons cell
-   */
-  static lisp_object_t* lisp_make_pattern_cons(lisp_object_t* car, lisp_object_t* cdr)
-  {
-    lisp_object_t* obj = lisp_object_alloc(LISP_TYPE_PATTERN_CONS);
-    obj->v.cons.car = car;
-    obj->v.cons.cdr = cdr;
-    return obj;
-  }
-
-  /**
-   * Creates a pattern variable object (used in pattern matching)
-   * @param type The pattern type (LISP_PATTERN_*)
-   * @param index The variable index for capture
-   * @param sub The sub-pattern (for OR patterns)
-   * @return Pointer to the new pattern variable
-   */
-  static lisp_object_t* lisp_make_pattern_var(int type, int index, lisp_object_t* sub)
-  {
-    lisp_object_t* obj = lisp_object_alloc(LISP_TYPE_PATTERN_VAR);
-    obj->v.pattern.type = type;
-    obj->v.pattern.index = index;
-    obj->v.pattern.sub = sub;
-    return obj;
-  }
-
   // ========================================================================
   // Safe Stream Reader
   // ========================================================================
@@ -465,23 +434,6 @@ namespace
      */
     TokenType scan_impl(SafeStreamReader& reader);
 
-    /**
-     * Non-recursive pattern compilation using iterative approach
-     * @param obj Pointer to the object pointer to compile
-     * @param index Pointer to the current variable index
-     * @return 1 on success, 0 on failure
-     */
-    int compile_pattern_iterative(lisp_object_t** obj, int* index);
-
-    /**
-     * Non-recursive pattern matching using work queue
-     * @param pattern The pattern to match against
-     * @param obj The object to match
-     * @param vars Array to store captured variables
-     * @return 1 if match succeeds, 0 otherwise
-     */
-    int match_pattern_iterative(lisp_object_t* pattern, lisp_object_t* obj, lisp_object_t** vars);
-
   public:
     /**
      * Constructor initializes parser state
@@ -501,24 +453,6 @@ namespace
      * @return The type of token scanned
      */
     TokenType scan(lisp_stream_t* stream);
-
-    /**
-     * Compiles a pattern for matching
-     * @param obj Pointer to the object pointer to compile
-     * @param index Pointer to the current variable index
-     * @return 1 on success, 0 on failure
-     */
-    int compile_pattern(lisp_object_t** obj, int* index);
-
-    /**
-     * Performs pattern matching
-     * @param pattern The pattern to match against
-     * @param obj The object to match
-     * @param vars Array to store captured variables
-     * @param num_subs Number of sub-patterns
-     * @return 1 if match succeeds, 0 otherwise
-     */
-    int do_match_pattern(lisp_object_t* pattern, lisp_object_t* obj, lisp_object_t** vars, int num_subs);
   };
 
   LispParserInternal::LispParserInternal() : token_length(0)
@@ -649,15 +583,6 @@ namespace
             return TokenType::TRUE;
           case 'f':
             return TokenType::FALSE;
-          case '?':
-          {
-            c = reader.get_char();
-            if (c == '(')
-            {
-              return TokenType::PATTERN_OPEN_PAREN;
-            }
-            return TokenType::ERROR;
-          }
         }
         return TokenType::ERROR;
       }
@@ -750,7 +675,6 @@ namespace
     {
       lisp_object_t* head = nullptr;
       lisp_object_t* tail = nullptr;
-      bool is_pattern = false;
     };
     std::vector<ParseState> stack;
     bool dot_pending = false;
@@ -763,12 +687,11 @@ namespace
       switch (token)
       {
         case TokenType::OPEN_PAREN:
-        case TokenType::PATTERN_OPEN_PAREN:
           if (stack.size() >= MAX_NESTING_DEPTH)
           {
             return &error_object;
           }
-          stack.push_back({nullptr, nullptr, token == TokenType::PATTERN_OPEN_PAREN});
+          stack.push_back({nullptr, nullptr});
           continue;
 
         case TokenType::CLOSE_PAREN:
@@ -862,8 +785,7 @@ namespace
       }
       else
       {
-        auto make_node = top.is_pattern ? lisp_make_pattern_cons : lisp_make_cons;
-        lisp_object_t* new_cons = make_node(current_obj, lisp_nil());
+        lisp_object_t* new_cons = lisp_make_cons(current_obj, lisp_nil());
         if (top.head == nullptr)
         {
           top.head = top.tail = new_cons;
@@ -876,358 +798,6 @@ namespace
       }
     }
     return &error_object;
-  }
-
-  /**
-   * Iterative pattern compilation - no recursion
-   * This function compiles pattern expressions into efficient pattern objects
-   * that can be used for matching. It recognizes pattern types like:
-   * - any, symbol, string, integer, real, boolean, list
-   * - or (for alternative patterns)
-   * @param obj Pointer to the object pointer to compile
-   * @param index Pointer to the current variable index
-   * @return 1 on success, 0 on failure
-   */
-  int LispParserInternal::compile_pattern_iterative(lisp_object_t** obj, int* index)
-  {
-    struct WorkItem
-    {
-      lisp_object_t** obj_ptr;
-      bool processed_car;
-      bool processed_cdr;
-    };
-
-    std::vector<WorkItem> work_stack;
-    work_stack.push_back({obj, false, false});
-
-    int operations = 0;
-
-    while (!work_stack.empty())
-    {
-      if (operations++ >= MAX_PARSE_OPERATIONS)
-      {
-        break;
-      }
-      // Use an index rather than a reference (push_back can reallocate)
-      // the vector, invalidating any reference into it.
-      const size_t back_idx = work_stack.size() - 1;
-
-      // obj_ptr points into pool-allocated memory, stable across reallocations.
-      lisp_object_t** const obj_ptr = work_stack[back_idx].obj_ptr;
-
-      if (!obj_ptr || !(*obj_ptr))
-      {
-        work_stack.pop_back();
-        continue;
-      }
-
-      int obj_type = lisp_type(*obj_ptr);
-
-      if (obj_type == LISP_TYPE_PATTERN_CONS)
-      {
-        // Pattern type mapping table
-        struct TypeMapping
-        {
-          const char* name;
-          int type;
-        }
-        types[] =
-        {
-          { "any", LISP_PATTERN_ANY },
-          { "symbol", LISP_PATTERN_SYMBOL },
-          { "string", LISP_PATTERN_STRING },
-          { "integer", LISP_PATTERN_INTEGER },
-          { "real", LISP_PATTERN_REAL },
-          { "boolean", LISP_PATTERN_BOOLEAN },
-          { "list", LISP_PATTERN_LIST },
-          { "or", LISP_PATTERN_OR },
-          { nullptr, 0 }
-        };
-
-        if (lisp_type(lisp_car(*obj_ptr)) != LISP_TYPE_SYMBOL)
-        {
-          return 0;
-        }
-
-        char* type_name = lisp_symbol(lisp_car(*obj_ptr));
-        if (!type_name)
-        {
-          return 0;
-        }
-
-        // Find matching pattern type
-        int type = -1;
-        for (int i = 0; types[i].name != nullptr; ++i)
-        {
-          if (strcmp(types[i].name, type_name) == 0)
-          {
-            type = types[i].type;
-            break;
-          }
-        }
-
-        if (type == -1)
-        {
-          return 0;
-        }
-        if (type != LISP_PATTERN_OR && lisp_cdr(*obj_ptr) != nullptr)
-        {
-          return 0;
-        }
-
-        lisp_object_t* pattern = lisp_make_pattern_var(type, (*index)++, lisp_nil());
-
-        if (type == LISP_PATTERN_OR)
-        {
-          // Detach the sub-pattern list and attach it to the new pattern node.
-          // Pop first, then push one compilation job per sub-list element so
-          // each sub-pattern car is compiled in a subsequent iteration.
-          lisp_object_t* sub_list = lisp_cdr(*obj_ptr);
-          pattern->v.pattern.sub = sub_list;
-          (*obj_ptr)->v.cons.cdr = lisp_nil();
-          *obj_ptr = pattern;
-
-          work_stack.pop_back();
-          for (lisp_object_t* sub = sub_list; sub != nullptr; sub = lisp_cdr(sub))
-          {
-            work_stack.push_back({&sub->v.cons.car, false, false});
-          }
-        }
-        else
-        {
-          *obj_ptr = pattern;
-          work_stack.pop_back();
-        }
-      }
-      else if (obj_type == LISP_TYPE_CONS)
-      {
-        if (!work_stack[back_idx].processed_car)
-        {
-          // Set the flag before push_back in case the vector reallocates.
-          work_stack[back_idx].processed_car = true;
-          work_stack.push_back({&(*obj_ptr)->v.cons.car, false, false});
-        }
-        else if (!work_stack[back_idx].processed_cdr)
-        {
-          work_stack[back_idx].processed_cdr = true;
-          work_stack.push_back({&(*obj_ptr)->v.cons.cdr, false, false});
-        }
-        else
-        {
-          work_stack.pop_back();
-        }
-      }
-      else
-      {
-        work_stack.pop_back();
-      }
-    }
-
-    return operations < MAX_PARSE_OPERATIONS ? 1 : 0;
-  }
-
-  int LispParserInternal::compile_pattern(lisp_object_t** obj, int* index)
-  {
-    return compile_pattern_iterative(obj, index);
-  }
-
-  /**
-   * Iterative pattern matching - no recursion
-   * This function matches a compiled pattern against a lisp object,
-   * optionally capturing matched sub-expressions into a variables array.
-   * @param pattern The pattern to match against
-   * @param obj The object to match
-   * @param vars Array to store captured variables
-   * @return 1 if match succeeds, 0 otherwise
-   */
-  int LispParserInternal::match_pattern_iterative(lisp_object_t* pattern, lisp_object_t* obj, lisp_object_t** vars)
-  {
-    struct MatchWork
-    {
-      lisp_object_t* pattern;
-      lisp_object_t* obj;
-      enum Phase { CHECK, CHECK_CAR, CHECK_CDR, DONE } phase;
-      bool car_result;
-    };
-
-    std::vector<MatchWork> stack;
-    stack.push_back({pattern, obj, MatchWork::CHECK, false});
-
-    int operations = 0;
-    std::vector<bool> results;
-    results.push_back(false);
-
-    while (!stack.empty())
-    {
-      if (operations++ >= MAX_PARSE_OPERATIONS)
-      {
-        break;
-      }
-      MatchWork& work = stack.back();
-
-      if (work.phase == MatchWork::DONE)
-      {
-        stack.pop_back();
-        continue;
-      }
-
-      if (work.phase == MatchWork::CHECK)
-      {
-        if (work.pattern == nullptr)
-        {
-          results.back() = (work.obj == nullptr);
-          work.phase = MatchWork::DONE;
-          continue;
-        }
-
-        if (work.obj == nullptr)
-        {
-          results.back() = false;
-          work.phase = MatchWork::DONE;
-          continue;
-        }
-
-        if (lisp_type(work.pattern) == LISP_TYPE_PATTERN_VAR)
-        {
-          bool match = false;
-
-          switch (work.pattern->v.pattern.type)
-          {
-            case LISP_PATTERN_ANY:
-              match = true;
-              break;
-            case LISP_PATTERN_SYMBOL:
-              match = (work.obj && lisp_type(work.obj) == LISP_TYPE_SYMBOL);
-              break;
-            case LISP_PATTERN_STRING:
-              match = (work.obj && lisp_type(work.obj) == LISP_TYPE_STRING);
-              break;
-            case LISP_PATTERN_INTEGER:
-              match = (work.obj && lisp_type(work.obj) == LISP_TYPE_INTEGER);
-              break;
-            case LISP_PATTERN_REAL:
-              match = (work.obj && lisp_type(work.obj) == LISP_TYPE_REAL);
-              break;
-            case LISP_PATTERN_BOOLEAN:
-              match = (work.obj && lisp_type(work.obj) == LISP_TYPE_BOOLEAN);
-              break;
-            case LISP_PATTERN_LIST:
-              match = (work.obj && lisp_type(work.obj) == LISP_TYPE_CONS);
-              break;
-            case LISP_PATTERN_OR:
-            {
-              for (lisp_object_t* sub = work.pattern->v.pattern.sub; sub != nullptr; sub = lisp_cdr(sub))
-              {
-                if (operations++ > MAX_PARSE_OPERATIONS)
-                {
-                  return 0;
-                }
-
-                std::vector<MatchWork> temp_stack;
-                temp_stack.push_back({lisp_car(sub), work.obj, MatchWork::CHECK, false});
-                bool temp_match = match_pattern_iterative(lisp_car(sub), work.obj, vars);
-
-                if (temp_match)
-                {
-                  match = true;
-                  break;
-                }
-              }
-              break;
-            }
-            default:
-              match = false;
-          }
-
-          if (match && vars && work.pattern->v.pattern.index >= 0 && work.pattern->v.pattern.index < 10000)
-          {
-            vars[work.pattern->v.pattern.index] = work.obj;
-          }
-
-          results.back() = match;
-          work.phase = MatchWork::DONE;
-          continue;
-        }
-
-        if (lisp_type(work.pattern) != lisp_type(work.obj))
-        {
-          results.back() = false;
-          work.phase = MatchWork::DONE;
-          continue;
-        }
-
-        switch (lisp_type(work.pattern))
-        {
-          case LISP_TYPE_SYMBOL:
-            results.back() = (work.pattern->v.string == work.obj->v.string);
-            work.phase = MatchWork::DONE;
-            break;
-          case LISP_TYPE_STRING:
-            results.back() = (work.pattern->v.string == work.obj->v.string);
-            work.phase = MatchWork::DONE;
-            break;
-          case LISP_TYPE_INTEGER:
-            results.back() = (lisp_integer(work.pattern) == lisp_integer(work.obj));
-            work.phase = MatchWork::DONE;
-            break;
-          case LISP_TYPE_REAL:
-            results.back() = (lisp_real(work.pattern) == lisp_real(work.obj));
-            work.phase = MatchWork::DONE;
-            break;
-          case LISP_TYPE_CONS:
-            work.phase = MatchWork::CHECK_CAR;
-            results.push_back(false);
-            stack.push_back({lisp_car(work.pattern), lisp_car(work.obj), MatchWork::CHECK, false});
-            break;
-          default:
-            results.back() = false;
-            work.phase = MatchWork::DONE;
-        }
-      }
-      else if (work.phase == MatchWork::CHECK_CAR)
-      {
-        work.car_result = results.back();
-        results.pop_back();
-
-        if (!work.car_result)
-        {
-          results.back() = false;
-          work.phase = MatchWork::DONE;
-        }
-        else
-        {
-          work.phase = MatchWork::CHECK_CDR;
-          results.push_back(false);
-          stack.push_back({lisp_cdr(work.pattern), lisp_cdr(work.obj), MatchWork::CHECK, false});
-        }
-      }
-      else if (work.phase == MatchWork::CHECK_CDR)
-      {
-        bool cdr_result = results.back();
-        results.pop_back();
-        results.back() = (work.car_result && cdr_result);
-        work.phase = MatchWork::DONE;
-      }
-    }
-
-    return !results.empty() ? (results.back() ? 1 : 0) : 0;
-  }
-
-  int LispParserInternal::do_match_pattern(lisp_object_t* pattern, lisp_object_t* obj, lisp_object_t** vars, int num_subs)
-  {
-    if (vars != nullptr)
-    {
-      if (num_subs < 0 || num_subs > 10000)
-      {
-        return 0;
-      }
-
-      for (int i = 0; i < num_subs; ++i)
-      {
-        vars[i] = &error_object;
-      }
-    }
-    return match_pattern_iterative(pattern, obj, vars);
   }
 
 } // anonymous namespace
@@ -1456,7 +1026,6 @@ void lisp_free(lisp_object_t* obj)
     switch (item.obj->type)
     {
       case LISP_TYPE_CONS:
-      case LISP_TYPE_PATTERN_CONS:
         if (!item.freed_car)
         {
           item.freed_car = true;
@@ -1473,14 +1042,6 @@ void lisp_free(lisp_object_t* obj)
           }
           stack.pop_back();
         }
-        break;
-
-      case LISP_TYPE_PATTERN_VAR:
-        if (item.obj->v.pattern.sub)
-        {
-          stack.push_back({item.obj->v.pattern.sub, false});
-        }
-        stack.pop_back();
         break;
 
       default:
@@ -1535,79 +1096,6 @@ lisp_object_t* lisp_read_from_string(const char* buf)
   }
 
   return lisp_read(&stream);
-}
-
-/**
- * Compile a pattern expression for matching
- * @param obj Pointer to the object pointer to compile
- * @param num_subs Output: number of sub-patterns/variables
- * @return 1 on success, 0 on failure
- */
-int lisp_compile_pattern(lisp_object_t** obj, int* num_subs)
-{
-  if (!obj)
-  {
-    return 0;
-  }
-
-  int index = 0;
-  LispParserInternal parser;
-  int result = parser.compile_pattern(obj, &index);
-
-  if (result && num_subs != nullptr)
-  {
-    *num_subs = index;
-  }
-  return result;
-}
-
-/**
- * Match a compiled pattern against an object
- * @param pattern The compiled pattern
- * @param obj The object to match
- * @param vars Array to store captured variables
- * @param num_subs Number of sub-patterns
- * @return 1 if match succeeds, 0 otherwise
- */
-int lisp_match_pattern(lisp_object_t* pattern, lisp_object_t* obj, lisp_object_t** vars, int num_subs)
-{
-  LispParserInternal parser;
-  return parser.do_match_pattern(pattern, obj, vars, num_subs);
-}
-
-/**
- * Parse and match a pattern string against an object
- * @param pattern_string The pattern string to parse and compile
- * @param obj The object to match
- * @param vars Array to store captured variables
- * @return 1 if match succeeds, 0 otherwise
- */
-int lisp_match_string(const char* pattern_string, lisp_object_t* obj, lisp_object_t** vars)
-{
-  if (!pattern_string)
-  {
-    return 0;
-  }
-
-  const size_t pattern_len = strnlen(pattern_string, MAX_STRING_LENGTH + 1);
-  if (pattern_len > MAX_STRING_LENGTH)
-  {
-    return 0;
-  }
-
-  lisp_object_t* pattern = lisp_read_from_string(pattern_string, pattern_len);
-  if (lisp_type(pattern) == LISP_TYPE_EOF || lisp_type(pattern) == LISP_TYPE_PARSE_ERROR)
-  {
-    return 0;
-  }
-
-  int num_subs;
-  if (!lisp_compile_pattern(&pattern, &num_subs))
-  {
-    return 0;
-  }
-
-  return lisp_match_pattern(pattern, obj, vars, num_subs);
 }
 
 /**
@@ -1706,7 +1194,7 @@ lisp_object_t* lisp_car(lisp_object_t* obj)
   {
     return nullptr;
   }
-  if (obj->type != LISP_TYPE_CONS && obj->type != LISP_TYPE_PATTERN_CONS)
+  if (obj->type != LISP_TYPE_CONS)
   {
     return nullptr;
   }
@@ -1724,7 +1212,7 @@ lisp_object_t* lisp_cdr(lisp_object_t* obj)
   {
     return nullptr;
   }
-  if (obj->type != LISP_TYPE_CONS && obj->type != LISP_TYPE_PATTERN_CONS)
+  if (obj->type != LISP_TYPE_CONS)
   {
     return nullptr;
   }
