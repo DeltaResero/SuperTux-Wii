@@ -47,10 +47,8 @@ public:
   LevelSubset(const LevelSubset&) = delete;
   LevelSubset& operator=(const LevelSubset&) = delete;
 
-  void create(std::string_view subset_name);
   void parse(lisp_object_t* data);
   void load(std::string_view subset);
-  void save();
 };
 
 struct OriginalTileInfo
@@ -105,7 +103,6 @@ public:
   int load(std::string_view subset, int level);
   int load(std::string_view filename);
   void reload_bricks_and_coins();
-  void save(const std::string& subset, int level);
   void cleanup();
   void load_gfx();
   void load_image(Surface** ptexture, const std::string& theme, const char* file, bool use_alpha);

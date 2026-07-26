@@ -13,7 +13,6 @@
 #include <limits.h>
 #include <unistd.h>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -47,38 +46,6 @@ namespace fs = std::filesystem;
 bool faccessible(const char* filename)
 {
   return fs::exists(filename) && fs::is_regular_file(filename);
-}
-
-/**
- * Checks if the given file is writable.
- * @param filename Path to the file.
- * @return true if the file is writable, false otherwise.
- */
-bool fwriteable(const char* filename)
-{
-  std::ofstream file(filename, std::ios::app);
-  return file.is_open();
-}
-
-/**
- * Attempts to create a directory in the SuperTux home directory first
- * and if it fails, it tries to create the directory in the base directory.
- * @param relative_dir The relative path of the directory to be created.
- * @return true if the directory was successfully created or already exists, false otherwise.
- */
-bool fcreatedir(const char* relative_dir)
-{
-  fs::path path = fs::path(st_dir) / relative_dir;
-
-  if (!fs::create_directories(path))
-  {
-    path = fs::path(datadir) / relative_dir;
-    if (!fs::create_directories(path))
-    {
-      return false;
-    }
-  }
-  return true;
 }
 
 /**
