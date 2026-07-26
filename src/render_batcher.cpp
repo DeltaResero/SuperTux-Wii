@@ -73,7 +73,9 @@ void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
     return;
   }
 
-  SurfaceOpenGL* gl_surface = dynamic_cast<SurfaceOpenGL*>(surface->impl.get());
+  // impl is null-checked because Surface tolerates a null impl; see the
+  // guards around impl in texture.cpp.
+  SurfaceOpenGL* gl_surface = surface->impl ? surface->impl->as_opengl() : nullptr;
   if (!gl_surface)
   {
     return;
