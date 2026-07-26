@@ -111,7 +111,7 @@ void Sprite::draw(RenderBatcher& batcher, float x, float y)
 
   if (frame < surfaces.size())
   {
-    batcher.add(surfaces[frame], x, y, x_hotspot, y_hotspot);
+    batcher.add(surfaces[frame], x - x_hotspot, y - y_hotspot);
   }
 }
 
@@ -151,7 +151,7 @@ void Sprite::draw_part(RenderBatcher& batcher, float sx, float sy, float x, floa
 
   if (frame < surfaces.size())
   {
-    batcher.add_part(surfaces[frame], sx, sy, x, y, w, h, x_hotspot, y_hotspot);
+    batcher.add_part(surfaces[frame], sx, sy, x - x_hotspot, y - y_hotspot, w, h);
   }
 }
 

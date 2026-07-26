@@ -43,11 +43,12 @@ class RenderBatcher
 public:
   RenderBatcher();
 
-  // Adds a full surface's data to the batch queue
-  void add(Surface* surface, float x, float y, int x_hotspot, int y_hotspot);
+  // Adds a full surface's data to the batch queue. Coordinates are world
+  // coordinates with any sprite hotspot already subtracted by the caller.
+  void add(Surface* surface, float x, float y);
 
   // Adds a portion of a surface's data to the batch queue
-  void add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h, int x_hotspot, int y_hotspot);
+  void add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h);
 
   // Draws all collected batches IN ORDER and clears them
   void flush();
@@ -70,8 +71,8 @@ class RenderBatcher
 {
 public:
   RenderBatcher() {}
-  void add(Surface* , float , float , int , int ) {}
-  void add_part(Surface* , float , float , float , float , float , float , int , int ) {}
+  void add(Surface* , float , float ) {}
+  void add_part(Surface* , float , float , float , float , float , float ) {}
   void flush() {}
 };
 

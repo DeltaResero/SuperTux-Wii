@@ -34,12 +34,10 @@ RenderBatcher::RenderBatcher()
  * Adds a complete sprite surface to the batch for rendering.
  * This is a convenience wrapper around the add_part method.
  * @param surface The Surface containing the texture to be drawn.
- * @param x The destination world x-coordinate.
- * @param y The destination world y-coordinate.
- * @param x_hotspot The x-offset from the coordinates to the sprite's origin.
- * @param y_hotspot The y-offset from the coordinates to the sprite's origin.
+ * @param x The destination world x-coordinate, hotspot already applied.
+ * @param y The destination world y-coordinate, hotspot already applied.
  */
-void RenderBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y_hotspot)
+void RenderBatcher::add(Surface* surface, float x, float y)
 {
   if (!surface)
   {
@@ -49,7 +47,7 @@ void RenderBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y
   // This function is now a simple wrapper around add_part.
   // It adds the *full* surface by specifying a source rectangle
   // at (0,0) with the surface's full width and height.
-  add_part(surface, 0.0f, 0.0f, x, y, surface->w, surface->h, x_hotspot, y_hotspot);
+  add_part(surface, 0.0f, 0.0f, x, y, surface->w, surface->h);
 }
 
 /**
@@ -59,14 +57,12 @@ void RenderBatcher::add(Surface* surface, float x, float y, int x_hotspot, int y
  * @param surface The Surface containing the texture to be drawn.
  * @param sx The source x-coordinate of the rectangle within the texture.
  * @param sy The source y-coordinate of the rectangle within the texture.
- * @param x The destination world x-coordinate.
- * @param y The destination world y-coordinate.
+ * @param x The destination world x-coordinate, hotspot already applied.
+ * @param y The destination world y-coordinate, hotspot already applied.
  * @param w The width of the portion to draw.
  * @param h The height of the portion to draw.
- * @param x_hotspot The x-offset from the coordinates to the sprite's origin.
- * @param y_hotspot The y-offset from the coordinates to the sprite's origin.
  */
-void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h, int x_hotspot, int y_hotspot)
+void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, float y, float w, float h)
 {
   if (!surface)
   {
@@ -82,8 +78,8 @@ void RenderBatcher::add_part(Surface* surface, float sx, float sy, float x, floa
   }
 
   GLuint tex_id = gl_surface->gl_texture;
-  float draw_x = x - x_hotspot - scroll_x;
-  float draw_y = y - y_hotspot;
+  float draw_x = x - scroll_x;
+  float draw_y = y;
 
   // Round to nearest integer to match original SDL/OpenGL behavior.
   // This prevents "breathing" gaps between tiles during scrolling.

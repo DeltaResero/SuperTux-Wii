@@ -316,8 +316,8 @@ void Tux::draw(const Point& offset_, RenderBatcher* batcher)
   {
     if (batcher)
     {
-      // Add to batcher if available. Hotspots are 0, 0.
-      batcher->add(sprite_to_draw, pos.x + offset_.x, pos.y + offset_.y - 10, 0, 0);
+      // Add to batcher if available. This sprite has no hotspot to apply.
+      batcher->add(sprite_to_draw, pos.x + offset_.x, pos.y + offset_.y - 10);
     }
     else
     {
@@ -1327,8 +1327,8 @@ void WorldMap::draw(const Point& offset_)
       Tile* tile = tile_manager->get(display_tile_id);
       if (batcher)
       {
-        // Add to batcher. Hotspots are 0, 0.
-        batcher->add(tile->sprite.get(), x * TILE_SIZE + offset_.x, y * TILE_SIZE + offset_.y, 0, 0);
+        // Add to batcher. This sprite has no hotspot to apply.
+        batcher->add(tile->sprite.get(), x * TILE_SIZE + offset_.x, y * TILE_SIZE + offset_.y);
       }
       else
       {
@@ -1364,8 +1364,8 @@ void WorldMap::draw(const Point& offset_)
       {
         if (batcher)
         {
-          // Add to batcher. Hotspots are 0, 0.
-          batcher->add(dot_sprite, i->x * TILE_SIZE + offset_.x, i->y * TILE_SIZE + offset_.y, 0, 0);
+          // Add to batcher. This sprite has no hotspot to apply.
+          batcher->add(dot_sprite, i->x * TILE_SIZE + offset_.x, i->y * TILE_SIZE + offset_.y);
         }
         else
         {

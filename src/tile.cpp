@@ -269,7 +269,7 @@ void Tile::draw(RenderBatcher* batcher, float x, float y, unsigned int c, Uint8 
       // RenderBatcher expects World Coordinates (it subtracts scroll_x internally)
       // Tile::draw receives Screen Coordinates (scroll_x already subtracted)
       // We must add scroll_x back to convert Screen -> World for the batcher
-      batcher->add(ptile->images[frame_index], x + scroll_x, y, 0, 0);
+      batcher->add(ptile->images[frame_index], x + scroll_x, y);
   }
   else
   {

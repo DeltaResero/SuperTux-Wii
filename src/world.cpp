@@ -370,7 +370,7 @@ void World::draw()
   draw_pooled_objects(bouncy_distros, [&](const BouncyDistro& distro) {
     if (batcher)
     {
-      batcher->add(img_distro[0], distro.base.x, distro.base.y, 0, 0);
+      batcher->add(img_distro[0], distro.base.x, distro.base.y);
     }
     else
     {
@@ -385,7 +385,7 @@ void World::draw()
       if (batcher)
       {
         batcher->add_part(brick.tile->images[0], brick.random_offset_x, brick.random_offset_y,
-                          brick.base.x, brick.base.y, 16, 16, 0, 0);
+                          brick.base.x, brick.base.y, 16, 16);
       }
       else
       {
