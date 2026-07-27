@@ -100,6 +100,24 @@ if(WARNINGS)
   add_compile_options(-Wall -Wextra)
 endif()
 
+# Build Type Options
+# Shared by both targets so the desktop and Wii builds cannot drift apart.
+# Listed in full rather than relying on CMake's per build type defaults,
+# which a toolchain file is free to override.
+# Each flag needs its own generator expression: add_compile_options splits
+# arguments on spaces, so a grouped $<$<CONFIG:Debug>:-g -O0> is emitted
+# literally and leaks Debug flags into Release.
+add_compile_options(
+  $<$<CONFIG:Debug>:-g>
+  $<$<CONFIG:Debug>:-O0>
+  $<$<CONFIG:Debug>:-DDEBUG>
+  $<$<CONFIG:Release>:-O3>
+  $<$<CONFIG:Release>:-flto>
+)
+add_link_options(
+  $<$<CONFIG:Release>:-flto>
+)
+
 # Add module path for custom Find modules, toolchains, and platform files
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -216,16 +234,9 @@ if(ENABLE_WII)
     )
   endif()
 
-  # Compile options
-  target_compile_options(${PROJECT_NAME}.elf PRIVATE
-    $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
-    $<$<CONFIG:Release>:-O3 -flto>
-  )
-
-  # Link options
+  # Link options (build type flags come from the shared block near the top)
   target_link_options(${PROJECT_NAME}.elf PRIVATE
     -Wl,-Map,${CMAKE_PROJECT_NAME}.map
-    $<$<CONFIG:Release>:-flto>
   )
 
   # Post-build: Strip the ELF binary (Release builds only)
