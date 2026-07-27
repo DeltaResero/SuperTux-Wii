@@ -31,9 +31,9 @@ class BouncyDistro: public GameObject
     bool removable;
 
     void init(float x, float y);
-    void action(float frame_ratio);
+    void action(float frame_ratio) override;
     void draw() override {}
-    std::string type()
+    std::string type() override
     {
       return "BouncyDistro";
     };
@@ -58,9 +58,9 @@ class BrokenBrick: public GameObject
     int random_offset_y;
 
     void init(Tile* tile, float x, float y, float xm, float ym);
-    void action(float frame_ratio);
+    void action(float frame_ratio) override;
     void draw() override {}
-    std::string type()
+    std::string type() override
     {
       return "BrokenBrick";
     };
@@ -75,10 +75,10 @@ class BouncyBrick: public GameObject
     int shape;
 
     void init(float x, float y);
-    void action(float frame_ratio);
+    void action(float frame_ratio) override;
     void draw() override;
     void draw(RenderBatcher* batcher);
-    std::string type()
+    std::string type() override
     {
       return "BouncyBrick";
     };
@@ -92,9 +92,9 @@ class FloatingScore: public GameObject
     Timer timer;
 
     void init(float x, float y, int s);
-    void action(float frame_ratio);
+    void action(float frame_ratio) override;
     void draw() override {}
-    std::string type()
+    std::string type() override
     {
       return "FloatingScore";
     };

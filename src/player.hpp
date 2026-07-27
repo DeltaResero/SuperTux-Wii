@@ -140,7 +140,7 @@ public:
   void init();                              // Initializes player state for a new level
   int key_event(SDL_Keycode key, int state);     // Processes a keyboard event
   void level_begin();                       // Resets player state for a level loop (e.g., in menu demo)
-  void action(float frame_ratio);          // Main update function, called once per frame
+  void action(float frame_ratio) override; // Main update function, called once per frame
   void updatePhysics(float deltaTime);
   void handle_input();                      // Main input handler, dispatches to sub-handlers
   void grabdistros();                       // Checks for and collects distros (coins)
@@ -154,7 +154,7 @@ public:
   bool under_solid() const;                 // Checks if the player is under a solid block
   void grow();                              // Makes the player grow to BIG state
   void jump_of_badguy(BadGuy* badguy);      // Bounces the player off a badguy
-  std::string type() { return "Player"; };  // Returns the object type as a string
+  std::string type() override { return "Player"; };  // Returns the object type as a string
 
 private:
   // Private Helper Methods

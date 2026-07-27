@@ -42,13 +42,11 @@ public:
   Physic physic;
 
   void init(float x, float y, Direction dir, UpgradeKind kind);
-  void action(float frame_ratio);
+  void action(float frame_ratio) override;
   void updatePhysics(float deltaTime);
   void draw() override {}
   void collision(void* p_c_object, int c_object, CollisionType type_);
-  std::string type() { return "Upgrade"; };
-
-  ~Upgrade() {};
+  std::string type() override { return "Upgrade"; };
 };
 
 class Bullet : public GameObject
@@ -58,11 +56,11 @@ class Bullet : public GameObject
   int life_count;
 
   void init(float x, float y, float xm, Direction dir);
-  void action(float frame_ratio);
+  void action(float frame_ratio) override;
   void updatePhysics(float deltaTime);
   void draw() override {}
   void collision(int c_object);
-  std::string type() { return "Bullet"; };
+  std::string type() override { return "Bullet"; };
 };
 
 #endif /*SUPERTUX_SPECIAL_H*/

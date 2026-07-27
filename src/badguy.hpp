@@ -104,11 +104,11 @@ private:
 public:
   BadGuy(float x, float y, BadGuyKind kind, bool stay_on_platform);
 
-  void action(float frame_ratio);
+  void action(float frame_ratio) override;
   void updatePhysics(float deltaTime, bool performCollision);
   void draw() override;
   void draw(RenderBatcher* batcher);
-  std::string type()
+  std::string type() override
   {
     return "BadGuy";
   };

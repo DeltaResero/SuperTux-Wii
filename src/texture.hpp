@@ -147,7 +147,7 @@ public:
   SurfaceOpenGL(SDL_Surface* surf, bool use_alpha);
   SurfaceOpenGL(std::string_view file, bool use_alpha);
   SurfaceOpenGL(std::string_view file, int x, int y, int w_, int h_, bool use_alpha);
-  virtual ~SurfaceOpenGL();
+  ~SurfaceOpenGL() override;
 
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
@@ -175,7 +175,7 @@ public:
   SurfaceSDL(SDL_Surface *surf, bool use_alpha);
   SurfaceSDL(std::string_view file, bool use_alpha);
   SurfaceSDL(std::string_view file, int x, int y, int w_, int h_, bool use_alpha);
-  virtual ~SurfaceSDL();
+  ~SurfaceSDL() override;
 
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
