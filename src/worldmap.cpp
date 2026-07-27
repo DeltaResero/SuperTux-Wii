@@ -661,32 +661,20 @@ void WorldMap::load_map()
           {
             Level level;
             LispReader reader(lisp_cdr(level_element));
-            level.solved = false;
-
-            level.north = true;
-            level.east = true;
-            level.south = true;
-            level.west = true;
 
             reader.read_string("extro-filename", &level.extro_filename);
             reader.read_string("name", &level.name);
             reader.read_int("x", &level.x);
             reader.read_int("y", &level.y);
             reader.read_string("map-message", &level.display_map_message);
-            level.auto_path = true;
             reader.read_bool("auto-path", &level.auto_path);
-            level.passive_message = true;
             reader.read_bool("passive-message", &level.passive_message);
 
-            level.invisible_teleporter = false;
-            level.teleport_dest_x = level.teleport_dest_y = -1;
             reader.read_int("dest_x", &level.teleport_dest_x);
             reader.read_int("dest_y", &level.teleport_dest_y);
             reader.read_string("teleport-message", &level.teleport_message);
             reader.read_bool("invisible-teleporter", &level.invisible_teleporter);
 
-            level.apply_action_north = level.apply_action_south =
-                  level.apply_action_east = level.apply_action_west = true;
             reader.read_bool("apply-action-up", &level.apply_action_north);
             reader.read_bool("apply-action-down", &level.apply_action_south);
             reader.read_bool("apply-action-left", &level.apply_action_west);

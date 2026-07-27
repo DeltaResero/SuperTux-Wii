@@ -168,11 +168,14 @@ public:
 public:
   struct Level
   {
-    int x;
-    int y;
+    /** Tile position on the map. A level whose entry gives no coordinates
+        keeps -1 and is simply never stood on, rather than matching a tile
+        by accident. */
+    int x = -1;
+    int y = -1;
     std::string name;
     std::string title;
-    bool solved;
+    bool solved = false;
 
     /** Filename of the extro text to show once the level is
         successfully completed */
@@ -180,28 +183,28 @@ public:
 
     /** Message to show in the Map during a certain time */
     std::string display_map_message;
-    bool passive_message;
+    bool passive_message = true;
 
     /** Teleporters */
-    int teleport_dest_x;
-    int teleport_dest_y;
+    int teleport_dest_x = -1;
+    int teleport_dest_y = -1;
     std::string teleport_message;
-    bool invisible_teleporter;
+    bool invisible_teleporter = false;
 
     /** If false, disables the auto walking after finishing a level */
-    bool auto_path;
+    bool auto_path = true;
 
     /** Only applies actions (ie. map messages) when going to that direction */
-    bool apply_action_north;
-    bool apply_action_east;
-    bool apply_action_south;
-    bool apply_action_west;
+    bool apply_action_north = true;
+    bool apply_action_east = true;
+    bool apply_action_south = true;
+    bool apply_action_west = true;
 
     // Directions which are walkable from this level
-    bool north;
-    bool east;
-    bool south;
-    bool west;
+    bool north = true;
+    bool east = true;
+    bool south = true;
+    bool west = true;
   };
 
   /** Variables to deal with the passive map messages */
