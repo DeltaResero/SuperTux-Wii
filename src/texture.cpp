@@ -277,21 +277,22 @@ void Surface::reload()
  */
 Surface::~Surface()
 {
-#ifdef DEBUG
-  bool found = false;
-  for (auto i = surfaces.begin(); i != surfaces.end(); ++i)
+  if (verbose)
   {
-    if (*i == this)
+    bool found = false;
+    for (auto i = surfaces.begin(); i != surfaces.end(); ++i)
     {
-      found = true;
-      break;
+      if (*i == this)
+      {
+        found = true;
+        break;
+      }
+    }
+    if (!found)
+    {
+      printf("Error: Surface freed twice!!!\n");
     }
   }
-  if (!found)
-  {
-    printf("Error: Surface freed twice!!!\n");
-  }
-#endif
   surfaces.remove(this);
 }
 
@@ -311,9 +312,12 @@ void Surface::reload_all()
  */
 void Surface::debug_check()
 {
-  for (auto& surface : surfaces)
+  if (verbose)
   {
-    printf("Surface not freed: T:%d F:%s.\n", surface->data.type, surface->data.file.c_str());
+    for (auto& surface : surfaces)
+    {
+      printf("Surface not freed: T:%d F:%s.\n", surface->data.type, surface->data.file.c_str());
+    }
   }
 }
 

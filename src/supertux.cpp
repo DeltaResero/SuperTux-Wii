@@ -106,9 +106,7 @@ int main(int argc, char ** argv)
   st_general_free();
   TileManager::destroy_instance();
 
-#ifdef DEBUG
   Surface::debug_check();  // Now this check should report an empty list.
-#endif
 
   // Perform the final, low-level system shutdown.
   st_shutdown();
