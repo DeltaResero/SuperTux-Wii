@@ -247,7 +247,7 @@ TileManager::TileManager()
         }
         tiles[id] = std::move(tile);
       }
-      else
+      else if (verbose)
       {
         puts("Unhandled symbol");
       }
@@ -1092,9 +1092,10 @@ void WorldMap::handleLevelCompletion(GameSession::ExitStatus result, bool coffee
         {
           tux->set_direction(dir);
         }
-#ifdef DEBUG
-        std::cout << "Walk to dir: " << dir << std::endl;
-#endif
+        if (verbose)
+        {
+          std::cout << "Walk to dir: " << dir << std::endl;
+        }
       }
 
       if (!level->extro_filename.empty())
@@ -1170,9 +1171,10 @@ void WorldMap::update(float delta)
     {
       if (level->x == tux->get_tile_pos().x && level->y == tux->get_tile_pos().y)
       {
-#ifdef DEBUG
-        std::cout << "Enter the current level: " << level->name << std::endl;
-#endif
+        if (verbose)
+        {
+          std::cout << "Enter the current level: " << level->name << std::endl;
+        }
         deleteSprites();
         tux->deleteSprites();
 
@@ -1220,7 +1222,7 @@ void WorldMap::update(float delta)
         unloadsounds();  // FIXME: ideally should load/unload when loading world maps
       }
     }
-    else
+    else if (verbose)
     {
       std::cout << "Nothing to enter at: " << tux->get_tile_pos().x << ", " << tux->get_tile_pos().y << std::endl;
     }
@@ -1589,12 +1591,11 @@ void WorldMap::display()
  */
 void WorldMap::report_save_failure(std::string_view filename)
 {
-#ifdef DEBUG
-  std::cerr << "Warning: Could not write the savegame \"" << filename
-            << "\"" << std::endl;
-#else
-  (void)filename;
-#endif
+  if (verbose)
+  {
+    std::cerr << "Warning: Could not write the savegame \"" << filename
+              << "\"" << std::endl;
+  }
 
   passive_message = "Could not save your progress!";
   passive_message_timer.start(DISPLAY_MAP_MESSAGE_TIME);
@@ -1606,9 +1607,10 @@ void WorldMap::report_save_failure(std::string_view filename)
  */
 void WorldMap::savegame(std::string_view filename)
 {
-#ifdef DEBUG
-  std::cout << "savegame: " << filename << std::endl;
-#endif
+  if (verbose)
+  {
+    std::cout << "savegame: " << filename << std::endl;
+  }
   // ofstream requires const char* or std::string
   std::ofstream out(std::string(filename).c_str());
   if (!out)
@@ -1663,18 +1665,20 @@ void WorldMap::savegame(std::string_view filename)
  */
 void WorldMap::loadgame(std::string_view filename)
 {
-#ifdef DEBUG
-  std::cout << "loadgame: " << filename << std::endl;
-#endif
+  if (verbose)
+  {
+    std::cout << "loadgame: " << filename << std::endl;
+  }
   savegame_file = filename;
 
   lisp_object_t* savegame_obj = lisp_read_from_file(filename);
   if (!savegame_obj)
   {
     // Reset player state for a new game
-#ifdef DEBUG
-    std::cout << "WorldMap:loadgame: File not found: " << filename << std::endl;
-#endif
+    if (verbose)
+    {
+      std::cout << "WorldMap:loadgame: File not found: " << filename << std::endl;
+    }
     player_status.reset();
     return;
   }

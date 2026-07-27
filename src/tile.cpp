@@ -133,7 +133,10 @@ void TileManager::load_tileset(const std::string& filename)
         LispReader reader(lisp_cdr(element));
         if (!reader.read_int("id", &tile->id))
         {
-          std::cerr << "Warning: Tile missing required 'id' property, skipping.\n";
+          if (verbose)
+          {
+            std::cerr << "Warning: Tile missing required 'id' property, skipping.\n";
+          }
           delete tile;
           continue;
         }
@@ -199,7 +202,7 @@ void TileManager::load_tileset(const std::string& filename)
         reader.read_int("id", &tileset_id);
         tileset_id *= 1000;
       }
-      else
+      else if (verbose)
       {
         puts("Unhandled symbol");
       }

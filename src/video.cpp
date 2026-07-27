@@ -189,7 +189,7 @@ void st_toggle_fullscreen(void)
   if (use_fullscreen)
   {
     // Go fullscreen (borderless desktop mode - no resolution change)
-    if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
+    if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0 && verbose)
     {
       fprintf(stderr, "Failed to enter fullscreen: %s\n", SDL_GetError());
     }
@@ -266,8 +266,11 @@ void st_video_setup_sdl(void)
 
   if (!renderer)
   {
-    std::cerr << "Warning: Failed to create accelerated renderer, falling back "
-                 "to software.\n";
+    if (verbose)
+    {
+      std::cerr << "Warning: Failed to create accelerated renderer, falling back "
+                   "to software.\n";
+    }
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
   }
 

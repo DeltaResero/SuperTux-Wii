@@ -114,15 +114,6 @@ inline constexpr int KICKING_TIME = 200;      // Kicking duration (ms)
 inline constexpr float SCROLL_SPEED_CREDITS = 1.55f;   // Scroll speed for credits
 inline constexpr float SCROLL_SPEED_MESSAGE = 1.0f;   // Scroll speed for messages
 
-/* Debugging */
-#ifdef DEBUG
-  #define DEBUG_MSG( msg ) { \
-    printf("%s", msg); printf("\n"); \
-  }
-#else
-  #define DEBUG_MSG( msg ) {}
-#endif
-
 #endif /* SUPERTUX_DEFINES_H */
 
 // EOF

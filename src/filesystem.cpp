@@ -60,7 +60,7 @@ FILE* opendata(const char* rel_filename, const char* mode)
 
   FILE* fi = fopen(filename.c_str(), mode);
 
-  if (fi == nullptr)
+  if (fi == nullptr && verbose)
   {
     std::cerr << "Warning: Unable to open the file \"" << filename.string() << "\" ";
     if (strcmp(mode, "r") == 0)
@@ -94,10 +94,10 @@ static void process_directory(const std::string& base_path, const std::string& r
   // Construct the full path
   fs::path path = fs::path(base_path) / rel_path;
 
-#ifdef DEBUG
-  // Debug output: print the full path being accessed in debug mode
-  std::cerr << "Accessing directory: " << path << std::endl;
-#endif
+  if (verbose)
+  {
+    std::cerr << "Accessing directory: " << path << std::endl;
+  }
 
   try
   {
@@ -201,9 +201,10 @@ void st_directory_setup(void)
   fs::create_directories(st_save_dir.c_str());
   fs::create_directories((st_dir + "/levels").c_str());
 
-  #ifdef DEBUG
-  printf("Wii Setup: Root=%s\nData=%s\nSave=%s\n", st_dir.c_str(), datadir.c_str(), st_save_dir.c_str());
-  #endif
+  if (verbose)
+  {
+    printf("Wii Setup: Root=%s\nData=%s\nSave=%s\n", st_dir.c_str(), datadir.c_str(), st_save_dir.c_str());
+  }
 }
 
 #else // #ifndef __WII__
@@ -283,7 +284,10 @@ void st_directory_setup(void)
       char* resolved_raw = realpath(exe_file, nullptr);
       if (resolved_raw == nullptr)
       {
-        puts("Couldn't resolve executable path, using default: " DATA_PREFIX);
+        if (verbose)
+        {
+          puts("Couldn't resolve executable path, using default: " DATA_PREFIX);
+        }
         datadir = DATA_PREFIX;
       }
       else
@@ -324,7 +328,10 @@ void st_directory_setup(void)
     }
     else
     {
-      puts("Couldn't determine executable path, using default: " DATA_PREFIX);
+      if (verbose)
+      {
+        puts("Couldn't determine executable path, using default: " DATA_PREFIX);
+      }
       datadir = DATA_PREFIX;
     }
   }
@@ -333,12 +340,12 @@ void st_directory_setup(void)
   datadir = "data";
 #endif
 
-#ifdef DEBUG
-  // Print the paths for verification in debug mode
-  printf("st_dir: %s\n", st_dir.c_str());
-  printf("st_save_dir: %s\n", st_save_dir.c_str());
-  printf("Datadir: %s\n", datadir.c_str());
-#endif
+  if (verbose)
+  {
+    printf("st_dir: %s\n", st_dir.c_str());
+    printf("st_save_dir: %s\n", st_save_dir.c_str());
+    printf("Datadir: %s\n", datadir.c_str());
+  }
 }
 
 #endif // def __WII__

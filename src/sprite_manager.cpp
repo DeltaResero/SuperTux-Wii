@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstring>
 #include <string_view>
+#include "globals.hpp"
 #include "lispreader.hpp"
 #include "sprite_manager.hpp"
 
@@ -47,7 +48,10 @@ void SpriteManager::load_resfile(std::string_view filename)
   lisp_object_t* root_obj = lisp_read_from_file(filename);
   if (!root_obj)
   {
-    std::cerr << "SpriteManager: Couldn't load: " << filename << std::endl;
+    if (verbose)
+    {
+      std::cerr << "SpriteManager: Couldn't load: " << filename << std::endl;
+    }
     return;
   }
 
@@ -74,10 +78,13 @@ void SpriteManager::load_resfile(std::string_view filename)
       {
         delete result.first->second;
         result.first->second = sprite;
-        std::cerr << "Warning: duplicate entry: '" << sprite_name << "'" << std::endl;
+        if (verbose)
+        {
+          std::cerr << "Warning: duplicate entry: '" << sprite_name << "'" << std::endl;
+        }
       }
     }
-    else
+    else if (verbose)
     {
       std::cerr << "SpriteManager: Unknown tag" << std::endl;
     }
@@ -102,7 +109,10 @@ Sprite* SpriteManager::load(std::string_view name)
   }
   else
   {
-    std::cerr << "SpriteManager: Sprite '" << name << "' not found" << std::endl;
+    if (verbose)
+    {
+      std::cerr << "SpriteManager: Sprite '" << name << "' not found" << std::endl;
+    }
     return nullptr;
   }
 }

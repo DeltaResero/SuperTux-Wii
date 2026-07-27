@@ -129,7 +129,7 @@ void GameSession::restart_level()
       world->get_tux()->old_base = world->get_tux()->base;
       world->get_tux()->previous_base = world->get_tux()->base;
 
-      if (collision_object_map(world->get_tux()->base))
+      if (verbose && collision_object_map(world->get_tux()->base))
       {
         std::cout << "Warning: reset point inside a wall.\n";
       }

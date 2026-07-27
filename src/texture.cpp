@@ -949,8 +949,11 @@ SurfaceSDL::SurfaceSDL(std::string_view file, bool use_alpha)
   texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
   if (!texture)
   {
-    std::cerr << "Failed to create texture from " << file << ": "
-              << SDL_GetError() << "\n";
+    if (verbose)
+    {
+      std::cerr << "Failed to create texture from " << file << ": "
+                << SDL_GetError() << "\n";
+    }
   }
   w = sdl_surface->w;
   h = sdl_surface->h;
@@ -971,8 +974,11 @@ SurfaceSDL::SurfaceSDL(std::string_view file, int x, int y, int w_, int h_, bool
   texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
   if (!texture)
   {
-    std::cerr << "Failed to create texture part from " << file << ": "
-              << SDL_GetError() << "\n";
+    if (verbose)
+    {
+      std::cerr << "Failed to create texture part from " << file << ": "
+                << SDL_GetError() << "\n";
+    }
   }
   w = sdl_surface->w;
   h = sdl_surface->h;

@@ -138,13 +138,11 @@ void play_sound(Mix_Chunk* snd, enum Sound_Speaker whichSpeaker)
     return;
   }
 
-#ifdef DEBUG
   // Check if all channels are full
-  if (Mix_Playing(-1) >= TOTAL_CHANNELS)
+  if (verbose && Mix_Playing(-1) >= TOTAL_CHANNELS)
   {
     printf("Warning: Exceeded available channels! Sound may not play.\n");
   }
-#endif
 
   Mix_PlayChannel(whichSpeaker, snd, 0);
 

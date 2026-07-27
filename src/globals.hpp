@@ -61,6 +61,14 @@ extern bool show_mouse;
 extern bool tv_overscan_enabled;
 extern int offset_y;
 
+/** Developer console output, compiled in for debug builds only.
+    Unrelated to debug_mode above, which unlocks cheats. */
+#ifdef DEBUG
+  inline constexpr bool verbose = true;
+#else
+  inline constexpr bool verbose = false;
+#endif
+
 /** The number of the joystick that will be use in the game */
 extern int joystick_num;
 extern std::string level_startup_file;

@@ -273,7 +273,10 @@ void check_contrib_subset_menu()
   {
     if (contrib_subset_menu->get_item_by_id(index).kind == MN_ACTION)
     {
-      std::cout << "Starting level: " << index << std::endl;
+      if (verbose)
+      {
+        std::cout << "Starting level: " << index << std::endl;
+      }
       GameSession session(current_contrib_subset, index, ST_GL_PLAY);
       session.run();
       player_status.reset();
@@ -444,9 +447,10 @@ static void handleMenuActions()
       {
         createDemo();
         loadsounds();
-#ifdef DEBUG
-        printf("loaded demo, load sounds\n");
-#endif
+        if (verbose)
+        {
+          printf("loaded demo, load sounds\n");
+        }
         // FIXME: shouldn't be needed if GameSession doesn't relay on global variables
         // reset tux
         scroll_x = 0;

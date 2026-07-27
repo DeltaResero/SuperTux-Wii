@@ -11,6 +11,7 @@
 // (at your option) any later version.
 
 #include "screen.hpp"
+#include "globals.hpp"
 #include "mousecursor.hpp"
 
 MouseCursor* MouseCursor::current_ = nullptr;  // Initialize static member to nullptr
@@ -28,9 +29,10 @@ MouseCursor::MouseCursor(std::string cursor_file, int frames)
   cursor = new Surface(cursor_file, true);
   if (!cursor)
   {
-#ifdef DEBUG
-    printf("Failed to load cursor image: %s\n", cursor_file.c_str());
-#endif
+    if (verbose)
+    {
+      printf("Failed to load cursor image: %s\n", cursor_file.c_str());
+    }
     return;
   }
 

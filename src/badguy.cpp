@@ -105,7 +105,10 @@ BadGuyKind badguykind_from_string(std::string_view str)
   else
   {
     // Handle unknown bad guy types.
-    std::cerr << "Couldn't convert badguy: '" << str << "'" << std::endl;
+    if (verbose)
+    {
+      std::cerr << "Couldn't convert badguy: '" << str << "'" << std::endl;
+    }
     return BAD_SNOWBALL; // Default fallback
   }
 }
@@ -232,8 +235,11 @@ BadGuy::BadGuy(float x, float y, BadGuyKind kind_, bool stay_on_platform_)
   // If we're in a solid tile at start, correct that now
   if (kind != BAD_FLAME && kind != BAD_FISH && collision_object_map(base))
   {
-    std::cerr << "Warning: BadGuy started in wall: kind: " << badguykind_to_string(kind)
-              << " pos: (" << base.x << ", " << base.y << ")" << std::endl;
+    if (verbose)
+    {
+      std::cerr << "Warning: BadGuy started in wall: kind: " << badguykind_to_string(kind)
+                << " pos: (" << base.x << ", " << base.y << ")" << std::endl;
+    }
     while (collision_object_map(base))
     {
       --base.y;

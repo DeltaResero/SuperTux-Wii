@@ -86,7 +86,10 @@ void LevelSubset::load(std::string_view subset)
   // If the filename length exceeds the limit, log an error and return
   if (filename.string().length() >= 1020)
   {
-    fprintf(stderr, "Filename is too long: %s\n", filename.string().c_str());
+    if (verbose)
+    {
+      fprintf(stderr, "Filename is too long: %s\n", filename.string().c_str());
+    }
     return;
   }
 
@@ -95,7 +98,10 @@ void LevelSubset::load(std::string_view subset)
     FILE* fi = fopen(filename.string().c_str(), "r");
     if (fi == nullptr)
     {
-      perror(filename.string().c_str());  // System-generated error message
+      if (verbose)
+      {
+        perror(filename.string().c_str());  // System-generated error message
+      }
       return;
     }
 
@@ -105,14 +111,20 @@ void LevelSubset::load(std::string_view subset)
 
     if (root_obj->type == LISP_TYPE_EOF || root_obj->type == LISP_TYPE_PARSE_ERROR)
     {
-      printf("World: Parse Error in file %s\n", filename.string().c_str());
+      if (verbose)
+      {
+        printf("World: Parse Error in file %s\n", filename.string().c_str());
+      }
     }
     else
     {
       lisp_object_t* cur = lisp_car(root_obj);
       if (!lisp_symbol_p(cur))
       {
-        printf("World: Read error in %s\n", filename.string().c_str());
+        if (verbose)
+        {
+          printf("World: Read error in %s\n", filename.string().c_str());
+        }
       }
       else if (strcmp(lisp_symbol(cur), "supertux-level-subset") == 0)
       {
@@ -269,13 +281,19 @@ int Level::load(std::string_view filename)
   lisp_object_t* root_obj = lisp_read_from_file(filename);
   if (!root_obj)
   {
-    std::cout << "Level: Couldn't load file: " << filename << std::endl;
+    if (verbose)
+    {
+      std::cout << "Level: Couldn't load file: " << filename << std::endl;
+    }
     return -1;
   }
 
   if (root_obj->type == LISP_TYPE_EOF || root_obj->type == LISP_TYPE_PARSE_ERROR)
   {
-    printf("World: Parse Error in file %s", std::string(filename).c_str());
+    if (verbose)
+    {
+      printf("World: Parse Error in file %s", std::string(filename).c_str());
+    }
     return -1;
   }
 
@@ -314,7 +332,7 @@ void Level::parseProperties(LispReader& reader)
   }
 
   time_left = 500;
-  if (!reader.read_int("time", &time_left))
+  if (!reader.read_int("time", &time_left) && verbose)
   {
     printf("Warning no time specified for level.\n");
   }
