@@ -289,6 +289,9 @@ private:
   void draw_status();
   void on_escape_press();
 
+  // Tells the player a savegame could not be written
+  void report_save_failure(std::string_view filename);
+
   // Smart tile substitution for snow tiles
   // Added const
   int get_display_tile_id(int x, int y) const;

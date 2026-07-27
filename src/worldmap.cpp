@@ -34,7 +34,45 @@
 #include "defines.hpp"
 
 namespace {
-  constexpr int DISPLAY_MAP_MESSAGE_TIME = 2800;
+  // Shared by the map flavour text and the savegame warning. Longer than
+  // the flavour text alone needs, so a failed save is readable.
+  constexpr int DISPLAY_MAP_MESSAGE_TIME = 4000;
+
+  /**
+   * Escapes a string so it can be written inside a quoted lisp string.
+   * Mirrors the reader in lispreader.cpp, which turns a backslash followed
+   * by 'n' or 't' into a newline or tab and a backslash followed by any
+   * other character into that character on its own.
+   * @param str The string to escape.
+   * @return The escaped string, safe to place between double quotes.
+   */
+  std::string escape_lisp_string(std::string_view str)
+  {
+    std::string result;
+    result.reserve(str.size());
+
+    for (const char c : str)
+    {
+      switch (c)
+      {
+        case '\\':
+        case '"':
+          result += '\\';
+          result += c;
+          break;
+        case '\n':
+          result += "\\n";
+          break;
+        case '\t':
+          result += "\\t";
+          break;
+        default:
+          result += c;
+          break;
+      }
+    }
+    return result;
+  }
 }
 
 namespace WorldMapNS
@@ -1541,6 +1579,28 @@ void WorldMap::display()
 }
 
 /**
+ * Reports that a savegame could not be written.
+ * The player is told on the world map itself, since the Wii has no console
+ * once the game is drawing and a release build should behave the same way
+ * on both platforms. It reuses the map message line, so it displaces any
+ * flavour text that happens to be showing. The path is only interesting
+ * while debugging.
+ * @param filename The name of the file that could not be written.
+ */
+void WorldMap::report_save_failure(std::string_view filename)
+{
+#ifdef DEBUG
+  std::cerr << "Warning: Could not write the savegame \"" << filename
+            << "\"" << std::endl;
+#else
+  (void)filename;
+#endif
+
+  passive_message = "Could not save your progress!";
+  passive_message_timer.start(DISPLAY_MAP_MESSAGE_TIME);
+}
+
+/**
  * Saves the game state to the specified file.
  * @param filename The name of the file to save the game state.
  */
@@ -1551,6 +1611,11 @@ void WorldMap::savegame(std::string_view filename)
 #endif
   // ofstream requires const char* or std::string
   std::ofstream out(std::string(filename).c_str());
+  if (!out)
+  {
+    report_save_failure(filename);
+    return;
+  }
 
   int nb_solved_levels = 0;
   for (Levels::iterator i = levels.begin(); i != levels.end(); ++i)
@@ -1563,7 +1628,7 @@ void WorldMap::savegame(std::string_view filename)
 
   out << "(supertux-savegame\n"
       << "  (version 1)\n"
-      << "  (title  \"" << name << " - " << nb_solved_levels << "/" << levels.size() << "\")\n"
+      << "  (title  \"" << escape_lisp_string(name) << " - " << nb_solved_levels << "/" << levels.size() << "\")\n"
       << "  (lives   " << player_status.lives << ")\n"
       << "  (score   " << player_status.score << ")\n"
       << "  (distros " << player_status.distros << ")\n"
@@ -1576,13 +1641,20 @@ void WorldMap::savegame(std::string_view filename)
   {
     if (i->solved && !i->name.empty())
     {
-      out << "     (level (name \"" << i->name << "\")\n"
+      out << "     (level (name \"" << escape_lisp_string(i->name) << "\")\n"
           << "            (solved #t))\n";
     }
   }
 
   out << "   )\n"
       << " )\n\n;; EOF ;;" << std::endl;
+
+  // A full or write-protected card fails here rather than at open time.
+  out.close();
+  if (!out)
+  {
+    report_save_failure(filename);
+  }
 }
 
 /**
