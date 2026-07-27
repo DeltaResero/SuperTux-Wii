@@ -45,7 +45,6 @@ struct Color
   int blue;
 };
 
-void drawline(int x1, int y1, int x2, int y2, int r, int g, int b, int a); // Draws a line on the screen
 void clearscreen(int r, int g, int b); // Clears the entire screen with a solid color
 void drawgradient(Color top_clr, Color bot_clr); // Draws a vertical gradient
 void fillrect(float x, float y, float w, float h, int r, int g, int b, int a); // Fills a rectangle with a solid color

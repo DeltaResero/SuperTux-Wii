@@ -83,31 +83,6 @@ void drawOpenGLGradient(const Color& top_clr, const Color& bot_clr)
 }
 
 /**
- * Draws a line using OpenGL with blending enabled.
- * The line is drawn from (x1, y1) to (x2, y2) with the specified color and alpha.
- * @param x1, y1 Starting coordinates of the line
- * @param x2, y2 Ending coordinates of the line
- * @param r, g, b RGB color components (0-255 range)
- * @param a Alpha component (0-255 range)
- */
-void drawOpenGLLine(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
-{
-  // Ensure untextured rendering
-  SurfaceOpenGL::reset_state();
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor4ub(r, g, b, a);
-
-  glBegin(GL_LINES);
-  glVertex2f(static_cast<float>(x1), static_cast<float>(y1));
-  glVertex2f(static_cast<float>(x2), static_cast<float>(y2));
-  glEnd();
-
-  glDisable(GL_BLEND);
-}
-
-/**
  * Fills a rectangle using OpenGL with the specified color and alpha.
  * @param x, y Coordinates of the top-left corner of the rectangle
  * @param w, h Width and height of the rectangle
@@ -200,80 +175,6 @@ void drawgradient(Color top_clr, Color bot_clr)
                static_cast<int>(((top_clr.blue - bot_clr.blue) / -(float)SCREEN_H) * y + top_clr.blue), 255);
     }
   }
-}
-
-/* --- PUT PIXEL --- */
-/**
- * Set a pixel at (x, y) to the specified value.
- * Handles different bytes per pixel formats.
- */
-void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
-{
-  int bpp = surface->format->BytesPerPixel;
-  Uint8 *p = static_cast<Uint8*>(surface->pixels) + y * surface->pitch + x * bpp;
-
-  switch (bpp)
-  {
-    case 1:
-      *p = pixel;
-      break;
-    case 2:
-      *reinterpret_cast<Uint16*>(p) = pixel;
-      break;
-    case 3:
-      if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-      {
-        p[0] = (pixel >> 16) & 0xff;
-        p[1] = (pixel >> 8) & 0xff;
-        p[2] = pixel & 0xff;
-      }
-      else
-      {
-        p[0] = pixel & 0xff;
-        p[1] = (pixel >> 8) & 0xff;
-        p[2] = (pixel >> 16) & 0xff;
-      }
-      break;
-    case 4:
-      *reinterpret_cast<Uint32*>(p) = pixel;
-      break;
-  }
-}
-
-/* --- DRAW PIXEL --- */
-/**
- * Draw a pixel on the screen at (x, y).
- * Locks the screen for direct access to the pixels if necessary.
- */
-void drawpixel(int x, int y, Uint32 pixel)
-{
-  // Unused in this port and incompatible with SDL_Renderer via direct surface access
-  (void)x;
-  (void)y;
-  (void)pixel;
-}
-
-/* --- DRAW LINE --- */
-/**
- * Draws a line from (x1, y1) to (x2, y2) with the specified color.
- * If OpenGL is used, it utilizes OpenGL functions.
- * Otherwise, it uses the Bresenham line algorithm for SDL rendering.
- * @param x1, y1 Starting coordinates of the line
- * @param x2, y2 Ending coordinates of the line
- * @param r, g, b RGB color components (0-255 range)
- * @param a Alpha component (0-255 range)
- */
-void drawline(int x1, int y1, int x2, int y2, int r, int g, int b, int a)
-{
-#ifndef NOOPENGL
-  if (use_gl)
-  {
-    drawOpenGLLine(x1, y1, x2, y2, r, g, b, a);
-    return;
-  }
-#endif
-  SDL_SetRenderDrawColor(renderer, r, g, b, a);
-  SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
 }
 
 /* --- FILL A RECTANGLE --- */
