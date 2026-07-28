@@ -393,28 +393,34 @@ void parseargs(int argc, char* argv[])
     }
     else if (strcmp(argv[i], "--joystick") == 0 || strcmp(argv[i], "-j") == 0)
     {
-      if (i + 1 < argc)
+      if (i + 1 >= argc)
       {
-        const char* value = argv[++i];
-        char* endptr = nullptr;
-        errno = 0;
-        const long parsed = strtol(value, &endptr, 10);
-        if (endptr == value || *endptr != '\0' || errno == ERANGE
-            || parsed < INT_MIN || parsed > INT_MAX)
-        {
-          std::string error_msg = "Invalid joystick number: " + std::string(value);
-          fprintf(stderr, "%s\n\n", error_msg.c_str());
-          exit(1);
-        }
-        joystick_num = static_cast<int>(parsed);
+        fprintf(stderr, "Option %s requires a joystick number.\n\n", argv[i]);
+        exit(1);
       }
+
+      const char* value = argv[++i];
+      char* endptr = nullptr;
+      errno = 0;
+      const long parsed = strtol(value, &endptr, 10);
+      if (endptr == value || *endptr != '\0' || errno == ERANGE
+          || parsed < INT_MIN || parsed > INT_MAX)
+      {
+        std::string error_msg = "Invalid joystick number: " + std::string(value);
+        fprintf(stderr, "%s\n\n", error_msg.c_str());
+        exit(1);
+      }
+      joystick_num = static_cast<int>(parsed);
     }
     else if (strcmp(argv[i], "--datadir") == 0 || strcmp(argv[i], "-d") == 0)
     {
-      if (i + 1 < argc)
+      if (i + 1 >= argc)
       {
-        datadir = argv[++i];
+        fprintf(stderr, "Option %s requires a directory.\n\n", argv[i]);
+        exit(1);
       }
+
+      datadir = argv[++i];
     }
     else if (strcmp(argv[i], "--show-fps") == 0)
     {
