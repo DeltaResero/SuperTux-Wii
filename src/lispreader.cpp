@@ -1271,7 +1271,7 @@ lisp_object_t* lisp_find_value(lisp_object_t* list, const char* key)
  * Builds a property map for fast lookup of named properties in the list.
  * @param l The lisp list to read from
  */
-LispReader::LispReader(lisp_object_t* l) : lst(l)
+LispReader::LispReader(lisp_object_t* l)
 {
   if (!l)
   {
@@ -1281,7 +1281,7 @@ LispReader::LispReader(lisp_object_t* l) : lst(l)
   int max_properties = 10000;
   int count = 0;
 
-  for (lisp_object_t* cursor = lst; !lisp_nil_p(cursor); cursor = lisp_cdr(cursor))
+  for (lisp_object_t* cursor = l; !lisp_nil_p(cursor); cursor = lisp_cdr(cursor))
   {
     if (count++ >= max_properties)
     {

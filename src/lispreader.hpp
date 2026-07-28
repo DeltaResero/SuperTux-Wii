@@ -120,7 +120,6 @@ lisp_object_t* lisp_make_boolean(int value);
 class LispReader
 {
 private:
-  lisp_object_t* lst;
   // Map for O(1) property lookups.
   // Keys are interned C-strings, so pointer comparison is sufficient and fast.
   std::unordered_map<const char*, lisp_object_t*> property_map;
