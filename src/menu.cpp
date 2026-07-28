@@ -49,7 +49,6 @@ Menu* game_menu      = nullptr;
 Menu* worldmap_menu  = nullptr;
 Menu* options_menu   = nullptr;
 Menu* options_keys_menu     = nullptr;
-Menu* options_joystick_menu = nullptr;
 Menu* load_game_menu = nullptr;
 Menu* save_game_menu = nullptr;
 Menu* contrib_menu   = nullptr;

@@ -128,7 +128,6 @@ void st_general_free(void)
   delete game_menu;
   delete save_game_menu;
   delete load_game_menu;
-  delete options_joystick_menu;
   delete options_keys_menu;
   delete options_menu;
   delete main_menu;
