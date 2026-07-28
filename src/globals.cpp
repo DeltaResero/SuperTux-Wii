@@ -210,15 +210,6 @@ void draw_player_hud()
   }
 }
 
-void st_wii_input_init()
-{
-#ifdef __WII__
-  WPAD_Init();
-  // Enable all buttons and accelerometer for all connected controllers
-  WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
-#endif
-}
-
 /**
  * Custom event polling wrapper to handle Wii Remote input directly.
  * Standard SDL2 on Wii sometimes "cooks" events into mouse inputs or misses
