@@ -16,8 +16,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include <sstream>
-#include <algorithm>
 
 #ifdef __WII__
 #include <gccore.h>
@@ -404,28 +402,6 @@ void parseargs(int argc, char* argv[])
         }
       }
     }
-    else if (strcmp(argv[i], "--joymap") == 0)
-    {
-      if (i + 1 < argc)
-      {
-        std::string joymap_str = argv[++i];
-        std::replace(joymap_str.begin(), joymap_str.end(), ':', ' '); // Replace colons with spaces
-        std::stringstream ss(joymap_str);
-        if (!(ss >> joystick_keymap.x_axis >> joystick_keymap.y_axis >> joystick_keymap.a_button >> joystick_keymap.b_button >> joystick_keymap.start_button))
-        {
-          puts("Warning: Invalid or incomplete joymap, should be: 'XAXIS:YAXIS:A:B:START'");
-        }
-        else
-        {
-          printf("Using new joymap: X=%d, Y=%d, A=%d, B=%d, START=%d\n",
-                 joystick_keymap.x_axis,
-                 joystick_keymap.y_axis,
-                 joystick_keymap.a_button,
-                 joystick_keymap.b_button,
-                 joystick_keymap.start_button);
-        }
-      }
-    }
     else if (strcmp(argv[i], "--datadir") == 0 || strcmp(argv[i], "-d") == 0)
     {
       if (i + 1 < argc)
@@ -499,8 +475,6 @@ void parseargs(int argc, char* argv[])
         "\n"
         "Misc Options:\n"
         "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
-        "  --joymap XAXIS:YAXIS:A:B:START\n"
-        "                      Define how joystick buttons and axis should be mapped\n"
         "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
         "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
         "  --help              Display a help message summarizing command-line\n"
