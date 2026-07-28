@@ -86,9 +86,6 @@ void loadconfig()
 #ifdef __WII__
   // On Wii Homebrew, fullscreen is mandatory, so we enforce it here.
   use_fullscreen = true;
-  // We read the config value to advance the parser but ignore its value.
-  bool dummy_fullscreen_setting;
-  reader.read_bool("fullscreen", &dummy_fullscreen_setting);
 #else
   // For other platforms, respect the user's fullscreen setting.
   reader.read_bool("fullscreen", &use_fullscreen);
@@ -102,9 +99,6 @@ void loadconfig()
 #ifdef NOOPENGL
   // When OpenGL is disabled at compile time, always force SDL mode.
   use_gl = false;
-  // We read the "video" setting to advance the parser but ignore its value.
-  std::string dummy_video_setting;
-  reader.read_string("video", &dummy_video_setting);
 #else
   // When OpenGL is available, read the user's preference from the config.
   // Only update use_gl if the tag is actually present in the file.
