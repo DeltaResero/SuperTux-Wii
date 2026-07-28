@@ -32,8 +32,6 @@ struct JoystickKeymap
   int y_axis{1};
 
   int dead_zone{8192};
-
-  JoystickKeymap();
 };
 
 extern JoystickKeymap joystick_keymap;

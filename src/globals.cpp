@@ -39,10 +39,6 @@ namespace {
 /** The datadir prefix prepended when loading game data file */
 std::string datadir;
 
-JoystickKeymap::JoystickKeymap()
-{
-}
-
 JoystickKeymap joystick_keymap;
 bool is_nunchuk_connected = false;
 
