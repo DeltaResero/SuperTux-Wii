@@ -302,10 +302,73 @@ void st_shutdown(void)
   // which will be called automatically and safely when main() returns.
   // Calling it manually here leads to a double-free and a segfault.
 
-#ifdef __WII__
-  // Reset the system and return to the system menu
-  SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#endif
+  // DO NOT add a return-to-menu call here.
+  //
+  // One was here for years and it was wrong. Working out why cost a great
+  // deal of time, so the findings are written down rather than left to be
+  // rediscovered.
+  //
+  // HOW EXITING IS MEANT TO WORK ON WII AND vWII
+  //
+  // A homebrew app ends by returning from main() or calling exit(). That is
+  // the documented convention (WiiBrew, "Developer tips") and it is what
+  // every one of devkitPro's own Wii examples does. libogc then looks for
+  // the marker "STUBHAXX" at 0x80001804. If a launcher left one there,
+  // libogc jumps to the return stub at 0x80001800 and the player lands back
+  // in whatever started the app, normally the Homebrew Channel or a USB
+  // loader. If no marker is present, libogc reboots the console itself.
+  // Handling the no-launcher case is libogc's job, not ours.
+  //
+  // vWii needs no special handling. The Homebrew Channel has shipped Wii U
+  // (Wii Mode) support since 1.1.1 and installs the same stub, so a single
+  // code path covers both machines.
+  //
+  // WHAT USED TO BE HERE, AND WHY IT WAS WRONG
+  //
+  // SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0) forced the Wii System Menu, so
+  // anyone who launched the game from the Homebrew Channel or a loader was
+  // ejected to the menu instead of returned to where they came from. It is
+  // also costlier than it looks. libogc maps that request to
+  // WII_ReturnToMenu(), which writes
+  // /title/00000001/00000002/data/state.dat and then
+  // /shared2/sys/NANDBOOTINFO before launching the System Menu title. That
+  // is two NAND writes on every exit, and NAND-writing homebrew is
+  // precisely what vWii users are warned against. If any step fails,
+  // SYS_ResetSystem falls through past __IOS_ShutdownSubsystems() and
+  // __irq_shutdown() and returns to its caller, leaving the game running
+  // with IOS torn down and interrupts disabled.
+  //
+  // DOLPHIN, AND WHY WE DO NOT WORK AROUND IT
+  //
+  // Under Dolphin, exiting stops the emulator rather than returning to the
+  // Homebrew Channel. That is not our defect and it cannot be repaired from
+  // here. Dolphin claims memory 0x1800 to 0x3000 for its cheat engine, the
+  // same range the Homebrew Channel's return stub occupies, and it never
+  // checks whether anything already lives there.
+  //
+  //   Cheats disabled: PatchFixedFunctions() hooks 0x80001800 with
+  //   HBReload, whose entire body is CPU().Break() plus a stop message.
+  //   That hook lives in a Dolphin-side address map rather than in
+  //   emulated RAM, so the guest can neither see it nor overwrite it.
+  //
+  //   Cheats enabled: that hook is skipped, but two others are installed
+  //   unconditionally at 0x800018A8 and 0x80002FFC, both of which sit
+  //   inside the stub. Reaching the first runs
+  //   GeckoCodeHandlerICacheFlush(), which writes 0xD01F1BAE over
+  //   0x80001800 and resets the icache, corrupting the very stub that is
+  //   mid-execution.
+  //
+  // There is therefore no configuration in which Dolphin returns to the
+  // Homebrew Channel, and nothing written here would change that.
+  // Detecting Dolphin is easy enough, since it registers a /dev/dolphin IOS
+  // device for that purpose, but it would only let us pick a different
+  // wrong behaviour while shipping emulator-specific code to every real
+  // console. Do not do it.
+  //
+  // Dolphin can fix this upstream, and the precedent sits in the same
+  // function: PatchFixedFunctions() already returns early for MIOS, which
+  // reserves the same low memory for the same reason. The Homebrew Channel
+  // never received the equivalent exemption.
 }
 
 /**
@@ -332,8 +395,8 @@ void st_shutdown(void)
   // Perform standard shutdown
   st_shutdown();
 
-  // Use abort as a final fallback
-  abort(); // This ensures the process terminates if shutdown doesn't fully exit
+  // Terminate with a failure status
+  exit(1); // Unlike abort(), this runs the remaining atexit handlers
 }
 
 /**
