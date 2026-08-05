@@ -29,51 +29,53 @@ Tile Class
 class Tile
 {
 public:
-  Tile();
+  Tile() = default;
   ~Tile();
 
-  int id;
+  /** Stays -1 until the tileset file supplies one, so a tile whose entry
+      omits the property is recognisable rather than colliding with tile 0. */
+  int id = -1;
 
   // Pre-calculated frame index for the current global frame
   // Calculated once per frame by TileManager::update_animations
-  int current_frame_index;
+  int current_frame_index = 0;
 
   std::vector<Surface*> images;
 
   std::vector<std::string>  filenames;
 
   /** solid tile that is indestructable by Tux */
-  bool solid;
+  bool solid = false;
 
   /** a brick that can be destroyed by jumping under it */
-  bool brick;
+  bool brick = false;
 
   /** FIXME: ? */
-  bool ice;
+  bool ice = false;
 
   /** water */
-  bool water;
+  bool water = false;
 
   /** Bonusbox, content is stored in \a data */
-  bool fullbox;
+  bool fullbox = false;
 
   /** Tile is a distro/coin */
-  bool distro;
+  bool distro = false;
 
   /** the level should be finished when touching a goaltile.
    * if data is 0 then the endsequence should be triggered, if data is 1
    * then we can finish the level instantly.
    */
-  bool goal;
+  bool goal = false;
 
   /** General purpose data attached to a tile (content of a box, type of coin) */
-  int data;
+  int data = 0;
 
   /** Id of the tile that is going to replace this tile once it has
       been collected or jumped at */
-  int next_tile;
+  int next_tile = 0;
 
-  int anim_speed;
+  int anim_speed = 25;
 
   /** Draw a tile on the screen. The position is where the tile sits in the
       level, so callers pass it straight through without subtracting scroll_x. */
@@ -105,6 +107,16 @@ private:
   static TileManager* instance_ ;
   static std::set<TileGroup>* tilegroups_;
   void load_tileset(const std::string& filename);
+  void parse_tileset_file(const std::string& filename,
+                          std::set<std::string>& visited);
+  void parse_tileset_elements(lisp_object_t* elements,
+                              std::set<std::string>& visited);
+  void parse_nested_tileset(lisp_object_t* element,
+                            const std::string& base_path,
+                            std::set<std::string>& visited);
+  void parse_tile(lisp_object_t* element, int tileset_id,
+                  const std::string& base_path);
+  static void parse_tilegroup(lisp_object_t* element);
 
   std::string current_tileset;
 
