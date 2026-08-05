@@ -62,6 +62,9 @@ int main(int argc, char ** argv)
 
 #endif
 
+  // Claim the power button before anything can press it
+  st_power_setup();
+
   // Setup directory paths and load configuration
   st_directory_setup();
   load_config_file();  // Load configuration file
@@ -110,6 +113,10 @@ int main(int argc, char ** argv)
 
   // Perform the final, low-level system shutdown.
   st_shutdown();
+
+  // If the player pressed a power button, the console goes off here rather
+  // than returning to the loader. The config has been saved by this point.
+  st_power_off_if_requested();
 
   return 0;
 }

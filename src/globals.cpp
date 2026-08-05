@@ -64,7 +64,7 @@ float game_speed = 1.0f;
 
 int joystick_num = 0;
 std::string level_startup_file;
-bool quit_requested = false;
+volatile bool quit_requested = false;
 
 /* SuperTux directory ($HOME/.supertux) and save directory($HOME/.supertux/save) */
 std::string st_dir;

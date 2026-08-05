@@ -274,6 +274,87 @@ void st_audio_setup(void)
   }
 }
 
+#ifdef __WII__
+
+/** Written from an interrupt handler, so it is volatile and the handler
+    does nothing but record the request. */
+static volatile bool power_off_requested = false;
+
+/**
+ * Records a press of the console power button.
+ * @see st_power_setup for why this replaces SDL's own handler.
+ */
+static void on_power_button(void)
+{
+  power_off_requested = true;
+  quit_requested = true;
+}
+
+/**
+ * Records a press of a Wii Remote power button.
+ * @param chan_ The controller channel the request came from, which we ignore
+ *              because either remote means the same thing here.
+ */
+static void on_remote_power_button(s32 chan_)
+{
+  (void)chan_;
+  on_power_button();
+}
+
+#endif
+
+/**
+ * Takes the Wii power button away from SDL.
+ *
+ * SDL's Wii startup code registers its own handlers for both power buttons
+ * before SDL_main() is reached. Those set a flag that makes SDL's event pump
+ * call SYS_ResetSystem(SYS_POWEROFF, 0, 0) and then carry on pumping. That
+ * call is not the end of the world it looks like: libogc asks IOS to cut the
+ * power, but the request is asynchronous, so libogc goes on to shut IOS down,
+ * disable interrupts and return to its caller. SDL then reads the Wii Remotes
+ * and the USB keyboard through an IOS that no longer exists, and hands the
+ * game an SDL_QUIT so the game does the same. Whether that ends in a clean
+ * power off or an exception depends on how quickly the hardware cuts power,
+ * which is why it fails only sometimes.
+ *
+ * Registering our own handlers means SDL's flag is never set and its pump
+ * never reaches that call. We record the request instead, let the game unwind
+ * normally, and power off from main() once the config has been saved. Both
+ * libogc setters return the handler they replaced, which we do not need.
+ */
+void st_power_setup(void)
+{
+#ifdef __WII__
+  SYS_SetPowerCallback(on_power_button);
+  WPAD_SetPowerButtonCallback(on_remote_power_button);
+#endif
+}
+
+/**
+ * Powers the console off, if that is what the player asked for.
+ * Call this only once the game has finished shutting down, because it does
+ * not return when a power off is pending.
+ */
+void st_power_off_if_requested(void)
+{
+#ifdef __WII__
+  if (!power_off_requested)
+  {
+    return;
+  }
+
+  SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+
+  // libogc returns from that call if IOS has not cut the power yet, having
+  // already torn IOS down and disabled interrupts. Stop here rather than run
+  // on in that state. The condition re-reads a volatile flag that stays true,
+  // so the wait cannot be optimised away.
+  while (power_off_requested)
+  {
+  }
+#endif
+}
+
 /**
  * Performs a graceful shutdown of the application, ensuring all
  * resources are freed, SDL subsystems are quit, and game configuration
