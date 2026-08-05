@@ -210,6 +210,144 @@ void st_directory_setup(void)
 #else // #ifndef __WII__
 
 /**
+ * Reads $HOME, canonicalized to strip any path-traversal sequences (e.g. "..")
+ * before it is used to build st_dir. realpath() only resolves paths that
+ * already exist, so a $HOME that has yet to be created falls back to the raw
+ * value and create_directories() makes it later. An unset $HOME gives ".".
+ * @return The home directory to build st_dir from.
+ */
+static std::string resolve_home_directory()
+{
+  const char* home_env = getenv("HOME");
+
+  if (home_env == nullptr)
+  {
+    return ".";
+  }
+
+  char* resolved_home = realpath(home_env, nullptr);
+  std::string home = (resolved_home != nullptr) ? resolved_home : home_env;
+  free(resolved_home);
+
+  return home;
+}
+
+#ifndef WIN32
+
+/**
+ * Asks the operating system where this executable lives.
+ * @param buffer Receives the path, always NUL terminated on success.
+ * @param size The size of buffer in bytes.
+ * @return true if the path was retrieved. A platform with no supported way of
+ *         asking always returns false, and the caller falls back to
+ *         DATA_PREFIX.
+ */
+static bool get_executable_path(char* buffer, size_t size)
+{
+#if defined(__linux__)
+  // readlink does not NUL-terminate; we do so explicitly.
+  ssize_t len = readlink("/proc/self/exe", buffer, size - 1);
+  if (len > 0)
+  {
+    buffer[len] = '\0';
+    return true;
+  }
+#elif defined(__APPLE__)
+  uint32_t buffer_size = static_cast<uint32_t>(size);
+  if (_NSGetExecutablePath(buffer, &buffer_size) == 0)
+  {
+    return true;
+  }
+#elif defined(__FreeBSD__)
+  int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+  size_t len = size;
+  if (sysctl(mib, 4, buffer, &len, NULL, 0) == 0)
+  {
+    return true;
+  }
+#else
+  (void)buffer;
+  (void)size;
+#endif
+
+  return false;
+}
+
+/**
+ * Looks for the game data in the usual places around the executable.
+ * @param exedir The directory holding the executable.
+ * @return The first candidate that exists and is a directory, or DATA_PREFIX
+ *         when none of them do.
+ */
+static std::string find_datadir_near(const fs::path& exedir)
+{
+  const std::vector<fs::path> search_paths = {
+      exedir / "data",
+      exedir / "../data",
+      exedir / "../share/supertux",
+  };
+
+  for (const auto& path : search_paths)
+  {
+    struct stat st;
+    if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
+    {
+      try
+      {
+        return fs::canonical(path).string();
+      }
+      catch (const fs::filesystem_error&)
+      {
+        // The path was invalid or unreadable, so we just try the next path.
+        continue;
+      }
+    }
+  }
+
+  return DATA_PREFIX;
+}
+
+/**
+ * Works out where the game data lives, starting from the executable's own
+ * location. Falls back to DATA_PREFIX at every step that can fail.
+ */
+static void detect_datadir()
+{
+  char exe_file[PATH_MAX] = {0};
+
+  if (!get_executable_path(exe_file, sizeof(exe_file)))
+  {
+    if (verbose)
+    {
+      puts("Couldn't determine executable path, using default: " DATA_PREFIX);
+    }
+    datadir = DATA_PREFIX;
+    return;
+  }
+
+  /* Use NULL destination so realpath allocates the buffer to avoid
+   * potential overflow if the resolved path exceeds PATH_MAX. */
+  char* resolved_raw = realpath(exe_file, nullptr);
+
+  if (resolved_raw == nullptr)
+  {
+    if (verbose)
+    {
+      puts("Couldn't resolve executable path, using default: " DATA_PREFIX);
+    }
+    datadir = DATA_PREFIX;
+    return;
+  }
+
+  const std::string resolved_path(resolved_raw);
+  free(resolved_raw);
+
+  datadir = find_datadir_near(fs::path(resolved_path).parent_path());
+}
+
+#endif // ifndef WIN32
+
+/**
  * Set SuperTux configuration and save directories (non HBC Wii)
  * This sets up the directory structure, including the base directory and
  * save directory. It handles home directory detection, creation of
@@ -217,21 +355,7 @@ void st_directory_setup(void)
  */
 void st_directory_setup(void)
 {
-  /* Get home directory from $HOME variable, canonicalized to strip any
-   * path-traversal sequences (e.g. "..") before we use it to build st_dir.
-   * realpath() only resolves paths that already exist, so a $HOME that has
-   * yet to be created must fall back to the raw value; create_directories()
-   * below will make it (and its parents). Only an unset $HOME uses ".". */
-  const char* home_env = getenv("HOME");
-  std::string home = ".";
-  if (home_env != nullptr)
-  {
-    char* resolved_home = realpath(home_env, nullptr);
-    home = (resolved_home != nullptr) ? resolved_home : home_env;
-    free(resolved_home);
-  }
-
-  st_dir = home + "/.supertux";
+  st_dir = resolve_home_directory() + "/.supertux";
 
   /* Remove .supertux config-file from old SuperTux versions */
   if (faccessible(st_dir.c_str()))
@@ -251,89 +375,7 @@ void st_directory_setup(void)
   // Handle datadir detection logic (Linux, macOS, BSD)
   if (datadir.empty())
   {
-    char exe_file[PATH_MAX] = {0};
-    bool path_retrieved = false;
-
-#if defined(__linux__)
-    // readlink does not NUL-terminate; we do so explicitly.
-    ssize_t len = readlink("/proc/self/exe", exe_file, sizeof(exe_file) - 1);
-    if (len > 0)
-    {
-      exe_file[len] = '\0';
-      path_retrieved = true;
-    }
-#elif defined(__APPLE__)
-    uint32_t size = sizeof(exe_file);
-    if (_NSGetExecutablePath(exe_file, &size) == 0)
-    {
-      path_retrieved = true;
-    }
-#elif defined(__FreeBSD__)
-    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
-    size_t len = sizeof(exe_file);
-    if (sysctl(mib, 4, exe_file, &len, NULL, 0) == 0)
-    {
-      path_retrieved = true;
-    }
-#endif
-
-    if (path_retrieved)
-    {
-      /* Use NULL destination so realpath allocates the buffer to avoid
-       * potential overflow if the resolved path exceeds PATH_MAX. */
-      char* resolved_raw = realpath(exe_file, nullptr);
-      if (resolved_raw == nullptr)
-      {
-        if (verbose)
-        {
-          puts("Couldn't resolve executable path, using default: " DATA_PREFIX);
-        }
-        datadir = DATA_PREFIX;
-      }
-      else
-      {
-        std::string resolved_path(resolved_raw);
-        free(resolved_raw);
-        fs::path exedir = fs::path(resolved_path).parent_path();
-        const std::vector<fs::path> search_paths = {
-            exedir / "data",
-            exedir / "../data",
-            exedir / "../share/supertux",
-        };
-
-        bool found = false;
-        for (const auto& path : search_paths)
-        {
-          struct stat st;
-          if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
-          {
-            try
-            {
-              datadir = fs::canonical(path).string();
-              found = true;
-              break;
-            }
-            catch (const fs::filesystem_error&)
-            {
-              // The path was invalid or unreadable, so we just try the next path.
-              continue;
-            }
-          }
-        }
-        if (!found)
-        {
-          datadir = DATA_PREFIX;
-        }
-      }
-    }
-    else
-    {
-      if (verbose)
-      {
-        puts("Couldn't determine executable path, using default: " DATA_PREFIX);
-      }
-      datadir = DATA_PREFIX;
-    }
+    detect_datadir();
   }
 #else // #ifdef WIN32
   // For Windows, use default data path
