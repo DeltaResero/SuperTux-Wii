@@ -695,7 +695,7 @@ void display_text_file(std::string_view file, Surface* surface, float scroll_spe
 
     SDL_Event event;
     bool done_static = false;
-    while (!done_static)
+    while (!done_static && !quit_requested)
     {
       if (st_poll_event(&event))
       {
@@ -733,7 +733,7 @@ void display_text_file(std::string_view file, Surface* surface, float scroll_spe
     }
 #endif
 
-    while (!done)
+    while (!done && !quit_requested)
     {
       SDL_Event event;
       while (st_poll_event(&event))

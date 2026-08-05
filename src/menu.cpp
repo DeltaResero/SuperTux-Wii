@@ -76,7 +76,7 @@ bool confirm_dialog(const std::string& text, Surface* background)
 
   Menu::set_current(dialog);
 
-  while (true)
+  while (!quit_requested)
   {
     SDL_Event event;
 
@@ -114,6 +114,12 @@ bool confirm_dialog(const std::string& text, Surface* background)
     mouse_cursor->draw();
     flipscreen();
   }
+
+  // The player asked to close the game while the dialog was still open. Answer
+  // no, so that a request to leave is never read as confirmation.
+  Menu::set_current(nullptr);
+  delete dialog;
+  return false;
 }
 
 /**

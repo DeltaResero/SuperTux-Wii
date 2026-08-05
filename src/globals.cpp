@@ -144,6 +144,14 @@ int wait_for_event(SDL_Event& event, unsigned int min_delay, unsigned int max_de
 
   for (i = 0; maxdelay.check() || !i; ++i)
   {
+    /* The close request may have been consumed by an earlier loop, or have
+       arrived while min_delay was still swallowing input, so check the flag
+       as well as the events. */
+    if (quit_requested)
+    {
+      return 2;
+    }
+
     while (st_poll_event(&event))
     {
       if (!mindelay.check())

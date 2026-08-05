@@ -398,7 +398,8 @@ static void processTitleInput()
       Menu::current()->event(event);
     }
 
-    // FIXME: QUIT signal should be handled more generically, not locally
+    // Drop the menu so this loop's own condition ends the title screen.
+    // quit_requested carries the request the rest of the way out of main().
     if (event.type == SDL_QUIT)
     {
       Menu::set_current(0);
