@@ -124,7 +124,7 @@ class GameSession
   private:
     void on_escape_press();
     void toggle_pause();
-    void process_menu();
+    static void process_menu();
 };
 
 std::string slotinfo(int slot);

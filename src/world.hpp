@@ -66,7 +66,7 @@ private:
   void cleanup_dead_objects();
 
   template<typename T, typename Func>
-  void draw_pooled_objects(ObjectPool<T>& pool, Func draw_lambda)
+  static void draw_pooled_objects(ObjectPool<T>& pool, Func draw_lambda)
   {
     const auto& pool_data = pool.get_pool_data();
     for (size_t index : pool.get_active_indices())

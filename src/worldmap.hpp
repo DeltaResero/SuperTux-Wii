@@ -235,7 +235,7 @@ public:
   /** Draw one frame */
   void draw(const Point& offset_);
 
-  Point get_next_tile(Point pos, Direction direction);
+  static Point get_next_tile(Point pos, Direction direction);
   Tile* at(Point pos);
   WorldMap::Level* at_level();
 
@@ -290,7 +290,7 @@ private:
   void handleLevelCompletion(GameSession::ExitStatus result, bool coffee, bool big, Level* level);
 
   void draw_status();
-  void on_escape_press();
+  static void on_escape_press();
 
   // Tells the player a savegame could not be written
   void report_save_failure(std::string_view filename);

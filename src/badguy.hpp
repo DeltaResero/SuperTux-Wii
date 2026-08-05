@@ -113,7 +113,8 @@ public:
     return "BadGuy";
   };
 
-  void explode(BadGuy* badguy);
+  /** Takes its subject as an argument rather than acting on this one. */
+  static void explode(BadGuy* badguy);
 
   void collision(void* p_c_object, int c_object,
                  CollisionType type_ = COLLISION_NORMAL);

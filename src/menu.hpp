@@ -154,7 +154,7 @@ private:
 
   void process_options_menu();
   void draw_item(int index, int menu_width, int menu_height);
-  void get_controlfield_key_into_input(MenuItem* item_);
+  static void get_controlfield_key_into_input(MenuItem* item_);
 
 public:
   // Static functions for menu navigation
