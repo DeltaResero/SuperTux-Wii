@@ -561,7 +561,7 @@ void title(void)
   loadsounds();
 
   // Main loop for the title screen
-  while (Menu::current())
+  while (Menu::current() && !quit_requested)
   {
     // Check if too much time has passed since the last update
     if ((update_time - last_update_time) > 1000)

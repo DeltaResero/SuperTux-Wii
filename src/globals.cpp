@@ -64,6 +64,7 @@ float game_speed = 1.0f;
 
 int joystick_num = 0;
 std::string level_startup_file;
+bool quit_requested = false;
 
 /* SuperTux directory ($HOME/.supertux) and save directory($HOME/.supertux/save) */
 std::string st_dir;
@@ -361,7 +362,16 @@ int st_poll_event(SDL_Event *event)
 
   // Fallback to standard SDL polling for other systems or non-Wii-specific
   // events
-  return SDL_PollEvent(event);
+  const int got_event = SDL_PollEvent(event);
+
+  // Record a close request centrally so it cannot be swallowed by a menu or
+  // by a loop that does not handle SDL_QUIT itself.
+  if (got_event && event->type == SDL_QUIT)
+  {
+    quit_requested = true;
+  }
+
+  return got_event;
 }
 
 // EOF

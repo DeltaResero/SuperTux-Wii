@@ -831,7 +831,7 @@ GameSession::ExitStatus GameSession::run()
 
   draw();
 
-  while (exit_status == ES_NONE)
+  while (exit_status == ES_NONE && !quit_requested)
   {
     /* Calculate the movement-factor */
     float frame_ratio = static_cast<float>(update_time - last_update_time) / static_cast<float>(FRAME_RATE);

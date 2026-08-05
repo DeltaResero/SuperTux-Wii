@@ -879,7 +879,11 @@ void WorldMap::get_input()
       {
         case SDL_QUIT:
         {
-          st_abort("Received window close", "");
+          // A close request is a normal way to leave, not an error. Drop the
+          // map so display() returns, and quit_requested carries the request
+          // on out through the title screen.
+          quit_map();
+          break;
         }
         case SDL_KEYDOWN:
         {
@@ -1535,7 +1539,7 @@ void WorldMap::display()
   // Ensure scroll_x is 0 so RenderBatcher doesn't apply side-scroller offsets
   scroll_x = 0;
 
-  while (!quit)
+  while (!quit && !quit_requested)
   {
     // Use same delta calculation as gameloop (divide by FRAME_RATE)
     float delta = static_cast<float>(update_time - last_update_time) / static_cast<float>(FRAME_RATE);

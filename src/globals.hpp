@@ -84,6 +84,12 @@ int wait_for_event(SDL_Event& event, unsigned int min_delay = 0, unsigned int ma
 
 void draw_player_hud();
 
+/** Set once the player asks for the game to close: the window's close
+    button on desktop, or the reset button on Wii. Every game loop checks
+    it so the request unwinds all the way out of main() instead of being
+    handled locally by whichever loop happened to see the event. */
+extern bool quit_requested;
+
 int st_poll_event(SDL_Event *event);
 
 #endif /* SUPERTUX_GLOBALS_H */
