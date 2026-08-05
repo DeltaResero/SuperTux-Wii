@@ -44,7 +44,6 @@ class Sprite
   Sprite& operator=(const Sprite&) = delete;
 
   void reset();                   // Resets animation timer
-  void update(float delta);       // Updates the animation
 
   void draw(float x, float y);    // Draws the sprite at coordinates (SDL path)
   void draw(RenderBatcher& batcher, float x, float y); // Draws the sprite (OpenGL path)

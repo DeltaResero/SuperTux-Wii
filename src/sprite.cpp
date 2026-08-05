@@ -73,17 +73,6 @@ void Sprite::init_defaults()
 }
 
 /**
- * Updates the sprite state.
- * This function would normally update the sprite based on the elapsed time, but is currently disabled.
- * @param delta The time that has passed since the last update.
- */
-void Sprite::update(float /*delta*/)
-{
-  // time += 10 * delta;
-  // std::cout << "Delta: " << delta << std::endl;
-}
-
-/**
  * Draws the sprite at the specified coordinates. (SDL Path)
  * The sprite is drawn based on the current frame, adjusted by the hotspot coordinates.
  * @param x The x-coordinate to draw the sprite.
