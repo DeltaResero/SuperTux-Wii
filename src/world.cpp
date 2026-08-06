@@ -669,13 +669,75 @@ void World::scrolling(float elapsed_time)
   }
 }
 
+namespace {
+
+/** A Mr. Iceblock in KICK mode is the one bad guy that hunts the others, and
+    both the special collider pass and the normal pass have to recognise it. */
+bool is_kicked_iceblock(const BadGuy* badguy)
+{
+  return badguy->kind == BAD_MRICEBLOCK && badguy->mode == BadGuy::KICK;
+}
+
+/** True when the object sits wholly left or wholly right of the band. */
+bool outside_x_band(const base_type& base, float band_start, float band_end)
+{
+  return base.x + base.width < band_start || base.x > band_end;
+}
+
+/** Tux squishes a bad guy by dropping onto its upper half, unless
+    invincibility is carrying him straight through. */
+bool tux_lands_on(const Player& tux, const BadGuy* badguy)
+{
+  return tux.previous_base.y < tux.base.y &&
+         tux.previous_base.y + tux.previous_base.height <
+           badguy->base.y + (badguy->base.height / 2) &&
+         !tux.invincible_timer.started();
+}
+
+/** The original engine (j = i + 1) processed each unordered pair exactly
+    once. With the grid, the pair (A, B) would otherwise be visited from
+    both sides, and collision responses like direction flips are toggles,
+    so firing twice cancels them out. Process the pair from 'cur' only if
+    'other' won't process it itself: either 'cur' orders first, or 'other'
+    is outside the screen cull and will never take its turn. */
+bool pair_belongs_to(const BadGuy* cur, const BadGuy* other,
+                     float band_start, float band_end)
+{
+  if (other == cur) return false;
+  if (other->dying != DYING_NOT) return false;
+
+  // Kicked ice blocks are special colliders; that pairing is already
+  // handled (unbounded) by the special collider pass.
+  if (is_kicked_iceblock(other)) return false;
+
+  const bool other_is_culled = outside_x_band(other->base, band_start, band_end);
+  return other_is_culled || !std::less<const BadGuy*>{}(other, cur);
+}
+
+} // namespace
+
 void World::collision_handler()
 {
-  // Rebuild spatial grid each frame
+  rebuild_collision_grid();
+
+  collide_bullets_with_badguys();
+  collide_special_colliders();
+  collide_specials_with_each_other();
+  collide_normal_badguys();
+
+  // A dying Tux takes no hits and picks nothing up.
+  if (tux.dying != DYING_NOT) return;
+
+  collide_player_with_badguys();
+  collide_player_with_upgrades();
+}
+
+/** Rebuild the spatial grid from the living bad guys. Bullets and upgrades
+    are never looked up by area, so they are deliberately left out. */
+void World::rebuild_collision_grid()
+{
   m_spatial_grid->clear();
 
-  // Add living badguys to the grid. Bullets and upgrades are never looked
-  // up by area, so they are deliberately left out.
   for (auto* badguy : bad_guys)
   {
     if (badguy->dying == DYING_NOT)
@@ -683,8 +745,10 @@ void World::collision_handler()
       m_spatial_grid->add_badguy(badguy);
     }
   }
+}
 
-  // Bullet vs BadGuy collisions
+void World::collide_bullets_with_badguys()
+{
   for (size_t index : bullets.get_active_indices())
   {
     Bullet* bullet = bullets.get_object_at(index);
@@ -708,59 +772,69 @@ void World::collision_handler()
       }
     }
   }
+}
 
-  // Special colliders (Mr. Iceblock case)
+void World::collide_special_colliders()
+{
   for (auto* special : special_colliders)
   {
     if (special->dying != DYING_NOT) continue;
 
-    // Mr. Iceblock in KICK mode can hit enemies OFF SCREEN
-    // Use unbounded query (all badguys) to preserve original behavior
-    bool is_kicked_iceblock = (special->kind == BAD_MRICEBLOCK &&
-                               special->mode == BadGuy::KICK);
-
-    if (is_kicked_iceblock)
+    if (is_kicked_iceblock(special))
     {
-      // Check against ALL badguys (original behavior)
-      for (auto* normal : normal_colliders)
-      {
-        if (normal->dying != DYING_NOT) continue;
-
-        if (rectcollision(special->base, normal->base))
-        {
-          normal->collision(special, CO_BADGUY);
-          special->collision(normal, CO_BADGUY);
-        }
-      }
+      collide_kicked_iceblock(special);
     }
     else
     {
-      // Other special colliders use spatial query
-      const auto& nearby = m_spatial_grid->query_badguys(
-        special->base.x - TILE_SIZE, special->base.y - TILE_SIZE,
-        special->base.width + (TILE_SIZE * 2), special->base.height + (TILE_SIZE * 2)
-      );
-
-      for (auto* normal : nearby)
-      {
-        // The grid contains ALL bad guys, so the query can return the special
-        // collider itself as well as other special colliders. Skip both:
-        // self-collision is never valid, and special-vs-special pairs are
-        // handled once by the dedicated loop below.
-        if (normal == special) continue;
-        if (normal->kind == BAD_MRICEBLOCK && normal->mode == BadGuy::KICK) continue;
-        if (normal->dying != DYING_NOT) continue;
-
-        if (rectcollision(special->base, normal->base))
-        {
-          normal->collision(special, CO_BADGUY);
-          special->collision(normal, CO_BADGUY);
-        }
-      }
+      collide_special_with_nearby(special);
     }
   }
+}
 
-  // Special vs Special collisions
+/** Mr. Iceblock in KICK mode can hit enemies OFF SCREEN, so it walks the whole
+    collider list instead of a bounded query, preserving original behavior. */
+void World::collide_kicked_iceblock(BadGuy* iceblock)
+{
+  for (auto* normal : normal_colliders)
+  {
+    if (normal->dying != DYING_NOT) continue;
+
+    if (rectcollision(iceblock->base, normal->base))
+    {
+      normal->collision(iceblock, CO_BADGUY);
+      iceblock->collision(normal, CO_BADGUY);
+    }
+  }
+}
+
+/** Every other special collider meets only what the grid hands back. */
+void World::collide_special_with_nearby(BadGuy* special)
+{
+  const auto& nearby = m_spatial_grid->query_badguys(
+    special->base.x - TILE_SIZE, special->base.y - TILE_SIZE,
+    special->base.width + (TILE_SIZE * 2), special->base.height + (TILE_SIZE * 2)
+  );
+
+  for (auto* normal : nearby)
+  {
+    // The grid contains ALL bad guys, so the query can return the special
+    // collider itself as well as other special colliders. Skip both:
+    // self-collision is never valid, and special-vs-special pairs are
+    // handled once by the dedicated pass.
+    if (normal == special) continue;
+    if (is_kicked_iceblock(normal)) continue;
+    if (normal->dying != DYING_NOT) continue;
+
+    if (rectcollision(special->base, normal->base))
+    {
+      normal->collision(special, CO_BADGUY);
+      special->collision(normal, CO_BADGUY);
+    }
+  }
+}
+
+void World::collide_specials_with_each_other()
+{
   for (size_t i = 0; i < special_colliders.size(); ++i)
   {
     BadGuy* special1 = special_colliders[i];
@@ -778,8 +852,10 @@ void World::collision_handler()
       }
     }
   }
+}
 
-  // Normal vs Normal (use spatial grid)
+void World::collide_normal_badguys()
+{
   const float screen_x_start = scroll_x - (float)(TILE_SIZE * 2);
   const float screen_x_end = scroll_x + screen->w + (float)(TILE_SIZE * 2);
 
@@ -788,8 +864,7 @@ void World::collision_handler()
     BadGuy* cur = normal_colliders[i];
 
     if (cur->dying != DYING_NOT) continue;
-    if (cur->base.x + cur->base.width < screen_x_start ||
-        cur->base.x > screen_x_end) continue;
+    if (outside_x_band(cur->base, screen_x_start, screen_x_end)) continue;
 
     const auto& nearby = m_spatial_grid->query_badguys(
       cur->base.x - TILE_SIZE,
@@ -800,22 +875,7 @@ void World::collision_handler()
 
     for (auto* other : nearby)
     {
-      if (other == cur) continue;
-      if (other->dying != DYING_NOT) continue;
-
-      // Kicked ice blocks are special colliders; that pairing is already
-      // handled (unbounded) by the special collider loop above.
-      if (other->kind == BAD_MRICEBLOCK && other->mode == BadGuy::KICK) continue;
-
-      // The original engine (j = i + 1) processed each unordered pair exactly
-      // once. With the grid, the pair (A, B) would otherwise be visited from
-      // both sides, and collision responses like direction flips are toggles,
-      // so firing twice cancels them out. Process the pair from 'cur' only if
-      // 'other' won't process it itself: either 'cur' orders first, or 'other'
-      // is outside the screen cull and will never take its turn.
-      bool other_is_culled = (other->base.x + other->base.width < screen_x_start ||
-                              other->base.x > screen_x_end);
-      if (!other_is_culled && std::less<BadGuy*>{}(other, cur)) continue;
+      if (!pair_belongs_to(cur, other, screen_x_start, screen_x_end)) continue;
 
       if (rectcollision(cur->base, other->base))
       {
@@ -825,23 +885,22 @@ void World::collision_handler()
       }
     }
   }
+}
 
-  // Player collisions
-  if (tux.dying != DYING_NOT) return;
-
+void World::collide_player_with_badguys()
+{
   for (auto* badguy : bad_guys)
   {
     if (badguy->dying != DYING_NOT) continue;
 
-    if (badguy->base.x + badguy->base.width < tux.base.x - (float)(TILE_SIZE * 2) ||
-        badguy->base.x > tux.base.x + tux.base.width + (float)(TILE_SIZE * 2))
+    if (outside_x_band(badguy->base,
+                       tux.base.x - (float)(TILE_SIZE * 2),
+                       tux.base.x + tux.base.width + (float)(TILE_SIZE * 2)))
       continue;
 
     if (rectcollision_offset(badguy->base, tux.base, 0, 0))
     {
-      if (tux.previous_base.y < tux.base.y &&
-          tux.previous_base.y + tux.previous_base.height < badguy->base.y + badguy->base.height/2 &&
-          !tux.invincible_timer.started())
+      if (tux_lands_on(tux, badguy))
       {
         badguy->collision(&tux, CO_PLAYER, COLLISION_SQUISH);
       }
@@ -852,16 +911,19 @@ void World::collision_handler()
       }
     }
   }
+}
 
-  // Upgrade collisions
+/** Upgrades can only be collected by the player, so only those inside a
+    64 pixel buffer around Tux are worth testing. */
+void World::collide_player_with_upgrades()
+{
   for (size_t index : upgrades.get_active_indices())
   {
-    // Upgrades can only be collected by the player, so we only need to check for them near the player
-    // Skip any upgrade that is not within a 64-pixel buffer around Tux
     Upgrade* upgrade = upgrades.get_object_at(index);
 
-    if (upgrade->base.x + upgrade->base.width < tux.base.x - (float)(TILE_SIZE * 2) ||
-        upgrade->base.x > tux.base.x + tux.base.width + (float)(TILE_SIZE * 2))
+    if (outside_x_band(upgrade->base,
+                       tux.base.x - (float)(TILE_SIZE * 2),
+                       tux.base.x + tux.base.width + (float)(TILE_SIZE * 2)))
     {
       continue;
     }

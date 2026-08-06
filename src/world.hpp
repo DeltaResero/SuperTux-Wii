@@ -65,6 +65,17 @@ private:
   // Helper function to clean up all objects marked for removal
   void cleanup_dead_objects();
 
+  // The collision passes, run in this order by collision_handler()
+  void rebuild_collision_grid();
+  void collide_bullets_with_badguys();
+  void collide_special_colliders();
+  void collide_kicked_iceblock(BadGuy* iceblock);
+  void collide_special_with_nearby(BadGuy* special);
+  void collide_specials_with_each_other();
+  void collide_normal_badguys();
+  void collide_player_with_badguys();
+  void collide_player_with_upgrades();
+
   template<typename T, typename Func>
   static void draw_pooled_objects(ObjectPool<T>& pool, Func draw_lambda)
   {
