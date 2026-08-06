@@ -48,7 +48,7 @@
 /* Local function prototypes: */
 #ifndef __WII__
 void seticon(void);
-void usage(char* prog, int ret);
+[[noreturn]] void usage(char* prog, int ret);
 #endif
 
 /**
@@ -745,7 +745,7 @@ void parseargs(int argc, char* argv[])
  * @param prog The name of the program.
  * @param ret  The exit code (0 for success, non-zero for error).
  */
-void usage(char* prog, int ret)
+[[noreturn]] void usage(char* prog, int ret)
 {
   // Determine which stream to write to
   FILE* fi = (ret == 0) ? stdout : stderr;
@@ -756,8 +756,9 @@ void usage(char* prog, int ret)
   if (ret != 0)
   {
     fprintf(stderr, "Incorrect command-line arguments.\n");
-    exit(ret);
   }
+
+  exit(ret);
 }
 #endif /* #ifndef __WII__ */
 
