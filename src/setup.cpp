@@ -134,6 +134,65 @@ void st_general_free(void)
 }
 
 /**
+ * Settles whether to keep using a joystick when SDL reports none at all.
+ */
+static void no_joysticks_available(void)
+{
+#ifdef __WII__
+  // On Wii, we effectively always have a joystick (Wiimote) via WPAD.
+  // Even if SDL sees none, we force enabled so config saves correctly
+  // 'joystick 0'.
+  use_joystick = true;
+  if (joystick_num < 0)
+    joystick_num = 0;
+#else
+  fprintf(stderr, "Warning: No joysticks are available.\n");
+  use_joystick = false;
+#endif
+}
+
+/**
+ * Settles whether to keep using a joystick that SDL refused to open.
+ */
+static void joystick_open_failed(void)
+{
+#ifdef __WII__
+  // Ignore open failure on Wii; we use custom polling.
+  use_joystick = true;
+#else
+  fprintf(stderr, "Warning: Could not open joystick %d.\n"
+                  "The Simple DirectMedia error that occurred was:\n%s\n\n",
+          joystick_num, SDL_GetError());
+
+  use_joystick = false;
+#endif
+}
+
+/**
+ * Reports on an opened joystick that is short of axes or buttons.
+ * @param joystick The joystick SDL handed back.
+ */
+static void check_joystick_capabilities(SDL_Joystick* joystick)
+{
+  if (SDL_JoystickNumAxes(joystick) < 2)
+  {
+    fprintf(stderr, "Warning: Joystick does not have enough axes!\n");
+    // We don't disable joystick here anymore because a sideways Wiimote
+    // might report weird axes but still be valid for buttons/dpad.
+  }
+
+  if (SDL_JoystickNumButtons(joystick) < 2)
+  {
+#ifdef __WII__
+    use_joystick = true;
+#else
+    fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
+    use_joystick = false;
+#endif
+  }
+}
+
+/**
  * Function for initializing joystick support
  */
 void st_joystick_setup(void)
@@ -143,79 +202,40 @@ void st_joystick_setup(void)
 
   if (SDL_Init(SDL_INIT_JOYSTICK) < 0)
   {
-    std::string error_msg = "Warning: Could not initialize joystick!\n"
-                            "The Simple DirectMedia error that occurred was:\n";
-    error_msg += SDL_GetError();
-    fprintf(stderr, "%s\n\n", error_msg.c_str());
+    fprintf(stderr, "Warning: Could not initialize joystick!\n"
+                    "The Simple DirectMedia error that occurred was:\n%s\n\n",
+            SDL_GetError());
 
     use_joystick = false;
+    return;
   }
-  else
+
+  // Ensure events are enabled and pump them once to update state
+  SDL_JoystickEventState(SDL_ENABLE);
+  SDL_PumpEvents();
+
+#ifdef __WII__
+  // SDL_Init resets WPAD. We must set the data format AFTER SDL_Init
+  // to ensure the Nunchuk/Extensions are detected and reported correctly
+  // for our custom polling in globals.cpp.
+  WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+#endif
+
+  /* Open joystick: */
+  if (SDL_NumJoysticks() <= 0)
   {
-    // Ensure events are enabled and pump them once to update state
-    SDL_JoystickEventState(SDL_ENABLE);
-    SDL_PumpEvents();
-
-#ifdef __WII__
-    // SDL_Init resets WPAD. We must set the data format AFTER SDL_Init
-    // to ensure the Nunchuk/Extensions are detected and reported correctly
-    // for our custom polling in globals.cpp.
-    WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
-#endif
-
-    /* Open joystick: */
-    if (SDL_NumJoysticks() <= 0)
-    {
-#ifdef __WII__
-      // On Wii, we effectively always have a joystick (Wiimote) via WPAD.
-      // Even if SDL sees none, we force enabled so config saves correctly
-      // 'joystick 0'.
-      use_joystick = true;
-      if (joystick_num < 0)
-        joystick_num = 0;
-#else
-      fprintf(stderr, "Warning: No joysticks are available.\n");
-      use_joystick = false;
-#endif
-    }
-    else
-    {
-      js = SDL_JoystickOpen(joystick_num);
-      if (js == nullptr)
-      {
-#ifdef __WII__
-        // Ignore open failure on Wii; we use custom polling.
-        use_joystick = true;
-#else
-        std::string error_msg = "Warning: Could not open joystick " + std::to_string(joystick_num) + ".\n"
-                                "The Simple DirectMedia error that occurred was:\n";
-        error_msg += SDL_GetError();
-        fprintf(stderr, "%s\n\n", error_msg.c_str());
-
-        use_joystick = false;
-#endif
-      }
-      else
-      {
-        if (SDL_JoystickNumAxes(js) < 2)
-        {
-          fprintf(stderr, "Warning: Joystick does not have enough axes!\n");
-          // We don't disable joystick here anymore because a sideways Wiimote
-          // might report weird axes but still be valid for buttons/dpad.
-        }
-
-        if (SDL_JoystickNumButtons(js) < 2)
-        {
-#ifdef __WII__
-          use_joystick = true;
-#else
-          fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
-          use_joystick = false;
-#endif
-        }
-      }
-    }
+    no_joysticks_available();
+    return;
   }
+
+  js = SDL_JoystickOpen(joystick_num);
+  if (js == nullptr)
+  {
+    joystick_open_failed();
+    return;
+  }
+
+  check_joystick_capabilities(js);
 }
 
 /**
