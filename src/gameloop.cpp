@@ -73,10 +73,6 @@ GameSession::GameSession(const std::string& subset_, int levelnb_, int mode):
   frame_timer.init(true);
 
   restart_level();
-
-#ifdef TSCONTROL
-  old_mouse_y = screen->w;
-#endif
 }
 
 /**
@@ -536,100 +532,6 @@ bool GameSession::handle_joystick_event(const SDL_Event& event, Player& tux)
   return true;
 }
 
-#ifdef TSCONTROL
-/**
- * Steers Tux from the touch position, by screen region.
- * @param motion The pointer motion event.
- * @param tux The player to steer.
- */
-void GameSession::handle_mouse_motion(const SDL_MouseMotionEvent& motion, Player& tux)
-{
-  if (motion.y < old_mouse_y - 16)
-  {
-    tux.input.up = DOWN;
-  }
-  else if (motion.y > old_mouse_y + 2)
-  {
-    tux.input.up = UP;
-  }
-
-  old_mouse_y = motion.y;
-
-  // Stand still
-  if ((motion.x < (screen->w / 2) + (screen->w / 10)) &&
-      (motion.x > (screen->w / 2) - (screen->w / 10)))
-  {
-    tux.input.fire  =  UP;
-    tux.input.left  =  UP;
-    tux.input.right = UP;
-  }
-  // Run left
-  else if ((motion.x > 0) && (motion.x < (screen->w / 8)))
-  {
-    tux.input.fire  = DOWN;
-    tux.input.left  = DOWN;
-    tux.input.right = UP;
-  }
-  // Walk left
-  else if ((motion.x > (screen->w / 8)) && (motion.x < (screen->w / 2)))
-  {
-    tux.input.fire  = UP;
-    tux.input.right = UP;
-    tux.input.left  = DOWN;
-  }
-  // Walk right
-  else if ((motion.x > (screen->w / 2)) && (motion.x < (7 * screen->w / 8)))
-  {
-    tux.input.fire  = UP;
-    tux.input.right = DOWN;
-    tux.input.left  = UP;
-  }
-  // Run right
-  else if ((motion.x > (7 * screen->w / 8)) && (motion.x < screen->w))
-  {
-    tux.input.fire  = DOWN;
-    tux.input.right = DOWN;
-    tux.input.left  = UP;
-  }
-}
-
-/**
- * Handles a pointer event during play.
- * @param event The event to inspect.
- * @param tux The player the event acts on.
- * @return bool True when the event was a pointer event.
- */
-bool GameSession::handle_mouse_event(const SDL_Event& event, Player& tux)
-{
-  switch (event.type)
-  {
-    case SDL_MOUSEBUTTONDOWN:
-    {
-      tux.input.fire = DOWN;
-      break;
-    }
-
-    case SDL_MOUSEBUTTONUP:
-    {
-      tux.input.fire = UP;
-      break;
-    }
-
-    case SDL_MOUSEMOTION:
-    {
-      handle_mouse_motion(event.motion, tux);
-      break;
-    }
-
-    default:
-    {
-      return false;
-    }
-  }
-
-  return true;
-}
-#endif
 
 /**
  * Routes one event to the input device that owns it during play.
@@ -648,13 +550,6 @@ void GameSession::handle_gameplay_event(const SDL_Event& event, Player& tux)
   {
     return;
   }
-
-#ifdef TSCONTROL
-  if (handle_mouse_event(event, tux))
-  {
-    return;
-  }
-#endif
 
   handle_joystick_event(event, tux);
 }
@@ -881,30 +776,6 @@ void GameSession::draw()
     Menu::current()->draw();
     mouse_cursor->draw();
   }
-
-#ifdef TSCONTROL
-  if (show_mouse)
-  {
-    MouseCursor::current()->draw();
-  }
-  int y = 4 * screen->h / 5;
-  int h = screen->h / 5;
-
-  // Run left
-  fillrect(0, y, screen->w / 8, h, 20, 20, 20, 60);
-
-  // Walk left
-  fillrect(screen->w / 8, y, screen->w / 2 - screen->w / 10 - screen->w / 8, h, 20, 20, 20, 40);
-
-  // Stand still
-  fillrect(screen->w / 2 - (screen->w / 10), y, screen->w / 5, h, 20, 20, 20, 20);
-
-  // Walk right
-  fillrect(screen->w / 2 + (screen->w / 10), y, screen->w / 2 - screen->w / 10 - screen->w / 8, h, 20, 20, 20, 40);
-
-  // Run right
-  fillrect(7 * screen->w / 8, y, screen->w / 8, h, 20, 20, 20, 60);
-#endif
 
   flipscreen();
 }

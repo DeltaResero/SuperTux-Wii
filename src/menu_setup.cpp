@@ -70,9 +70,6 @@ void st_menu(void)
     options_menu->additem(MN_DEACTIVE, "Music      ", false, 0, MNID_MUSIC);
   }
 
-#ifdef TSCONTROL
-  options_menu->additem(MN_TOGGLE, "Show Mouse ", show_mouse, 0, MNID_SHOWMOUSE);
-#endif
   options_menu->additem(MN_TOGGLE, "Show FPS   ", show_fps, 0, MNID_SHOWFPS);
   options_menu->additem(MN_TOGGLE, "TV Overscan", tv_overscan_enabled, 0, MNID_TV_OVERSCAN);
   options_menu->additem(MN_GOTO, "Keyboard Setup", 0, options_keys_menu);

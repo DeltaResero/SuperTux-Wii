@@ -752,39 +752,6 @@ void WorldMap::handleKeyboardInput(const SDL_Event& event)
   }
 }
 
-#ifdef TSCONTROL
-/**
- * Handles mouse-specific input events.
- * @param event The SDL_Event for the mouse action.
- */
-void WorldMap::handleMouseInput(const SDL_Event& event)
-{
-  if (event.type == SDL_MOUSEBUTTONDOWN)
-  {
-    if (event.motion.y < screen->h / 4)
-    {
-      input_direction = D_NORTH;
-    }
-    else if (event.motion.y > 3 * screen->h / 4)
-    {
-      input_direction = D_SOUTH;
-    }
-    else if (event.motion.x < screen->w / 4)
-    {
-      input_direction = D_WEST;
-    }
-    else if (event.motion.x > 3 * screen->w / 4)
-    {
-      input_direction = D_EAST;
-    }
-    else
-    {
-      enter_level = true;
-    }
-  }
-}
-#endif
-
 /**
  * Handles joystick-specific input events.
  * @param event The SDL_Event for the joystick action.
@@ -890,13 +857,6 @@ void WorldMap::get_input()
           handleKeyboardInput(event);
           break;
         }
-#ifdef TSCONTROL
-        case SDL_MOUSEBUTTONDOWN:
-        {
-          handleMouseInput(event);
-          break;
-        }
-#endif
         case SDL_JOYAXISMOTION:
         case SDL_JOYHATMOTION:
         case SDL_JOYBUTTONDOWN:
@@ -1503,22 +1463,12 @@ void WorldMap::renderScene()
 
   draw(offset);
 
-#ifndef TSCONTROL
   if (Menu::current())
   {
     Menu::current()->draw();
     mouse_cursor->draw();
   }
-#else
-  if (Menu::current())
-  {
-    Menu::current()->draw();
-  }
-  if (show_mouse)
-  {
-    mouse_cursor->draw();
-  }
-#endif
+
   flipscreen();
 }
 

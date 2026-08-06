@@ -282,9 +282,6 @@ private:
   // Refactored input handlers
   void handleKeyboardInput(const SDL_Event& event);
   void handleJoystickInput(const SDL_Event& event);
-#ifdef TSCONTROL
-  void handleMouseInput(const SDL_Event& event);
-#endif
 
   // Refactored update logic
   void handleLevelCompletion(GameSession::ExitStatus result, bool coffee, bool big, Level* level);

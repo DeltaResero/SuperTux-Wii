@@ -50,9 +50,6 @@ class GameSession
     unsigned int update_time;
     int pause_menu_frame;
     int debug_fps;
-#ifdef TSCONTROL
-    int old_mouse_y;
-#endif
 
     /** If true the end_sequence will be played, user input will be
         ignored while doing that */
@@ -125,10 +122,6 @@ class GameSession
     void handle_key_up(SDL_Keycode key, Player& tux);
     void handle_joystick_button_down(Uint8 button, Player& tux);
     void handle_joystick_button_up(Uint8 button, Player& tux);
-#ifdef TSCONTROL
-    bool handle_mouse_event(const SDL_Event& event, Player& tux);
-    void handle_mouse_motion(const SDL_MouseMotionEvent& motion, Player& tux);
-#endif
 
     void levelintro();
     void drawstatus();

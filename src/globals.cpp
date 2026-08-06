@@ -57,7 +57,6 @@ bool use_joystick;
 bool use_fullscreen;
 bool debug_mode;
 bool show_fps;
-bool show_mouse;
 bool tv_overscan_enabled;
 int offset_y = 0;
 float game_speed = 1.0f;

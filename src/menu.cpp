@@ -282,12 +282,6 @@ void Menu::process_options_menu()
       }
       break;
 
-#ifdef TSCONTROL
-    case MNID_SHOWMOUSE:
-      show_mouse = isToggled(MNID_SHOWMOUSE);
-      break;
-#endif
-
     case MNID_SHOWFPS:
       show_fps = isToggled(MNID_SHOWFPS);
       break;
