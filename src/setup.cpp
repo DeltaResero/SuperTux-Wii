@@ -609,6 +609,10 @@ static bool parse_display_option(const char* arg)
 #ifndef NOOPENGL
     /* Use OpenGL */
     use_gl = true;
+#else
+    /* Recognised, but there is no renderer behind it in this build */
+    fprintf(stderr, "Option %s ignored: this build has no OpenGL support.\n\n",
+            arg);
 #endif
   }
   else if (strcmp(arg, "--sdl") == 0)
