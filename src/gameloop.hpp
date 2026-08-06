@@ -116,6 +116,19 @@ class GameSession
     void check_end_conditions();
     void start_timers();
     void process_events();
+    void process_endsequence_events();
+    void process_gameplay_events();
+    void handle_endsequence_event(const SDL_Event& event);
+    void handle_gameplay_event(const SDL_Event& event, Player& tux);
+    bool handle_keyboard_event(const SDL_Event& event, Player& tux);
+    bool handle_joystick_event(const SDL_Event& event, Player& tux);
+    void handle_key_up(SDL_Keycode key, Player& tux);
+    void handle_joystick_button_down(Uint8 button, Player& tux);
+    void handle_joystick_button_up(Uint8 button, Player& tux);
+#ifdef TSCONTROL
+    bool handle_mouse_event(const SDL_Event& event, Player& tux);
+    void handle_mouse_motion(const SDL_MouseMotionEvent& motion, Player& tux);
+#endif
 
     void levelintro();
     void drawstatus();
