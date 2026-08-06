@@ -514,6 +514,201 @@ void seticon(void)
 }
 
 /**
+ * Displays the full help message listing every command-line option.
+ * @param prog The name of the program.
+ */
+static void print_help(const char* prog)
+{
+  puts("SuperTux Wii " VERSION "\n"
+       "  Please see the file \"README.txt\" for more details.\n");
+  printf("Usage: %s [OPTIONS] FILENAME\n\n", prog);
+  puts("Display Options:\n"
+    "  -w, --window        Run in window mode.\n"
+    "  -f, --fullscreen    Run in fullscreen mode.\n"
+    "  -gl, --opengl       If opengl support was compiled in, this will enable\n"
+    "                      the OpenGL mode.\n"
+    "  --sdl               Use non-opengl renderer\n"
+    "\n"
+    "Sound Options:\n"
+    "  --disable-sound     If sound support was compiled in,  this will\n"
+    "                      disable sound for this session of the game.\n"
+    "  --disable-music     Like above, but this will disable music.\n"
+    "\n"
+    "Misc Options:\n"
+    "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
+    "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
+    "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
+    "  --help              Display a help message summarizing command-line\n"
+    "                      options, license and game controls.\n"
+    "  --usage             Display a brief message summarizing command-line options.\n"
+    "  --version           Display the version of SuperTux you're running.\n\n");
+}
+
+/**
+ * Reads the value that follows an option, advancing the index past it.
+ * Exits when the option was given without a value.
+ * @param argc  The number of arguments.
+ * @param argv  The array of argument strings.
+ * @param index The index of the option, left pointing at its value.
+ * @param what  The kind of value expected, quoted back in the error message.
+ * @return const char* The value that followed the option.
+ */
+static const char* take_option_value(int argc, char* argv[], int& index,
+                                     const char* what)
+{
+  if (index + 1 >= argc)
+  {
+    fprintf(stderr, "Option %s requires %s.\n\n", argv[index], what);
+    exit(1);
+  }
+
+  return argv[++index];
+}
+
+/**
+ * Converts a joystick number given on the command line.
+ * Exits when the value is not a whole number that fits in an int.
+ * @param value The argument text to convert.
+ * @return int The joystick number.
+ */
+static int parse_joystick_number(const char* value)
+{
+  char* endptr = nullptr;
+  errno = 0;
+  const long parsed = strtol(value, &endptr, 10);
+
+  if (endptr == value || *endptr != '\0' || errno == ERANGE
+      || parsed < INT_MIN || parsed > INT_MAX)
+  {
+    fprintf(stderr, "Invalid joystick number: %s\n\n", value);
+    exit(1);
+  }
+
+  return static_cast<int>(parsed);
+}
+
+/**
+ * Applies the command-line options that select how the game is displayed.
+ * @param arg The argument text to match.
+ * @return bool True when the argument was recognised.
+ */
+static bool parse_display_option(const char* arg)
+{
+  if (strcmp(arg, "--fullscreen") == 0 || strcmp(arg, "-f") == 0)
+  {
+    /* Use full screen */
+    use_fullscreen = true;
+  }
+  else if (strcmp(arg, "--window") == 0 || strcmp(arg, "-w") == 0)
+  {
+    /* Use window mode */
+    use_fullscreen = false;
+  }
+  else if (strcmp(arg, "--opengl") == 0 || strcmp(arg, "-gl") == 0)
+  {
+#ifndef NOOPENGL
+    /* Use OpenGL */
+    use_gl = true;
+#endif
+  }
+  else if (strcmp(arg, "--sdl") == 0)
+  {
+    /* Use SDL (non-OpenGL) */
+    use_gl = false;
+  }
+  else if (strcmp(arg, "--show-fps") == 0)
+  {
+    /* Show FPS */
+    show_fps = true;
+  }
+  else
+  {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Applies the command-line options that silence the compiled-in audio.
+ * @param arg The argument text to match.
+ * @return bool True when the argument was recognised.
+ */
+static bool parse_sound_option(const char* arg)
+{
+  if (strcmp(arg, "--disable-sound") == 0)
+  {
+    /* Disable the compiled-in sound feature */
+    printf("Sounds disabled\n");
+    use_sound = false;
+    audio_device = false;
+  }
+  else if (strcmp(arg, "--disable-music") == 0)
+  {
+    /* Disable the compiled-in music feature */
+    printf("Music disabled\n");
+    use_music = false;
+  }
+  else
+  {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Applies the remaining options, both those carrying a value of their own
+ * and those that only report and quit.
+ * @param argc  The number of arguments.
+ * @param argv  The array of argument strings.
+ * @param index The index of the option, advanced past any value it consumes.
+ * @return bool True when the argument was recognised.
+ */
+static bool parse_misc_option(int argc, char* argv[], int& index)
+{
+  const char* arg = argv[index];
+
+  if (strcmp(arg, "--joystick") == 0 || strcmp(arg, "-j") == 0)
+  {
+    joystick_num = parse_joystick_number(
+        take_option_value(argc, argv, index, "a joystick number"));
+  }
+  else if (strcmp(arg, "--datadir") == 0 || strcmp(arg, "-d") == 0)
+  {
+    datadir = take_option_value(argc, argv, index, "a directory");
+  }
+  else if (strcmp(arg, "--debug-mode") == 0)
+  {
+    /* Enable the debug-mode */
+    debug_mode = true;
+  }
+  else if (strcmp(arg, "--usage") == 0)
+  {
+    /* Show usage */
+    usage(argv[0], 0);
+  }
+  else if (strcmp(arg, "--version") == 0)
+  {
+    /* Show version */
+    printf("SuperTux " VERSION "\n");
+    exit(0);
+  }
+  else if (strcmp(arg, "--help") == 0)
+  {
+    /* Show help */
+    print_help(argv[0]);
+    exit(0);
+  }
+  else
+  {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Parses the command-line arguments to set various options for the game.
  * Arguments include options for fullscreen, joystick, data directory,
  * showing FPS, and enabling debug mode.
@@ -525,124 +720,17 @@ void parseargs(int argc, char* argv[])
   /* Parse arguments */
   for (int i = 1; i < argc; ++i)
   {
-    if (strcmp(argv[i], "--fullscreen") == 0 || strcmp(argv[i], "-f") == 0)
-    {
-      /* Use full screen */
-      use_fullscreen = true;
-    }
-    else if (strcmp(argv[i], "--window") == 0 || strcmp(argv[i], "-w") == 0)
-    {
-      /* Use window mode */
-      use_fullscreen = false;
-    }
-    else if (strcmp(argv[i], "--joystick") == 0 || strcmp(argv[i], "-j") == 0)
-    {
-      if (i + 1 >= argc)
-      {
-        fprintf(stderr, "Option %s requires a joystick number.\n\n", argv[i]);
-        exit(1);
-      }
+    const char* arg = argv[i];
 
-      const char* value = argv[++i];
-      char* endptr = nullptr;
-      errno = 0;
-      const long parsed = strtol(value, &endptr, 10);
-      if (endptr == value || *endptr != '\0' || errno == ERANGE
-          || parsed < INT_MIN || parsed > INT_MAX)
-      {
-        std::string error_msg = "Invalid joystick number: " + std::string(value);
-        fprintf(stderr, "%s\n\n", error_msg.c_str());
-        exit(1);
-      }
-      joystick_num = static_cast<int>(parsed);
-    }
-    else if (strcmp(argv[i], "--datadir") == 0 || strcmp(argv[i], "-d") == 0)
+    if (parse_display_option(arg) || parse_sound_option(arg)
+        || parse_misc_option(argc, argv, i))
     {
-      if (i + 1 >= argc)
-      {
-        fprintf(stderr, "Option %s requires a directory.\n\n", argv[i]);
-        exit(1);
-      }
+      continue;
+    }
 
-      datadir = argv[++i];
-    }
-    else if (strcmp(argv[i], "--show-fps") == 0)
+    if (arg[0] != '-')
     {
-      /* Show FPS */
-      show_fps = true;
-    }
-    else if (strcmp(argv[i], "--opengl") == 0 || strcmp(argv[i], "-gl") == 0)
-    {
-#ifndef NOOPENGL
-      /* Use OpenGL */
-      use_gl = true;
-#endif
-    }
-    else if (strcmp(argv[i], "--sdl") == 0)
-    {
-      /* Use SDL (non-OpenGL) */
-      use_gl = false;
-    }
-    else if (strcmp(argv[i], "--usage") == 0)
-    {
-      /* Show usage */
-      usage(argv[0], 0);
-    }
-    else if (strcmp(argv[i], "--version") == 0)
-    {
-      /* Show version */
-      printf("SuperTux " VERSION "\n");
-      exit(0);
-    }
-    else if (strcmp(argv[i], "--disable-sound") == 0)
-    {
-      /* Disable the compiled-in sound feature */
-      printf("Sounds disabled\n");
-      use_sound = false;
-      audio_device = false;
-    }
-    else if (strcmp(argv[i], "--disable-music") == 0)
-    {
-      /* Disable the compiled-in music feature */
-      printf("Music disabled\n");
-      use_music = false;
-    }
-    else if (strcmp(argv[i], "--debug-mode") == 0)
-    {
-      /* Enable the debug-mode */
-      debug_mode = true;
-    }
-    else if (strcmp(argv[i], "--help") == 0)
-    {
-      /* Show help */
-      puts("SuperTux Wii " VERSION "\n"
-           "  Please see the file \"README.txt\" for more details.\n");
-      printf("Usage: %s [OPTIONS] FILENAME\n\n", argv[0]);
-      puts("Display Options:\n"
-        "  -w, --window        Run in window mode.\n"
-        "  -f, --fullscreen    Run in fullscreen mode.\n"
-        "  -gl, --opengl       If opengl support was compiled in, this will enable\n"
-        "                      the OpenGL mode.\n"
-        "  --sdl               Use non-opengl renderer\n"
-        "\n"
-        "Sound Options:\n"
-        "  --disable-sound     If sound support was compiled in,  this will\n"
-        "                      disable sound for this session of the game.\n"
-        "  --disable-music     Like above, but this will disable music.\n"
-        "\n"
-        "Misc Options:\n"
-        "  -j, --joystick NUM  Use joystick NUM (default: 0)\n"
-        "  -d, --datadir DIR   Load Game data from DIR (default: automatic)\n"
-        "  --debug-mode        Enables the debug-mode, which is useful for developers.\n"
-        "  --help              Display a help message summarizing command-line\n"
-        "                      options, license and game controls.\n"
-        "  --usage             Display a brief message summarizing command-line options.\n"
-        "  --version           Display the version of SuperTux you're running.\n\n");
-      exit(0);
-    }
-    else if (argv[i][0] != '-')
-    {
-      level_startup_file = argv[i];
+      level_startup_file = arg;
     }
     else
     {
