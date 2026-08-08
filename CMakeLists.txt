@@ -23,7 +23,7 @@ endif()
 project(SuperTux-Wii VERSION 0.1.4 LANGUAGES C CXX)
 
 # Full version string including platform suffix
-set(FULL_VERSION "${PROJECT_VERSION}-wii-d.05")
+set(FULL_VERSION "${PROJECT_VERSION}-wii-d.06")
 set(VERSION ${FULL_VERSION})  # For config.h substitution
 
 # Build Type Configuration (Default to Release)
