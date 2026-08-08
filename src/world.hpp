@@ -62,6 +62,15 @@ private:
   // Helper function to draw a layer of tiles (bg, ia, or fg)
   void draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_data, bool is_interactive_layer = false);
 
+  // The object passes, run in this order by draw()
+  void draw_bullets(RenderBatcher* batcher);
+  void draw_upgrades(RenderBatcher* batcher);
+  void draw_bouncy_distros(RenderBatcher* batcher);
+  void draw_broken_bricks(RenderBatcher* batcher);
+  void draw_floating_scores();
+
+  void flush_batch();
+
   // Helper function to clean up all objects marked for removal
   void cleanup_dead_objects();
 

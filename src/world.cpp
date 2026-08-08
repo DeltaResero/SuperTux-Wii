@@ -268,6 +268,22 @@ void World::draw_tile_layer(RenderBatcher* batcher, const unsigned int* tile_dat
   }
 }
 
+namespace {
+
+Sprite* upgrade_sprite(UpgradeKind kind)
+{
+  switch (kind)
+  {
+    case UPGRADE_GROWUP:    return img_growup;
+    case UPGRADE_ICEFLOWER: return img_iceflower;
+    case UPGRADE_HERRING:   return img_star;
+    case UPGRADE_1UP:       return img_1up;
+  }
+  return nullptr;
+}
+
+} // namespace
+
 void World::draw()
 {
   /* Draw the real background */
@@ -286,12 +302,7 @@ void World::draw()
   draw_tile_layer(batcher, level->bg_tiles.data());
   draw_tile_layer(batcher, level->ia_tiles.data(), true);
 
-#ifndef NOOPENGL
-  if (use_gl)
-  {
-    m_renderBatcher->flush();
-  }
-#endif
+  flush_batch();
 
   for (unsigned int i = 0; i < bouncy_bricks.size(); ++i)
   {
@@ -305,120 +316,21 @@ void World::draw()
 
   tux.draw(batcher);
 
-  // Draw Bullets
-  draw_pooled_objects(bullets, [&](const Bullet& bullet) {
-    if (bullet.base.x >= scroll_x - bullet.base.width && bullet.base.x <= scroll_x + screen->w)
-    {
-      if (batcher)
-      {
-        img_bullet->draw(*batcher, bullet.base.x, bullet.base.y);
-      }
-      else
-      {
-        img_bullet->draw(bullet.base.x, bullet.base.y);
-      }
-    }
-  });
+  draw_bullets(batcher);
+  draw_upgrades(batcher);
+  draw_bouncy_distros(batcher);
+  draw_broken_bricks(batcher);
 
-  // Draw Upgrades
-  draw_pooled_objects(upgrades, [&](const Upgrade& upgrade) {
-    Sprite* sprite_to_draw = nullptr;
-    if (upgrade.kind == UPGRADE_GROWUP)
-    {
-      sprite_to_draw = img_growup;
-    }
-    else if (upgrade.kind == UPGRADE_ICEFLOWER)
-    {
-      sprite_to_draw = img_iceflower;
-    }
-    else if (upgrade.kind == UPGRADE_HERRING)
-    {
-      sprite_to_draw = img_star;
-    }
-    else if (upgrade.kind == UPGRADE_1UP)
-    {
-      sprite_to_draw = img_1up;
-    }
+  flush_batch();
 
-    if (sprite_to_draw)
-    {
-      if (upgrade.base.height < TILE_SIZE)
-      {
-        if (batcher)
-        {
-          sprite_to_draw->draw_part(*batcher, 0, 0, upgrade.base.x, upgrade.base.y + TILE_SIZE - upgrade.base.height, TILE_SIZE, upgrade.base.height);
-        }
-        else
-        {
-          sprite_to_draw->draw_part(0, 0, upgrade.base.x - scroll_x, upgrade.base.y + TILE_SIZE - upgrade.base.height, TILE_SIZE, upgrade.base.height);
-        }
-      }
-      else
-      {
-        if (batcher)
-        {
-          sprite_to_draw->draw(*batcher, upgrade.base.x, upgrade.base.y);
-        }
-        else
-        {
-          sprite_to_draw->draw(upgrade.base.x, upgrade.base.y);
-        }
-      }
-    }
-  });
-
-  // Draw Bouncy Distros
-  draw_pooled_objects(bouncy_distros, [&](const BouncyDistro& distro) {
-    if (batcher)
-    {
-      batcher->add(img_distro[0], distro.base.x, distro.base.y);
-    }
-    else
-    {
-      img_distro[0]->draw(distro.base.x - scroll_x, distro.base.y);
-    }
-  });
-
-  // Draw Broken Bricks
-  draw_pooled_objects(broken_bricks, [&](const BrokenBrick& brick) {
-    if (!brick.tile->images.empty())
-    {
-      if (batcher)
-      {
-        batcher->add_part(brick.tile->images[0], brick.random_offset_x, brick.random_offset_y,
-                          brick.base.x, brick.base.y, 16, 16);
-      }
-      else
-      {
-        brick.tile->images[0]->draw_part(brick.random_offset_x, brick.random_offset_y,
-                                          brick.base.x - scroll_x, brick.base.y, 16, 16);
-      }
-    }
-  });
-
-#ifndef NOOPENGL
-  if (use_gl)
-  {
-    m_renderBatcher->flush();
-  }
-#endif
-
-  // Draw Floating Scores (Text-based, drawn AFTER flush)
-  draw_pooled_objects(floating_scores, [&](const FloatingScore& score) {
-    std::string score_str = std::to_string(score.value);
-    int x_pos = static_cast<int>(score.base.x - scroll_x + 16 - score_str.length() * 8);
-    gold_text->draw(score_str, x_pos, static_cast<int>(score.base.y), 1);
-  });
+  // Scores are text, which the batcher does not carry, so they go out
+  // after the flush.
+  draw_floating_scores();
 
   /* Draw foreground tiles: */
   draw_tile_layer(batcher, level->fg_tiles.data());
 
-#ifndef NOOPENGL
-  if (use_gl)
-  {
-    m_renderBatcher->flush();
-  }
-#endif
+  flush_batch();
 
   /* Draw particle systems (foreground) */
   for(auto* p : particle_systems)
@@ -432,6 +344,106 @@ void World::draw()
     SurfaceOpenGL::reset_state();
   }
 #endif
+}
+
+/** Hand the batched quads to OpenGL. RenderBatcher::flush() is an empty
+    stub in NOOPENGL builds, so this needs no preprocessor guard. */
+void World::flush_batch()
+{
+  if (use_gl)
+  {
+    m_renderBatcher->flush();
+  }
+}
+
+void World::draw_bullets(RenderBatcher* batcher)
+{
+  draw_pooled_objects(bullets, [&](const Bullet& bullet) {
+    if (bullet.base.x >= scroll_x - bullet.base.width && bullet.base.x <= scroll_x + screen->w)
+    {
+      if (batcher)
+      {
+        img_bullet->draw(*batcher, bullet.base.x, bullet.base.y);
+      }
+      else
+      {
+        img_bullet->draw(bullet.base.x, bullet.base.y);
+      }
+    }
+  });
+}
+
+void World::draw_upgrades(RenderBatcher* batcher)
+{
+  draw_pooled_objects(upgrades, [&](const Upgrade& upgrade) {
+    Sprite* sprite = upgrade_sprite(upgrade.kind);
+    if (!sprite) return;
+
+    // Still rising out of the box: only the emerged strip is drawn.
+    if (upgrade.base.height < TILE_SIZE)
+    {
+      if (batcher)
+      {
+        sprite->draw_part(*batcher, 0, 0, upgrade.base.x, upgrade.base.y + TILE_SIZE - upgrade.base.height, TILE_SIZE, upgrade.base.height);
+      }
+      else
+      {
+        sprite->draw_part(0, 0, upgrade.base.x - scroll_x, upgrade.base.y + TILE_SIZE - upgrade.base.height, TILE_SIZE, upgrade.base.height);
+      }
+    }
+    else
+    {
+      if (batcher)
+      {
+        sprite->draw(*batcher, upgrade.base.x, upgrade.base.y);
+      }
+      else
+      {
+        sprite->draw(upgrade.base.x, upgrade.base.y);
+      }
+    }
+  });
+}
+
+void World::draw_bouncy_distros(RenderBatcher* batcher)
+{
+  draw_pooled_objects(bouncy_distros, [&](const BouncyDistro& distro) {
+    if (batcher)
+    {
+      batcher->add(img_distro[0], distro.base.x, distro.base.y);
+    }
+    else
+    {
+      img_distro[0]->draw(distro.base.x - scroll_x, distro.base.y);
+    }
+  });
+}
+
+void World::draw_broken_bricks(RenderBatcher* batcher)
+{
+  draw_pooled_objects(broken_bricks, [&](const BrokenBrick& brick) {
+    if (brick.tile->images.empty()) return;
+
+    if (batcher)
+    {
+      batcher->add_part(brick.tile->images[0], brick.random_offset_x, brick.random_offset_y,
+                        brick.base.x, brick.base.y, 16, 16);
+    }
+    else
+    {
+      brick.tile->images[0]->draw_part(brick.random_offset_x, brick.random_offset_y,
+                                        brick.base.x - scroll_x, brick.base.y, 16, 16);
+    }
+  });
+}
+
+void World::draw_floating_scores()
+{
+  draw_pooled_objects(floating_scores, [&](const FloatingScore& score) {
+    std::string score_str = std::to_string(score.value);
+    int x_pos = static_cast<int>(score.base.x - scroll_x + 16 - score_str.length() * 8);
+    gold_text->draw(score_str, x_pos, static_cast<int>(score.base.y), 1);
+  });
 }
 
 void World::resolvePlayerPhysics(Player* player)
