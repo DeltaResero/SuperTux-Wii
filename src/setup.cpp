@@ -540,7 +540,7 @@ void seticon(void)
 static void print_help(const char* prog)
 {
   puts("SuperTux Wii " VERSION "\n"
-       "  Please see the file \"README.txt\" for more details.\n");
+       "  Please see the file \"README.md\" for more details.\n");
   printf("Usage: %s [OPTIONS] FILENAME\n\n", prog);
   puts("Display Options:\n"
     "  -w, --window        Run in window mode.\n"
