@@ -7,7 +7,7 @@
   (height 15)
   (start_pos_x    170)
   (start_pos_y    20)
-  (background "cave2.jpg")
+  (background "cave2.png")
   (music "cave.mod")
   (bkgd_red_top    150)
   (bkgd_green_top  200)

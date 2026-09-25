@@ -4,7 +4,7 @@
   (name "Frozen Tunnel")
   (author "Nilrok")
   (music "salcon.mod")
-  (background "cave2.jpg")
+  (background "cave2.png")
   (particle_system "")
   (bkgd_speed 50)
   (bkgd_red_top 0)

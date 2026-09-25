@@ -378,7 +378,7 @@ static void processTitleInput()
       int slot = load_game_menu->get_active_item_id();
 
       // Call the dialog, passing the correct background surface.
-      auto dialog_background = std::make_unique<Surface>(datadir + "/images/title/background.jpg", false);
+      auto dialog_background = std::make_unique<Surface>(datadir + "/images/title/background.png", false);
       if (confirm_dialog("Are you sure you want to delete slot " + std::to_string(slot) + "?", dialog_background.get()))
       {
         remove((std::string(st_save_dir) + "/slot" + std::to_string(slot) + ".stsg").c_str());
@@ -431,7 +431,7 @@ static void handleMenuActions()
 
           if (!credits_background)
           {
-            credits_background = new Surface(datadir + "/images/title/background.jpg", false);
+            credits_background = new Surface(datadir + "/images/title/background.png", false);
           }
           display_text_file("credits.txt", credits_background, SCROLL_SPEED_CREDITS);
 
@@ -522,7 +522,7 @@ void title(void)
   }
 
   // Load title screen graphics here, owned by the title() function.
-  bkg_title = new Surface(datadir + "/images/title/background.jpg", false);
+  bkg_title = new Surface(datadir + "/images/title/background.png", false);
 
   // Release the loading surface now that title assets are ready.
   loading_surf.reset();

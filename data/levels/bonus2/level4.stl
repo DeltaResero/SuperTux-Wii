@@ -4,7 +4,7 @@
   (name "Into The Cave")
   (author "Jason Kleinemas")
   (music "Mortimers_chipdisko.mod")
-  (background "arctis2.jpg")
+  (background "arctis2.png")
   (particle_system "snow")
   (bkgd_speed 50)
   (bkgd_red_top 0)

@@ -4,7 +4,7 @@
   (name "Think Fast, or Die")
   (author "Kevin")
   (music "cave.mod")
-  (background "cave2.jpg")
+  (background "cave2.png")
   (particle_system "")
   (bkgd_speed 50)
   (bkgd_red_top 0)

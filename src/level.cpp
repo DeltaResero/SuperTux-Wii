@@ -229,7 +229,7 @@ void Level::init_defaults()
   name = "UnNamed";
   author = "UnNamed";
   song_title = "Mortimers_chipdisko.mod";
-  bkgd_image = "arctis2.jpg";
+  bkgd_image = "arctis2.png";
   width = MIN_LEVEL_WIDTH;
   start_pos_x = 100;
   start_pos_y = 170;
@@ -588,6 +588,11 @@ void Level::load_gfx()
     if (!faccessible(fname.string().c_str()))
     {
       fname = fs::path(datadir) / "images/background" / bkgd_image;
+      // Older levels still name the backgrounds that are PNGs now by .jpg
+      if (!faccessible(fname.string().c_str()) && fname.extension() == ".jpg")
+      {
+        fname.replace_extension(".png");
+      }
     }
     img_bkgd = new Surface(fname.string().c_str(), false);
   }

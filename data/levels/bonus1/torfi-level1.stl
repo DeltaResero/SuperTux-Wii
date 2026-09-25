@@ -4,7 +4,7 @@
   (name "A good start")
   (author "Torfi Gunnarsson")
   (music "Mortimers_chipdisko.mod")
-  (background "arctis2.jpg")
+  (background "arctis2.png")
   (particle_system "")
   (bkgd_speed 50)
   (bkgd_red_top 0)
