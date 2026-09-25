@@ -26,6 +26,8 @@
 #include <sys/sysctl.h>
 #endif
 
+#include <SDL2/SDL_filesystem.h>
+
 #include "globals.hpp"
 #include "setup.hpp"
 #include "defines.hpp"
@@ -209,29 +211,6 @@ void st_directory_setup(void)
 
 #else // #ifndef __WII__
 
-/**
- * Reads $HOME, canonicalized to strip any path-traversal sequences (e.g. "..")
- * before it is used to build st_dir. realpath() only resolves paths that
- * already exist, so a $HOME that has yet to be created falls back to the raw
- * value and create_directories() makes it later. An unset $HOME gives ".".
- * @return The home directory to build st_dir from.
- */
-static std::string resolve_home_directory()
-{
-  const char* home_env = getenv("HOME");
-
-  if (home_env == nullptr)
-  {
-    return ".";
-  }
-
-  char* resolved_home = realpath(home_env, nullptr);
-  std::string home = (resolved_home != nullptr) ? resolved_home : home_env;
-  free(resolved_home);
-
-  return home;
-}
-
 #ifndef WIN32
 
 /**
@@ -284,7 +263,7 @@ static std::string find_datadir_near(const fs::path& exedir)
   const std::vector<fs::path> search_paths = {
       exedir / "data",
       exedir / "../data",
-      exedir / "../share/supertux",
+      exedir / "../share/games/supertux-wii",
   };
 
   for (const auto& path : search_paths)
@@ -355,13 +334,10 @@ static void detect_datadir()
  */
 void st_directory_setup(void)
 {
-  st_dir = resolve_home_directory() + "/.supertux";
-
-  /* Remove .supertux config-file from old SuperTux versions */
-  if (faccessible(st_dir.c_str()))
-  {
-    fs::remove(st_dir.c_str());
-  }
+  // The platform's per-user data folder, such as ~/.local/share/supertux-wii
+  char* pref_path = SDL_GetPrefPath(nullptr, "supertux-wii");
+  st_dir = pref_path ? fs::path(pref_path).parent_path().string() : ".";
+  SDL_free(pref_path);
 
   st_save_dir = st_dir + "/save";
 

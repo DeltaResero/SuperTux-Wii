@@ -68,7 +68,7 @@ extern int offset_y;
 extern int joystick_num;
 extern std::string level_startup_file;
 
-/* SuperTux directory ($HOME/.supertux) and save directory($HOME/.supertux/save) */
+/* SuperTux user directory (the game's own folder on Wii) and its save directory */
 extern std::string st_dir;
 extern std::string st_save_dir;
 

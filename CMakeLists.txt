@@ -292,7 +292,10 @@ else()
     set(RENDERER_STATUS "Software (SDL)")
   endif()
 
-  add_definitions(-DDATA_PREFIX="${CMAKE_INSTALL_PREFIX}/share/supertux")
+  set(INSTALL_SUBDIR_BIN "games" CACHE STRING "Installation subdir for the binary")
+  set(INSTALL_SUBDIR_SHARE "share/games/supertux-wii" CACHE STRING "Installation subdir for data")
+
+  add_definitions(-DDATA_PREFIX="${CMAKE_INSTALL_PREFIX}/${INSTALL_SUBDIR_SHARE}")
 
   add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
@@ -346,15 +349,16 @@ else()
   if(UNIX AND NOT APPLE)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.png ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.png
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.desktop ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.desktop
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux-wii.desktop ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux-wii.desktop
       COMMENT "Copying Linux desktop files to dist/supertux-wii/..."
       VERBATIM
     )
     
-    install(TARGETS ${PROJECT_NAME} DESTINATION bin)
-    install(FILES packaging/linux/supertux.desktop DESTINATION share/applications)
-    install(FILES packaging/linux/supertux.png DESTINATION share/pixmaps)
-    install(DIRECTORY data/ DESTINATION share/supertux)
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_SUBDIR_BIN})
+    install(FILES packaging/linux/supertux-wii.desktop DESTINATION share/applications)
+    install(FILES packaging/linux/supertux.png DESTINATION share/icons/hicolor/48x48/apps
+            RENAME supertux-wii.png)
+    install(DIRECTORY data/ DESTINATION ${INSTALL_SUBDIR_SHARE})
   endif()
 endif()
 

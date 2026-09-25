@@ -74,7 +74,7 @@ int joystick_num = 0;
 std::string level_startup_file;
 volatile bool quit_requested = false;
 
-/* SuperTux directory ($HOME/.supertux) and save directory($HOME/.supertux/save) */
+/* SuperTux user directory (the game's own folder on Wii) and its save directory */
 std::string st_dir;
 std::string st_save_dir;
 
