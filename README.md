@@ -135,10 +135,6 @@ support, append the following flag to your `cmake` command: `-DENABLE_OPENGL=OFF
    ```bash
    cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/Wii.cmake ..
    ```
-   Alternatively, the system-wide toolchain provided by devkitPro should work:
-   ```bash
-   cmake -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Wii.cmake ..
-   ```
 
 3. Build the game:
    ```bash
