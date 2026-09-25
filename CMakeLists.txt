@@ -257,17 +257,6 @@ if(ENABLE_WII)
     VERBATIM
   )
 
-  # Post-build: Create Homebrew Channel structure
-  add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/boot.dol ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/boot.dol
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/data
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/wii/icon.png ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/icon.png
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/wii/meta.xml ${CMAKE_CURRENT_BINARY_DIR}/apps/supertux/meta.xml
-    COMMENT "Creating Homebrew Channel package in build/apps/supertux/..."
-    VERBATIM
-  )
-
 else()
   # ============================================================================
   # Desktop Linux/Windows Build
@@ -296,6 +285,7 @@ else()
   set(INSTALL_SUBDIR_SHARE "share/games/supertux-wii" CACHE STRING "Installation subdir for data")
 
   add_definitions(-DDATA_PREFIX="${CMAKE_INSTALL_PREFIX}/${INSTALL_SUBDIR_SHARE}")
+  add_definitions(-DBUILD_DATA_DIR="${CMAKE_SOURCE_DIR}/data")
 
   add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
@@ -336,27 +326,11 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
   endif()
 
-  # Post-build: Create portable distribution folder
-  add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/$<TARGET_FILE_NAME:${PROJECT_NAME}>
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/data
-    COMMENT "Creating distribution directory in build/dist/supertux-wii/..."
-    VERBATIM
-  )
-
   # Linux/BSD Specifics (Icons/Desktop files)
   if(UNIX AND NOT APPLE)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux.png ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux.png
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/packaging/linux/supertux-wii.desktop ${CMAKE_CURRENT_BINARY_DIR}/dist/supertux-wii/supertux-wii.desktop
-      COMMENT "Copying Linux desktop files to dist/supertux-wii/..."
-      VERBATIM
-    )
-    
     install(TARGETS ${PROJECT_NAME} DESTINATION ${INSTALL_SUBDIR_BIN})
     install(FILES packaging/linux/supertux-wii.desktop DESTINATION share/applications)
-    install(FILES packaging/linux/supertux.png DESTINATION share/icons/hicolor/48x48/apps
+    install(FILES data/images/icon.png DESTINATION share/icons/hicolor/48x48/apps
             RENAME supertux-wii.png)
     install(DIRECTORY data/ DESTINATION ${INSTALL_SUBDIR_SHARE})
   endif()
@@ -377,10 +351,9 @@ message(STATUS "Strip Tool        : ${CMAKE_STRIP}")
 message(STATUS "Renderer          : ${RENDERER_STATUS}")
 if(ENABLE_WII)
   message(STATUS "Toolchain         : devkitPPC")
-  message(STATUS "Output            : build/apps/supertux/")
+  message(STATUS "Output            : boot.dol")
 else()
   message(STATUS "Install Prefix    : ${CMAKE_INSTALL_PREFIX}")
-  message(STATUS "Distribution      : build/dist/supertux-wii/")
 endif()
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "")

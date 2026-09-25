@@ -260,8 +260,10 @@ static bool get_executable_path(char* buffer, size_t size)
  */
 static std::string find_datadir_near(const fs::path& exedir)
 {
+  // Beside the binary first, so a portable folder wins over the source tree
   const std::vector<fs::path> search_paths = {
       exedir / "data",
+      BUILD_DATA_DIR,
       exedir / "../data",
       exedir / "../share/games/supertux-wii",
   };

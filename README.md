@@ -141,17 +141,16 @@ support, append the following flag to your `cmake` command: `-DENABLE_OPENGL=OFF
    make -j$(nproc)
    ```
 
-   This will generate `boot.dol` and a ready-to-deploy folder structure in
-   `build/apps/supertux`.
+   This will generate `boot.dol` in the build directory.
 
 <br>
 
 ### Installing SuperTux on Wii (Homebrew Channel)
 
-1. The build process automatically creates the necessary folder structure in
-   `build/apps/supertux`.
+1. Create a `supertux` folder under `apps/` on your SD or USB device.
 
-2. Copy the `supertux` folder from `build/apps/` to the `apps/` folder on your SD/USB device.
+2. Copy in the built `boot.dol`, the `data` folder from the source tree, and the icon and
+   metadata from `packaging/wii/`:
    ```
    SD:/apps/supertux/boot.dol
    SD:/apps/supertux/data/
@@ -211,19 +210,19 @@ support, append the following flag to your `cmake` command: `-DENABLE_OPENGL=OFF
    make -j$(nproc)
    ```
 
-5. Run (Portable Mode):
-   The build process automatically creates a portable folder named `supertux-wii` inside
-   `build/dist/` containing the executable and data.
+5. Run it straight from the build directory. It finds the `data` folder in the source tree:
    ```bash
-   cd dist/supertux-wii
    ./supertux-wii
    ```
+
+   To make a portable copy, put the `supertux-wii` binary and the `data` folder side by side in
+   any folder. Saves and settings go to `~/.local/share/supertux-wii` either way.
 
 **Important Note on Installation:**
 While `sudo make install` is supported by CMake, it is **not recommended** for this project.
 Installing files directly to your system directories this way without using a package manager
-makes them very difficult to uninstall cleanly later. We strongly recommend using the portable
-method above for testing.
+makes them very difficult to uninstall cleanly later. We strongly recommend running from the
+build directory or a portable copy instead.
 
 **Note on Other Operating Systems:**
 Support for other platforms (Windows, macOS, BSD) is currently outside the scope of this

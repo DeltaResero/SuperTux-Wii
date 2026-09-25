@@ -500,17 +500,17 @@ void load_config_file()
 #ifndef __WII__ /* Wii Homebrew Apps don't use a window manager nor take arguments */
 /**
  * Sets the window icon for non-Wii builds. This function attempts
- * to load the "supertux.png" file as the window icon and will fail
- * gracefully if the icon cannot be loaded.
+ * to load "images/icon.png" from the data folder as the window icon and
+ * will fail gracefully if the icon cannot be loaded.
  */
 void seticon(void)
 {
   /* Attempt to load icon into a surface: */
-  SDL_Surface* icon = IMG_Load("supertux.png");
+  SDL_Surface* icon = IMG_Load((datadir + "/images/icon.png").c_str());
   if (icon == nullptr)
   {
     fprintf(stderr,
-            "\nWarning: Could not load the icon image: supertux.png\n"
+            "\nWarning: Could not load the icon image: images/icon.png\n"
             "The Simple DirectMedia error that occurred was:\n"
             "%s\n\n", SDL_GetError());
     // Fail gracefully if the icon is not found
