@@ -35,6 +35,7 @@
 
 // Loading screen surface (shown while heavy resources load on startup)
 std::unique_ptr<Surface> loading_surf;
+std::unique_ptr<Surface> logo_surf;
 
 
 /**
@@ -87,8 +88,10 @@ int main(int argc, char ** argv)
 
   // Initialize and show the loading screen
   clearscreen(0, 0, 0);
+  logo_surf = std::make_unique<Surface>(datadir + "/images/title/logo.png", true);
   loading_surf = std::make_unique<Surface>(datadir + "/images/title/loading.png", true);
-  loading_surf->draw(160, 30);
+  logo_surf->draw(160, 30);
+  loading_surf->draw(248, 268);
   updatescreen();  // Refresh screen to show the loading screen
 
   // Initialize input systems, game settings, and menus
@@ -107,6 +110,10 @@ int main(int argc, char ** argv)
   {
     title();
   }
+
+  // A level started from the command line never reaches the title screen
+  loading_surf.reset();
+  logo_surf.reset();
 
   // Clear the screen (but don't flip the buffer at shutdown)
   clearscreen(0, 0, 0);

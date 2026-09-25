@@ -50,7 +50,6 @@ namespace fs = std::filesystem;  // Alias for ease of use
 
 // Global variables
 static Surface* bkg_title;  // Background image for the title screen
-static Surface* logo;       // Logo image for the title screen
 static Surface* credits_background = nullptr;  // Credits background
 
 static bool walking;        // Indicates if the character is walking in the demo
@@ -475,7 +474,7 @@ static void renderTitleScene()
   // Draw the logo if on the main menu
   if (Menu::current() == main_menu)
   {
-    logo->draw(160, 30);
+    logo_surf->draw(160, 30);
   }
 
   // Draw text and handle menu actions
@@ -518,12 +517,12 @@ void title(void)
   // Draw loading screen as a placeholder while loading resources
   if (loading_surf)
   {
-    loading_surf->draw(160, 30);
+    logo_surf->draw(160, 30);
+    loading_surf->draw(248, 268);
   }
 
   // Load title screen graphics here, owned by the title() function.
   bkg_title = new Surface(datadir + "/images/title/background.jpg", false);
-  logo = new Surface(datadir + "/images/title/logo.png", true);
 
   // Release the loading surface now that title assets are ready.
   loading_surf.reset();
@@ -613,8 +612,7 @@ void title(void)
   delete bkg_title;
   bkg_title = nullptr;
 
-  delete logo;
-  logo = nullptr;
+  logo_surf.reset();
 
   deleteDemo();
   free_contrib_menu();

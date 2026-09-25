@@ -23,6 +23,8 @@
 
 // Loading Screen as Supertux takes a long, long time to load on Wii
 extern std::unique_ptr<Surface> loading_surf;
+// Title logo, shown above the loading text and kept for the title screen
+extern std::unique_ptr<Surface> logo_surf;
 
 extern std::string datadir;
 
