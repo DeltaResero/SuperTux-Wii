@@ -62,7 +62,8 @@ int main(int argc, char ** argv)
       usleep(50000);
     }
   }
-  bool res = fatInitDefault();
+  // The default cache is too small to keep directories between file opens
+  bool res = fatInit(32, true);
   if (res == 0)
   {
     st_abort("FAT Library Initialization Failed", "Unable to initialize FAT library for SD/USB access.");
