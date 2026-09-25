@@ -506,7 +506,7 @@ void st_shutdown(void)
 void load_config_file()
 {
   loadconfig(); // Load the config file and if none exist create one
-  offset_y = tv_overscan_enabled ? 40 : 0;
+  offset_y = tv_overscan_enabled ? 24 : 0;
 }
 
 #ifndef __WII__ /* Wii Homebrew Apps don't use a window manager nor take arguments */
