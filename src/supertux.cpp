@@ -25,9 +25,11 @@
 #include "texture.hpp"
 #include "tile.hpp"
 #ifdef __WII__
+  #include <cstring>
   #include <unistd.h>
   #include <wiiuse/wpad.h>
   #include <ogc/lwp_watchdog.h>
+  #include <ogc/usbstorage.h>
   #include <fat.h>
 #endif
 
@@ -49,11 +51,16 @@ int main(int argc, char ** argv)
 {
 
 #ifdef __WII__
-  // Wii-specific setup for FAT library and USB disk handling.
-  // argc/argv are unused on Wii since parseargs() is not called here.
-  (void)argc;
-  (void)argv;
-  sleep(1);  // Delay to allow USB disks behind hubs to initialize.
+  // A USB drive behind a hub can take a moment to answer, so give it up to
+  // a second unless the game was started from the SD card.
+  if (argc < 1 || strncmp(argv[0], "sd:", 3) != 0)
+  {
+    __io_usbstorage.startup();
+    for (int i = 0; i < 20 && !__io_usbstorage.isInserted(); ++i)
+    {
+      usleep(50000);
+    }
+  }
   bool res = fatInitDefault();
   if (res == 0)
   {
