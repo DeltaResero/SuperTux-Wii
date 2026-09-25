@@ -138,17 +138,8 @@ void st_general_free(void)
  */
 static void no_joysticks_available(void)
 {
-#ifdef __WII__
-  // On Wii, we effectively always have a joystick (Wiimote) via WPAD.
-  // Even if SDL sees none, we force enabled so config saves correctly
-  // 'joystick 0'.
-  use_joystick = true;
-  if (joystick_num < 0)
-    joystick_num = 0;
-#else
   fprintf(stderr, "Warning: No joysticks are available.\n");
   use_joystick = false;
-#endif
 }
 
 /**
@@ -156,16 +147,11 @@ static void no_joysticks_available(void)
  */
 static void joystick_open_failed(void)
 {
-#ifdef __WII__
-  // Ignore open failure on Wii; we use custom polling.
-  use_joystick = true;
-#else
   fprintf(stderr, "Warning: Could not open joystick %d.\n"
                   "The Simple DirectMedia error that occurred was:\n%s\n\n",
           joystick_num, SDL_GetError());
 
   use_joystick = false;
-#endif
 }
 
 /**
@@ -183,12 +169,8 @@ static void check_joystick_capabilities(SDL_Joystick* joystick)
 
   if (SDL_JoystickNumButtons(joystick) < 2)
   {
-#ifdef __WII__
-    use_joystick = true;
-#else
     fprintf(stderr, "Warning: Joystick does not have enough buttons!\n");
     use_joystick = false;
-#endif
   }
 }
 
@@ -219,6 +201,12 @@ void st_joystick_setup(void)
   // to ensure the Nunchuk/Extensions are detected and reported correctly
   // for our custom polling in globals.cpp.
   WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+  PAD_Init();
+
+  // st_poll_event reads the controllers itself; an open joystick doubles them
+  if (joystick_num < 0)
+    joystick_num = 0;
+  return;
 #endif
 
   /* Open joystick: */

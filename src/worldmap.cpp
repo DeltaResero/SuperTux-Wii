@@ -789,7 +789,7 @@ void WorldMap::handleJoystickInput(const SDL_Event& event)
     case SDL_JOYHATMOTION:
     {
       // Fix: Use a local variable since 'event' is const
-      Uint8 hat = adjust_joystick_hat(event.jhat.value);
+      Uint8 hat = adjust_joystick_hat(event.jhat.value, event.jhat.which);
 
       if (hat == SDL_HAT_UP)
       {

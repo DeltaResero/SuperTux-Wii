@@ -79,7 +79,7 @@ extern SDL_Joystick* js;
 extern bool is_nunchuk_connected;
 
 // Helper to rotate D-Pad if Nunchuk is missing from Wii Remote
-Uint8 adjust_joystick_hat(Uint8 hat);
+Uint8 adjust_joystick_hat(Uint8 hat, SDL_JoystickID which);
 
 int wait_for_event(SDL_Event& event, unsigned int min_delay = 0, unsigned int max_delay = 0, bool empty_events = false);
 

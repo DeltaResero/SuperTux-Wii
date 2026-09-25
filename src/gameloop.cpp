@@ -501,7 +501,7 @@ bool GameSession::handle_joystick_event(const SDL_Event& event, Player& tux)
     case SDL_JOYHATMOTION:
     {
       // Apply rotation if needed
-      handle_joystick_hat(adjust_joystick_hat(event.jhat.value), tux);
+      handle_joystick_hat(adjust_joystick_hat(event.jhat.value, event.jhat.which), tux);
       break;
     }
 

@@ -21,6 +21,9 @@
 #include "resources.hpp" // Needed for tux_life sprite
 
 #ifdef __WII__
+#include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #endif
@@ -33,6 +36,12 @@ namespace {
   constexpr size_t EVENT_QUEUE_SIZE = 32;
   static_assert((EVENT_QUEUE_SIZE & (EVENT_QUEUE_SIZE - 1)) == 0,
                 "EVENT_QUEUE_SIZE must be power of 2");
+
+  // The Wii Remote is joystick 0 and the GameCube pad this one
+  constexpr SDL_JoystickID GAMECUBE_PAD = 1;
+
+  // Stick travel ignored around the centre
+  constexpr int16_t STICK_DEADZONE = 4000;
 #endif
 }
 
@@ -81,9 +90,15 @@ SDL_Joystick* js;
  * Physical Left  (Down)  -> Game Down (Duck)
  * Physical Right (Up)    -> Game Up   (Jump)
  */
-Uint8 adjust_joystick_hat(Uint8 hat)
+Uint8 adjust_joystick_hat(Uint8 hat, [[maybe_unused]] SDL_JoystickID which)
 {
 #ifdef __WII__
+  // Nobody holds a GameCube pad sideways
+  if (which == GAMECUBE_PAD)
+  {
+    return hat;
+  }
+
   // Dynamically check what is plugged into the expansion port.
   // This handles hot-plugging (plugging/unplugging mid-game).
   u32 type;
@@ -215,7 +230,7 @@ void draw_player_hud()
 }
 
 /**
- * Custom event polling wrapper to handle Wii Remote input directly.
+ * Custom event polling wrapper to handle Wii controller input directly.
  * Standard SDL2 on Wii sometimes "cooks" events into mouse inputs or misses
  * them. This injects raw WPAD events as standard SDL Joystick events.
  */
@@ -224,6 +239,12 @@ int st_poll_event(SDL_Event *event)
 #ifdef __WII__
 
   static uint8_t last_hat = SDL_HAT_CENTERED;
+  static uint8_t last_pad_hat = SDL_HAT_CENTERED;
+  static uint16_t last_pad_held = 0;
+  static int16_t last_x = 0;
+  static int16_t last_y = 0;
+  static int16_t last_pad_x = 0;
+  static int16_t last_pad_y = 0;
   static SDL_Event queue[EVENT_QUEUE_SIZE]; // Small buffer for injected events
   static int queue_head = 0;
   static int queue_tail = 0;
@@ -236,127 +257,166 @@ int st_poll_event(SDL_Event *event)
     return 1;
   }
 
+  auto push = [](const SDL_Event& e)
+  {
+    queue[queue_tail] = e;
+    queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
+  };
+
+  auto push_button = [&push](SDL_JoystickID which, uint8_t button, bool down)
+  {
+    SDL_Event e;
+    e.type = down ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
+    e.jbutton.which = which;
+    e.jbutton.button = button;
+    e.jbutton.state = down ? SDL_PRESSED : SDL_RELEASED;
+    push(e);
+  };
+
+  auto push_hat = [&push](SDL_JoystickID which, uint8_t hat, uint8_t& last)
+  {
+    if (hat == last)
+      return;
+
+    SDL_Event e;
+    e.type = SDL_JOYHATMOTION;
+    e.jhat.which = which;
+    e.jhat.hat = 0;
+    e.jhat.value = hat;
+    push(e);
+    last = hat;
+  };
+
+  // Takes a stick with up positive and sends it the SDL way, with up negative
+  auto push_stick = [&push](SDL_JoystickID which, int x, int y,
+                            int16_t& last_x, int16_t& last_y)
+  {
+    int16_t values[2] = {
+      static_cast<int16_t>(std::clamp(x, -32768, 32767)),
+      static_cast<int16_t>(std::clamp(-y, -32768, 32767)),
+    };
+    int16_t* lasts[2] = {&last_x, &last_y};
+
+    for (uint8_t axis = 0; axis < 2; ++axis)
+    {
+      if (abs(values[axis]) < STICK_DEADZONE)
+        values[axis] = 0;
+
+      if (values[axis] != *lasts[axis])
+      {
+        SDL_Event e;
+        e.type = SDL_JOYAXISMOTION;
+        e.jaxis.which = which;
+        e.jaxis.axis = axis;
+        e.jaxis.value = values[axis];
+        push(e);
+        *lasts[axis] = values[axis];
+      }
+    }
+  };
+
+  struct ButtonMap {
+    uint32_t wii_btn;
+    uint8_t sdl_btn;
+  };
+
   // Poll native Wii input
   WPAD_ScanPads();
   uint32_t buttons_down = WPAD_ButtonsDown(0);
   uint32_t buttons_up = WPAD_ButtonsUp(0);
   uint32_t buttons_held = WPAD_ButtonsHeld(0);
 
-  // Mapping Wii Remote buttons to SDL Joystick Buttons
+  // Mapping Wii Remote and Classic Controller buttons to SDL Joystick Buttons
   // 0: A
   // 1: B
-  // 2: 1
-  // 3: 2
+  // 2: 1, Classic X
+  // 3: 2, Classic Y
   // 4: Minus
   // 5: Plus
   // 6: Home
-  struct ButtonMap {
-    uint32_t wpad_btn;
-    uint8_t sdl_btn;
-  };
-
   ButtonMap bmap[] = {
-      {WPAD_BUTTON_A, 0},    {WPAD_BUTTON_B, 1},     {WPAD_BUTTON_1, 2},
-      {WPAD_BUTTON_2, 3},    {WPAD_BUTTON_MINUS, 4}, {WPAD_BUTTON_PLUS, 5},
-      {WPAD_BUTTON_HOME, 6},
+      {WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, 0},
+      {WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, 1},
+      {WPAD_BUTTON_1 | WPAD_CLASSIC_BUTTON_X, 2},
+      {WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_Y, 3},
+      {WPAD_BUTTON_MINUS | WPAD_CLASSIC_BUTTON_MINUS, 4},
+      {WPAD_BUTTON_PLUS | WPAD_CLASSIC_BUTTON_PLUS, 5},
+      {WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 6},
   };
 
   for (auto &bm : bmap)
   {
-    if (buttons_down & bm.wpad_btn)
-    {
-      SDL_Event e;
-      e.type = SDL_JOYBUTTONDOWN;
-      e.jbutton.which = 0;
-      e.jbutton.button = bm.sdl_btn;
-      e.jbutton.state = SDL_PRESSED;
-      queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
-    }
-    if (buttons_up & bm.wpad_btn)
-    {
-      SDL_Event e;
-      e.type = SDL_JOYBUTTONUP;
-      e.jbutton.which = 0;
-      e.jbutton.button = bm.sdl_btn;
-      e.jbutton.state = SDL_RELEASED;
-      queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
-    }
+    if (buttons_down & bm.wii_btn)
+      push_button(0, bm.sdl_btn, true);
+    if (buttons_up & bm.wii_btn)
+      push_button(0, bm.sdl_btn, false);
   }
 
   // Handle D-Pad as Hat
   uint8_t hat = SDL_HAT_CENTERED;
-  if (buttons_held & WPAD_BUTTON_UP)
+  if (buttons_held & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP))
     hat |= SDL_HAT_UP;
-  if (buttons_held & WPAD_BUTTON_DOWN)
+  if (buttons_held & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN))
     hat |= SDL_HAT_DOWN;
-  if (buttons_held & WPAD_BUTTON_LEFT)
+  if (buttons_held & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT))
     hat |= SDL_HAT_LEFT;
-  if (buttons_held & WPAD_BUTTON_RIGHT)
+  if (buttons_held & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT))
     hat |= SDL_HAT_RIGHT;
+  push_hat(0, hat, last_hat);
 
-  if (hat != last_hat) {
-    SDL_Event e;
-    e.type = SDL_JOYHATMOTION;
-    e.jhat.which = 0;
-    e.jhat.hat = 0;
-    e.jhat.value = hat;
-    queue[queue_tail] = e;
-    queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
-    last_hat = hat;
-  }
-
-  // Handle Nunchuk Analog Stick
+  // Handle the Nunchuk or Classic Controller left stick
   WPADData *wd = WPAD_Data(0);
   if (wd->exp.type == WPAD_EXP_NUNCHUK)
   {
-    static int16_t last_x = 0;
-    static int16_t last_y = 0;
-
-    // Get raw position and subtract center to get centered value (-128 to +127
-    // range)
-    int raw_x = wd->exp.nunchuk.js.pos.x - wd->exp.nunchuk.js.center.x;
-    int raw_y = wd->exp.nunchuk.js.pos.y - wd->exp.nunchuk.js.center.y;
-
-    // Scale to SDL's -32768 to +32767 range (multiply by ~256)
-    int16_t current_x = (int16_t)(raw_x * 256);
-    int16_t current_y = (int16_t)(raw_y * 256);
-
-    // Apply deadzone: if within small range of center, treat as zero
-    const int16_t DEADZONE = 4000;
-    if (abs(current_x) < DEADZONE)
-      current_x = 0;
-    if (abs(current_y) < DEADZONE)
-      current_y = 0;
-
-    // Send X axis event if changed
-    if (current_x != last_x)
-    {
-      SDL_Event e;
-      e.type = SDL_JOYAXISMOTION;
-      e.jaxis.which = 0;
-      e.jaxis.axis = 0; // X Axis
-      e.jaxis.value = current_x;
-      queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
-      last_x = current_x;
-    }
-
-    // Send Y axis event if changed (invert Y: pushing stick UP should be
-    // negative in SDL)
-    if (current_y != last_y)
-    {
-      SDL_Event e;
-      e.type = SDL_JOYAXISMOTION;
-      e.jaxis.which = 0;
-      e.jaxis.axis = 1;           // Y Axis
-      e.jaxis.value = -current_y; // Invert Y for SDL standard
-      queue[queue_tail] = e;
-      queue_tail = (queue_tail + 1) % EVENT_QUEUE_SIZE;
-      last_y = current_y;
-    }
+    // Raw positions run about 128 either side of the centre
+    const joystick_t& stick = wd->exp.nunchuk.js;
+    push_stick(0, (stick.pos.x - stick.center.x) * 256,
+               (stick.pos.y - stick.center.y) * 256, last_x, last_y);
   }
+  else if (wd->exp.type == WPAD_EXP_CLASSIC)
+  {
+    // Its range is smaller than the Nunchuk's, so go by libogc's angle
+    const joystick_t& stick = wd->exp.classic.ljs;
+    const float angle = stick.ang * std::numbers::pi_v<float> / 180.0f;
+    const float reach = std::min(stick.mag, 1.0f) * 32767.0f;
+    push_stick(0, static_cast<int>(std::sin(angle) * reach),
+               static_cast<int>(std::cos(angle) * reach), last_x, last_y);
+  }
+
+  // SDL scans the GameCube pads too, so compare with our own last reading
+  PAD_ScanPads();
+  const uint16_t pad_held = PAD_ButtonsHeld(0);
+  const uint16_t pad_down = pad_held & ~last_pad_held;
+  const uint16_t pad_up = last_pad_held & ~pad_held;
+  last_pad_held = pad_held;
+
+  // Z and Start both stand in for Home
+  ButtonMap pad_map[] = {
+      {PAD_BUTTON_A, 0}, {PAD_BUTTON_B, 1},     {PAD_BUTTON_X, 2},
+      {PAD_BUTTON_Y, 3}, {PAD_TRIGGER_Z, 6},    {PAD_BUTTON_START, 6},
+  };
+
+  for (auto &bm : pad_map)
+  {
+    if (pad_down & bm.wii_btn)
+      push_button(GAMECUBE_PAD, bm.sdl_btn, true);
+    if (pad_up & bm.wii_btn)
+      push_button(GAMECUBE_PAD, bm.sdl_btn, false);
+  }
+
+  uint8_t pad_hat = SDL_HAT_CENTERED;
+  if (pad_held & PAD_BUTTON_UP)
+    pad_hat |= SDL_HAT_UP;
+  if (pad_held & PAD_BUTTON_DOWN)
+    pad_hat |= SDL_HAT_DOWN;
+  if (pad_held & PAD_BUTTON_LEFT)
+    pad_hat |= SDL_HAT_LEFT;
+  if (pad_held & PAD_BUTTON_RIGHT)
+    pad_hat |= SDL_HAT_RIGHT;
+  push_hat(GAMECUBE_PAD, pad_hat, last_pad_hat);
+
+  push_stick(GAMECUBE_PAD, PAD_StickX(0) * 256, PAD_StickY(0) * 256,
+             last_pad_x, last_pad_y);
 
   // If we generated events, return the first one
   if (queue_head != queue_tail)
