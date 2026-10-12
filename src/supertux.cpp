@@ -62,6 +62,13 @@ int main(int argc, char ** argv)
       usleep(50000);
     }
   }
+  // SDL2main already mounted every device with the default cache, and
+  // mounting over a name orphans the old mount. The colon matters, since a
+  // bare name unmounts whichever device holds the working directory.
+  fatUnmount("sd:");
+  fatUnmount("usb:");
+  fatUnmount("carda:");
+  fatUnmount("cardb:");
   // The default cache is too small to keep directories between file opens
   bool res = fatInit(32, true);
   if (res == 0)
