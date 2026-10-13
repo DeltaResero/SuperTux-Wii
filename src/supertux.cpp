@@ -25,6 +25,7 @@
 #include "texture.hpp"
 #include "tile.hpp"
 #ifdef __WII__
+  #include <climits>
   #include <cstring>
   #include <unistd.h>
   #include <wiiuse/wpad.h>
@@ -74,6 +75,19 @@ int main(int argc, char ** argv)
   if (res == 0)
   {
     st_abort("FAT Library Initialization Failed", "Unable to initialize FAT library for SD/USB access.");
+  }
+  // The game only reads from the device holding its working directory, so
+  // unmount the others to give back their caches
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)))
+  {
+    for (const char* device : {"sd:", "usb:", "carda:", "cardb:"})
+    {
+      if (strncmp(cwd, device, strlen(device)) != 0)
+      {
+        fatUnmount(device);
+      }
+    }
   }
 
 #endif
