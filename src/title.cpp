@@ -156,8 +156,8 @@ void generate_contrib_menu()
     std::string full_path = datadir + "/levels/worldmaps/" + map_filename;
 
     // Use our new, fast "peek" function to get the title without parsing the whole file.
-    std::string title = WorldMapNS::WorldMap::get_world_title_fast(full_path);
-    cached_bonus_content.push_back({title, map_filename, true});
+    std::string world_title = WorldMapNS::WorldMap::get_world_title_fast(full_path);
+    cached_bonus_content.push_back({world_title, map_filename, true});
   }
 
   // Sort the combined list alphabetically by title
@@ -276,8 +276,8 @@ void check_contrib_subset_menu()
       {
         std::cout << "Starting level: " << index << std::endl;
       }
-      GameSession session(current_contrib_subset, index, ST_GL_PLAY);
-      session.run();
+      GameSession contrib_session(current_contrib_subset, index, ST_GL_PLAY);
+      contrib_session.run();
       player_status.reset();
       Menu::set_current(main_menu);
     }
@@ -296,14 +296,14 @@ void draw_background()
 
 /**
  * Draws the demo session, updating the world and handling character movements.
- * @param session Pointer to the current game session.
+ * @param demo_session Pointer to the demo's game session.
  * @param frame_ratio The ratio for frame timing, used to control animations.
  */
-void draw_demo(GameSession* session, float frame_ratio)
+void draw_demo(GameSession* demo_session, float frame_ratio)
 {
-  World* world  = session->get_world();
+  World* world  = demo_session->get_world();
   World::set_current(world);
-  Level* plevel = session->get_level();
+  Level* plevel = demo_session->get_level();
   Player* tux = world->get_tux();
 
   world->play_music(LEVEL_MUSIC);
