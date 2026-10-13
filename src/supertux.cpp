@@ -28,8 +28,6 @@
   #include <climits>
   #include <cstring>
   #include <unistd.h>
-  #include <wiiuse/wpad.h>
-  #include <ogc/lwp_watchdog.h>
   #include <ogc/usbstorage.h>
   #include <fat.h>
 #endif
