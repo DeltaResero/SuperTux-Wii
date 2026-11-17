@@ -579,9 +579,8 @@ void title(void)
 
     processTitleInput();
 
-    // Draw the background and demo BEFORE handling menu actions
-    clearscreen(0, 0, 0); // Clear screen to prevent ghosting/freezing
-    bkg_title->draw_bg();
+    // Draw the demo BEFORE handling menu actions. The demo level's own
+    // background covers the whole screen, so nothing needs clearing first.
     draw_demo(session.get(), frame_ratio);
 
     handleMenuActions();
