@@ -76,9 +76,13 @@ static std::string current_contrib_subset;         // Currently selected contrib
 
 static StringList worldmap_list;  // List of available world maps
 
-#ifdef __WII__
-  static double fractional_increment = 0.0; // Static variable to manage the fractional increment
-#endif
+// The "?" block's flash (11 images x 50 ms = 22 counter steps, see TileManager::update_animations)
+// is timed to the title music's hi-hat: theme.mod hits it every 4 rows at speed 9, 125 BPM = 720 ms.
+// The counter follows the clock at 22 steps per 720 ms, so the flash keeps time at any frame rate.
+static constexpr Uint64 TITLE_ANIM_STEPS = 22;
+static constexpr Uint64 TITLE_ANIM_PERIOD_MS = 720;
+static unsigned int title_anim_start;  // Ticks::get() when the title screen started
+static unsigned int title_anim_base;   // global_frame_counter at that moment
 
 static std::unique_ptr<GameSession> session;  // The current demo session
 
@@ -308,17 +312,8 @@ void draw_demo(GameSession* demo_session, float frame_ratio)
 
   world->play_music(LEVEL_MUSIC);
 
-#ifdef __WII__ // FIXME: very hackish way to get our "?" blocks to animate approximate correctly
-  // Increment global_frame_counter by 1 every second call
-  fractional_increment += 0.5;
-  if (fractional_increment >= 1.0)
-  {
-    global_frame_counter++;
-    fractional_increment -= 1.0;
-  }
-#else // non-Wii builds
-  global_frame_counter++; //increment every call as per normal
-#endif
+  global_frame_counter = title_anim_base + static_cast<unsigned int>(
+    static_cast<Uint64>(Ticks::get() - title_anim_start) * TITLE_ANIM_STEPS / TITLE_ANIM_PERIOD_MS);
   tux->key_event((SDL_Keycode) keymap.right, DOWN);
 
   // Check if the random timer has triggered an event
@@ -552,6 +547,8 @@ void title(void)
   // Set the frame counter and start the random timer
   frame = 0;
   update_time = Ticks::get();
+  title_anim_start = update_time;
+  title_anim_base = global_frame_counter;
   random_timer.start(rand() % 2000 + 2000);
 
   // Set the current menu to the main menu
@@ -591,20 +588,14 @@ void title(void)
     last_update_time = update_time;
     update_time = Ticks::get();
 
-    // Pause the loop for a short duration
     frame++;
 
-#ifdef __WII__
-    /*FIXME: Gets 60fps now on Wii by removing SDL_Delay, but animation of "?" blocks are
-     * about 2x too fast unless we compensate by only incrementing global frame counter
-     * half as often in draw_demo when building for Wii. This is a very hackish; please fix!
-     */
-#else
-    /* FIXME: Default delay is 25 which should work as normal for non-Wii provided the machine
-     * is modern enough to actually handle this delay properly
-     */
-    SDL_Delay(25);
-#endif
+    // Yield the CPU if the frame finished very quickly, as the level loop does
+    if ((update_time - last_update_time) <= 12)
+    {
+      SDL_Delay(5);
+      update_time = Ticks::get();
+    }
   }
 
   // Cleanup and free resources
