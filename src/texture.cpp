@@ -45,6 +45,38 @@ static GLenum g_blend_dst = GL_ZERO;
 Surface::Surfaces Surface::surfaces;
 
 /**
+ * Picks the pixel format for loaded images.
+ * With SDL's software renderer, every draw is a CPU blit onto the window's
+ * format, so the source format decides the speed:
+ *  - Opaque images use the window's own format, so drawing them is a plain copy.
+ *  - Images with alpha use ARGB8888. SDL has dedicated fast blenders from
+ *    ARGB8888 onto 16- and 32-bit screens; RGBA8888 falls back to SDL's
+ *    generic per-pixel blitter, which is several times slower.
+ * OpenGL mode and hardware renderers keep RGBA8888, as before.
+ * @param use_alpha Whether the image needs its alpha channel.
+ * @return An SDL_PIXELFORMAT_* value.
+ */
+static Uint32 surface_format(bool use_alpha)
+{
+  if (use_gl || !renderer)
+    return SDL_PIXELFORMAT_RGBA8888;
+
+  SDL_RendererInfo info;
+  if (SDL_GetRendererInfo(renderer, &info) != 0 || !(info.flags & SDL_RENDERER_SOFTWARE))
+    return SDL_PIXELFORMAT_RGBA8888;
+
+  if (use_alpha)
+    return SDL_PIXELFORMAT_ARGB8888;
+
+  Uint32 window_format = window ? SDL_GetWindowPixelFormat(window) : (Uint32)SDL_PIXELFORMAT_UNKNOWN;
+  if (window_format == SDL_PIXELFORMAT_UNKNOWN || SDL_ISPIXELFORMAT_FOURCC(window_format) ||
+      SDL_ISPIXELFORMAT_INDEXED(window_format) || SDL_ISPIXELFORMAT_ALPHA(window_format))
+    return SDL_PIXELFORMAT_ARGB8888;
+
+  return window_format;
+}
+
+/**
  * Helper function to finalize a newly created SDL_Surface.
  * This function converts the surface to the display format, handles alpha settings,
  * checks for errors, and frees the temporary input surface.
@@ -57,10 +89,9 @@ static SDL_Surface* finalize_surface(SDL_Surface* temp, bool use_alpha, const st
 {
   SDL_Surface* final_surface;
 
-  // In SDL2, we typically just convert to a standard format like RGBA8888 or
-  // ARGB8888 regardless of alpha preference, relying on BlendMode for alpha
-  // handling.
-  Uint32 format = SDL_PIXELFORMAT_RGBA8888;
+  // Alpha is still controlled by the blend mode below; the format only picks
+  // the fastest way for the active renderer to draw the image.
+  Uint32 format = surface_format(use_alpha);
   final_surface = SDL_ConvertSurfaceFormat(temp, format, 0);
 
   if (final_surface == NULL)
@@ -453,20 +484,19 @@ SDL_Surface* sdl_surface_from_sdl_surface(SDL_Surface* sdl_surf, bool use_alpha)
     SDL_SetSurfaceAlphaMod(sdl_surf, 255);
   }
 
-  if (!use_alpha && !use_gl)
-  {
-    sdl_surface = SDL_ConvertSurfaceFormat(sdl_surf, SDL_PIXELFORMAT_RGBA8888, 0);
-  }
-  else
-  {
-    // If use_alpha is true or use_gl is true, we still convert to RGBA8888
-    // as it's a common format for OpenGL textures and handles alpha.
-    sdl_surface = SDL_ConvertSurfaceFormat(sdl_surf, SDL_PIXELFORMAT_RGBA8888, 0);
-  }
+  // RGBA8888 for OpenGL and hardware renderers; the fastest format for the
+  // software renderer (see surface_format()).
+  sdl_surface = SDL_ConvertSurfaceFormat(sdl_surf, surface_format(use_alpha), 0);
 
   if (sdl_surface == NULL)
   {
     st_abort("Can't convert to display format", "SURFACE");
+  }
+
+  if (!SDL_ISPIXELFORMAT_ALPHA(sdl_surface->format->format))
+  {
+    // An opaque copy in the window's format: draw it as a plain copy.
+    SDL_SetSurfaceBlendMode(sdl_surface, SDL_BLENDMODE_NONE);
   }
 
   if (sdl_surf->format->Amask != 0)
