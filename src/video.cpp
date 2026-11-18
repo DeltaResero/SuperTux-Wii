@@ -322,6 +322,41 @@ void st_toggle_fullscreen(void)
 #endif
 }
 
+#ifndef __WII__
+/**
+ * True when the renderer is one of SDL's OpenGL renderers and that OpenGL runs
+ * on the CPU (no working graphics driver). SDL still calls such a renderer
+ * accelerated. Mesa's CPU renderers and Windows' fallback give themselves
+ * away in GL_RENDERER.
+ */
+static bool st_renderer_is_cpu_opengl(SDL_Renderer* r)
+{
+  SDL_RendererInfo info;
+  if (SDL_GetRendererInfo(r, &info) != 0 || strncmp(info.name, "opengl", 6) != 0 ||
+      !SDL_GL_GetCurrentContext())
+    return false;
+
+#ifdef _WIN32
+  typedef const unsigned char*(__stdcall* GetStringFn)(unsigned int);
+#else
+  typedef const unsigned char* (*GetStringFn)(unsigned int);
+#endif
+  GetStringFn get_string = reinterpret_cast<GetStringFn>(SDL_GL_GetProcAddress("glGetString"));
+  const unsigned int gl_renderer = 0x1F01;  // GL_RENDERER, without needing the GL headers
+  const char* name = get_string ? reinterpret_cast<const char*>(get_string(gl_renderer)) : nullptr;
+  if (!name)
+    return false;
+
+  static const char* const cpu_renderers[] = {"llvmpipe", "softpipe", "Software Rasterizer", "GDI Generic"};
+  for (const char* cpu : cpu_renderers)
+  {
+    if (strstr(name, cpu))
+      return true;
+  }
+  return false;
+}
+#endif
+
 /**
  * Configures the video mode using SDL (Software Rendering).
  * This function is called when OpenGL is not available or not selected.
@@ -356,6 +391,23 @@ void st_video_setup_sdl(void)
     }
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
   }
+
+#ifndef __WII__
+  // Any system without a working graphics driver: SDL's own software renderer
+  // does the same work as OpenGL on the CPU without the emulation on top, and
+  // its frames then reach the screen without it too. SDL_RENDER_DRIVER, when
+  // set, still decides.
+  if (renderer && !SDL_getenv("SDL_RENDER_DRIVER") && st_renderer_is_cpu_opengl(renderer))
+  {
+    if (verbose)
+    {
+      std::cerr << "OpenGL runs on the CPU here; using SDL's software renderer.\n";
+    }
+    SDL_DestroyRenderer(renderer);
+    SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "0");
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+  }
+#endif
 
   if (!renderer)
   {
