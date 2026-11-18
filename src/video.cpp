@@ -14,11 +14,16 @@
 #include <SDL2/SDL_image.h>
 #include <iostream>
 #include <cstdio>
+#include <cstring>
 #include <SDL_error.h>
 #include <SDL_video.h>
 
 #ifndef NOOPENGL
 #include <GL/gl.h>
+#endif
+
+#if defined(__linux__) && !defined(__WII__)
+#include <dirent.h>
 #endif
 
 #include "globals.hpp"
@@ -36,6 +41,73 @@ void seticon(void);
 #ifndef NOOPENGL
 static SDL_GLContext gl_context = nullptr;
 #endif
+
+#if defined(__linux__) && !defined(__WII__)
+/**
+ * True when a DRM render node (/dev/dri/renderD*) exists. Linux graphics
+ * drivers that can draw create one; display-only drivers don't.
+ */
+static bool st_has_render_node(void)
+{
+  DIR* dir = opendir("/dev/dri");
+  if (!dir)
+    return false;
+  bool found = false;
+  while (const dirent* entry = readdir(dir))
+  {
+    if (strncmp(entry->d_name, "renderD", 7) == 0)
+    {
+      found = true;
+      break;
+    }
+  }
+  closedir(dir);
+  return found;
+}
+#endif
+
+/**
+ * True when running Linux on a Nintendo GameCube or Wii (e.g. Wii-Linux).
+ * Their GPUs have no Mesa driver, so OpenGL there is CPU emulation (llvmpipe)
+ * and runs far slower than SDL's own software renderer. Checked once.
+ */
+bool st_gl_is_software_only(void)
+{
+#if defined(__linux__) && !defined(__WII__)
+  static int cached = -1;
+  if (cached < 0)
+  {
+    cached = 0;
+    // A list of NUL-separated strings. Only these two exact names, so other
+    // Nintendo hardware that runs Linux is left alone.
+    FILE* f = fopen("/proc/device-tree/compatible", "rb");
+    if (f)
+    {
+      char buf[256];
+      size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+      fclose(f);
+      buf[n] = '\0';
+      for (size_t i = 0; i < n; i += strlen(buf + i) + 1)
+      {
+        if (strcmp(buf + i, "nintendo,wii") == 0 || strcmp(buf + i, "nintendo,gamecube") == 0)
+        {
+          cached = 1;
+          break;
+        }
+      }
+    }
+    // Should a real graphics driver for these consoles ever arrive, it will
+    // create a render node; then leave OpenGL to them as on any other system.
+    if (cached == 1 && st_has_render_node())
+    {
+      cached = 0;
+    }
+  }
+  return cached == 1;
+#else
+  return false;
+#endif
+}
 
 /**
  * Properly cleans up video resources before switching modes.
@@ -259,6 +331,17 @@ void st_video_setup_sdl(void)
 {
   // Force linear filtering to match OpenGL's look
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
+  if (st_gl_is_software_only())
+  {
+    // No GPU driver (Wii/GameCube Linux): SDL's "accelerated" renderer would
+    // be Mesa's CPU-emulated OpenGL. Use SDL's software renderer, and show its
+    // frames with plain X11/XShm instead of through an OpenGL texture (SDL's
+    // default on X11), which also goes through the emulated OpenGL.
+    // Environment variables of the same name still take precedence.
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
+    SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "0");
+  }
 
   // Create hardware accelerated renderer
   renderer = SDL_CreateRenderer(

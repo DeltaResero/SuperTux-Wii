@@ -37,6 +37,7 @@ void st_video_setup(void); // Chooses and sets up the appropriate video system
 void st_video_cleanup(void); // Cleans up video resources before switching modes
 void st_video_reinit(void); // Reinitializes video when switching modes
 void st_toggle_fullscreen(void); // Toggles fullscreen without recreating window
+bool st_gl_is_software_only(void); // True on systems where OpenGL can only be CPU-emulated (Wii/GameCube Linux)
 void st_audio_setup(void); // Sets up the audio system
 void st_joystick_setup(void); // Sets up the joystick system
 void st_power_setup(void); // Takes the Wii power button over from SDL
