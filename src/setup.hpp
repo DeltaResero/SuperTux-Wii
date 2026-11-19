@@ -21,6 +21,7 @@
 #include "type.hpp"
 
 class Menu;
+union SDL_Event;
 
 bool faccessible(const char *filename); // Checks if the file is accessible
 FILE * opendata(const char * filename, const char * mode); // Opens a data file
@@ -37,6 +38,9 @@ void st_video_setup(void); // Chooses and sets up the appropriate video system
 void st_video_cleanup(void); // Cleans up video resources before switching modes
 void st_video_reinit(void); // Reinitializes video when switching modes
 void st_toggle_fullscreen(void); // Toggles fullscreen without recreating window
+void st_present(void); // Shows the finished frame (SDL renderer mode)
+void st_mouse_state_to_game(int* x, int* y); // Maps an SDL_GetMouseState() position into SCREEN_W x SCREEN_H
+void st_mouse_event_to_game(SDL_Event* event); // Maps a mouse event's position into SCREEN_W x SCREEN_H
 bool st_gl_is_software_only(void); // True on systems where OpenGL can only be CPU-emulated (Wii/GameCube Linux)
 void st_audio_setup(void); // Sets up the audio system
 void st_joystick_setup(void); // Sets up the joystick system

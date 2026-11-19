@@ -17,6 +17,7 @@
 // (at your option) any later version.
 
 #include "globals.hpp"
+#include "setup.hpp"
 #include "player.hpp"
 #include "resources.hpp" // Needed for tux_life sprite
 
@@ -430,6 +431,13 @@ int st_poll_event(SDL_Event *event)
   // Fallback to standard SDL polling for other systems or non-Wii-specific
   // events
   const int got_event = SDL_PollEvent(event);
+
+  // Mouse positions come in window pixels; the game works in SCREEN_W x
+  // SCREEN_H, which may be scaled or cropped to fit the window.
+  if (got_event)
+  {
+    st_mouse_event_to_game(event);
+  }
 
   // Record a close request centrally so it cannot be swallowed by a menu or
   // by a loop that does not handle SDL_QUIT itself.

@@ -15,6 +15,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <vector>
 #include <SDL_error.h>
 #include <SDL_video.h>
 
@@ -41,6 +42,30 @@ void seticon(void);
 #ifndef NOOPENGL
 static SDL_GLContext gl_context = nullptr;
 #endif
+
+// Software renderer only: when the window is not SCREEN_W x SCREEN_H (for
+// example a 640x448 TV screen in fullscreen), the game draws into this
+// SCREEN_W x SCREEN_H texture, and st_present() scales it to the window once
+// per frame. Without it, SDL scales every single sprite as it is drawn, which
+// is several times slower and allocates temporary surfaces for clipped ones.
+static SDL_Texture* frame_target = nullptr;
+// Set when the window around the scaled frame (letterbox bars) needs clearing.
+static bool frame_bars_dirty = false;
+// Window exactly SCREEN_W wide but shorter (the Wii's 640x448 TV screen):
+// the frame is stretched to fill it by leaving out evenly spaced rows, which
+// is just a few unscaled block copies (SDL's scaler works pixel by pixel).
+// Each strip is a run of rows that are copied as they are.
+struct FrameStrip
+{
+  int src_y;
+  int dst_y;
+  int h;
+};
+static std::vector<FrameStrip> frame_strips;
+// Where the frame lands in the window when frame_target is used. The game
+// places it itself rather than through SDL's logical size, which SDL 2 and
+// SDL 3 (sdl2-compat) apply differently, and maps the mouse back from it.
+static SDL_Rect frame_dst = {0, 0, SCREEN_W, SCREEN_H};
 
 #if defined(__linux__) && !defined(__WII__)
 /**
@@ -110,6 +135,219 @@ bool st_gl_is_software_only(void)
 }
 
 /**
+ * Drops the frame target (if any) and draws straight to the window again.
+ */
+static void st_frame_target_free(void)
+{
+  if (frame_target)
+  {
+    SDL_SetRenderTarget(renderer, NULL);
+    SDL_DestroyTexture(frame_target);
+    frame_target = nullptr;
+  }
+  frame_strips.clear();
+}
+
+/**
+ * Puts the renderer back to drawing in plain window pixels: no logical size,
+ * no scale, the whole window as the viewport.
+ */
+static void st_frame_window_reset(void)
+{
+  SDL_RenderSetLogicalSize(renderer, 0, 0);
+  SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+  SDL_RenderSetViewport(renderer, NULL);
+}
+
+/**
+ * Sets up the frame target when the software renderer would otherwise have to
+ * scale each sprite. Call after the renderer's logical size or scale is set.
+ */
+static void st_frame_target_setup(void)
+{
+  st_frame_target_free();
+  if (!renderer || use_gl)
+    return;
+
+  SDL_RendererInfo info;
+  if (SDL_GetRendererInfo(renderer, &info) != 0 || !(info.flags & SDL_RENDERER_SOFTWARE))
+    return;
+
+  int out_w;
+  int out_h;
+  if (SDL_GetRendererOutputSize(renderer, &out_w, &out_h) != 0)
+    return;
+  // A logical size set by the caller asks for the frame to keep its shape
+  // (black bars); without one it is stretched to fill the window.
+  int logical_w;
+  int logical_h;
+  SDL_RenderGetLogicalSize(renderer, &logical_w, &logical_h);
+  const bool keep_shape = logical_w != 0;
+
+  // In each case below the game places the frame itself (see frame_dst) and
+  // maps the mouse itself (see st_mouse_state_to_game()), so SDL's own
+  // placement is cleared first.
+  if (out_w == SCREEN_W && out_h == SCREEN_H)
+  {
+    st_frame_window_reset();
+    return;
+  }
+  if (!(info.flags & SDL_RENDERER_TARGETTEXTURE))
+    return;
+
+  // Same format as the window, so the final scale is a plain pixel copy.
+  Uint32 format = SDL_GetWindowPixelFormat(window);
+  if (format == SDL_PIXELFORMAT_UNKNOWN || SDL_ISPIXELFORMAT_FOURCC(format) ||
+      SDL_ISPIXELFORMAT_INDEXED(format) || SDL_ISPIXELFORMAT_ALPHA(format))
+    format = SDL_PIXELFORMAT_RGB888;
+
+  frame_target = SDL_CreateTexture(renderer, format, SDL_TEXTUREACCESS_TARGET, SCREEN_W, SCREEN_H);
+  if (!frame_target)
+    return;
+
+  // SDL's software scaler only does smooth (linear) scaling for 32-bit
+  // pixels; for other formats it converts the whole frame back and forth.
+  // Nearest-pixel scaling keeps it a fast copy.
+  SDL_SetTextureScaleMode(frame_target, SDL_ScaleModeNearest);
+  SDL_SetTextureBlendMode(frame_target, SDL_BLENDMODE_NONE);
+  st_frame_window_reset();  // Before binding the target: SDL keeps the window's state aside meanwhile
+  if (SDL_SetRenderTarget(renderer, frame_target) != 0)
+  {
+    SDL_DestroyTexture(frame_target);
+    frame_target = nullptr;
+    return;
+  }
+  frame_bars_dirty = true;
+
+  frame_dst = {0, 0, out_w, out_h};
+  if (keep_shape && !(out_w == SCREEN_W && out_h < SCREEN_H))
+  {
+    const float scale = SDL_min((float)out_w / SCREEN_W, (float)out_h / SCREEN_H);
+    frame_dst.w = (int)(SCREEN_W * scale);
+    frame_dst.h = (int)(SCREEN_H * scale);
+    frame_dst.x = (out_w - frame_dst.w) / 2;
+    frame_dst.y = (out_h - frame_dst.h) / 2;
+  }
+
+  if (out_w == SCREEN_W && out_h < SCREEN_H)
+  {
+    // Destination row y shows source row y * SCREEN_H / out_h; group the rows
+    // into runs where consecutive destination rows show consecutive source rows.
+    for (int y = 0; y < out_h; ++y)
+    {
+      int src_y = y * SCREEN_H / out_h;
+      if (!frame_strips.empty() &&
+          frame_strips.back().src_y + frame_strips.back().h == src_y)
+        frame_strips.back().h++;
+      else
+        frame_strips.push_back({src_y, y, 1});
+    }
+  }
+}
+
+/**
+ * Shows the finished frame in SDL renderer mode.
+ */
+void st_present(void)
+{
+  if (!frame_target)
+  {
+    SDL_RenderPresent(renderer);
+    return;
+  }
+
+  SDL_SetRenderTarget(renderer, NULL);
+
+  if (!frame_strips.empty())
+  {
+    for (const FrameStrip& strip : frame_strips)
+    {
+      SDL_Rect src = {0, strip.src_y, SCREEN_W, strip.h};
+      SDL_Rect dst = {0, strip.dst_y, SCREEN_W, strip.h};
+      SDL_RenderCopy(renderer, frame_target, &src, &dst);
+    }
+    SDL_RenderPresent(renderer);
+    SDL_SetRenderTarget(renderer, frame_target);
+    return;
+  }
+
+  if (frame_bars_dirty)
+  {
+    // The frame copy below never touches the letterbox bars, so clear them once.
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    frame_bars_dirty = false;
+  }
+  SDL_RenderCopy(renderer, frame_target, NULL, &frame_dst);
+  SDL_RenderPresent(renderer);
+  SDL_SetRenderTarget(renderer, frame_target);
+}
+
+/**
+ * Where the game draws a window position: maps it into SCREEN_W x SCREEN_H
+ * when the software renderer places the frame itself.
+ * @return false when the frame is placed by SDL instead.
+ */
+static bool st_frame_window_to_game(int* x, int* y)
+{
+  if (frame_target && frame_dst.w > 0 && frame_dst.h > 0)
+  {
+    *x = (*x - frame_dst.x) * SCREEN_W / frame_dst.w;
+    *y = (*y - frame_dst.y) * SCREEN_H / frame_dst.h;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Maps a mouse position read from SDL_GetMouseState() (window pixels) into
+ * the game's SCREEN_W x SCREEN_H, whichever way the frame reaches the window.
+ */
+void st_mouse_state_to_game(int* x, int* y)
+{
+  if (use_gl || !renderer || st_frame_window_to_game(x, y))
+    return;
+  float lx;
+  float ly;
+  SDL_RenderWindowToLogical(renderer, *x, *y, &lx, &ly);
+  *x = (int)lx;
+  *y = (int)ly;
+}
+
+/**
+ * Maps a mouse event's position into the game's SCREEN_W x SCREEN_H. SDL
+ * already does this when the renderer has a logical size; otherwise the event
+ * still holds window pixels.
+ */
+void st_mouse_event_to_game(SDL_Event* event)
+{
+  int* x;
+  int* y;
+  if (event->type == SDL_MOUSEMOTION)
+  {
+    x = &event->motion.x;
+    y = &event->motion.y;
+  }
+  else if (event->type == SDL_MOUSEBUTTONDOWN || event->type == SDL_MOUSEBUTTONUP)
+  {
+    x = &event->button.x;
+    y = &event->button.y;
+  }
+  else
+  {
+    return;
+  }
+
+  if (use_gl || !renderer)
+    return;
+  int logical_w;
+  int logical_h;
+  SDL_RenderGetLogicalSize(renderer, &logical_w, &logical_h);
+  if (logical_w == 0)
+    st_mouse_state_to_game(x, y);
+}
+
+/**
  * Properly cleans up video resources before switching modes.
  * This prevents the "ghost window" issue when toggling between modes.
  */
@@ -124,7 +362,9 @@ void st_video_cleanup(void)
   }
 #endif
 
-  // Destroy renderer if it exists
+  // Destroy renderer if it exists (it also frees its textures)
+  frame_target = nullptr;
+  frame_strips.clear();
   if (renderer)
   {
     SDL_DestroyRenderer(renderer);
@@ -258,6 +498,9 @@ void st_toggle_fullscreen(void)
   if (!window)
     return;
 
+  // Draw straight to the window while its size and scaling change.
+  st_frame_target_free();
+
   if (use_fullscreen)
   {
     // Go fullscreen (borderless desktop mode - no resolution change)
@@ -303,6 +546,9 @@ void st_toggle_fullscreen(void)
     // Reset Viewport to full window
     // Since we are stretching, we don't need offsets or centering.
     SDL_RenderSetViewport(renderer, NULL);
+
+    // Software renderer: draw to one SCREEN_W x SCREEN_H frame and scale that.
+    st_frame_target_setup();
   }
 
 #ifndef NOOPENGL
@@ -416,6 +662,10 @@ void st_video_setup_sdl(void)
 
   // Set logical size for resolution independence
   SDL_RenderSetLogicalSize(renderer, SCREEN_W, SCREEN_H);
+
+  // Software renderer on a window that isn't SCREEN_W x SCREEN_H: draw to one
+  // frame and scale that, instead of scaling every sprite.
+  st_frame_target_setup();
 }
 
 #ifndef NOOPENGL

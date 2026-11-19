@@ -1056,7 +1056,7 @@ int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
 
   if (update == UPDATE)
   {
-    SDL_RenderPresent(renderer);
+    st_present();
   }
 
   return 0;
@@ -1083,7 +1083,7 @@ int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
 
   if (update == UPDATE)
   {
-    SDL_RenderPresent(renderer);
+    st_present();
   }
 
   return 0;
@@ -1119,7 +1119,7 @@ int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w_, float 
   SDL_RenderCopy(renderer, texture, &src, &dst);
 
   if (update == UPDATE)
-    SDL_RenderPresent(renderer);
+    st_present();
 
   return 0;
 }

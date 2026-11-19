@@ -241,7 +241,7 @@ void flipscreen()
     return;
   }
 #endif
-  SDL_RenderPresent(renderer);
+  st_present();
 }
 
 /* --- FADE OUT SCREEN --- */
