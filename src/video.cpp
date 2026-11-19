@@ -415,10 +415,18 @@ void st_video_setup(void)
   }
 #endif
 
-  // Create the window
-  window = SDL_CreateWindow("SuperTux Wii " VERSION, SDL_WINDOWPOS_CENTERED,
-                            SDL_WINDOWPOS_CENTERED, SCREEN_W, SCREEN_H,
-                            window_flags);
+  // Create the window. A fullscreen one starts at its display's top-left
+  // corner (see st_window_to_display_origin()).
+  int window_x = SDL_WINDOWPOS_CENTERED;
+  int window_y = SDL_WINDOWPOS_CENTERED;
+  SDL_Rect display_bounds;
+  if (use_fullscreen && SDL_GetDisplayBounds(0, &display_bounds) == 0)
+  {
+    window_x = display_bounds.x;
+    window_y = display_bounds.y;
+  }
+  window = SDL_CreateWindow("SuperTux Wii " VERSION, window_x, window_y,
+                            SCREEN_W, SCREEN_H, window_flags);
 
   if (!window)
   {
@@ -489,6 +497,29 @@ void st_video_reinit(void)
 }
 
 /**
+ * Moves the window to its display's top-left corner before it goes
+ * fullscreen. With no window manager (Wii Linux), the X server leaves a
+ * fullscreen window where it was: a 640x480 window centred on the 448-line
+ * screen stayed 16 rows up, though SDL reports it at 0,0, cutting off the top
+ * of the picture and leaving the bottom rows black.
+ */
+static void st_window_to_display_origin(void)
+{
+  int display = SDL_GetWindowDisplayIndex(window);
+  SDL_Rect bounds;
+  if (display < 0 || SDL_GetDisplayBounds(display, &bounds) != 0)
+    return;
+  SDL_SetWindowPosition(window, bounds.x, bounds.y);
+  // Let the X server finish the move first; going fullscreen straight after
+  // it left the window at 640x480 on the Wii.
+  for (int i = 0; i < 4; ++i)
+  {
+    SDL_PumpEvents();
+    SDL_Delay(50);
+  }
+}
+
+/**
  * Toggles fullscreen mode without recreating the window or renderer.
  * This preserves all textures and is the proper SDL2 way to toggle fullscreen.
  * Based on modern SuperTux's approach (sdlbase_video_system.cpp).
@@ -503,6 +534,7 @@ void st_toggle_fullscreen(void)
 
   if (use_fullscreen)
   {
+    st_window_to_display_origin();
     // Go fullscreen (borderless desktop mode - no resolution change)
     if (SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0 && verbose)
     {
@@ -514,6 +546,7 @@ void st_toggle_fullscreen(void)
     // Go windowed
     SDL_SetWindowFullscreen(window, 0);
     SDL_SetWindowSize(window, SCREEN_W, SCREEN_H);
+    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
   }
 
   // Update renderer's logical size and viewport to maintain proper scaling (SDL
