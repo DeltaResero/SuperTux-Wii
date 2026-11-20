@@ -66,6 +66,15 @@ static std::vector<FrameStrip> frame_strips;
 // places it itself rather than through SDL's logical size, which SDL 2 and
 // SDL 3 (sdl2-compat) apply differently, and maps the mouse back from it.
 static SDL_Rect frame_dst = {0, 0, SCREEN_W, SCREEN_H};
+// Window exactly SCREEN_W wide and at most this many rows shorter: instead of
+// stretching, the frame is drawn straight into the window with the extra rows
+// cut off equally at the top and bottom, which a TV's overscan mostly hides
+// anyway. Saves a full-screen copy every frame. (The Wii's 640x448 TV screen
+// cuts 16 rows each side.) "TV Overscan" is kept on meanwhile (see
+// st_apply_tv_overscan()); it moves the status text 24 rows in, so no more
+// than 24 rows may go from each side.
+static constexpr int FRAME_CROP_MAX = 48;
+static int frame_crop_y = 0;  // Rows cut off the top (as many off the bottom)
 
 #if defined(__linux__) && !defined(__WII__)
 /**
@@ -146,6 +155,7 @@ static void st_frame_target_free(void)
     frame_target = nullptr;
   }
   frame_strips.clear();
+  frame_crop_y = 0;
 }
 
 /**
@@ -157,6 +167,47 @@ static void st_frame_window_reset(void)
   SDL_RenderSetLogicalSize(renderer, 0, 0);
   SDL_RenderSetScale(renderer, 1.0f, 1.0f);
   SDL_RenderSetViewport(renderer, NULL);
+}
+
+/**
+ * Cropped window: game row y lands on window row y - frame_crop_y.
+ * Applied after every present, as SDL resets the viewport whenever the window
+ * reports a size change.
+ */
+static void st_frame_crop_apply(void)
+{
+  SDL_RenderSetScale(renderer, 1.0f, 1.0f);
+  SDL_Rect viewport = {0, -frame_crop_y, SCREEN_W, SCREEN_H};
+  SDL_RenderSetViewport(renderer, &viewport);
+}
+
+/**
+ * True while the screen is trimmed: too short for the frame, so its top and
+ * bottom rows are cut off (see st_frame_target_setup()).
+ */
+bool st_screen_is_trimmed(void)
+{
+  return frame_crop_y != 0;
+}
+
+/**
+ * Sets offset_y (how far the status text sits from the top and bottom) from
+ * "TV Overscan". While the screen is trimmed (see st_frame_target_setup()),
+ * the trimmed rows would hide the status text, so it is kept on and greyed
+ * out in Options whatever the saved setting says. The saved setting itself
+ * is left alone.
+ */
+void st_apply_tv_overscan(void)
+{
+  const bool trimmed = st_screen_is_trimmed();
+  offset_y = (tv_overscan_enabled || trimmed) ? 24 : 0;
+  if (options_menu)
+  {
+    MenuItem& item = options_menu->get_item_by_id(MNID_TV_OVERSCAN);
+    item.kind = trimmed ? MN_DEACTIVE : MN_TOGGLE;
+    item.text = trimmed ? "TV Overscan (always on)" : "TV Overscan";
+    item.toggled = tv_overscan_enabled;
+  }
 }
 
 /**
@@ -190,6 +241,13 @@ static void st_frame_target_setup(void)
   if (out_w == SCREEN_W && out_h == SCREEN_H)
   {
     st_frame_window_reset();
+    return;
+  }
+  if (out_w == SCREEN_W && out_h < SCREEN_H && SCREEN_H - out_h <= FRAME_CROP_MAX)
+  {
+    st_frame_window_reset();
+    frame_crop_y = (SCREEN_H - out_h) / 2;
+    st_frame_crop_apply();
     return;
   }
   if (!(info.flags & SDL_RENDERER_TARGETTEXTURE))
@@ -253,6 +311,8 @@ void st_present(void)
   if (!frame_target)
   {
     SDL_RenderPresent(renderer);
+    if (frame_crop_y)
+      st_frame_crop_apply();
     return;
   }
 
@@ -294,6 +354,11 @@ static bool st_frame_window_to_game(int* x, int* y)
   {
     *x = (*x - frame_dst.x) * SCREEN_W / frame_dst.w;
     *y = (*y - frame_dst.y) * SCREEN_H / frame_dst.h;
+    return true;
+  }
+  if (frame_crop_y)
+  {
+    *y += frame_crop_y;
     return true;
   }
   return false;
@@ -365,6 +430,7 @@ void st_video_cleanup(void)
   // Destroy renderer if it exists (it also frees its textures)
   frame_target = nullptr;
   frame_strips.clear();
+  frame_crop_y = 0;
   if (renderer)
   {
     SDL_DestroyRenderer(renderer);
@@ -475,6 +541,7 @@ void st_video_setup(void)
   {
     st_video_setup_sdl(); // Call SDL setup function otherwise
   }
+  st_apply_tv_overscan();
 
   Surface::reload_all();
 
@@ -582,6 +649,7 @@ void st_toggle_fullscreen(void)
 
     // Software renderer: draw to one SCREEN_W x SCREEN_H frame and scale that.
     st_frame_target_setup();
+    st_apply_tv_overscan();
   }
 
 #ifndef NOOPENGL

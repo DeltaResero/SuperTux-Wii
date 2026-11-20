@@ -39,6 +39,8 @@ void st_video_cleanup(void); // Cleans up video resources before switching modes
 void st_video_reinit(void); // Reinitializes video when switching modes
 void st_toggle_fullscreen(void); // Toggles fullscreen without recreating window
 void st_present(void); // Shows the finished frame (SDL renderer mode)
+bool st_screen_is_trimmed(void); // True while the screen is too short and the frame's top and bottom rows are cut off
+void st_apply_tv_overscan(void); // Sets offset_y from "TV Overscan", kept on while the screen is trimmed
 void st_mouse_state_to_game(int* x, int* y); // Maps an SDL_GetMouseState() position into SCREEN_W x SCREEN_H
 void st_mouse_event_to_game(SDL_Event* event); // Maps a mouse event's position into SCREEN_W x SCREEN_H
 bool st_gl_is_software_only(void); // True on systems where OpenGL can only be CPU-emulated (Wii/GameCube Linux)

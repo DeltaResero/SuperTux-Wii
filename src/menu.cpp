@@ -288,7 +288,7 @@ void Menu::process_options_menu()
 
     case MNID_TV_OVERSCAN:
       tv_overscan_enabled = isToggled(MNID_TV_OVERSCAN);
-      offset_y = tv_overscan_enabled ? 24 : 0;
+      st_apply_tv_overscan();
       break;
   }
 }
