@@ -476,6 +476,52 @@ void st_video_cleanup(void)
   // compatibility surface and will be recreated in st_video_setup()
 }
 
+/**
+ * Size for window mode: SCREEN_W x SCREEN_H, or smaller if that wouldn't fit
+ * in the screen's free space (what taskbars leave, minus the window's own
+ * borders once it has them). A window taller than the screen would hang off
+ * it, and the rows off screen would take the status text with them. A smaller
+ * window is drawn like a smaller fullscreen (see st_frame_target_setup()).
+ */
+static void st_window_mode_size(int display, int* w, int* h)
+{
+  *w = SCREEN_W;
+  *h = SCREEN_H;
+  SDL_Rect usable;
+  if (SDL_GetDisplayUsableBounds(display < 0 ? 0 : display, &usable) != 0)
+    return;
+  int top = 0;
+  int left = 0;
+  int bottom = 0;
+  int right = 0;
+  if (window && SDL_GetWindowBordersSize(window, &top, &left, &bottom, &right) != 0)
+  {
+    top = 0;
+    left = 0;
+    bottom = 0;
+    right = 0;
+  }
+  const int free_w = usable.w - left - right;
+  const int free_h = usable.h - top - bottom;
+  if (free_w > 0 && free_w < *w)
+    *w = free_w;
+  if (free_h > 0 && free_h < *h)
+    *h = free_h;
+}
+
+/**
+ * Sizes a window-mode window to fit the screen's free space (see
+ * st_window_mode_size()) and centres it.
+ */
+static void st_window_fit_to_screen(void)
+{
+  int w;
+  int h;
+  st_window_mode_size(SDL_GetWindowDisplayIndex(window), &w, &h);
+  SDL_SetWindowSize(window, w, h);
+  SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+}
+
 /*
  * This function is responsible for configuring the visual display, including
  * windowed and fullscreen modes, and preparing the screen for rendering.
@@ -513,18 +559,32 @@ void st_video_setup(void)
   // corner (see st_window_to_display_origin()).
   int window_x = SDL_WINDOWPOS_CENTERED;
   int window_y = SDL_WINDOWPOS_CENTERED;
+  int window_w = SCREEN_W;
+  int window_h = SCREEN_H;
   SDL_Rect display_bounds;
   if (use_fullscreen && SDL_GetDisplayBounds(0, &display_bounds) == 0)
   {
     window_x = display_bounds.x;
     window_y = display_bounds.y;
   }
+  else if (!use_fullscreen)
+  {
+    st_window_mode_size(0, &window_w, &window_h);
+  }
   window = SDL_CreateWindow("SuperTux Wii " VERSION, window_x, window_y,
-                            SCREEN_W, SCREEN_H, window_flags);
+                            window_w, window_h, window_flags);
 
   if (!window)
   {
     st_abort("Window Creation Failed", SDL_GetError());
+  }
+
+  // The window's borders are only known once it is on screen; shrink it
+  // again if they push it past the screen's free space.
+  if (!use_fullscreen)
+  {
+    SDL_PumpEvents();
+    st_window_fit_to_screen();
   }
 
   // Free the old screen surface if it exists before creating a new one
@@ -640,8 +700,7 @@ void st_toggle_fullscreen(void)
   {
     // Go windowed
     SDL_SetWindowFullscreen(window, 0);
-    SDL_SetWindowSize(window, SCREEN_W, SCREEN_H);
-    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+    st_window_fit_to_screen();
   }
 
   // Update renderer's logical size and viewport to maintain proper scaling (SDL
