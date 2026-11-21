@@ -170,7 +170,7 @@ private:
 class SurfaceSDL : public SurfaceImpl
 {
 public:
-  SDL_Texture *texture; // Hardware texture
+  SDL_Texture *texture; // Renderer texture (software renderer: made on first use, see get_texture())
 
   SurfaceSDL(SDL_Surface *surf, bool use_alpha);
   SurfaceSDL(std::string_view file, bool use_alpha);
@@ -180,6 +180,10 @@ public:
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
   int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) override;
+
+private:
+  void init_from_sdl_surface(std::string_view what);
+  SDL_Texture* get_texture();
 };
 
 #endif /*SUPERTUX_TEXTURE_H*/

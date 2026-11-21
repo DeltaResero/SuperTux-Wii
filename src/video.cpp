@@ -75,6 +75,9 @@ static SDL_Rect frame_dst = {0, 0, SCREEN_W, SCREEN_H};
 // than 24 rows may go from each side.
 static constexpr int FRAME_CROP_MAX = 48;
 static int frame_crop_y = 0;  // Rows cut off the top (as many off the bottom)
+// Software renderer drawing straight into the window at 1:1, so images can be
+// blitted onto the window's surface directly (see st_direct_surface()).
+static bool frame_direct = false;
 
 #if defined(__linux__) && !defined(__WII__)
 /**
@@ -156,6 +159,7 @@ static void st_frame_target_free(void)
   }
   frame_strips.clear();
   frame_crop_y = 0;
+  frame_direct = false;
 }
 
 /**
@@ -211,6 +215,27 @@ void st_apply_tv_overscan(void)
 }
 
 /**
+ * Software renderer drawing 1:1 into the window: returns the window's surface,
+ * ready to blit on (queued renderer drawing done first, so the order holds),
+ * and in shift_y how far game rows move on it. nullptr otherwise; then all
+ * drawing must go through the renderer.
+ */
+SDL_Surface* st_direct_surface(int* shift_y)
+{
+  if (!frame_direct)
+    return nullptr;
+  // Flush first: after the window changes size, the renderer's next drawing
+  // replaces the window surface, and a surface fetched before that is freed.
+  SDL_RenderFlush(renderer);
+  SDL_Surface* surface = SDL_GetWindowSurface(window);
+  if (!surface)
+    return nullptr;
+  SDL_SetClipRect(surface, NULL);
+  *shift_y = -frame_crop_y;
+  return surface;
+}
+
+/**
  * Sets up the frame target when the software renderer would otherwise have to
  * scale each sprite. Call after the renderer's logical size or scale is set.
  */
@@ -241,6 +266,7 @@ static void st_frame_target_setup(void)
   if (out_w == SCREEN_W && out_h == SCREEN_H)
   {
     st_frame_window_reset();
+    frame_direct = true;
     return;
   }
   if (out_w == SCREEN_W && out_h < SCREEN_H && SCREEN_H - out_h <= FRAME_CROP_MAX)
@@ -248,6 +274,7 @@ static void st_frame_target_setup(void)
     st_frame_window_reset();
     frame_crop_y = (SCREEN_H - out_h) / 2;
     st_frame_crop_apply();
+    frame_direct = true;
     return;
   }
   if (!(info.flags & SDL_RENDERER_TARGETTEXTURE))
@@ -356,7 +383,7 @@ static bool st_frame_window_to_game(int* x, int* y)
     *y = (*y - frame_dst.y) * SCREEN_H / frame_dst.h;
     return true;
   }
-  if (frame_crop_y)
+  if (frame_direct)
   {
     *y += frame_crop_y;
     return true;
@@ -431,6 +458,7 @@ void st_video_cleanup(void)
   frame_target = nullptr;
   frame_strips.clear();
   frame_crop_y = 0;
+  frame_direct = false;
   if (renderer)
   {
     SDL_DestroyRenderer(renderer);
@@ -650,6 +678,18 @@ void st_toggle_fullscreen(void)
     // Software renderer: draw to one SCREEN_W x SCREEN_H frame and scale that.
     st_frame_target_setup();
     st_apply_tv_overscan();
+
+    // Software renderer: switching can change where images are drawn (blitted
+    // onto the window, or through the renderer into the frame). An RLE image
+    // drawn onto one surface and then another crashes SDL 3's SDL 2 layer
+    // (sdl2-compat), so every image starts fresh. Switching is rare, so the
+    // reload costs nothing that matters.
+    SDL_RendererInfo info;
+    if (SDL_GetRendererInfo(renderer, &info) == 0 && (info.flags & SDL_RENDERER_SOFTWARE))
+    {
+      Surface::reload_all();
+      Text::recache_all_pointers();
+    }
   }
 
 #ifndef NOOPENGL

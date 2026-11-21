@@ -973,6 +973,87 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w_, flo
 // ----------------------------------------------------------------------------
 
 /**
+ * True when drawing goes through SDL's software renderer.
+ */
+static bool soft_renderer_in_use()
+{
+  if (use_gl || !renderer)
+    return false;
+  SDL_RendererInfo info;
+  return SDL_GetRendererInfo(renderer, &info) == 0 && (info.flags & SDL_RENDERER_SOFTWARE);
+}
+
+/**
+ * Software renderer: images can be blitted straight onto the window (see
+ * st_direct_surface()). Images with see-through pixels are RLE encoded on
+ * their first blit, which skips clear runs and copies solid runs without
+ * blending: about 3x faster than blending every pixel on the Wii (logo
+ * 1.90 -> 0.65 ms), and the encoded copy replaces the unpacked pixels.
+ */
+static void prepare_for_soft_blits(SDL_Surface* surface)
+{
+  // Every draw call passes its own alpha (255 for a plain draw); a surface's
+  // own alpha (text shadows are made with 128) is ignored, as it is when the
+  // renderer draws.
+  SDL_SetSurfaceAlphaMod(surface, 255);
+  SDL_BlendMode mode;
+  if (SDL_ISPIXELFORMAT_ALPHA(surface->format->format) &&
+      SDL_GetSurfaceBlendMode(surface, &mode) == 0 && mode == SDL_BLENDMODE_BLEND)
+  {
+    SDL_SetSurfaceRLE(surface, 1);
+  }
+}
+
+/**
+ * Blits straight onto the window if the software renderer allows it.
+ * @return false if the caller must draw through the renderer instead.
+ */
+static bool blit_direct(SDL_Surface* src, const SDL_Rect* srcrect, int x, int y)
+{
+  int shift_y;
+  SDL_Surface* dst = src ? st_direct_surface(&shift_y) : nullptr;
+  if (!dst)
+    return false;
+  SDL_Rect dstrect = {x, y + shift_y, 0, 0};
+  SDL_BlitSurface(src, srcrect, dst, &dstrect);
+  return true;
+}
+
+/**
+ * Sets up a freshly loaded surface. With the software renderer, the texture
+ * is only made when a draw needs it (see get_texture()), as most images are
+ * blitted directly and never need one.
+ */
+void SurfaceSDL::init_from_sdl_surface(std::string_view what)
+{
+  texture = nullptr;
+  w = sdl_surface->w;
+  h = sdl_surface->h;
+  if (soft_renderer_in_use())
+  {
+    prepare_for_soft_blits(sdl_surface);
+    return;
+  }
+  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
+  if (!texture && verbose)
+  {
+    std::cerr << "Failed to create texture from " << what << ": " << SDL_GetError() << "\n";
+  }
+}
+
+/**
+ * The renderer's texture for this surface, made on first use.
+ */
+SDL_Texture* SurfaceSDL::get_texture()
+{
+  if (!texture && sdl_surface)
+  {
+    texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
+  }
+  return texture;
+}
+
+/**
  * Constructor for SurfaceSDL.
  * @param file The path to the image file.
  * @param use_alpha Whether to use alpha transparency.
@@ -980,17 +1061,7 @@ int SurfaceOpenGL::draw_part(float sx, float sy, float x, float y, float w_, flo
 SurfaceSDL::SurfaceSDL(std::string_view file, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_file(file, use_alpha);
-  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
-  if (!texture)
-  {
-    if (verbose)
-    {
-      std::cerr << "Failed to create texture from " << file << ": "
-                << SDL_GetError() << "\n";
-    }
-  }
-  w = sdl_surface->w;
-  h = sdl_surface->h;
+  init_from_sdl_surface(file);
 }
 
 /**
@@ -1005,25 +1076,13 @@ SurfaceSDL::SurfaceSDL(std::string_view file, bool use_alpha)
 SurfaceSDL::SurfaceSDL(std::string_view file, int x, int y, int w_, int h_, bool use_alpha)
 {
   sdl_surface = sdl_surface_part_from_file(file, x, y, w_, h_, use_alpha);
-  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
-  if (!texture)
-  {
-    if (verbose)
-    {
-      std::cerr << "Failed to create texture part from " << file << ": "
-                << SDL_GetError() << "\n";
-    }
-  }
-  w = sdl_surface->w;
-  h = sdl_surface->h;
+  init_from_sdl_surface(file);
 }
 
 SurfaceSDL::SurfaceSDL(SDL_Surface *surf, bool use_alpha)
 {
   sdl_surface = sdl_surface_from_sdl_surface(surf, use_alpha);
-  texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
-  w = sdl_surface->w;
-  h = sdl_surface->h;
+  init_from_sdl_surface("a surface");
 }
 
 SurfaceSDL::~SurfaceSDL()
@@ -1044,15 +1103,18 @@ SurfaceSDL::~SurfaceSDL()
  */
 int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
 {
-  SDL_Rect dst;
+  if (alpha != 255 || !blit_direct(sdl_surface, nullptr, (int)x, (int)y))
+  {
+    SDL_Rect dst;
+    dst.x = (int)x;
+    dst.y = (int)y;
+    dst.w = w;
+    dst.h = h;
 
-  dst.x = (int)x;
-  dst.y = (int)y;
-  dst.w = w;
-  dst.h = h;
-
-  SDL_SetTextureAlphaMod(texture, alpha);
-  SDL_RenderCopy(renderer, texture, NULL, &dst);
+    SDL_Texture* tex = get_texture();
+    SDL_SetTextureAlphaMod(tex, alpha);
+    SDL_RenderCopy(renderer, tex, NULL, &dst);
+  }
 
   if (update == UPDATE)
   {
@@ -1071,13 +1133,22 @@ int SurfaceSDL::draw(float x, float y, Uint8 alpha, bool update)
 int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
 {
   // Tile the texture to fill SCREEN_W x SCREEN_H
-  SDL_SetTextureAlphaMod(texture, alpha);
+  SDL_Texture* tex = nullptr;
   for (int x = 0; x < SCREEN_W; x += w)
   {
     for (int y = 0; y < SCREEN_H; y += h)
     {
+      if (alpha == 255 && blit_direct(sdl_surface, nullptr, x, y))
+      {
+        continue;
+      }
+      if (!tex)
+      {
+        tex = get_texture();
+        SDL_SetTextureAlphaMod(tex, alpha);
+      }
       SDL_Rect dst = {x, y, w, h};
-      SDL_RenderCopy(renderer, texture, NULL, &dst);
+      SDL_RenderCopy(renderer, tex, NULL, &dst);
     }
   }
 
@@ -1104,19 +1175,23 @@ int SurfaceSDL::draw_bg(Uint8 alpha, bool update)
 int SurfaceSDL::draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update)
 {
   SDL_Rect src;
-  SDL_Rect dst;
   src.x = (int)sx;
   src.y = (int)sy;
   src.w = (int)w_;
   src.h = (int)h_;
 
-  dst.x = (int)x;
-  dst.y = (int)y;
-  dst.w = (int)w_;
-  dst.h = (int)h_;
+  if (alpha != 255 || !blit_direct(sdl_surface, &src, (int)x, (int)y))
+  {
+    SDL_Rect dst;
+    dst.x = (int)x;
+    dst.y = (int)y;
+    dst.w = (int)w_;
+    dst.h = (int)h_;
 
-  SDL_SetTextureAlphaMod(texture, alpha);
-  SDL_RenderCopy(renderer, texture, &src, &dst);
+    SDL_Texture* tex = get_texture();
+    SDL_SetTextureAlphaMod(tex, alpha);
+    SDL_RenderCopy(renderer, tex, &src, &dst);
+  }
 
   if (update == UPDATE)
     st_present();
