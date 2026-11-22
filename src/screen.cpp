@@ -179,6 +179,64 @@ void drawgradient(Color top_clr, Color bot_clr)
 
 /* --- FILL A RECTANGLE --- */
 /**
+ * Software renderer drawing 1:1 into the window (see st_direct_surface()):
+ * fills straight onto the window's surface. A see-through fill onto a 16-bit
+ * RGB565 screen (Wii Linux) is blended here two colour fields at a time with
+ * one multiply per pixel, the way SDL's own 565 alpha blitters do it; SDL's
+ * blended rectangle fill works channel by channel and took ~2 ms a frame for
+ * the title menu's box on the Wii.
+ * @param rect The rectangle in game coordinates.
+ * @return false when the renderer must draw it instead.
+ */
+static bool fillrect_direct(const SDL_Rect& rect, int r, int g, int b, int a)
+{
+  if (a <= 0)
+    return true;  // Nothing to draw
+
+  int shift_y;
+  SDL_Surface* dst = st_direct_surface(&shift_y);
+  if (!dst || (a < 255 && dst->format->format != SDL_PIXELFORMAT_RGB565))
+    return false;
+
+  SDL_Rect area = {rect.x, rect.y + shift_y, rect.w, rect.h};
+  if (a >= 255)
+  {
+    SDL_FillRect(dst, &area, SDL_MapRGB(dst->format, r, g, b));
+    return true;
+  }
+  if (!SDL_IntersectRect(&area, &dst->clip_rect, &area))
+    return true;
+
+  if (SDL_MUSTLOCK(dst) && SDL_LockSurface(dst) != 0)
+    return false;
+
+  // RGB565 spread over 32 bits as 00000GGGGGG00000RRRRR000000BBBBB, so each
+  // field has room for a 5-bit alpha multiply without spilling into the next.
+  const Uint32 mask = 0x07e0f81f;
+  const Uint32 alpha = (static_cast<Uint32>(a) * 32 + 127) / 255;  // 0-32
+  Uint32 src = SDL_MapRGB(dst->format, r, g, b);
+  src = (src | src << 16) & mask;
+
+  Uint8* row = static_cast<Uint8*>(dst->pixels) + area.y * dst->pitch + area.x * 2;
+  for (int y = 0; y < area.h; ++y, row += dst->pitch)
+  {
+    Uint16* p = reinterpret_cast<Uint16*>(row);
+    for (int x = 0; x < area.w; ++x)
+    {
+      Uint32 d = p[x];
+      d = (d | d << 16) & mask;
+      d += (src - d) * alpha >> 5;
+      d &= mask;
+      p[x] = static_cast<Uint16>(d | d >> 16);
+    }
+  }
+
+  if (SDL_MUSTLOCK(dst))
+    SDL_UnlockSurface(dst);
+  return true;
+}
+
+/**
  * Fills a rectangle with the specified color.
  * If OpenGL is used, it utilizes OpenGL functions.
  * Otherwise, it uses SDL functions to fill the rectangle.
@@ -216,6 +274,9 @@ void fillrect(float x, float y, float w, float h, int r, int g, int b, int a)
   }
 #endif
   SDL_Rect rect = {static_cast<int>(ix), static_cast<int>(iy), static_cast<int>(iw), static_cast<int>(ih)};
+
+  if (fillrect_direct(rect, r, g, b, a))
+    return;
 
   SDL_SetRenderDrawColor(renderer, r, g, b, a);
   if (a != 255)
