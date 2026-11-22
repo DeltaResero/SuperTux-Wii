@@ -90,6 +90,29 @@ class Text
     void build_cached_text(Surface* pchars, std::string_view text, CachedTextRun& run);
 #endif
 
+    // SDL software renderer only: a string drawn again and again is drawn once, shadow
+    // included, into its own image, then shown with one blit instead of one per letter.
+    struct SoftRun
+    {
+      std::string text;
+      int shadowsize;
+      int uses;              // Draws so far while not yet built
+      unsigned int last_used;
+      SDL_Texture* texture;  // Owned; only made when the run can't be blitted directly.
+                             // Freed with the renderer's other textures.
+      int w;
+      int h;
+      SDL_Surface* surface;  // Owned; the composed string (RLE encoded on first blit)
+    };
+    std::vector<SoftRun> soft_runs;
+    unsigned int soft_clock = 0;
+    unsigned int soft_generation = 0;  // st_renderer_generation the textures belong to
+
+    bool draw_soft_cached(std::string_view text, int x, int y, int shadowsize);
+    SDL_Surface* build_soft_run(std::string_view text, int shadowsize, int& tw, int& th);
+    void free_soft_run(SoftRun& run, bool renderer_alive);
+    void free_soft_runs();
+
   public:
     typedef std::list<Text*> Texts;
     static Texts texts;
@@ -102,6 +125,7 @@ class Text
 
     void recache_opengl_pointers(); // Public method to update pointers after a video mode switch.
     static void recache_all_pointers();
+    static void free_all_soft_runs(); // Drops every cached string (software renderer)
 
     void draw(std::string_view text, int x, int y, int shadowsize = 1, int update = NO_UPDATE);
 #ifndef NOOPENGL

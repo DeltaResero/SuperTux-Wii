@@ -46,6 +46,7 @@ SDL_Surface* st_direct_surface(int* shift_y); // Window surface to blit on direc
 void st_mouse_state_to_game(int* x, int* y); // Maps an SDL_GetMouseState() position into SCREEN_W x SCREEN_H
 void st_mouse_event_to_game(SDL_Event* event); // Maps a mouse event's position into SCREEN_W x SCREEN_H
 bool st_gl_is_software_only(void); // True on systems where OpenGL can only be CPU-emulated (Wii/GameCube Linux)
+extern unsigned int st_renderer_generation; // Goes up each time the SDL renderer, and with it every texture, is destroyed
 void st_audio_setup(void); // Sets up the audio system
 void st_joystick_setup(void); // Sets up the joystick system
 void st_power_setup(void); // Takes the Wii power button over from SDL

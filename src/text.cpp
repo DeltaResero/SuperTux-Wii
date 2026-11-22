@@ -23,8 +23,140 @@
 #include "text.hpp"
 #include "menu.hpp"
 #include "texture.hpp"
+#include "setup.hpp"
+#include <algorithm>
 
 Text::Texts Text::texts;
+
+// Cached text runs (SDL software renderer). A string is built after it has been drawn
+// SOFT_RUN_MIN_USES times, so strings that change every frame (counters) are left alone.
+static constexpr size_t SOFT_RUN_SLOTS = 16;     // Per font
+static constexpr int SOFT_RUN_MIN_USES = 3;
+static constexpr long SOFT_RUN_MAX_PIXELS = 65536;     // 256 KB per run at most
+static constexpr long SOFT_RUN_BUDGET_PIXELS = 262144; // 1 MB for all fonts together
+static long soft_run_pixels = 0;                       // Pixels in cached runs now
+
+/**
+ * Finds a character's cell on the font spritesheet.
+ * @return false for characters the font doesn't have.
+ */
+static bool glyph_source(char c, int w, int h, int& sx, int& sy)
+{
+  if (c >= ' ' && c <= '/')       // Symbols (e.g. '!', '"', '#')
+  {
+    sx = (c - ' ') * w;
+    sy = 0;
+  }
+  else if (c >= '0' && c <= '?')  // Numbers (0-9) and symbols
+  {
+    sx = (c - '0') * w;
+    sy = h;
+  }
+  else if (c >= '@' && c <= 'O')  // Uppercase letters A-O
+  {
+    sx = (c - '@') * w;
+    sy = h * 2;
+  }
+  else if (c >= 'P' && c <= '_')  // Uppercase letters P-Z
+  {
+    sx = (c - 'P') * w;
+    sy = h * 3;
+  }
+  else if (c >= '`' && c <= 'o')  // Lowercase letters a-o
+  {
+    sx = (c - '`') * w;
+    sy = h * 4;
+  }
+  else if (c >= 'p' && c <= '~')  // Lowercase letters p-z
+  {
+    sx = (c - 'p') * w;
+    sy = h * 5;
+  }
+  else
+  {
+    return false;
+  }
+  return true;
+}
+
+static bool soft_renderer_active()
+{
+  if (use_gl || !renderer)
+  {
+    return false;
+  }
+  SDL_RendererInfo info;
+  return SDL_GetRendererInfo(renderer, &info) == 0 && (info.flags & SDL_RENDERER_SOFTWARE);
+}
+
+/**
+ * Puts an ARGB8888 pixel over another (straight alpha), the same result as
+ * blending the two onto the screen one after the other.
+ */
+static inline void blend_over(Uint32* d, Uint32 s)
+{
+  const Uint32 sa = s >> 24;
+  if (sa == 0)
+  {
+    return;
+  }
+  const Uint32 da = *d >> 24;
+  if (sa == 255 || da == 0)
+  {
+    *d = s;
+    return;
+  }
+  const Uint32 dw = da * (255 - sa);    // Destination weight, scaled by 255
+  const Uint32 oa = sa * 255 + dw;      // Output alpha, scaled by 255
+  Uint32 out = ((oa + 127) / 255) << 24;
+  for (int shift = 0; shift <= 16; shift += 8)
+  {
+    const Uint32 sc = (s >> shift) & 0xff;
+    const Uint32 dc = (*d >> shift) & 0xff;
+    out |= ((sc * sa * 255 + dc * dw) / oa) << shift;
+  }
+  *d = out;
+}
+
+/**
+ * Draws a string's glyphs from an ARGB8888 spritesheet into an ARGB8888 surface,
+ * laid out exactly as Text::draw_chars lays them out on screen.
+ */
+static void compose_glyphs(SDL_Surface* out, SDL_Surface* sheet, std::string_view text, size_t len,
+                           int w, int h, int ox, int oy)
+{
+  int y = oy;
+  size_t j = 0;
+  for (size_t i = 0; i < len; ++i, ++j)
+  {
+    if (text[i] == '\n')
+    {
+      y += h + 2;
+      j = (size_t)-1;
+      continue;
+    }
+    int sx, sy;
+    if (!glyph_source(text[i], w, h, sx, sy))
+    {
+      continue;
+    }
+    const int dx = ox + static_cast<int>(j) * w;
+    const int n = std::min({w, sheet->w - sx, out->w - dx});
+    for (int row = 0; row < h && n > 0; ++row)
+    {
+      if (sy + row >= sheet->h || y + row >= out->h)
+      {
+        break;
+      }
+      const Uint32* src = reinterpret_cast<const Uint32*>(static_cast<const Uint8*>(sheet->pixels) + (sy + row) * sheet->pitch) + sx;
+      Uint32* dst = reinterpret_cast<Uint32*>(static_cast<Uint8*>(out->pixels) + (y + row) * out->pitch) + dx;
+      for (int k = 0; k < n; ++k)
+      {
+        blend_over(&dst[k], src[k]);
+      }
+    }
+  }
+}
 
 namespace {
   constexpr size_t MAX_TEXT_LEN = 256;
@@ -148,8 +280,187 @@ Text::~Text()
   texts.remove(this);
 
   // Free allocated memory
+  free_soft_runs();
   delete chars;
   delete shadow_chars;
+}
+
+/**
+ * Frees one cached string. Its texture is only freed if its renderer still
+ * exists (SDL frees a renderer's textures with it).
+ */
+void Text::free_soft_run(SoftRun& run, bool renderer_alive)
+{
+  if (run.texture && renderer_alive)
+  {
+    SDL_DestroyTexture(run.texture);
+  }
+  run.texture = nullptr;
+  if (run.surface)
+  {
+    SDL_FreeSurface(run.surface);
+    run.surface = nullptr;
+    soft_run_pixels -= static_cast<long>(run.w) * run.h;
+  }
+}
+
+/**
+ * Frees every cached string.
+ */
+void Text::free_soft_runs()
+{
+  const bool alive = renderer && soft_generation == st_renderer_generation;
+  for (SoftRun& run : soft_runs)
+  {
+    free_soft_run(run, alive);
+  }
+  soft_runs.clear();
+}
+
+/**
+ * Builds one image holding a whole string (and its shadow).
+ * @return nullptr if the string can't be cached; the caller then draws it letter by letter.
+ */
+SDL_Surface* Text::build_soft_run(std::string_view text, int shadowsize, int& tw, int& th)
+{
+  SDL_Surface* sheet = chars->impl->get_sdl_surface();
+  SDL_Surface* shadow_sheet = shadow_chars ? shadow_chars->impl->get_sdl_surface() : nullptr;
+  if (!sheet || sheet->format->format != SDL_PIXELFORMAT_ARGB8888)
+  {
+    return nullptr;
+  }
+  if (shadowsize != 0 && (!shadow_sheet || shadow_sheet->format->format != SDL_PIXELFORMAT_ARGB8888))
+  {
+    return nullptr;
+  }
+
+  const size_t len = std::min(text.length(), static_cast<size_t>(MAX_TEXT_LEN));
+  int cols = 0;
+  int max_cols = 0;
+  int lines = 1;
+  for (size_t i = 0; i < len; ++i)
+  {
+    if (text[i] == '\n')
+    {
+      ++lines;
+      cols = 0;
+    }
+    else
+    {
+      max_cols = std::max(max_cols, ++cols);
+    }
+  }
+  tw = max_cols * w + shadowsize;
+  th = (lines - 1) * (h + 2) + h + shadowsize;
+  const long pixels = static_cast<long>(tw) * th;
+  if (max_cols == 0 || pixels > SOFT_RUN_MAX_PIXELS || soft_run_pixels + pixels > SOFT_RUN_BUDGET_PIXELS)
+  {
+    return nullptr;
+  }
+
+  SDL_Surface* out = SDL_CreateRGBSurfaceWithFormat(0, tw, th, 32, SDL_PIXELFORMAT_ARGB8888);
+  if (!out)
+  {
+    return nullptr;
+  }
+  SDL_memset(out->pixels, 0, static_cast<size_t>(out->pitch) * out->h);
+
+  // Same order as Text::draw: every shadow first, then every letter.
+  if (shadowsize != 0)
+  {
+    SDL_LockSurface(shadow_sheet);
+    compose_glyphs(out, shadow_sheet, text, len, w, h, shadowsize, shadowsize);
+    SDL_UnlockSurface(shadow_sheet);
+  }
+  SDL_LockSurface(sheet);
+  compose_glyphs(out, sheet, text, len, w, h, 0, 0);
+  SDL_UnlockSurface(sheet);
+
+  // Mostly clear pixels: RLE encoding (done on the first blit) skips them.
+  SDL_SetSurfaceBlendMode(out, SDL_BLENDMODE_BLEND);
+  SDL_SetSurfaceRLE(out, 1);
+  soft_run_pixels += pixels;
+  return out;
+}
+
+/**
+ * Draws a string from its cached texture, building it once the string has been
+ * drawn often enough.
+ * @return false if the caller should draw the string letter by letter instead.
+ */
+bool Text::draw_soft_cached(std::string_view text, int x, int y, int shadowsize)
+{
+  if (shadowsize < 0 || !soft_renderer_active())
+  {
+    return false;
+  }
+  if (soft_generation != st_renderer_generation)
+  {
+    free_soft_runs();  // That renderer, and its textures, are gone (simplest to start over)
+    soft_generation = st_renderer_generation;
+  }
+
+  ++soft_clock;
+  SoftRun* run = nullptr;
+  for (SoftRun& r : soft_runs)
+  {
+    if (r.shadowsize == shadowsize && r.text == text)
+    {
+      run = &r;
+      break;
+    }
+  }
+
+  if (!run)
+  {
+    if (soft_runs.size() >= SOFT_RUN_SLOTS)
+    {
+      // Replace the least recently used run
+      auto lru = std::min_element(soft_runs.begin(), soft_runs.end(),
+                                  [](const SoftRun& a, const SoftRun& b) { return a.last_used < b.last_used; });
+      free_soft_run(*lru, true);
+      *lru = soft_runs.back();
+      soft_runs.pop_back();
+    }
+    soft_runs.push_back(SoftRun{std::string(text), shadowsize, 0, 0, nullptr, 0, 0, nullptr});
+    run = &soft_runs.back();
+  }
+  run->last_used = soft_clock;
+
+  if (!run->surface)
+  {
+    if (++run->uses < SOFT_RUN_MIN_USES)
+    {
+      return false;
+    }
+    run->surface = build_soft_run(text, shadowsize, run->w, run->h);
+    if (!run->surface)
+    {
+      run->uses = -1000000;  // Can't be cached; don't try again on every frame
+      return false;
+    }
+  }
+
+  int shift_y;
+  if (SDL_Surface* target = st_direct_surface(&shift_y))
+  {
+    SDL_Rect at = {x, y + shift_y, 0, 0};
+    SDL_BlitSurface(run->surface, NULL, target, &at);
+    return true;
+  }
+
+  if (!run->texture)
+  {
+    run->texture = SDL_CreateTextureFromSurface(renderer, run->surface);
+    if (!run->texture)
+    {
+      return false;
+    }
+    SDL_SetTextureBlendMode(run->texture, SDL_BLENDMODE_BLEND);
+  }
+  SDL_Rect dst = {x, y, run->w, run->h};
+  SDL_RenderCopy(renderer, run->texture, NULL, &dst);
+  return true;
 }
 
 /**
@@ -178,6 +489,17 @@ void Text::recache_opengl_pointers()
     opengl_shadow_chars = nullptr;
   }
 #endif
+}
+
+/**
+ * Drops every cached string of every Text object (see st_toggle_fullscreen()).
+ */
+void Text::free_all_soft_runs()
+{
+  for (auto& text : texts)
+  {
+    text->free_soft_runs();
+  }
 }
 
 /**
@@ -226,6 +548,10 @@ void Text::draw(std::string_view text, int x, int y, int shadowsize, int update)
 #endif
 
     // Original SDL path
+    if (update == NO_UPDATE && draw_soft_cached(text, x, y, shadowsize))
+    {
+      return;
+    }
     if (shadowsize != 0)
     {
       draw_chars(shadow_chars, text, x + shadowsize, y + shadowsize, update);
@@ -439,47 +765,17 @@ void Text::draw_chars(Surface* pchars, std::string_view text, int x, int y, int 
   size_t j = 0;
   for (size_t i = 0; i < len; ++i, ++j)
   {
-    int src_offset_x = 0;  // Horizontal offset on the source surface (spritesheet)
-    int src_offset_y = 0;  // Vertical offset on the source surface (spritesheet)
-
-    // Determine the position of the character on the spritesheet based on its ASCII value
-    if (text[i] >= ' ' && text[i] <= '/')  // ASCII range for symbols (e.g., '!', '"', '#')
-    {
-      src_offset_x = (text[i] - ' ') * w;
-      src_offset_y = 0;
-    }
-    else if (text[i] >= '0' && text[i] <= '?')  // ASCII range for numbers (0-9) and symbols
-    {
-      src_offset_x = (text[i] - '0') * w;
-      src_offset_y = h;
-    }
-    else if (text[i] >= '@' && text[i] <= 'O')  // ASCII range for uppercase letters A-O
-    {
-      src_offset_x = (text[i] - '@') * w;
-      src_offset_y = h * 2;
-    }
-    else if (text[i] >= 'P' && text[i] <= '_')  // ASCII range for uppercase letters P-Z
-    {
-      src_offset_x = (text[i] - 'P') * w;
-      src_offset_y = h * 3;
-    }
-    else if (text[i] >= '`' && text[i] <= 'o')  // ASCII range for lowercase letters a-o
-    {
-      src_offset_x = (text[i] - '`') * w;
-      src_offset_y = h * 4;
-    }
-    else if (text[i] >= 'p' && text[i] <= '~')  // ASCII range for lowercase letters p-z
-    {
-      src_offset_x = (text[i] - 'p') * w;
-      src_offset_y = h * 5;
-    }
-    else if (text[i] == '\n')  // Handle new line character
+    if (text[i] == '\n')  // Handle new line character
     {
       y += h + 2;  // Move down to the next line
       j = (size_t)-1;  // Reset column position for the next line
       continue;  // Skip to the next character without drawing
     }
-    else
+
+    // Position of the character on the spritesheet (horizontal, vertical)
+    int src_offset_x = 0;
+    int src_offset_y = 0;
+    if (!glyph_source(text[i], w, h, src_offset_x, src_offset_y))
     {
       continue;  // Ignore unsupported characters
     }

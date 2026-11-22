@@ -43,6 +43,8 @@ void seticon(void);
 static SDL_GLContext gl_context = nullptr;
 #endif
 
+unsigned int st_renderer_generation = 0;  // See setup.hpp
+
 // Software renderer only: when the window is not SCREEN_W x SCREEN_H (for
 // example a 640x448 TV screen in fullscreen), the game draws into this
 // SCREEN_W x SCREEN_H texture, and st_present() scales it to the window once
@@ -463,6 +465,7 @@ void st_video_cleanup(void)
   {
     SDL_DestroyRenderer(renderer);
     renderer = nullptr;
+    ++st_renderer_generation;
   }
 
   // Destroy window if it exists
@@ -741,13 +744,14 @@ void st_toggle_fullscreen(void)
     // Software renderer: switching can change where images are drawn (blitted
     // onto the window, or through the renderer into the frame). An RLE image
     // drawn onto one surface and then another crashes SDL 3's SDL 2 layer
-    // (sdl2-compat), so every image starts fresh. Switching is rare, so the
-    // reload costs nothing that matters.
+    // (sdl2-compat), so every image and cached string starts fresh. Switching
+    // is rare, so the reload costs nothing that matters.
     SDL_RendererInfo info;
     if (SDL_GetRendererInfo(renderer, &info) == 0 && (info.flags & SDL_RENDERER_SOFTWARE))
     {
       Surface::reload_all();
       Text::recache_all_pointers();
+      Text::free_all_soft_runs();
     }
   }
 
