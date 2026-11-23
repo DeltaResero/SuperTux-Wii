@@ -176,6 +176,44 @@ Direction string_to_direction(std::string_view directory)
 }
 
 /**
+ * Checks whether a tile image hides everything under its cell: it must be at
+ * least TILE_SIZE square, and every pixel inside the cell must be fully solid.
+ * The shipped tiles all are. A tile from a custom tile set might not be, and
+ * then the world map clears the screen under its tiles (see WorldMap::draw).
+ * @param sprite The tile's image, as loaded.
+ * @return bool True when nothing drawn under the cell can show through.
+ */
+static bool image_covers_cell(const Surface& sprite)
+{
+  SDL_Surface* image = sprite.impl ? sprite.impl->get_sdl_surface() : nullptr;
+  if (!image || image->w < TILE_SIZE || image->h < TILE_SIZE)
+  {
+    return false;
+  }
+  if (!SDL_ISPIXELFORMAT_ALPHA(image->format->format))
+  {
+    return true;
+  }
+  if (image->format->BytesPerPixel != 4 || SDL_LockSurface(image) != 0)
+  {
+    return false;
+  }
+  bool solid = true;
+  for (int y = 0; y < TILE_SIZE && solid; ++y)
+  {
+    const Uint32* row = reinterpret_cast<const Uint32*>(static_cast<const Uint8*>(image->pixels) + y * image->pitch);
+    for (int x = 0; x < TILE_SIZE && solid; ++x)
+    {
+      Uint8 r, g, b, a;
+      SDL_GetRGBA(row[x], image->format, &r, &g, &b, &a);
+      solid = (a == 255);
+    }
+  }
+  SDL_UnlockSurface(image);
+  return solid;
+}
+
+/**
  * Initializes the TileManager, reading tile data from a file.
  */
 TileManager::TileManager()
@@ -241,6 +279,7 @@ TileManager::TileManager()
         }
 
         tile->sprite = std::make_unique<Surface>(datadir + "/images/worldmap/" + filename, true);
+        tile->covers_cell = image_covers_cell(*tile->sprite);
         if (id >= int(tiles.size()))
         {
           tiles.resize(id + 1);
@@ -535,7 +574,7 @@ void Tux::update(float delta)
 Tile::Tile()
   : sprite(nullptr),
     north(false), east(false), south(false), west(false),
-    one_way(0), stop(false), auto_walk(false)
+    one_way(0), stop(false), auto_walk(false), covers_cell(false)
 {
 }
 
@@ -695,11 +734,14 @@ void WorldMap::load_map()
 
   // Pre-calculate display tiles (smart substitution) once at load time
   display_tilemap.resize(width * height);
+  tiles_cover_cells = true;
   for (int y = 0; y < height; ++y)
   {
     for (int x = 0; x < width; ++x)
     {
       display_tilemap[y * width + x] = get_display_tile_id(x, y);
+      const Tile* tile = tile_manager->get(display_tilemap[y * width + x]);
+      tiles_cover_cells = tiles_cover_cells && tile && tile->covers_cell;
     }
   }
 
@@ -1273,8 +1315,12 @@ void WorldMap::draw(const Point& offset_)
     glClear(GL_COLOR_BUFFER_BIT);
   }
 #endif
-  // Also clear for SDL renderer to prevent ghosting
-  if (!use_gl)
+  // SDL renderer: the tiles hide the last frame on their own when the map is
+  // at least as big as the screen (renderScene() keeps the view inside it)
+  // and every cell's tile covers its whole cell. That skips a full-screen
+  // fill every frame. A smaller map, or a custom tile with see-through
+  // pixels or a short image, still gets the clear.
+  if (!use_gl && (!tiles_cover_cells || width * TILE_SIZE < screen->w || height * TILE_SIZE < screen->h))
   {
     clearscreen(0, 0, 0);
   }

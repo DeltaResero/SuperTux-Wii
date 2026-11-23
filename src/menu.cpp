@@ -85,8 +85,12 @@ bool confirm_dialog(const std::string& text, Surface* background)
       dialog->event(event);
     }
 
-    clearscreen(0, 0, 0); // Ensure clean buffer
-
+    // Without OpenGL the background is opaque (loaded without alpha) and
+    // repeated over the whole screen, so nothing under it can show.
+    if (!background || use_gl)
+    {
+      clearscreen(0, 0, 0);
+    }
     if (background)
     {
       background->draw_bg();

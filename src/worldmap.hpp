@@ -84,6 +84,10 @@ public:
   /** When set automatically turn directions when walked over such a
       tile (ie. walk smoothly a curve) */
   bool auto_walk;
+
+  /** True when the image is at least a whole cell and has no see-through
+      pixel in it, so it hides whatever was drawn there before */
+  bool covers_cell;
 };
 
 class TileManager
@@ -309,6 +313,7 @@ private:
 
   std::vector<int> tilemap;
   std::vector<int> display_tilemap; // Cached visual tile IDs
+  bool tiles_cover_cells = false;   // Every cell's tile has covers_cell set
   int width;
   int height;
 
