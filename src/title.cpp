@@ -570,8 +570,14 @@ void title(void)
       update_time = last_update_time = Ticks::get();
     }
 
-    // Calculate the frame ratio for animation timing
+    // Calculate the frame ratio for animation timing. Cap it as the level
+    // loop does, so a slow frame (such as a switch between OpenGL and SDL)
+    // can't move Tux so far in one step that he passes through the ground.
     float frame_ratio = static_cast<float>(update_time - last_update_time) / static_cast<float>(FRAME_RATE);
+    if (frame_ratio > 2.5f)
+    {
+      frame_ratio = 2.5f;
+    }
     if (frame_ratio > 1.5f)
     {
       frame_ratio = 1.5f + (frame_ratio - 1.5f) * 0.85f;
