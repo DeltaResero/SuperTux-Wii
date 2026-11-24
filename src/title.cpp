@@ -344,7 +344,18 @@ void draw_demo(GameSession* demo_session, float frame_ratio)
 
   tux->can_jump = true;
   float last_tux_x_pos = tux->base.x;
+  int lives_before = player_status.lives;
   world->action(frame_ratio);
+
+  // Failsafe: if Tux dies anyway, start the demo over rather than leave him
+  // dead for good. The life he lost goes back too, as a bonus level started
+  // from this screen keeps the same player status.
+  if (tux->dying != DYING_NOT || tux->is_dead())
+  {
+    player_status.lives = lives_before;
+    tux->level_begin();
+    scroll_x = 0;
+  }
 
   // Check if Tux is stuck behind a wall, and force a jump if necessary
   if (last_tux_x_pos == tux->base.x)
