@@ -123,6 +123,7 @@ int main(int argc, char ** argv)
   // Check if a level startup file is specified (start a game session), otherwise show the title screen
   if (!level_startup_file.empty())
   {
+    loadsounds();  // The title screen loads these, but a level started here skips it
     GameSession session(level_startup_file, 1, ST_GL_LOAD_LEVEL_FILE);
     session.run();
   }
