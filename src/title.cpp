@@ -472,13 +472,17 @@ static void renderTitleScene()
     logo_surf->draw(160, 30);
   }
 
-  // Draw text and handle menu actions
+  // Draw text and handle menu actions. The five lines are 53 rows tall (11
+  // rows apart, the last 9 tall). They keep their own 7-row gap from the
+  // bottom, or "TV Overscan"'s gap (offset_y) if that's bigger, so they sit
+  // as far in as the rest of the status text.
+  const int copyright_gap = std::max(7, offset_y);
   white_small_text->draw("SuperTux " VERSION "\n"
                          "Copyright (c) 2003-2025 SuperTux Devel Team & DeltaResero\n"
                          "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
                          "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
                          "for details.\n",
-                         white_small_text->w, (420 - offset_y), 0);
+                         white_small_text->w, SCREEN_H - 53 - copyright_gap, 0);
 
   Menu* menu = Menu::current();
   if (menu)
