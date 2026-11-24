@@ -121,6 +121,13 @@ void swapOpenGLBuffers()
   // frame starts with a known state.
   SurfaceOpenGL::reset_state();
   SDL_GL_SwapWindow(window);
+
+  // On the Wii, SDL turns the depth test on after every swap without telling
+  // OpenGL (OpenGX), so drawings behind old depths get skipped. After a
+  // switch from SDL mode that froze the screen. Disabling it again makes
+  // OpenGX send its own setting (off) with the next drawing. Elsewhere it
+  // only repeats a setting that is already off.
+  glDisable(GL_DEPTH_TEST);
 }
 
 #endif // NOOPENGL
