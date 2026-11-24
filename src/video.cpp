@@ -452,6 +452,7 @@ void st_video_cleanup(void)
   // Destroy OpenGL context if it exists
   if (gl_context)
   {
+    Surface::free_all_gl_textures();  // The Wii's OpenGL keeps them past the context
     SDL_GL_DeleteContext(gl_context);
     gl_context = nullptr;
     ++st_gl_context_generation;

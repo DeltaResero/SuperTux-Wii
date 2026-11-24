@@ -338,6 +338,27 @@ void Surface::reload_all()
   }
 }
 
+#ifndef NOOPENGL
+/**
+ * Frees every image's OpenGL texture. Call it just before deleting the game's
+ * OpenGL context. Most drivers free a context's textures along with it, but
+ * the Wii's OpenGL (OpenGX) keeps one texture table for the whole program, so
+ * any texture left behind there stays taken for good.
+ */
+void Surface::free_all_gl_textures()
+{
+  for (auto& surface : surfaces)
+  {
+    SurfaceOpenGL* gl_surface = surface->impl ? surface->impl->as_opengl() : nullptr;
+    if (gl_surface)
+    {
+      gl_surface->free_texture();
+    }
+  }
+  SurfaceOpenGL::reset_state();  // Forget the bound texture, as its number is free again
+}
+#endif
+
 /**
  * Checks for any surfaces that were not freed and reports them.
  */
@@ -592,13 +613,21 @@ SurfaceOpenGL::SurfaceOpenGL(std::string_view file, int x, int y, int w_, int h_
  */
 SurfaceOpenGL::~SurfaceOpenGL()
 {
-  // Deleting the game's OpenGL context already freed the texture. Its number
-  // may belong to someone else by now, such as SDL's own OpenGL renderer after
-  // a switch to SDL mode, so only delete it while the context still exists.
+  free_texture();
+}
+
+/**
+ * Frees the texture, but only while the game's OpenGL context that made it
+ * still exists. After that, its number may belong to someone else, such as
+ * SDL's own OpenGL renderer after a switch to SDL mode.
+ */
+void SurfaceOpenGL::free_texture()
+{
   if (gl_generation == st_gl_context_generation)
   {
     glDeleteTextures(1, &gl_texture);
   }
+  gl_texture = 0;
 }
 
 /**

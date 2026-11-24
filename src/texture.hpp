@@ -98,6 +98,9 @@ public:
 
   static void reload_all();
   static void debug_check();
+#ifndef NOOPENGL
+  static void free_all_gl_textures();
+#endif
 
 private:
   void init_impl();
@@ -156,6 +159,7 @@ public:
 
   SurfaceOpenGL* as_opengl() override { return this; }
 
+  void free_texture();
   static void reset_state();
   // Expose vertex array state management to other renderers (like Text)
   static void enable_vertex_arrays();
