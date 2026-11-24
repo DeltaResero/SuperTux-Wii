@@ -44,6 +44,7 @@ static SDL_GLContext gl_context = nullptr;
 #endif
 
 unsigned int st_renderer_generation = 0;  // See setup.hpp
+unsigned int st_gl_context_generation = 0;  // See setup.hpp
 
 // Software renderer only: when the window is not SCREEN_W x SCREEN_H (for
 // example a 640x448 TV screen in fullscreen), the game draws into this
@@ -453,6 +454,7 @@ void st_video_cleanup(void)
   {
     SDL_GL_DeleteContext(gl_context);
     gl_context = nullptr;
+    ++st_gl_context_generation;
   }
 #endif
 

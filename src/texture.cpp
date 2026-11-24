@@ -592,7 +592,13 @@ SurfaceOpenGL::SurfaceOpenGL(std::string_view file, int x, int y, int w_, int h_
  */
 SurfaceOpenGL::~SurfaceOpenGL()
 {
-  glDeleteTextures(1, &gl_texture);
+  // Deleting the game's OpenGL context already freed the texture. Its number
+  // may belong to someone else by now, such as SDL's own OpenGL renderer after
+  // a switch to SDL mode, so only delete it while the context still exists.
+  if (gl_generation == st_gl_context_generation)
+  {
+    glDeleteTextures(1, &gl_texture);
+  }
 }
 
 /**
@@ -759,6 +765,7 @@ void SurfaceOpenGL::create_gl(SDL_Surface* surf, GLuint* tex)
   }
 
   glGenTextures(1, tex);
+  gl_generation = st_gl_context_generation;
   glBindTexture(GL_TEXTURE_2D, *tex);
 
   // Use GL_LINEAR for smooth scaling (now safe due to smearing)
@@ -1035,6 +1042,7 @@ void SurfaceSDL::init_from_sdl_surface(std::string_view what)
     return;
   }
   texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
+  texture_generation = st_renderer_generation;
   if (!texture && verbose)
   {
     std::cerr << "Failed to create texture from " << what << ": " << SDL_GetError() << "\n";
@@ -1049,6 +1057,7 @@ SDL_Texture* SurfaceSDL::get_texture()
   if (!texture && sdl_surface)
   {
     texture = SDL_CreateTextureFromSurface(renderer, sdl_surface);
+    texture_generation = st_renderer_generation;
   }
   return texture;
 }
@@ -1087,7 +1096,8 @@ SurfaceSDL::SurfaceSDL(SDL_Surface *surf, bool use_alpha)
 
 SurfaceSDL::~SurfaceSDL()
 {
-  if (texture)
+  // Destroying the renderer already destroyed the texture
+  if (texture && texture_generation == st_renderer_generation)
   {
     SDL_DestroyTexture(texture);
   }
