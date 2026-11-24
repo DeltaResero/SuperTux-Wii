@@ -136,6 +136,7 @@ class SurfaceOpenGL : public SurfaceImpl
 {
 public:
   unsigned gl_texture;
+  unsigned int gl_generation = 0;  // st_gl_context_generation gl_texture belongs to
   // Cached texture dimensions.
   // On Desktop: Rounded up to the nearest power of two.
   // On Wii: Aligned to 4 pixels.
@@ -170,7 +171,8 @@ private:
 class SurfaceSDL : public SurfaceImpl
 {
 public:
-  SDL_Texture *texture; // Hardware texture
+  SDL_Texture *texture; // Renderer texture (software renderer: made on first use, see get_texture())
+  unsigned int texture_generation = 0;  // st_renderer_generation texture belongs to
 
   SurfaceSDL(SDL_Surface *surf, bool use_alpha);
   SurfaceSDL(std::string_view file, bool use_alpha);
@@ -180,6 +182,10 @@ public:
   int draw(float x, float y, Uint8 alpha, bool update) override;
   int draw_bg(Uint8 alpha, bool update) override;
   int draw_part(float sx, float sy, float x, float y, float w_, float h_, Uint8 alpha, bool update) override;
+
+private:
+  void init_from_sdl_surface(std::string_view what);
+  SDL_Texture* get_texture();
 };
 
 #endif /*SUPERTUX_TEXTURE_H*/

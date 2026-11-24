@@ -12,6 +12,7 @@
 
 #include "screen.hpp"
 #include "globals.hpp"
+#include "setup.hpp"
 #include "mousecursor.hpp"
 
 MouseCursor* MouseCursor::current_ = nullptr;  // Initialize static member to nullptr
@@ -89,6 +90,11 @@ void MouseCursor::draw()
   int x;
   int y;
   Uint8 ispressed = SDL_GetMouseState(&x, &y);  // Get the mouse position and button state
+
+  // SDL reports window pixels; the game draws in SCREEN_W x SCREEN_H, which
+  // the window may show stretched or cut. Mouse events get the same mapping
+  // (see st_poll_event()), so the cursor and the menus agree.
+  st_mouse_state_to_game(&x, &y);
 
   // Note: The width and height of the cursor frame ('frame_w', 'frame_h') are now
   // pre-calculated and cached in the constructor, so we don't recalculate them here.

@@ -711,6 +711,13 @@ void Level::draw_bg() const
 {
   if (img_bkgd)
   {
+    // Nothing else clears the screen between frames (see GameSession::draw),
+    // so an image smaller than the screen gets a black screen behind it, as
+    // it always had. Every background the game ships with is screen-sized.
+    if (img_bkgd->w < screen->w || img_bkgd->h < screen->h)
+    {
+      clearscreen(0, 0, 0);
+    }
     int s = (int)((float)scroll_x * ((float)bkgd_speed / 100.0f)) % screen->w;
     img_bkgd->draw_part(s, 0, 0, 0, img_bkgd->w - s, img_bkgd->h);
     img_bkgd->draw_part(0, 0, screen->w - s, 0, s, img_bkgd->h);

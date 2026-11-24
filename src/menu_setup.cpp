@@ -76,6 +76,7 @@ void st_menu(void)
 
   options_menu->additem(MN_HL, "", 0, nullptr);
   options_menu->additem(MN_BACK, "Back", 0, nullptr);
+  st_apply_tv_overscan(); // Greys out "TV Overscan" if the screen is trimmed
 
   options_keys_menu->additem(MN_LABEL, "Key Setup", 0, nullptr);
   options_keys_menu->additem(MN_HL, "", 0, nullptr);

@@ -16,6 +16,9 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#if defined(__linux__) && defined(__powerpc__)
+#include <sys/auxv.h>
+#endif
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
@@ -122,6 +125,104 @@ void swapOpenGLBuffers()
 
 #endif // NOOPENGL
 
+#if defined(__linux__) && defined(__powerpc__)
+/**
+ * True when the CPU's data cache lines are 32 bytes (the Wii's and the
+ * GameCube's), so fill_row_lines() may use dcbz. Asked once.
+ */
+static bool can_zero_cache_lines(void)
+{
+  static const bool ok = getauxval(AT_DCACHEBSIZE) == 32;
+  return ok;
+}
+
+/**
+ * Fills one row of 16- or 32-bit pixels. Each whole 32-byte cache line is
+ * first zeroed with dcbz, which claims the line without reading it from
+ * memory, then written. Pixels before the first and after the last whole
+ * line are written one by one.
+ * @param d Start of the row.
+ * @param end One past the row's last byte.
+ * @param word Two 16-bit pixels, or one 32-bit pixel.
+ * @param bpp Bytes per pixel, 2 or 4.
+ */
+static void fill_row_lines(Uint8* d, const Uint8* end, Uint32 word, int bpp)
+{
+  typedef Uint16 u16a __attribute__((may_alias));
+  typedef Uint32 u32a __attribute__((may_alias));
+  while (d < end && (reinterpret_cast<uintptr_t>(d) & 31) != 0)
+  {
+    if (bpp == 2)
+      *reinterpret_cast<u16a*>(d) = static_cast<Uint16>(word);
+    else
+      *reinterpret_cast<u32a*>(d) = word;
+    d += bpp;
+  }
+  // Two lines per step, as the CPU then has both claimed before it writes.
+  for (; d + 64 <= end; d += 64)
+  {
+    __asm__ volatile("dcbz 0,%0" : : "r"(d) : "memory");
+    __asm__ volatile("dcbz 0,%0" : : "r"(d + 32) : "memory");
+    u32a* q = reinterpret_cast<u32a*>(d);
+    q[0] = word; q[1] = word; q[2] = word; q[3] = word;
+    q[4] = word; q[5] = word; q[6] = word; q[7] = word;
+    q[8] = word; q[9] = word; q[10] = word; q[11] = word;
+    q[12] = word; q[13] = word; q[14] = word; q[15] = word;
+  }
+  if (d + 32 <= end)
+  {
+    __asm__ volatile("dcbz 0,%0" : : "r"(d) : "memory");
+    u32a* q = reinterpret_cast<u32a*>(d);
+    q[0] = word; q[1] = word; q[2] = word; q[3] = word;
+    q[4] = word; q[5] = word; q[6] = word; q[7] = word;
+    d += 32;
+  }
+  while (d < end)
+  {
+    if (bpp == 2)
+      *reinterpret_cast<u16a*>(d) = static_cast<Uint16>(word);
+    else
+      *reinterpret_cast<u32a*>(d) = word;
+    d += bpp;
+  }
+}
+#else
+static bool can_zero_cache_lines(void) { return false; }
+static void fill_row_lines(Uint8*, const Uint8*, Uint32, int) {}
+#endif
+
+/**
+ * Fills part of a surface with one solid pixel value. SDL's fill writes
+ * word by word, so the Wii's CPU reads every cache line in from memory
+ * before overwriting it. On 32-bit PowerPC Linux with 32-byte cache lines,
+ * 16- and 32-bit surfaces are filled by fill_row_lines() instead, which
+ * skips that read. On the Wii a 640x448 16-bit screen takes ~0.6 ms this
+ * way, against ~3.7 ms with SDL_FillRect. Never use it on memory a device
+ * reads directly (a framebuffer): a zeroed line shows as black until it is
+ * written. The window's surface is ordinary memory.
+ * @param dst The surface (locked, if it needs locking).
+ * @param area The rectangle, in surface pixels.
+ * @param pixel The pixel value, in dst's format.
+ */
+static void fill_rows(SDL_Surface* dst, SDL_Rect area, Uint32 pixel)
+{
+  if (!SDL_IntersectRect(&area, &dst->clip_rect, &area))
+    return;
+  const int bpp = dst->format->BytesPerPixel;
+  if (!can_zero_cache_lines() || (bpp != 2 && bpp != 4))
+  {
+    SDL_FillRect(dst, &area, pixel);
+    return;
+  }
+  const Uint32 word = bpp == 2 ? (pixel & 0xffff) * 0x10001u : pixel;
+  const size_t row_bytes = static_cast<size_t>(area.w) * bpp;
+  Uint8* row = static_cast<Uint8*>(dst->pixels) + area.y * dst->pitch + area.x * bpp;
+  for (int y = 0; y < area.h; ++y, row += dst->pitch)
+  {
+    fill_row_lines(row, row + row_bytes, word, bpp);
+  }
+}
+
 /* --- CLEAR SCREEN --- */
 /**
  * Clears the screen with a given color.
@@ -138,6 +239,16 @@ void clearscreen(int r, int g, int b)
     return;
   }
 #endif
+  int shift_y;
+  SDL_Surface* dst = st_direct_surface(&shift_y);
+  if (dst && (!SDL_MUSTLOCK(dst) || SDL_LockSurface(dst) == 0))
+  {
+    // Like SDL_RenderClear, this covers the whole window.
+    fill_rows(dst, {0, 0, dst->w, dst->h}, SDL_MapRGB(dst->format, r, g, b));
+    if (SDL_MUSTLOCK(dst))
+      SDL_UnlockSurface(dst);
+    return;
+  }
   SDL_SetRenderDrawColor(renderer, r, g, b, 255);
   SDL_RenderClear(renderer);
 }
@@ -179,6 +290,68 @@ void drawgradient(Color top_clr, Color bot_clr)
 
 /* --- FILL A RECTANGLE --- */
 /**
+ * Software renderer drawing 1:1 into the window (see st_direct_surface()):
+ * fills straight onto the window's surface. Solid fills go through
+ * fill_rows(). A see-through fill onto a 16-bit RGB565 screen (Wii Linux) is
+ * blended here two colour fields at a time with one multiply per pixel, the
+ * way SDL's own 565 alpha blitters do it; SDL's blended rectangle fill works
+ * channel by channel and took ~2 ms a frame for the title menu's box on the
+ * Wii.
+ * @param rect The rectangle in game coordinates.
+ * @return false when the renderer must draw it instead.
+ */
+static bool fillrect_direct(const SDL_Rect& rect, int r, int g, int b, int a)
+{
+  if (a <= 0)
+    return true;  // Nothing to draw
+
+  int shift_y;
+  SDL_Surface* dst = st_direct_surface(&shift_y);
+  if (!dst || (a < 255 && dst->format->format != SDL_PIXELFORMAT_RGB565))
+    return false;
+
+  SDL_Rect area = {rect.x, rect.y + shift_y, rect.w, rect.h};
+  if (!SDL_IntersectRect(&area, &dst->clip_rect, &area))
+    return true;
+
+  if (SDL_MUSTLOCK(dst) && SDL_LockSurface(dst) != 0)
+    return false;
+
+  if (a >= 255)
+  {
+    fill_rows(dst, area, SDL_MapRGB(dst->format, r, g, b));
+    if (SDL_MUSTLOCK(dst))
+      SDL_UnlockSurface(dst);
+    return true;
+  }
+
+  // RGB565 spread over 32 bits as 00000GGGGGG00000RRRRR000000BBBBB, so each
+  // field has room for a 5-bit alpha multiply without spilling into the next.
+  const Uint32 mask = 0x07e0f81f;
+  const Uint32 alpha = (static_cast<Uint32>(a) * 32 + 127) / 255;  // 0-32
+  Uint32 src = SDL_MapRGB(dst->format, r, g, b);
+  src = (src | src << 16) & mask;
+
+  Uint8* row = static_cast<Uint8*>(dst->pixels) + area.y * dst->pitch + area.x * 2;
+  for (int y = 0; y < area.h; ++y, row += dst->pitch)
+  {
+    Uint16* p = reinterpret_cast<Uint16*>(row);
+    for (int x = 0; x < area.w; ++x)
+    {
+      Uint32 d = p[x];
+      d = (d | d << 16) & mask;
+      d += (src - d) * alpha >> 5;
+      d &= mask;
+      p[x] = static_cast<Uint16>(d | d >> 16);
+    }
+  }
+
+  if (SDL_MUSTLOCK(dst))
+    SDL_UnlockSurface(dst);
+  return true;
+}
+
+/**
  * Fills a rectangle with the specified color.
  * If OpenGL is used, it utilizes OpenGL functions.
  * Otherwise, it uses SDL functions to fill the rectangle.
@@ -217,6 +390,9 @@ void fillrect(float x, float y, float w, float h, int r, int g, int b, int a)
 #endif
   SDL_Rect rect = {static_cast<int>(ix), static_cast<int>(iy), static_cast<int>(iw), static_cast<int>(ih)};
 
+  if (fillrect_direct(rect, r, g, b, a))
+    return;
+
   SDL_SetRenderDrawColor(renderer, r, g, b, a);
   if (a != 255)
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -241,7 +417,7 @@ void flipscreen()
     return;
   }
 #endif
-  SDL_RenderPresent(renderer);
+  st_present();
 }
 
 /* --- FADE OUT SCREEN --- */

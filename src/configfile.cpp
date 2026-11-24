@@ -37,8 +37,9 @@ static void defaults()
 #ifdef NOOPENGL
   use_gl = false;
 #else
-  // Default to OpenGL if available as it's typically faster on most platforms
-  use_gl = true;
+  // Default to OpenGL if available as it's typically faster on most platforms,
+  // but not where OpenGL is only CPU emulation (Wii/GameCube Linux).
+  use_gl = !st_gl_is_software_only();
 #endif
   use_sound = true;
   use_music = true;
