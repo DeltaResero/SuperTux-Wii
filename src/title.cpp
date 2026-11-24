@@ -489,7 +489,7 @@ static void renderTitleScene()
   // as far in as the rest of the status text.
   const int copyright_gap = std::max(7, offset_y);
   white_small_text->draw("SuperTux " VERSION "\n"
-                         "Copyright (c) 2003-2025 SuperTux Devel Team & DeltaResero\n"
+                         "Copyright (c) 2003-2026 SuperTux & SuperTux Wii Development Teams\n"
                          "This game comes with ABSOLUTELY NO WARRANTY. This is free software, and you\n"
                          "are welcome to redistribute it under certain conditions; see the file LICENSE\n"
                          "for details.\n",
