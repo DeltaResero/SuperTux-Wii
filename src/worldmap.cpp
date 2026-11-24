@@ -1448,7 +1448,9 @@ void WorldMap::draw_status()
         /* Display a message in the map, if any as been selected */
         if (!i->display_map_message.empty() && !i->passive_message)
         {
-          gold_text->draw_align(i->display_map_message, screen->w / 2, screen->h - 30, A_HMIDDLE, A_BOTTOM);
+          // Raised by the same gap as the level name below it, so the two don't
+          // overlap when "TV Overscan" moves the level name up
+          gold_text->draw_align(i->display_map_message, screen->w / 2, screen->h - 30 - offset_y, A_HMIDDLE, A_BOTTOM);
         }
 
         break;
@@ -1459,7 +1461,7 @@ void WorldMap::draw_status()
   /* Display a passive message in the map, if needed */
   if (passive_message_timer.check())
   {
-    gold_text->draw_align(passive_message, screen->w / 2, screen->h - 30, A_HMIDDLE, A_BOTTOM);
+    gold_text->draw_align(passive_message, screen->w / 2, screen->h - 30 - offset_y, A_HMIDDLE, A_BOTTOM);
   }
 }
 
